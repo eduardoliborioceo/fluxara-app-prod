@@ -1,0 +1,3 @@
+ALTER TABLE ouvidoria_tickets
+    ADD COLUMN IF NOT EXISTS resposta TEXT,
+    ADD COLUMN IF NOT EXISTS respondido_em TIMESTAMP WITH TIME ZONE;

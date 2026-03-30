@@ -1,0 +1,221 @@
+{% extends "layouts/app.html" %}
+
+{% block title %}
+  {% if tipo == 'receita' %}Fluxara · Nova Receita
+  {% elif tipo == 'despesa_cartao' %}Fluxara · Despesa Cartão
+  {% else %}Fluxara · Nova Despesa{% endif %}
+{% endblock %}
+
+{% block page_title %}
+  {% if tipo == 'receita' %}Nova Receita
+  {% elif tipo == 'despesa_cartao' %}Despesa no Cartão
+  {% else %}Nova Despesa{% endif %}
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/lancamento.css') }}?v={{ static_v }}">
+<div id="lancamentoTipo" style="display:none">{{ tipo }}</div>
+
+<div class="lancamento-wrapper">
+  <div class="lancamento-card">
+
+    {% if tipo == 'receita' %}
+    <div class="lancamento-header lancamento-header--receita">
+      <div class="lancamento-header-icon"><i class="bi bi-arrow-down-circle-fill"></i></div>
+      <div class="lancamento-header-title">Nova Receita</div>
+    </div>
+    {% elif tipo == 'despesa_cartao' %}
+    <div class="lancamento-header lancamento-header--despesa-cartao">
+      <div class="lancamento-header-icon"><i class="bi bi-credit-card-fill"></i></div>
+      <div class="lancamento-header-title">Nova Despesa no Cartão</div>
+    </div>
+    {% else %}
+    <div class="lancamento-header lancamento-header--despesa">
+      <div class="lancamento-header-icon"><i class="bi bi-arrow-up-circle-fill"></i></div>
+      <div class="lancamento-header-title">Nova Despesa</div>
+    </div>
+    {% endif %}
+
+    <div class="lancamento-section" style="position:relative">
+      <div class="lancamento-field-label">Descrição</div>
+      <input type="text" id="lDescricao" class="form-control lancamento-text"
+             placeholder="Descrição..." autocomplete="off">
+      <div class="sug-dropdown" id="sugDropdown"></div>
+    </div>
+
+    <div class="lancamento-section">
+      <div class="lancamento-field-label">Valor</div>
+      <div class="valor-input-wrapper">
+        <span class="valor-currency">R$</span>
+        <input type="number" id="lValor" class="valor-input"
+               placeholder="0,00" step="0.01" min="0">
+      </div>
+    </div>
+
+    <div class="lancamento-section">
+      <div class="lancamento-field-label">
+        {% if tipo == 'despesa_cartao' %}Fatura (calculada automaticamente){% else %}Data de Vencimento{% endif %}
+      </div>
+      {% if tipo == 'despesa_cartao' %}
+      <div id="faturaDisplay" class="text-muted small" style="padding:4px 0">
+        Selecione um cartão para calcular automaticamente
+      </div>
+      <input type="hidden" id="lFaturaMes">
+      <input type="hidden" id="lFaturaAno">
+      {% else %}
+      <input type="date" id="lData" class="form-control lancamento-text">
+      {% endif %}
+    </div>
+
+    <div class="lancamento-section">
+      <div class="lancamento-field-label">Recorrência</div>
+      <select id="lRecorrenciaModo" class="form-select lancamento-select">
+        <option value="nao_recorrente">Não recorrente</option>
+        <option value="parcela">Parcela ou repetir</option>
+        <option value="fixa">Fixa</option>
+      </select>
+      <div class="d-none mt-3" id="divFixaPeriodicidade">
+        <select id="lPeriodicidadeFixa" class="form-select lancamento-select">
+          <option value="mensal">Mensal</option>
+          <option value="semanal">Semanal</option>
+          <option value="trimestral">Trimestral</option>
+          <option value="anual">Anual</option>
+          <option value="diario">Diário</option>
+        </select>
+      </div>
+      <div class="d-none mt-2" id="divParcelaResumo">
+        <span class="text-muted" style="font-size:.85rem" id="lblParcelaResumo"></span>
+        <button type="button" class="btn btn-link btn-sm p-0 ms-2" id="btnEditarParcela" style="font-size:.8rem">Editar</button>
+      </div>
+    </div>
+
+    {% if tipo != 'despesa_cartao' %}
+    <div class="lancamento-section">
+      <div class="lancamento-field-label mb-2">Status</div>
+      <div class="status-toggle">
+        <button class="status-btn active-efetivado" id="btnEfetivado">
+          <i class="bi bi-check-circle me-1"></i>Efetivada
+        </button>
+        <button class="status-btn" id="btnPendente">
+          <i class="bi bi-clock me-1"></i>Pendente
+        </button>
+      </div>
+      <input type="hidden" id="lEfetivado" value="true">
+    </div>
+    {% endif %}
+
+    {% if tipo == 'despesa_cartao' %}
+    <div class="lancamento-section">
+      <div class="lancamento-field-label">Cartão de Crédito</div>
+      <div class="conta-picker" id="cartaoPicker">
+        <div class="conta-picker-trigger" id="cartaoPickerTrigger">
+          <div class="conta-picker-selected" id="cartaoPickerSelected">
+            <span class="text-muted">Selecionar cartão...</span>
+          </div>
+          <i class="bi bi-chevron-down conta-picker-arrow"></i>
+        </div>
+        <div class="conta-picker-dropdown" id="cartaoPickerDropdown"></div>
+        <input type="hidden" id="lCartao">
+      </div>
+    </div>
+    {% else %}
+    <div class="lancamento-section">
+      <div class="lancamento-field-label">Conta</div>
+      <div class="conta-picker" id="contaPicker">
+        <div class="conta-picker-trigger" id="contaPickerTrigger">
+          <div class="conta-picker-selected" id="contaPickerSelected">
+            <span class="text-muted">Selecionar conta...</span>
+          </div>
+          <i class="bi bi-chevron-down conta-picker-arrow"></i>
+        </div>
+        <div class="conta-picker-dropdown" id="contaPickerDropdown"></div>
+        <input type="hidden" id="lConta">
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="lancamento-section">
+      <div class="lancamento-field-label">Categoria</div>
+      <select id="lCategoria" class="form-select lancamento-select">
+        <option value="">Selecionar categoria...</option>
+      </select>
+    </div>
+
+    <div class="lancamento-section" id="secSubcategoria" style="display:none">
+      <div class="lancamento-field-label">Subcategoria</div>
+      <select id="lSubcategoria" class="form-select lancamento-select">
+        <option value="">Selecionar subcategoria...</option>
+      </select>
+    </div>
+
+    <div class="lancamento-actions">
+      <a href="{{ url_for('pages.resumo') }}" class="btn-cancelar" title="Cancelar">
+        <i class="bi bi-x-lg"></i>
+      </a>
+      <button class="btn-salvar" id="btnSalvar">Salvar e Continuar</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Mini-modal de parcelamento -->
+<div class="rec-overlay" id="recOverlay">
+  <div class="rec-sheet">
+    <div class="rec-sheet-handle"></div>
+    <div class="rec-sheet-header">
+      <span class="rec-sheet-title">Configurar repetição</span>
+      <button class="rec-sheet-close" id="recSheetClose"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="rec-sheet-body">
+
+      <div class="rec-field">
+        <span class="rec-field-label">Parcela inicial</span>
+        <div class="rec-counter">
+          <button class="rec-counter-btn" id="btnPInicialMinus">−</button>
+          <span class="rec-counter-val" id="valPInicial">1</span>
+          <button class="rec-counter-btn" id="btnPInicialPlus">+</button>
+        </div>
+      </div>
+
+      <div class="rec-field">
+        <span class="rec-field-label">Quantidade</span>
+        <div class="rec-counter">
+          <button class="rec-counter-btn" id="btnQuantMinus">−</button>
+          <span class="rec-counter-val" id="valQuant">2</span>
+          <button class="rec-counter-btn" id="btnQuantPlus">+</button>
+        </div>
+      </div>
+
+      <div class="rec-field">
+        <span class="rec-field-label">Periodicidade</span>
+        <select class="form-select lancamento-select" id="lPeriodicidade">
+          <option value="mensal">Mensal</option>
+          <option value="diario">Diário</option>
+          <option value="semanal">Semanal</option>
+          <option value="trimestral">Trimestral</option>
+          <option value="anual">Anual</option>
+        </select>
+      </div>
+
+      <div class="rec-field">
+        <span class="rec-field-label">Calcular sobre</span>
+        <div class="rec-calc-toggle">
+          <button type="button" class="status-btn" id="btnCalcTotal">Valor Total</button>
+          <button type="button" class="status-btn active-efetivado" id="btnCalcParcela">Valor Parcela</button>
+        </div>
+        <input type="hidden" id="lCalculoTipo" value="parcela">
+      </div>
+
+      <div class="rec-preview" id="recPreview"></div>
+
+      <button type="button" class="btn-salvar mt-3" id="btnRecConfirmar">Confirmar</button>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/novo_lancamento.js') }}?v={{ static_v }}"></script>
+{% endblock %}

@@ -1,0 +1,330 @@
+{% extends "layouts/app.html" %}
+{% block title %}Admin · Suporte{% endblock %}
+
+{% block page_title %}
+<div class="page-header">
+  <div class="page-header-title">
+    <span class="page-header-section">Administrador</span>
+    <h1 class="page-header-name">Central de Suporte</h1>
+  </div>
+  <div class="page-header-actions">
+    <a href="{{ url_for('pages.configuracoes') }}" class="btn-header-icon" title="Voltar">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+    <button class="btn-header-icon" onclick="toggleFullscreen()" title="Tela cheia">
+      <i class="bi bi-arrows-fullscreen"></i>
+    </button>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ static_v }}">
+
+<div class="document-mobile-wrapper">
+<div class="document-desktop-canvas">
+<div class="container-fluid py-2">
+  <div class="row g-3">
+
+    <!-- ========== TICKETS DA OUVIDORIA ========== -->
+    <div class="col-12">
+      <div class="card" style="border:1px solid var(--border);border-radius:12px;">
+        <div class="card-header fw-bold" style="background:#0f172a;color:#fff;border-radius:12px 12px 0 0;">
+          <i class="bi bi-megaphone me-2"></i>Chamados da Ouvidoria
+          <span class="badge bg-warning ms-2">{{ tickets | selectattr('status', 'equalto', 'pendente') | list | length }} pendentes</span>
+        </div>
+        <div class="card-body p-0">
+          {% if not tickets %}
+            <div class="text-center py-4 text-muted">
+              <i class="bi bi-inbox fs-3 d-block mb-2 opacity-25"></i>
+              Nenhum chamado recebido.
+            </div>
+          {% else %}
+          <div class="table-responsive">
+            <table class="table table-hover mb-0" style="font-size:.875rem;">
+              <thead style="background:#f8fafc;">
+                <tr>
+                  <th style="font-size:.72rem;letter-spacing:.5px;text-transform:uppercase;color:#64748b;padding:10px 16px;">Usuário</th>
+                  <th style="font-size:.72rem;letter-spacing:.5px;text-transform:uppercase;color:#64748b;">Tipo</th>
+                  <th style="font-size:.72rem;letter-spacing:.5px;text-transform:uppercase;color:#64748b;">Mensagem</th>
+                  <th style="font-size:.72rem;letter-spacing:.5px;text-transform:uppercase;color:#64748b;">Status</th>
+                  <th style="font-size:.72rem;letter-spacing:.5px;text-transform:uppercase;color:#64748b;">Data</th>
+                  <th style="font-size:.72rem;letter-spacing:.5px;text-transform:uppercase;color:#64748b;">Ação</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for t in tickets %}
+                <tr id="ticket-row-{{ t.id }}">
+                  <td style="padding:12px 16px;font-weight:600;">{{ t.username }}</td>
+                  <td>
+                    {% set tipo_colors = {'reclamacao': ('fee2e2','991b1b'), 'sugestao': ('dbeafe','1e40af'), 'elogio': ('d1fae5','065f46'), 'denuncia': ('fef3c7','92400e'), 'solicitacao': ('ede9fe','5b21b6')} %}
+                    {% set tc = tipo_colors.get(t.tipo, ('f1f5f9','64748b')) %}
+                    <span style="background:#{{ tc[0] }};color:#{{ tc[1] }};font-size:.72rem;font-weight:700;padding:3px 8px;border-radius:6px;">
+                      {{ t.tipo | capitalize }}
+                    </span>
+                  </td>
+                  <td style="max-width:320px;">
+                    <div style="white-space:pre-wrap;font-size:.83rem;color:#1e293b;">{{ t.mensagem | truncate(120) }}</div>
+                    {% if t.resposta %}
+                    <div style="margin-top:6px;padding:6px 10px;background:#f0fdf4;border-left:3px solid #16a34a;border-radius:6px;font-size:.78rem;color:#065f46;">
+                      <strong>Resposta:</strong> {{ t.resposta | truncate(80) }}
+                    </div>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if t.status == 'pendente' %}
+                      <span class="badge" style="background:#f1f5f9;color:#64748b;">Pendente</span>
+                    {% elif t.status == 'lido' %}
+                      <span class="badge" style="background:#dbeafe;color:#1e40af;">Lido</span>
+                    {% else %}
+                      <span class="badge" style="background:#d1fae5;color:#065f46;">Resolvido</span>
+                    {% endif %}
+                  </td>
+                  <td style="font-size:.78rem;color:#64748b;white-space:nowrap;">
+                    {{ t.criado_em.strftime('%d/%m/%Y %H:%M') if t.criado_em else '' }}
+                  </td>
+                  <td>
+                    <button class="btn btn-sm btn-outline-primary"
+                            onclick="abrirResposta({{ t.id }})"
+                            style="font-size:.78rem;border-radius:6px;">
+                      <i class="bi bi-reply me-1"></i>Responder
+                    </button>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== CONVERSAS DO CHAT ========== -->
+    <div class="col-12">
+      <div class="card" style="border:1px solid var(--border);border-radius:12px;">
+        <div class="card-header fw-bold" style="background:#0f172a;color:#fff;border-radius:12px 12px 0 0;">
+          <i class="bi bi-chat-dots me-2"></i>Conversas com Especialista
+        </div>
+        <div class="card-body p-0">
+          {% if not conversations %}
+            <div class="text-center py-4 text-muted">
+              <i class="bi bi-chat-dots fs-3 d-block mb-2 opacity-25"></i>
+              Nenhuma conversa iniciada.
+            </div>
+          {% else %}
+          <div class="list-group list-group-flush">
+            {% for conv in conversations %}
+            <a href="#chat-{{ conv.user_id }}" class="list-group-item list-group-item-action"
+               onclick="abrirChat({{ conv.user_id }}, event)"
+               style="border-color:var(--border);padding:14px 16px;">
+              <div class="d-flex align-items-center gap-3">
+                <div style="width:36px;height:36px;border-radius:50%;background:#0f172a;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;flex-shrink:0;">
+                  {{ conv.username[0] | upper }}
+                </div>
+                <div style="flex:1;min-width:0;">
+                  <div class="fw-semibold" style="font-size:.875rem;">{{ conv.username }}</div>
+                  <div style="font-size:.78rem;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                    {{ conv.ultima_mensagem | truncate(60) }}
+                  </div>
+                </div>
+                {% if conv.nao_lidas %}
+                <span class="badge bg-danger">{{ conv.nao_lidas }}</span>
+                {% endif %}
+                <span style="font-size:.72rem;color:#64748b;white-space:nowrap;">
+                  {{ conv.ultima_msg_em.strftime('%d/%m %H:%M') if conv.ultima_msg_em else '' }}
+                </span>
+              </div>
+            </a>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+</div>
+
+<!-- MODAL RESPOSTA TICKET -->
+<div class="modal fade" id="modalResposta" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content" style="border-radius:14px;">
+      <div class="modal-header" style="border-color:var(--border);">
+        <h5 class="modal-title fw-bold">Responder Chamado</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="respostaTicketId">
+        <div class="mb-3 p-3" style="background:#f8fafc;border-radius:8px;font-size:.85rem;">
+          <div class="fw-semibold mb-1" id="respostaUsuarioLabel"
+               style="color:#64748b;font-size:.78rem;text-transform:uppercase;letter-spacing:.4px;"></div>
+          <div id="respostaMensagemPreview" style="white-space:pre-wrap;color:#1e293b;"></div>
+        </div>
+        <label class="form-label fw-semibold" style="font-size:.8rem;">Sua resposta</label>
+        <textarea id="respostaTexto" class="form-control" rows="5"
+                  maxlength="3000"
+                  style="border-radius:8px;font-size:.875rem;"></textarea>
+        <div class="form-text mt-1">
+          O usuário receberá uma notificação push informando que o chamado foi resolvido.
+        </div>
+      </div>
+      <div class="modal-footer" style="border-color:var(--border);">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius:8px;">Cancelar</button>
+        <button type="button" class="btn btn-success" id="btnEnviarResposta" style="border-radius:8px;">
+          <i class="bi bi-check-circle me-1"></i>Marcar como resolvido e notificar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CHAT -->
+<div class="modal fade" id="modalChat" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content" style="border-radius:14px;">
+      <div class="modal-header" style="border-color:var(--border);">
+        <h5 class="modal-title fw-bold" id="chatModalTitle">Chat</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-0" style="height:400px;overflow-y:auto;" id="chatModalMessages">
+        <div class="text-center py-4 text-muted">
+          <div class="spinner-border spinner-border-sm"></div>
+        </div>
+      </div>
+      <div class="modal-footer" style="border-color:var(--border);gap:8px;">
+        <textarea id="chatModalInput" class="form-control" rows="1"
+                  placeholder="Digite sua resposta..." maxlength="2000"
+                  style="border-radius:8px;resize:none;flex:1;font-size:.875rem;"></textarea>
+        <button type="button" class="btn btn-primary" id="btnEnviarChatAdmin" style="border-radius:8px;">
+          <i class="bi bi-send-fill"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/document-fit.js') }}?v={{ static_v }}"></script>
+<script>
+var _ticketsData = {{ tickets | tojson }};
+var _convsData   = {{ conversations | tojson }};
+</script>
+<script>
+(function () {
+  var modalResposta = new bootstrap.Modal(document.getElementById('modalResposta'));
+  var modalChat     = new bootstrap.Modal(document.getElementById('modalChat'));
+  var chatUserId    = null;
+
+  function esc(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function formatDate(iso) {
+    if (!iso) return '';
+    return new Date(iso).toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  }
+
+  function textoRespostaPadrao(username) {
+    return 'Prezado(a), ' + username + ', informamos que as tratativas para atender ao seu chamado no suporte foram realizadas. Fluxara agradece sua contribuição.';
+  }
+
+  window.abrirResposta = function(id) {
+    var ticket = (_ticketsData || []).find(function(t) { return t.id === id; });
+    if (!ticket) return;
+    document.getElementById('respostaTicketId').value = id;
+    document.getElementById('respostaUsuarioLabel').textContent = 'Usuário: ' + ticket.username;
+    document.getElementById('respostaMensagemPreview').textContent = ticket.mensagem;
+    document.getElementById('respostaTexto').value = ticket.resposta || textoRespostaPadrao(ticket.username);
+    modalResposta.show();
+  };
+
+  document.getElementById('btnEnviarResposta').addEventListener('click', async function () {
+    var id      = document.getElementById('respostaTicketId').value;
+    var resposta = document.getElementById('respostaTexto').value.trim();
+    if (!resposta) { document.getElementById('respostaTexto').focus(); return; }
+    this.disabled = true;
+    try {
+      var r = await fetch('/api/suporte/admin/tickets/' + id + '/resposta', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resposta: resposta }),
+      });
+      if (r.ok) {
+        modalResposta.hide();
+        location.reload();
+      } else {
+        var err = await r.json();
+        alert(err.error || 'Erro ao enviar resposta.');
+      }
+    } finally {
+      this.disabled = false;
+    }
+  });
+
+  window.abrirChat = function(userId, e) {
+    e.preventDefault();
+    var conv = (_convsData || []).find(function(c) { return c.user_id === userId; });
+    chatUserId = userId;
+    document.getElementById('chatModalTitle').textContent = 'Chat com ' + (conv ? conv.username : userId);
+    document.getElementById('chatModalMessages').innerHTML =
+      '<div class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm"></div></div>';
+    modalChat.show();
+    carregarChat(userId);
+  };
+
+  async function carregarChat(userId) {
+    var container = document.getElementById('chatModalMessages');
+    try {
+      var r = await fetch('/api/suporte/admin/chat/' + userId);
+      var msgs = await r.json();
+      if (!Array.isArray(msgs) || !msgs.length) {
+        container.innerHTML = '<div class="text-center py-4 text-muted">Nenhuma mensagem.</div>';
+        return;
+      }
+      container.innerHTML = msgs.map(function(m) {
+        var isUser = m.remetente === 'user';
+        return '<div style="display:flex;justify-content:' + (isUser ? 'flex-start' : 'flex-end') + ';padding:8px 16px;">'
+          + '<div style="max-width:72%;padding:10px 14px;border-radius:14px;font-size:.85rem;line-height:1.5;word-break:break-word;'
+          + (isUser ? 'background:#f1f5f9;color:#1e293b;' : 'background:#0d6efd;color:#fff;') + '">'
+          + esc(m.mensagem)
+          + '<div style="font-size:.7rem;margin-top:4px;opacity:.65;">'
+          + (isUser ? 'Usuário' : 'Você') + ' · ' + formatDate(m.criado_em)
+          + '</div></div></div>';
+      }).join('');
+      container.scrollTop = container.scrollHeight;
+    } catch (e) {
+      container.innerHTML = '<div class="text-center py-4 text-muted">Erro ao carregar.</div>';
+    }
+  }
+
+  document.getElementById('btnEnviarChatAdmin').addEventListener('click', async function() {
+    if (!chatUserId) return;
+    var input    = document.getElementById('chatModalInput');
+    var mensagem = input.value.trim();
+    if (!mensagem) return;
+    this.disabled = true;
+    try {
+      var r = await fetch('/api/suporte/admin/chat/' + chatUserId, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mensagem: mensagem }),
+      });
+      if (r.ok) { input.value = ''; carregarChat(chatUserId); }
+    } finally {
+      this.disabled = false;
+    }
+  });
+
+  document.getElementById('chatModalInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      document.getElementById('btnEnviarChatAdmin').click();
+    }
+  });
+})();
+</script>
+{% endblock %}

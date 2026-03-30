@@ -1,0 +1,132 @@
+{% extends "layouts/app.html" %}
+{% block title %}Fluxara · {{ cartao_nome }}{% endblock %}
+{% block page_title %}{{ cartao_nome }}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/extrato.css') }}?v={{ static_v }}">
+
+<div id="extratoConfig"
+     data-id="{{ cartao_id }}"
+     data-nome="{{ cartao_nome }}"
+     data-bandeira="{{ cartao_bandeira }}"
+     style="display:none"></div>
+
+<div class="extrato-page-header">
+  <a href="{{ url_for('pages.resumo') }}" class="extrato-back-btn">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <div class="extrato-header-info">
+    <div class="extrato-header-logo" id="extratoLogo"></div>
+    <div style="min-width:0">
+      <div class="extrato-header-nome">{{ cartao_nome }}</div>
+      <div class="extrato-header-saldo" id="extratoSaldoInfo"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid px-3" style="max-width:680px;padding-bottom:100px;">
+
+  <div class="mes-filtro">
+    <button id="btnMesAnterior" title="Fatura anterior">
+      <i class="bi bi-chevron-left"></i>
+    </button>
+    <span class="mes-label" id="mesLabel"></span>
+    <button id="btnMesPosterior" title="Próxima fatura">
+      <i class="bi bi-chevron-right"></i>
+    </button>
+  </div>
+
+  <div class="extrato-card" id="extratoBody">
+    <div class="text-center py-4 text-muted small">
+      <i class="bi bi-inbox d-block mb-1" style="font-size:1.8rem;opacity:.3"></i>
+      Carregando...
+    </div>
+  </div>
+
+</div>
+
+<!-- ====== EDIT SHEET ====== -->
+<div class="edit-sheet-backdrop" id="editBackdrop">
+  <div class="edit-sheet">
+    <div class="edit-sheet-handle"></div>
+    <div class="edit-sheet-title-row">
+      <div class="edit-sheet-type-icon edit-sheet-type-icon--cartao" id="editTypeIcon">
+        <i class="bi bi-credit-card-fill"></i>
+      </div>
+      <div class="edit-sheet-title" id="editSheetTitle">Editar Despesa</div>
+      <button class="edit-sheet-close" id="editSheetClose">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <div class="edit-sheet-body">
+
+      <input type="hidden" id="editId">
+
+      <div class="edit-field">
+        <label class="edit-label">Descrição</label>
+        <input type="text" id="editDescricao" class="edit-input" placeholder="Descrição...">
+      </div>
+
+      <div class="edit-field">
+        <label class="edit-label">Valor</label>
+        <div class="edit-valor-wrap">
+          <span class="edit-currency">R$</span>
+          <input type="number" id="editValor" class="edit-valor-input" placeholder="0,00" step="0.01" min="0">
+        </div>
+      </div>
+
+      <div class="edit-field">
+        <label class="edit-label">Categoria</label>
+        <select id="editCategoria" class="edit-select">
+          <option value="">Sem categoria</option>
+        </select>
+      </div>
+
+      <div class="edit-field" id="editFieldSubcategoria" style="display:none">
+        <label class="edit-label">Subcategoria</label>
+        <select id="editSubcategoria" class="edit-select">
+          <option value="">Sem subcategoria</option>
+        </select>
+      </div>
+
+      <div class="edit-actions">
+        <button type="button" class="edit-btn-delete" id="editBtnDelete">
+          <i class="bi bi-trash"></i> Excluir
+        </button>
+        <button type="button" class="edit-btn-save" id="editBtnSave">
+          Salvar alterações
+        </button>
+      </div>
+
+      <div class="edit-delete-confirm" id="editDeleteConfirm">
+        <div id="editDeleteScope" class="edit-scope-picker" style="display:none">
+          <div class="edit-scope-label">Excluir qual ocorrência?</div>
+          <label class="edit-scope-option">
+            <input type="radio" name="deleteEscopo" value="este" checked> Somente esta
+          </label>
+          <label class="edit-scope-option">
+            <input type="radio" name="deleteEscopo" value="futuros"> Esta e as seguintes
+          </label>
+          <label class="edit-scope-option">
+            <input type="radio" name="deleteEscopo" value="todos"> Todas da série
+          </label>
+        </div>
+        <div class="edit-delete-confirm-text">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          Confirmar exclusão?
+        </div>
+        <div class="edit-delete-confirm-btns">
+          <button type="button" class="edit-btn-cancel-delete" id="editBtnCancelDelete">Cancelar</button>
+          <button type="button" class="edit-btn-confirm-delete" id="editBtnConfirmDelete">Excluir</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/extrato_cartao.js') }}?v={{ static_v }}"></script>
+{% endblock %}

@@ -1,0 +1,95 @@
+{% extends "layouts/app.html" %}
+{% block title %}Fluxara · Contas{% endblock %}
+
+{% block page_title %}Contas{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/contas.css') }}?v={{ static_v }}">
+
+<div class="contas-wrapper">
+
+  <div id="contasLoading" class="text-center py-5 text-muted">
+    <div class="spinner-border spinner-border-sm me-2"></div>Carregando...
+  </div>
+
+  <div id="contasVazio" class="contas-vazio d-none">
+    <i class="bi bi-wallet2"></i>
+    <p>Nenhuma conta cadastrada</p>
+    <span>Toque no + para adicionar sua primeira conta</span>
+  </div>
+
+  <div id="contasList" class="contas-card d-none">
+    <div id="contasItens"></div>
+  </div>
+
+</div>
+
+<!-- FAB -->
+<div class="contas-fab">
+  <button class="fab-btn-contas" id="btnNovaContaFab" aria-label="Nova conta">
+    <i class="bi bi-plus"></i>
+  </button>
+</div>
+
+<!-- MODAL CONTA -->
+<div class="modal fade" id="modalConta" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalContaTitulo">Nova Conta</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="contaEditId">
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Nome da conta</label>
+          <input type="text" id="contaNome" class="form-control" placeholder="Ex: Conta Nubank" maxlength="100">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Instituição</label>
+          <div class="inst-select-wrapper">
+            <div class="inst-preview" id="instPreview">
+              <div class="inst-logo-mini" id="instLogoMini" style="background:#6c757d">O</div>
+              <span id="instNomeLabel">Outro</span>
+              <i class="bi bi-chevron-down ms-auto"></i>
+            </div>
+            <div class="inst-dropdown d-none" id="instDropdown">
+              <input type="text" class="inst-search" id="instSearch" placeholder="Buscar banco...">
+              <div class="inst-list" id="instList"></div>
+            </div>
+          </div>
+          <input type="hidden" id="contaInstituicao" value="outro">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Tipo</label>
+          <select id="contaCategoria" class="form-select">
+            <option value="">Carregando...</option>
+          </select>
+        </div>
+
+        <div class="mb-1">
+          <label class="form-label fw-semibold">Saldo inicial</label>
+          <div class="input-group">
+            <span class="input-group-text">R$</span>
+            <input type="text" id="contaSaldo" class="form-control" placeholder="0,00" inputmode="decimal">
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-link text-danger me-auto d-none" id="btnDeletarConta">Excluir</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="btnSalvarConta">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/contas.js') }}?v={{ static_v }}"></script>
+{% endblock %}

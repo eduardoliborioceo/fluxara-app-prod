@@ -1,0 +1,374 @@
+{% extends "layouts/app.html" %}
+{% block title %}Fluxara · Configurações{% endblock %}
+
+{% block page_title %}<span id="pageHeaderTitle">Configurações</span>{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/configuracoes.css') }}?v={{ static_v }}">
+
+<div class="cfg-wrapper">
+
+  <!-- ====== MENU PRINCIPAL ====== -->
+  <div id="viewMenu">
+    <div class="settings-card">
+      <ul class="settings-menu">
+
+        <li class="settings-item" onclick="location.href='{{ url_for('pages.contas') }}'">
+          <span class="menu-icon" style="background:#eff6ff;color:#2563eb">
+            <i class="bi bi-credit-card"></i>
+          </span>
+          <div class="settings-info">
+            <span class="settings-label">Contas</span>
+            <span class="settings-value">Gerencie suas contas</span>
+          </div>
+          <i class="bi bi-chevron-right settings-chevron"></i>
+        </li>
+
+        <li class="settings-item" data-panel="tema">
+          <span class="menu-icon" style="background:#eff6ff;color:#2563eb">
+            <i class="bi bi-moon-stars"></i>
+          </span>
+          <div class="settings-info">
+            <span class="settings-label">Tema do Sistema</span>
+            <span class="settings-value" id="temaAtualLabel">
+              {% if user_tema == 'escuro' %}Escuro{% else %}Claro{% endif %}
+            </span>
+          </div>
+          <i class="bi bi-chevron-right settings-chevron"></i>
+        </li>
+
+        <li class="settings-item" data-panel="categorias">
+          <span class="menu-icon" style="background:#f0fdf4;color:#16a34a">
+            <i class="bi bi-tags"></i>
+          </span>
+          <div class="settings-info">
+            <span class="settings-label">Categorias</span>
+            <span class="settings-value">Despesas, Receitas, Contas</span>
+          </div>
+          <i class="bi bi-chevron-right settings-chevron"></i>
+        </li>
+
+        <li class="settings-item" data-panel="cartoes">
+          <span class="menu-icon" style="background:#fff7ed;color:#ea580c">
+            <i class="bi bi-credit-card"></i>
+          </span>
+          <div class="settings-info">
+            <span class="settings-label">Cartões de Crédito</span>
+            <span class="settings-value">Gerencie seus cartões</span>
+          </div>
+          <i class="bi bi-chevron-right settings-chevron"></i>
+        </li>
+
+        <li class="settings-item" data-panel="gastosDev">
+          <span class="menu-icon" style="background:#eff6ff;color:#2563eb">
+            <i class="bi bi-code-square"></i>
+          </span>
+          <div class="settings-info">
+            <span class="settings-label">Gastos Developer</span>
+            <span class="settings-value">Tipos de custos personalizados</span>
+          </div>
+          <i class="bi bi-chevron-right settings-chevron"></i>
+        </li>
+
+        <li class="settings-item" data-panel="usuario">
+          <span class="menu-icon" style="background:#f0fdf4;color:#16a34a">
+            <i class="bi bi-person-circle"></i>
+          </span>
+          <div class="settings-info">
+            <span class="settings-label">Área do Usuário</span>
+            <span class="settings-value">Notificações push</span>
+          </div>
+          <i class="bi bi-chevron-right settings-chevron"></i>
+        </li>
+
+        {% if current_user.is_authenticated and (current_user.is_admin or current_user.is_owner) %}
+        <li class="settings-item" data-panel="admin">
+          <span class="menu-icon" style="background:#fef2f2;color:#dc2626">
+            <i class="bi bi-shield-lock"></i>
+          </span>
+          <div class="settings-info">
+            <span class="settings-label">Área do Administrador</span>
+            <span class="settings-value">Usuários, Suporte, Backups, Debug</span>
+          </div>
+          <i class="bi bi-chevron-right settings-chevron"></i>
+        </li>
+        {% endif %}
+
+      </ul>
+    </div>
+  </div>
+
+  <!-- ====== PAINEL TEMA ====== -->
+  <div id="viewTema" class="settings-panel d-none">
+    <button class="btn-back" id="btnBackTema">
+      <i class="bi bi-chevron-left"></i> Configurações
+    </button>
+    <div class="settings-card mt-3">
+      <div class="settings-card-title">Tema do Sistema</div>
+      <div class="tema-options">
+        <button class="tema-btn tema-claro {% if user_tema == 'claro' %}active{% endif %}"
+                data-tema="claro">
+          <i class="bi bi-sun fs-3"></i>
+          <span>Claro</span>
+        </button>
+        <button class="tema-btn tema-escuro {% if user_tema == 'escuro' %}active{% endif %}"
+                data-tema="escuro">
+          <i class="bi bi-moon-stars fs-3"></i>
+          <span>Escuro</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== PAINEL CATEGORIAS ====== -->
+  <div id="viewCategorias" class="settings-panel d-none">
+    <button class="btn-back" id="btnBackCat">
+      <i class="bi bi-chevron-left"></i> Configurações
+    </button>
+    <div class="settings-card mt-3">
+      <div class="settings-card-title">Categorias</div>
+      <div class="d-flex gap-2 p-3 pb-0">
+        <button class="cat-tipo-btn active" data-tipo="despesa">
+          <i class="bi bi-arrow-up-circle text-danger me-1"></i>Despesas
+        </button>
+        <button class="cat-tipo-btn" data-tipo="receita">
+          <i class="bi bi-arrow-down-circle text-success me-1"></i>Receitas
+        </button>
+        <button class="cat-tipo-btn" data-tipo="conta">
+          <i class="bi bi-wallet2 text-primary me-1"></i>Contas
+        </button>
+      </div>
+      <div id="catList" class="p-3">
+        <div class="text-center py-4 text-muted">
+          <div class="spinner-border spinner-border-sm me-2"></div>Carregando...
+        </div>
+      </div>
+      <div class="px-3 pb-3">
+        <button class="btn btn-outline-primary btn-sm w-100" id="btnAddCat">
+          <i class="bi bi-plus-lg me-1"></i>Nova categoria
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ====== PAINEL CARTÕES DE CRÉDITO ====== -->
+  <div id="viewCartoes" class="settings-panel d-none">
+    <button class="btn-back" id="btnBackCartoes">
+      <i class="bi bi-chevron-left"></i> Configurações
+    </button>
+    <div class="settings-card mt-3">
+      <div class="settings-card-title">Cartões de Crédito</div>
+      <div id="cartoesList" class="p-3">
+        <div class="text-center py-4 text-muted">
+          <div class="spinner-border spinner-border-sm me-2"></div>Carregando...
+        </div>
+      </div>
+      <div class="px-3 pb-3">
+        <button class="btn btn-outline-primary btn-sm w-100" id="btnAddCartao">
+          <i class="bi bi-plus-lg me-1"></i>Novo cartão
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== PAINEL GASTOS DEVELOPER ====== -->
+  <div id="viewGastosDev" class="settings-panel d-none">
+    <button class="btn-back" id="btnBackGastosDev">
+      <i class="bi bi-chevron-left"></i> Configurações
+    </button>
+    <div class="settings-card mt-3">
+      <div class="settings-card-title">Gastos Developer</div>
+      <p class="px-3 pt-1 mb-2" style="font-size:.8rem;color:#64748b">
+        Cada grupo aparece como opção ao selecionar o serviço em "Novo Projeto".
+        Clique em <strong>+</strong> para adicionar um serviço personalizado ao grupo.
+      </p>
+      <div id="gastosDevGroups" class="px-3 pb-3">
+        <div class="text-center py-4 text-muted">
+          <div class="spinner-border spinner-border-sm me-2"></div>Carregando...
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== PAINEL ÁREA DO USUÁRIO ====== -->
+  <div id="viewUsuario" class="settings-panel d-none">
+    <button class="btn-back" id="btnBackUsuario">
+      <i class="bi bi-chevron-left"></i> Configurações
+    </button>
+    <div class="settings-card mt-3">
+      <div class="settings-card-title">Área do Usuário</div>
+      <div class="admin-grid p-3">
+        <a href="{{ url_for('pages.usuario_debug_push') }}" class="admin-grid-card">
+          <i class="bi bi-bell-fill"></i>
+          <span>Debug Push</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== PAINEL ÁREA DO ADMINISTRADOR ====== -->
+  {% if current_user.is_authenticated and (current_user.is_admin or current_user.is_owner) %}
+  <div id="viewAdmin" class="settings-panel d-none">
+    <button class="btn-back" id="btnBackAdmin">
+      <i class="bi bi-chevron-left"></i> Configurações
+    </button>
+    <div class="settings-card mt-3">
+      <div class="settings-card-title">Área do Administrador</div>
+      <div class="admin-grid p-3">
+        <a href="{{ url_for('auth.admin_users') }}" class="admin-grid-card">
+          <i class="bi bi-person-check"></i>
+          <span>Usuários Pendentes</span>
+        </a>
+        <a href="{{ url_for('auth.admin_users_all') }}" class="admin-grid-card">
+          <i class="bi bi-people"></i>
+          <span>Todos os Usuários</span>
+        </a>
+        <a href="{{ url_for('admin.suporte_admin') }}" class="admin-grid-card">
+          <i class="bi bi-headset"></i>
+          <span>Suporte</span>
+        </a>
+        <a href="{{ url_for('admin.backups') }}" class="admin-grid-card">
+          <i class="bi bi-database"></i>
+          <span>Backup</span>
+        </a>
+        <a href="{{ url_for('pages.push_debug_page') }}" class="admin-grid-card">
+          <i class="bi bi-bell-fill"></i>
+          <span>Debug Push</span>
+        </a>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- MODAL categoria -->
+<div class="modal fade" id="modalCat" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalCatTitle">Nova Categoria</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="catEditId">
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Nome</label>
+          <input type="text" id="catNome" class="form-control" placeholder="Ex: Alimentação" maxlength="100">
+        </div>
+        <div class="mb-2">
+          <label class="form-label fw-semibold">Ícone</label>
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <i id="catIconePreview" class="bi bi-tag fs-4"></i>
+            <span class="text-muted small" id="catIconeNome">bi-tag</span>
+          </div>
+          <div class="icone-picker" id="iconePicker"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="btnSaveCat">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL subcategoria -->
+<div class="modal fade" id="modalSub" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Nova Subcategoria</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="subCatId">
+        <label class="form-label fw-semibold">Nome</label>
+        <input type="text" id="subNome" class="form-control" placeholder="Ex: Mercado" maxlength="100">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="btnSaveSub">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL cartão -->
+<div class="modal fade" id="modalCartao" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalCartaoTitle">Novo Cartão</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="cartaoEditId">
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Nome do cartão</label>
+          <input type="text" id="cartaoNome" class="form-control" placeholder="Ex: Nubank Gold" maxlength="100">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Limite</label>
+          <div class="input-group">
+            <span class="input-group-text">R$</span>
+            <input type="text" id="cartaoLimite" class="form-control" placeholder="0,00" inputmode="decimal">
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Bandeira</label>
+          <select id="cartaoBandeira" class="form-select">
+            <option value="visa">Visa</option>
+            <option value="mastercard">Mastercard</option>
+            <option value="elo">Elo</option>
+            <option value="amex">American Express</option>
+            <option value="hipercard">Hipercard</option>
+            <option value="outro">Outro</option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Conta vinculada</label>
+          <div class="cartao-conta-picker" id="cartaoContaWrapper">
+            <button type="button" class="cartao-conta-btn" id="cartaoContaBtn">
+              <span id="cartaoContaDisplay" style="display:flex;align-items:center;gap:8px;">Nenhuma</span>
+              <i class="bi bi-chevron-down" style="font-size:.75rem;color:#64748b;flex-shrink:0;"></i>
+            </button>
+            <div class="cartao-conta-dropdown d-none" id="cartaoContaDropdown"></div>
+          </div>
+          <input type="hidden" id="cartaoConta" value="">
+        </div>
+
+        <div class="row g-3">
+          <div class="col-6">
+            <label class="form-label fw-semibold">Dia fechamento</label>
+            <input type="number" id="cartaoDiaFechamento" class="form-control" min="1" max="31" placeholder="Ex: 25">
+          </div>
+          <div class="col-6">
+            <label class="form-label fw-semibold">Dia vencimento</label>
+            <input type="number" id="cartaoDiaVencimento" class="form-control" min="1" max="31" placeholder="Ex: 2">
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-link text-danger me-auto d-none" id="btnDeletarCartao">Excluir</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="btnSalvarCartao">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const _userTema = {{ user_tema | tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/configuracoes.js') }}?v={{ static_v }}"></script>
+{% endblock %}

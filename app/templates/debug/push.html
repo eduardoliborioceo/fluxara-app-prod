@@ -1,0 +1,169 @@
+{% extends "layouts/app.html" %}
+{% block title %}Debug · Push Notifications{% endblock %}
+
+{% block page_title %}Debug Push{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ static_v }}">
+<div class="mb-3">
+  <a href="{{ url_for('pages.configuracoes') }}?panel=admin" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left"></i> Voltar
+  </a>
+</div>
+<div class="document-mobile-wrapper">
+<div class="document-desktop-canvas">
+<div class="container-fluid py-2">
+  <div class="row g-3">
+
+    <!-- ========== PAINEL SERVIDOR ========== -->
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-dark text-white fw-bold">
+          <i class="bi bi-server me-2"></i>Configuração do Servidor
+        </div>
+        <div class="card-body p-0">
+          <div id="serverPanel" class="p-3">
+            <div class="text-center py-4 text-muted">
+              <div class="spinner-border spinner-border-sm me-2"></div>
+              Consultando servidor...
+            </div>
+          </div>
+        </div>
+        <div class="card-footer border-0 bg-light d-flex gap-2">
+          <button id="btnRefreshServer" class="btn btn-sm btn-outline-dark flex-fill">
+            <i class="bi bi-arrow-clockwise me-1"></i>Atualizar
+          </button>
+          <button id="btnClearAllSubs" class="btn btn-sm btn-danger flex-fill">
+            <i class="bi bi-trash-fill me-1"></i>Limpar subscriptions antigas
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== PAINEL BROWSER ========== -->
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-dark text-white fw-bold">
+          <i class="bi bi-browser-chrome me-2"></i>Status no Browser
+        </div>
+        <div class="card-body p-0">
+          <div id="browserPanel" class="p-3">
+            <div class="text-center py-4 text-muted">
+              <div class="spinner-border spinner-border-sm me-2"></div>
+              Verificando browser...
+            </div>
+          </div>
+        </div>
+        <div class="card-footer border-0 bg-light d-flex gap-2">
+          <button id="btnBrowserDiag" class="btn btn-sm btn-outline-info flex-fill">
+            <i class="bi bi-search me-1"></i>Diagnosticar
+          </button>
+          <button id="btnResetSub" class="btn btn-sm btn-outline-danger flex-fill">
+            <i class="bi bi-arrow-counterclockwise me-1"></i>Resetar subscription
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== ENVIAR NOTIFICAÇÃO ========== -->
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-primary text-white fw-bold">
+          <i class="bi bi-send-fill me-2"></i>Enviar Notificação de Teste
+        </div>
+        <div class="card-body">
+          <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Título</label>
+              <input id="notifTitle" class="form-control" value="Fluxara" maxlength="80">
+            </div>
+            <div class="col-md-5">
+              <label class="form-label fw-semibold">Mensagem</label>
+              <input id="notifBody" class="form-control" value="Teste de notificação push" maxlength="200">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-semibold">URL de destino</label>
+              <input id="notifUrl" class="form-control" value="/">
+            </div>
+          </div>
+          <div class="row g-2 mt-2">
+            <div class="col-md-6">
+              <button id="btnSendMe" class="btn btn-outline-primary w-100">
+                <i class="bi bi-person-fill me-1"></i>Enviar só para mim
+              </button>
+            </div>
+            <div class="col-md-6">
+              <button id="btnSendAll" class="btn btn-warning w-100">
+                <i class="bi bi-megaphone-fill me-1"></i>Enviar para TODOS os usuários
+              </button>
+            </div>
+          </div>
+          <pre id="sendOutput" class="mt-3 p-3 bg-dark text-success rounded small d-none" style="white-space:pre-wrap;max-height:260px;overflow-y:auto;"></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== CONFIGURAÇÃO RAILWAY ========== -->
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-secondary text-white fw-bold">
+          <i class="bi bi-cloud-fill me-2"></i>Como configurar no Railway
+        </div>
+        <div class="card-body">
+          <p class="text-muted mb-3">Adicione as seguintes variáveis de ambiente no painel do Railway (serviço → Variables):</p>
+          <div class="table-responsive">
+            <table class="table table-bordered table-sm">
+              <thead class="table-dark">
+                <tr>
+                  <th>Variável</th>
+                  <th>Valor</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>VAPID_PUBLIC_KEY</code></td>
+                  <td class="text-muted">Chave pública VAPID (base64url) gerada com pywebpush ou web-push-libs</td>
+                </tr>
+                <tr>
+                  <td><code>VAPID_PRIVATE_KEY</code></td>
+                  <td class="text-muted">Chave privada VAPID (base64url)</td>
+                </tr>
+                <tr>
+                  <td><code>VAPID_CLAIMS_SUB</code></td>
+                  <td class="text-muted"><code>mailto:seuemail@dominio.com</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="alert alert-info mt-3 mb-0">
+            <strong>Como gerar as chaves VAPID:</strong><br>
+            <code>python -c "from pywebpush import Vapid; v = Vapid(); v.generate_keys(); print('PUBLIC:', v.public_key); print('PRIVATE:', v.private_key)"</code>
+            <br><small class="text-muted mt-1 d-block">Ou use <a href="https://web-push-codelab.glitch.me/" target="_blank">web-push-codelab.glitch.me</a> para gerar online.</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== LOG ========== -->
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-dark text-white fw-bold d-flex justify-content-between align-items-center">
+          <span><i class="bi bi-terminal-fill me-2"></i>Log de diagnóstico</span>
+          <button id="btnClearLog" class="btn btn-sm btn-outline-light">Limpar</button>
+        </div>
+        <div class="card-body p-0">
+          <pre id="diagLog" class="m-0 p-3 bg-black text-light rounded-bottom small" style="min-height:180px;max-height:360px;overflow-y:auto;white-space:pre-wrap;font-size:0.78rem;"></pre>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/push-debug.js') }}?v={{ static_v }}"></script>
+<script src="{{ url_for('static', filename='js/document-fit.js') }}?v={{ static_v }}"></script>
+{% endblock %}

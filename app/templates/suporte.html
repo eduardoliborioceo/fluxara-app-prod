@@ -1,0 +1,100 @@
+{% extends "layouts/app.html" %}
+{% block title %}Fluxara · Suporte{% endblock %}
+
+{% block page_title %}Suporte{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/suporte.css') }}?v={{ static_v }}">
+
+<div class="sup-page">
+
+  <!-- TABS -->
+  <div class="sup-tabs">
+    <button class="sup-tab active" data-tab="ouvidoria">
+      <i class="bi bi-megaphone me-1"></i>Ouvidoria
+    </button>
+    <button class="sup-tab" data-tab="chat">
+      <i class="bi bi-chat-dots me-1"></i>Especialista
+    </button>
+  </div>
+
+  <!-- ====== TAB: OUVIDORIA ====== -->
+  <div class="sup-panel" id="panelOuvidoria">
+
+    <p class="sup-desc">
+      Use a ouvidoria para enviar reclamações, sugestões, elogios, denúncias ou solicitações.
+      Nossa equipe analisa cada mensagem.
+    </p>
+
+    <div class="sup-form-card">
+      <div class="sup-field">
+        <label class="sup-label">Tipo de mensagem</label>
+        <div class="sup-tipo-grid">
+          <label class="sup-tipo-opt">
+            <input type="radio" name="ouvidoriaTipo" value="reclamacao">
+            <span><i class="bi bi-emoji-frown"></i> Reclamação</span>
+          </label>
+          <label class="sup-tipo-opt">
+            <input type="radio" name="ouvidoriaTipo" value="sugestao">
+            <span><i class="bi bi-lightbulb"></i> Sugestão</span>
+          </label>
+          <label class="sup-tipo-opt">
+            <input type="radio" name="ouvidoriaTipo" value="elogio">
+            <span><i class="bi bi-emoji-smile"></i> Elogio</span>
+          </label>
+          <label class="sup-tipo-opt">
+            <input type="radio" name="ouvidoriaTipo" value="denuncia">
+            <span><i class="bi bi-exclamation-triangle"></i> Denúncia</span>
+          </label>
+          <label class="sup-tipo-opt">
+            <input type="radio" name="ouvidoriaTipo" value="solicitacao">
+            <span><i class="bi bi-card-checklist"></i> Solicitação</span>
+          </label>
+        </div>
+      </div>
+      <div class="sup-field">
+        <label class="sup-label">Sua mensagem</label>
+        <textarea id="ouvidoriaMensagem" class="sup-textarea" rows="5"
+                  placeholder="Descreva em detalhes..."></textarea>
+      </div>
+      <button class="sup-btn-send" id="btnEnviarOuvidoria">
+        <i class="bi bi-send me-1"></i>Enviar
+      </button>
+      <div class="sup-feedback" id="ouvidoriaFeedback" style="display:none"></div>
+    </div>
+
+    <div class="sup-history-title">Histórico de envios</div>
+    <div id="ouvidoriaHistorico">
+      <div class="sup-loading"><span class="spinner-border spinner-border-sm"></span></div>
+    </div>
+
+  </div>
+
+  <!-- ====== TAB: CHAT ====== -->
+  <div class="sup-panel" id="panelChat" style="display:none">
+
+    <p class="sup-desc">
+      Converse diretamente com o especialista responsável pelo Fluxara.
+    </p>
+
+    <div class="sup-chat-wrap">
+      <div class="sup-chat-messages" id="chatMessages">
+        <div class="sup-loading"><span class="spinner-border spinner-border-sm"></span></div>
+      </div>
+      <div class="sup-chat-input-row">
+        <textarea id="chatInput" class="sup-chat-input" rows="1"
+                  placeholder="Digite sua mensagem..."></textarea>
+        <button class="sup-chat-send-btn" id="btnEnviarChat">
+          <i class="bi bi-send-fill"></i>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/suporte.js') }}?v={{ static_v }}"></script>
+{% endblock %}

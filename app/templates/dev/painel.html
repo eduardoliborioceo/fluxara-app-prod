@@ -1,0 +1,158 @@
+{% extends "layouts/app.html" %}
+{% block title %}Fluxara · Dev · Painel{% endblock %}
+
+{% block page_title %}
+<div class="page-header">
+  <div class="page-header-title">
+    <span class="page-header-section">Desenvolvedor</span>
+    <h1 class="page-header-name">Painel de Projetos</h1>
+  </div>
+  <div class="page-header-actions">
+    <a href="{{ url_for('dev.novo_projeto') }}" class="btn-header-icon" title="Novo projeto">
+      <i class="bi bi-plus-lg"></i>
+    </a>
+    <button class="btn-header-icon" onclick="toggleFullscreen()" title="Tela cheia">
+      <i class="bi bi-arrows-fullscreen"></i>
+    </button>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dev.css') }}?v={{ static_v }}">
+
+<div class="dev-page">
+
+  <!-- GUIA DE FASES DE INFRAESTRUTURA -->
+  <div class="dev-infra-guide">
+    <div class="dev-infra-guide-title">
+      <i class="bi bi-info-circle"></i> Guia de infraestrutura por escala
+    </div>
+    <div class="dev-infra-guide-items">
+      <div class="dev-infra-guide-item dev-infra-guide-item--success">
+        <i class="bi bi-rocket"></i>
+        <div>
+          <strong>Railway Hobby</strong>
+          <span>0 – 1.000 usuários · $5/mês · até 5 serviços</span>
+        </div>
+      </div>
+      <div class="dev-infra-guide-item dev-infra-guide-item--warning">
+        <i class="bi bi-arrow-up-circle"></i>
+        <div>
+          <strong>Railway PRO</strong>
+          <span>1.001 – 10.000 usuários · ~$20/mês · até 15 serviços</span>
+        </div>
+      </div>
+      <div class="dev-infra-guide-item dev-infra-guide-item--danger">
+        <i class="bi bi-cloud-arrow-up"></i>
+        <div>
+          <strong>Migrar para AWS</strong>
+          <span>Acima de 10.000 usuários · escala sob demanda</span>
+        </div>
+      </div>
+    </div>
+    <p class="dev-infra-guide-tip">
+      <i class="bi bi-lightbulb"></i>
+      <strong>Custo compartilhado:</strong> O plano Railway Hobby cobre até 5 serviços por $5/mês.
+      Ao cadastrar o custo de servidor, use o campo <em>"Dividir por"</em> com o número de projetos
+      no mesmo plano para calcular o custo real por projeto.
+    </p>
+  </div>
+
+  {% if projects %}
+  <div class="dev-summary-bar">
+    <div class="dev-summary-item">
+      <span class="dev-summary-label">Projetos</span>
+      <span class="dev-summary-value">{{ projects | length }}</span>
+    </div>
+    <div class="dev-summary-item">
+      <span class="dev-summary-label">Despesa mensal total</span>
+      <span class="dev-summary-value">
+        R$ {{ "%.2f" | format(projects | sum(attribute='despesa_mensal')) | replace('.', ',') }}
+      </span>
+    </div>
+    <div class="dev-summary-item">
+      <span class="dev-summary-label">Projeção anual</span>
+      <span class="dev-summary-value">
+        R$ {{ "%.2f" | format(projects | sum(attribute='projecao_anual')) | replace('.', ',') }}
+      </span>
+    </div>
+  </div>
+
+  <div class="dev-table-wrap">
+    <table class="dev-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Nome</th>
+          <th>Público-alvo</th>
+          <th>Criado em</th>
+          <th>Usuários</th>
+          <th>Infraestrutura</th>
+          <th>Despesa / mês</th>
+          <th>Projeção anual</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in projects %}
+        {% set fase = p.fase_infra %}
+        <tr>
+          <td class="dev-td-id">{{ p.id }}</td>
+          <td class="dev-td-nome">{{ p.nome }}</td>
+          <td class="dev-td-muted">{{ p.publico_alvo or '—' }}</td>
+          <td class="dev-td-muted">
+            {% if p.data_inicio %}
+              {{ p.data_inicio.strftime('%d/%m/%Y') }}
+            {% else %}
+              {{ p.created_at.strftime('%d/%m/%Y') }}
+            {% endif %}
+          </td>
+          <td class="dev-td-muted">
+            {% if p.quantidade_usuarios %}
+              {{ "{:,}".format(p.quantidade_usuarios).replace(',', '.') }}
+            {% else %}
+              <span style="color:var(--text-muted,#64748b)">—</span>
+            {% endif %}
+          </td>
+          <td>
+            <span class="dev-fase dev-fase--{{ fase.fase }}" title="{{ fase.label }}">
+              <i class="bi {{ fase.icon }}"></i>
+              {{ fase.label }}
+            </span>
+          </td>
+          <td class="dev-td-valor">R$ {{ "%.2f" | format(p.despesa_mensal) | replace('.', ',') }}</td>
+          <td class="dev-td-valor">R$ {{ "%.2f" | format(p.projecao_anual) | replace('.', ',') }}</td>
+          <td>
+            <span class="dev-status dev-status--{{ p.status }}">{{ p.status | capitalize }}</span>
+          </td>
+          <td class="dev-td-actions">
+            <a href="{{ url_for('dev.editar_projeto', project_id=p.id) }}" class="dev-btn-icon" title="Editar">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <form action="{{ url_for('dev.excluir_projeto', project_id=p.id) }}" method="post"
+                  onsubmit="return confirm('Excluir projeto {{ p.nome | e }}?')" style="display:inline">
+              <button type="submit" class="dev-btn-icon dev-btn-icon--danger" title="Excluir">
+                <i class="bi bi-trash"></i>
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% else %}
+  <div class="dev-empty">
+    <i class="bi bi-code-square dev-empty-icon"></i>
+    <p class="dev-empty-text">Nenhum projeto cadastrado ainda.</p>
+    <a href="{{ url_for('dev.novo_projeto') }}" class="dev-btn-primary">
+      <i class="bi bi-plus-lg me-1"></i>Cadastrar primeiro projeto
+    </a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

@@ -1,0 +1,152 @@
+{% extends "layouts/app.html" %}
+{% block title %}Fluxara · Resumo{% endblock %}
+
+{% block page_title %}Resumo{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/resumo.css') }}?v={{ static_v }}">
+
+<div class="resumo-desktop-wrapper container-fluid px-3" style="padding-bottom: 100px;">
+
+  <!-- ====== FILTRO MÊS ====== -->
+  <div class="mes-filtro">
+    <button id="btnMesAnterior" title="Mês anterior">
+      <i class="bi bi-chevron-left"></i>
+    </button>
+    <span class="mes-label" id="mesLabel"></span>
+    <button id="btnMesPosterior" title="Próximo mês">
+      <i class="bi bi-chevron-right"></i>
+    </button>
+  </div>
+
+  <div id="cardsContainer">
+
+  <!-- ====== CARD CONTAS ====== -->
+  <div class="resumo-card card" data-card-id="contas" draggable="true">
+    <div class="card-header-custom">
+      <i class="bi bi-grip-vertical card-drag-handle"></i>
+      <i class="bi bi-wallet2 text-primary"></i> Contas
+      <span class="ms-auto text-muted fw-normal" style="font-size:.8rem">Saldo total</span>
+      <span class="ms-2 fw-bold" id="totalContas">R$ 0,00</span>
+    </div>
+    <div class="card-body" id="contasBody">
+      <div class="text-center py-3 text-muted small">
+        <i class="bi bi-wallet2 d-block mb-1" style="font-size:1.8rem;opacity:.3"></i>
+        Nenhuma conta cadastrada
+      </div>
+    </div>
+  </div>
+
+  <div class="resumo-right-col" id="resumoRightCol">
+
+  <!-- ====== CARD VISÃO GERAL ====== -->
+  <div class="resumo-card card" data-card-id="visao" draggable="true">
+    <div class="card-header-custom">
+      <i class="bi bi-grip-vertical card-drag-handle"></i>
+      <i class="bi bi-bar-chart-line text-primary"></i> Visão Geral
+    </div>
+    <div class="card-body">
+      <div class="visao-row">
+        <div class="visao-item visao-receita">
+          <div class="visao-label">Receitas</div>
+          <div class="visao-valor" id="totalReceitas">R$ 0,00</div>
+        </div>
+        <div class="visao-item visao-despesa">
+          <div class="visao-label">Despesas</div>
+          <div class="visao-valor" id="totalDespesas">R$ 0,00</div>
+        </div>
+        <div class="visao-item visao-resultado">
+          <div class="visao-label">Resultado</div>
+          <div class="visao-valor" id="totalResultado">R$ 0,00</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== CARD CARTÃO DE CRÉDITO ====== -->
+  <div class="resumo-card card" data-card-id="cartoes" draggable="true">
+    <div class="card-header-custom">
+      <i class="bi bi-grip-vertical card-drag-handle"></i>
+      <i class="bi bi-credit-card text-primary"></i> Cartão de Crédito
+      <span class="ms-auto text-muted fw-normal" style="font-size:.8rem">Limite disponível</span>
+      <span class="ms-2 fw-bold" id="totalCartoes">R$ 0,00</span>
+    </div>
+    <div class="card-body" id="cartoesBody">
+      <div class="text-center py-3 text-muted small">
+        <i class="bi bi-credit-card d-block mb-1" style="font-size:1.8rem;opacity:.3"></i>
+        Nenhum cartão cadastrado
+      </div>
+    </div>
+  </div>
+
+  </div><!-- /.resumo-right-col -->
+
+  <!-- ====== CARD PROJEÇÃO DE SALDO ====== -->
+  <div class="resumo-card card" data-card-id="projecao" draggable="true">
+    <div class="card-header-custom">
+      <i class="bi bi-grip-vertical card-drag-handle"></i>
+      <i class="bi bi-graph-up-arrow text-primary"></i> Projeção de Saldo
+      <span class="ms-auto text-muted fw-normal" style="font-size:.8rem">próximos 60 dias</span>
+    </div>
+    <div class="card-body" style="padding-bottom:8px">
+      <div class="projecao-hoje">
+        <span class="projecao-hoje-label">Saldo hoje</span>
+        <span class="projecao-hoje-valor" id="projecaoHoje">R$ 0,00</span>
+      </div>
+      <div id="projecaoBody">
+        <div class="text-center py-3 text-muted small">
+          <i class="bi bi-graph-up-arrow d-block mb-1" style="font-size:1.8rem;opacity:.3"></i>
+          Carregando...
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div>
+
+</div>
+
+<!-- ====== FAB ====== -->
+<div class="fab-wrapper">
+  <div class="fab-menu" id="fabMenu">
+
+    <a href="{{ url_for('pages.nova_transferencia') }}" class="fab-option">
+      <span class="fab-option-label">Transferência</span>
+      <span class="fab-option-icon" style="background:#e0f2fe;color:#0284c7">
+        <i class="bi bi-arrow-left-right"></i>
+      </span>
+    </a>
+
+    <a href="{{ url_for('pages.novo_lancamento', tipo='despesa_cartao') }}" class="fab-option">
+      <span class="fab-option-label">Despesa Cartão</span>
+      <span class="fab-option-icon" style="background:#fef9c3;color:#b45309">
+        <i class="bi bi-credit-card-fill"></i>
+      </span>
+    </a>
+
+    <a href="{{ url_for('pages.novo_lancamento', tipo='despesa') }}" class="fab-option">
+      <span class="fab-option-label">Despesa</span>
+      <span class="fab-option-icon" style="background:#fee2e2;color:#dc2626">
+        <i class="bi bi-arrow-up-circle-fill"></i>
+      </span>
+    </a>
+
+    <a href="{{ url_for('pages.novo_lancamento', tipo='receita') }}" class="fab-option">
+      <span class="fab-option-label">Receita</span>
+      <span class="fab-option-icon" style="background:#dcfce7;color:#16a34a">
+        <i class="bi bi-arrow-down-circle-fill"></i>
+      </span>
+    </a>
+
+  </div>
+
+  <button class="fab-btn" id="fabBtn" aria-label="Novo lançamento">
+    <i class="bi bi-plus fab-icon"></i>
+  </button>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/resumo.js') }}?v={{ static_v }}"></script>
+{% endblock %}

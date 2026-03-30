@@ -1,0 +1,218 @@
+{% extends "layouts/app.html" %}
+{% block title %}Fluxara · Backups{% endblock %}
+
+{% block page_title %}Backups{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ static_v }}">
+
+<div class="container-fluid px-3 admin-page-wrapper" style="padding-bottom:60px;">
+
+  <!-- ====== STATUS CARD ====== -->
+  {% set last = logs[0] if logs else none %}
+  <div class="backup-status-card {% if last and last.status == 'success' %}backup-status-ok{% elif last and last.status == 'failed' %}backup-status-fail{% else %}backup-status-none{% endif %}">
+    <div class="backup-status-icon">
+      {% if last and last.status == 'success' %}
+        <i class="bi bi-shield-check"></i>
+      {% elif last and last.status == 'failed' %}
+        <i class="bi bi-shield-exclamation"></i>
+      {% else %}
+        <i class="bi bi-shield"></i>
+      {% endif %}
+    </div>
+    <div class="backup-status-info">
+      {% if last and last.status == 'success' %}
+        <div class="backup-status-title">Último backup bem-sucedido</div>
+        <div class="backup-status-sub">
+          {{ last.iniciado_em.strftime('%d/%m/%Y às %H:%M') if last.iniciado_em else '—' }}
+          {% if last.tamanho_bytes %}· {{ (last.tamanho_bytes / 1024 / 1024) | round(2) }} MB{% endif %}
+        </div>
+      {% elif last and last.status == 'failed' %}
+        <div class="backup-status-title">Último backup falhou</div>
+        <div class="backup-status-sub">{{ last.mensagem_erro or 'Erro desconhecido' }}</div>
+      {% elif last and last.status == 'running' %}
+        <div class="backup-status-title">Backup em execução...</div>
+        <div class="backup-status-sub">Iniciado em {{ last.iniciado_em.strftime('%d/%m/%Y às %H:%M') if last.iniciado_em else '—' }}</div>
+      {% else %}
+        <div class="backup-status-title">Nenhum backup realizado</div>
+        <div class="backup-status-sub">Configure e execute o primeiro backup abaixo</div>
+      {% endif %}
+    </div>
+    <button class="backup-run-btn" id="btnRunBackup" title="Executar backup agora">
+      <i class="bi bi-play-fill"></i> Executar agora
+    </button>
+  </div>
+
+  <!-- ====== CONFIGURAÇÃO ====== -->
+  <div class="backup-section-card">
+    <div class="backup-section-title">
+      <i class="bi bi-gear"></i> Configuração
+    </div>
+    <form method="POST" action="{{ url_for('admin.save_config') }}" id="formConfig">
+      <div class="backup-form-grid">
+
+        <div class="backup-field backup-field-full">
+          <label class="backup-label">URL do Banco de Dados</label>
+          <input type="text" name="db_url" class="backup-input"
+                 value="{{ config.db_url if config else '' }}"
+                 placeholder="postgresql://user:pass@host:port/database">
+          <div class="backup-hint">Deixe em branco para usar a variável de ambiente DATABASE_URL</div>
+        </div>
+
+        <div class="backup-field">
+          <label class="backup-label">Frequência</label>
+          <select name="frequencia" class="backup-select">
+            {% for val, label in [('daily','Diário'),('weekly','Semanal'),('monthly','Mensal'),('bimonthly','Bimestral'),('yearly','Anual')] %}
+            <option value="{{ val }}" {% if config and config.frequencia == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="backup-field">
+          <label class="backup-label">Horário de execução</label>
+          <div class="backup-time-row">
+            <input type="number" name="hora" class="backup-input" style="width:80px"
+                   min="0" max="23" value="{{ config.hora if config else 2 }}">
+            <span class="backup-time-sep">:</span>
+            <input type="number" name="minuto" class="backup-input" style="width:80px"
+                   min="0" max="59" value="{{ config.minuto if config else 0 }}">
+            <span class="backup-time-unit">UTC</span>
+          </div>
+        </div>
+
+        <div class="backup-field">
+          <label class="backup-label">Retenção (dias)</label>
+          <input type="number" name="retencao_dias" class="backup-input"
+                 min="1" max="3650" value="{{ config.retencao_dias if config else 30 }}">
+        </div>
+
+        <div class="backup-field backup-field-toggle">
+          <label class="backup-label">Agendamento automático</label>
+          <label class="backup-toggle">
+            <input type="checkbox" name="ativo" value="1"
+                   {% if config and config.ativo %}checked{% endif %}>
+            <span class="backup-toggle-track">
+              <span class="backup-toggle-thumb"></span>
+            </span>
+          </label>
+        </div>
+
+      </div>
+      <div class="backup-form-actions">
+        <button type="submit" class="backup-btn-save">
+          <i class="bi bi-check-lg"></i> Salvar configuração
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ====== HISTÓRICO ====== -->
+  <div class="backup-section-card">
+    <div class="backup-section-title">
+      <i class="bi bi-clock-history"></i> Histórico de Backups
+    </div>
+    {% if logs %}
+    <div class="backup-log-list">
+      {% for log in logs %}
+      <div class="backup-log-item backup-log-{{ log.status }}">
+        <div class="backup-log-icon">
+          {% if log.status == 'success' %}
+            <i class="bi bi-check-circle-fill"></i>
+          {% elif log.status == 'failed' %}
+            <i class="bi bi-x-circle-fill"></i>
+          {% else %}
+            <i class="bi bi-hourglass-split"></i>
+          {% endif %}
+        </div>
+        <div class="backup-log-info">
+          <div class="backup-log-date">
+            {{ log.iniciado_em.strftime('%d/%m/%Y %H:%M') if log.iniciado_em else '—' }}
+            <span class="backup-log-badge backup-log-badge-{{ log.frequencia or 'daily' }}">{{ log.frequencia or 'manual' }}</span>
+          </div>
+          {% if log.status == 'success' %}
+          <div class="backup-log-meta">
+            {% if log.tamanho_bytes %}{{ (log.tamanho_bytes / 1024 / 1024) | round(2) }} MB · {% endif %}
+            {% if log.duracao_segundos %}{{ log.duracao_segundos | round(1) }}s · {% endif %}
+            {% if log.checksum %}SHA-256: {{ log.checksum[:16] }}…{% endif %}
+          </div>
+          {% elif log.status == 'failed' %}
+          <div class="backup-log-error">{{ log.mensagem_erro or 'Erro desconhecido' }}</div>
+          {% else %}
+          <div class="backup-log-meta">Em execução...</div>
+          {% endif %}
+        </div>
+        {% if log.status == 'success' and log.arquivo %}
+        <a href="{{ url_for('admin.download_backup', log_id=log.id) }}" class="backup-log-download" title="Download">
+          <i class="bi bi-download"></i>
+        </a>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="backup-empty">
+      <i class="bi bi-inbox"></i>
+      <span>Nenhum backup registrado</span>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ====== INFO SEGURANÇA ====== -->
+  <div class="backup-info-card">
+    <div class="backup-info-row">
+      <i class="bi bi-lock"></i>
+      <div>
+        <strong>Criptografia AES-256</strong>
+        <span>{{ 'Ativa — variável BACKUP_ENCRYPTION_KEY configurada' if config else 'Inativa — defina BACKUP_ENCRYPTION_KEY nas variáveis de ambiente' }}</span>
+      </div>
+      <span class="backup-info-badge {% if config %}backup-info-ok{% else %}backup-info-warn{% endif %}">
+        {% if config %}Ativa{% else %}Inativa{% endif %}
+      </span>
+    </div>
+    <div class="backup-info-row">
+      <i class="bi bi-hdd"></i>
+      <div>
+        <strong>Armazenamento local</strong>
+        <span>/tmp/backups — efêmero no Railway. Faça download e armazene offsite.</span>
+      </div>
+      <span class="backup-info-badge backup-info-warn">Efêmero</span>
+    </div>
+    <div class="backup-info-row">
+      <i class="bi bi-shield-check"></i>
+      <div>
+        <strong>Verificação SHA-256</strong>
+        <span>Checksum calculado automaticamente após cada backup</span>
+      </div>
+      <span class="backup-info-badge backup-info-ok">Ativo</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal run backup -->
+<div class="backup-run-modal" id="runModal" style="display:none">
+  <div class="backup-run-modal-box">
+    <div class="backup-run-modal-title">Executar backup manual</div>
+    <form method="POST" action="{{ url_for('admin.run_backup') }}" id="formRun">
+      <div class="backup-field">
+        <label class="backup-label">Tipo</label>
+        <select name="frequencia" class="backup-select">
+          <option value="daily">Diário</option>
+          <option value="weekly">Semanal</option>
+          <option value="monthly">Mensal</option>
+          <option value="yearly">Anual</option>
+        </select>
+      </div>
+      <div class="backup-run-modal-actions">
+        <button type="button" class="backup-btn-cancel" id="btnCancelRun">Cancelar</button>
+        <button type="submit" class="backup-btn-save">Executar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin_backup.js') }}?v={{ static_v }}"></script>
+{% endblock %}

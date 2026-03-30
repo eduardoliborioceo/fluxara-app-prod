@@ -1,0 +1,241 @@
+{% extends "layouts/app.html" %}
+{% block title %}Fluxara · Meu Perfil{% endblock %}
+
+{% block page_title %}Meu Perfil{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm p-4" style="max-width: 640px">
+
+  <input type="file" id="avatarInput" accept="image/*" class="d-none">
+
+  <div class="d-flex align-items-center gap-4 mb-4">
+    <div class="avatar-wrapper">
+      {% if user.profile_image %}
+        <img id="avatarDisplay"
+             src="{{ user.profile_image }}"
+             alt="Foto de perfil">
+        <span id="avatarPlaceholder" class="avatar-placeholder d-none">
+          <i class="bi bi-person-fill"></i>
+        </span>
+      {% else %}
+        <img id="avatarDisplay" src="" alt="" class="d-none">
+        <span id="avatarPlaceholder" class="avatar-placeholder">
+          <i class="bi bi-person-fill"></i>
+        </span>
+      {% endif %}
+      <label for="avatarInput" class="avatar-edit-btn" title="Alterar foto">
+        <i class="bi bi-pencil-fill"></i>
+      </label>
+    </div>
+
+    <div class="avatar-info">
+      <strong>{{ user.full_name }}</strong>
+      <span class="text-muted small">@{{ user.username }}</span>
+      <div class="mt-1">
+        <button type="button"
+                class="btn btn-sm btn-outline-danger {% if not user.profile_image %}d-none{% endif %}"
+                id="removeAvatarBtn">
+          <i class="bi bi-trash"></i> Remover foto
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex gap-2 mb-4">
+    <a href="{{ url_for('auth.assinaturas') }}" class="btn btn-outline-warning flex-fill">
+      <i class="bi bi-star"></i> Assinaturas
+    </a>
+  </div>
+
+
+  <form method="post">
+
+    <h5 class="mb-3">Dados do usuário</h5>
+
+    <div class="row g-3 mb-4">
+      <div class="col-md-6">
+        <label class="form-label">Nome completo</label>
+        <input class="form-control" value="{{ user.full_name }}" disabled>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Usuário</label>
+        <input class="form-control" value="{{ user.username }}" disabled>
+      </div>
+
+      <div class="col-12">
+        <label class="form-label">Email</label>
+        <input class="form-control" value="{{ user.email }}" disabled>
+      </div>
+    </div>
+
+    <h5 class="mb-3">Contato e Endereço</h5>
+
+    <div class="row g-3 mb-4">
+      <div class="col-12">
+        <label class="form-label">Telefone</label>
+        <input name="phone"
+               data-mask="phone"
+               class="form-control"
+               placeholder="(99) 99999-9999"
+               value="{{ profile.phone if profile }}">
+      </div>
+
+      <div class="col-md-8">
+        <label class="form-label">Rua / Avenida</label>
+        <input name="street" class="form-control" placeholder="Nome da rua"
+               value="{{ profile.street if profile }}">
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label">Número</label>
+        <input name="number" class="form-control" placeholder="Nº"
+               value="{{ profile.number if profile }}">
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Bairro</label>
+        <input name="neighborhood" class="form-control" placeholder="Bairro"
+               value="{{ profile.neighborhood if profile }}">
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">CEP</label>
+        <input name="zip_code" data-mask="zip" class="form-control" placeholder="00000-000"
+               value="{{ profile.zip_code if profile }}">
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Cidade</label>
+        <input name="city" class="form-control" placeholder="Cidade"
+               value="{{ profile.city if profile }}">
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Estado</label>
+        <input name="state" class="form-control" placeholder="UF" maxlength="2"
+               value="{{ profile.state if profile }}">
+      </div>
+
+      <div class="col-12">
+        <label class="form-label">Complemento</label>
+        <input name="complement" class="form-control" placeholder="Apto, bloco, casa..."
+               value="{{ profile.complement if profile }}">
+      </div>
+    </div>
+
+    <h5 class="mb-3">Segurança da conta</h5>
+
+    {% if user.provider == 'local' %}
+    <div class="mb-3 p-3 rounded-3
+      {% if password_age_days is none %}
+        border border-warning bg-warning bg-opacity-10
+      {% elif password_age_days > 180 %}
+        border border-danger bg-danger bg-opacity-10
+      {% elif password_age_days > 150 %}
+        border border-warning bg-warning bg-opacity-10
+      {% else %}
+        border border-success bg-success bg-opacity-10
+      {% endif %}">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi
+          {% if password_age_days is none %}bi-exclamation-triangle-fill text-warning
+          {% elif password_age_days > 180 %}bi-shield-exclamation text-danger
+          {% elif password_age_days > 150 %}bi-clock-history text-warning
+          {% else %}bi-shield-check text-success{% endif %}
+          fs-5"></i>
+        <div>
+          {% if password_age_days is none %}
+            <strong class="d-block">Senha nunca foi alterada</strong>
+            <small>Defina uma senha segura para proteger sua conta.</small>
+          {% elif password_age_days > 180 %}
+            <strong class="d-block text-danger">Senha expirada</strong>
+            <small>Sua senha não é alterada há {{ password_age_days }} dias. Troque agora.</small>
+          {% elif password_age_days > 150 %}
+            <strong class="d-block">Senha expira em breve</strong>
+            <small>Faltam {{ 180 - password_age_days }} dias para a expiração obrigatória.</small>
+          {% else %}
+            <strong class="d-block">Senha em dia</strong>
+            <small>Última alteração há {{ password_age_days }} dias.</small>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <h5 class="mb-3">Alterar senha</h5>
+
+    <input type="password" name="current_password"
+           class="form-control mb-2" placeholder="Senha atual">
+
+    <input type="password" id="perfilNewPassword" name="new_password"
+           class="form-control mb-2" placeholder="Nova senha">
+
+    <div id="perfilPwdPolicy" class="pwd-policy-box mb-2"></div>
+
+    <input type="password" name="confirm_password"
+           class="form-control mb-3" placeholder="Confirmar nova senha">
+
+    <small class="text-muted d-block mb-3">
+      Deixe em branco para não alterar
+    </small>
+
+    <button class="btn btn-outline-success">
+      Salvar alterações
+    </button>
+
+  </form>
+</div>
+
+<div class="modal fade" id="cropModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Ajustar foto de perfil</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-2">
+        <div class="crop-container">
+          <img id="cropImage" src="" alt="">
+        </div>
+        <div class="d-flex justify-content-center gap-3 mt-3">
+          <button type="button" id="rotateCCW" class="btn btn-sm btn-outline-secondary" title="Girar esquerda">
+            <i class="bi bi-arrow-counterclockwise"></i>
+          </button>
+          <button type="button" id="rotateCW" class="btn btn-sm btn-outline-secondary" title="Girar direita">
+            <i class="bi bi-arrow-clockwise"></i>
+          </button>
+          <button type="button" id="zoomIn" class="btn btn-sm btn-outline-secondary" title="Zoom +">
+            <i class="bi bi-zoom-in"></i>
+          </button>
+          <button type="button" id="zoomOut" class="btn btn-sm btn-outline-secondary" title="Zoom -">
+            <i class="bi bi-zoom-out"></i>
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="confirmCrop">Confirmar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/myperfil.css') }}?v={{ static_v }}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/input-masks.js') }}?v={{ static_v }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
+<script src="{{ url_for('static', filename='js/myperfil.js') }}?v={{ static_v }}"></script>
+<script src="{{ url_for('static', filename='js/password-policy.js') }}?v={{ static_v }}"></script>
+<script>
+  PasswordPolicy.init(
+    document.getElementById('perfilNewPassword'),
+    document.getElementById('perfilPwdPolicy'),
+    {{ user.username | tojson }}
+  );
+</script>
+{% endblock %}

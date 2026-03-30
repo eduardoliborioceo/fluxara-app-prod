@@ -1,0 +1,25 @@
+/* Provisão — ajustes isolados para "documento inteiro / fit" no mobile
+   (não interfere em solicitacoes.html, pois este CSS só é importado na provisão) */
+
+.provisao-canvas {
+  /* Base visual mais realista para a tabela e o total no desktop */
+  width: 1200px;
+}
+
+/* Opcional: melhora leitura/compactação no canvas */
+.provisao-canvas .table {
+  font-size: 0.95rem;
+}
+
+@media (max-width: 768px) {
+  /* No mobile, o fit já é aplicado via --doc-scale no solicitacoes.css,
+     aqui só garantimos que o canvas use a base correta (1200px) */
+  .provisao-canvas .table {
+    font-size: 12px;
+  }
+
+  .provisao-canvas h5,
+  .provisao-canvas h4 {
+    margin-bottom: 10px;
+  }
+}

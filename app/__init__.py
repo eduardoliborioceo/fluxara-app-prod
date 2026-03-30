@@ -1,0 +1,91 @@
+import os
+import decimal
+import uuid
+import dataclasses
+from flask import Flask
+from datetime import datetime, date
+from werkzeug.middleware.proxy_fix import ProxyFix
+from flask.json.provider import DefaultJSONProvider
+
+from app.config import Config
+from app.extensions import login_manager
+
+
+class _ISODateJSONProvider(DefaultJSONProvider):
+    @staticmethod
+    def default(o):
+        if isinstance(o, (date, datetime)):
+            return o.isoformat()
+        if isinstance(o, (decimal.Decimal, uuid.UUID)):
+            return str(o)
+        if dataclasses and dataclasses.is_dataclass(o):
+            return dataclasses.asdict(o)
+        raise TypeError(f"Object of type {type(o).__name__} is not JSON serializable")
+
+from app.routes.pages import bp as pages_bp
+from app.routes.api import bp as api_bp
+from app.routes.admin import bp as admin_bp
+from app.routes.dev import bp as dev_bp
+from app.auth.routes import bp as auth_bp
+from app.auth.models import User
+
+_static_v = os.getenv("RAILWAY_DEPLOYMENT_ID") or os.getenv("RAILWAY_REVISION") or str(int(datetime.utcnow().timestamp()))
+
+
+def create_app():
+    app = Flask(__name__)
+    app.json = _ISODateJSONProvider(app)
+    app.config.from_object(Config)
+
+    app.wsgi_app = ProxyFix(
+        app.wsgi_app,
+        x_for=1,
+        x_proto=1,
+        x_host=1,
+        x_port=1,
+        x_prefix=1
+    )
+
+    if not app.config.get("SECRET_KEY"):
+        raise RuntimeError("SECRET_KEY não configurada")
+
+    login_manager.init_app(app)
+    login_manager.login_view = "auth.login"
+    login_manager.login_message = None
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.get(user_id)
+
+    @app.context_processor
+    def inject_globals():
+        from flask_login import current_user
+        from app.services.config_service import get_tema
+
+        tema = "claro"
+        if current_user and current_user.is_authenticated:
+            try:
+                tema = get_tema(current_user.id)
+            except Exception:
+                pass
+
+        return {
+            "now": datetime.utcnow,
+            "ENVIRONMENT": app.config.get("ENVIRONMENT", "production"),
+            "static_v": _static_v,
+            "user_tema": tema,
+        }
+
+    app.register_blueprint(pages_bp)
+    app.register_blueprint(api_bp, url_prefix="/api")
+    app.register_blueprint(auth_bp, url_prefix="/auth")
+    app.register_blueprint(admin_bp)
+    app.register_blueprint(dev_bp)
+
+    from app.services import backup_service
+    backup_service.init_scheduler(app)
+
+    from app.services import cartao_notification_service
+    cartao_notification_service.init_notifications(app)
+
+    return app

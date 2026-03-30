@@ -1,0 +1,233 @@
+{% extends "layouts/app.html" %}
+{% block title %}Fluxara · Dev · {{ 'Editar' if projeto else 'Novo' }} Projeto{% endblock %}
+
+{% block page_title %}
+<div class="page-header">
+  <div class="page-header-title">
+    <span class="page-header-section">Desenvolvedor</span>
+    <h1 class="page-header-name">{{ 'Editar Projeto' if projeto else 'Novo Projeto' }}</h1>
+  </div>
+  <div class="page-header-actions">
+    <a href="{{ url_for('dev.painel') }}" class="btn-header-icon" title="Voltar">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+    <button class="btn-header-icon" onclick="toggleFullscreen()" title="Tela cheia">
+      <i class="bi bi-arrows-fullscreen"></i>
+    </button>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dev.css') }}?v={{ static_v }}">
+
+<div class="dev-page dev-form-page">
+
+  <form method="post"
+        action="{{ url_for('dev.atualizar_projeto', project_id=projeto.id) if projeto else url_for('dev.criar_projeto') }}">
+
+    <!-- DADOS DO PROJETO -->
+    <div class="dev-card">
+      <div class="dev-card-header">
+        <i class="bi bi-folder2-open"></i> Dados do projeto
+      </div>
+      <div class="dev-card-body">
+        <div class="dev-form-grid">
+
+          <div class="dev-form-group dev-form-group--wide">
+            <label class="dev-label">Nome do projeto <span class="dev-required">*</span></label>
+            <input type="text" name="nome" class="dev-input" required maxlength="200"
+                   value="{{ projeto.nome if projeto else '' }}" placeholder="Ex: Fluxara App">
+          </div>
+
+          <div class="dev-form-group">
+            <label class="dev-label">Público-alvo</label>
+            <input type="text" name="publico_alvo" class="dev-input" maxlength="200"
+                   value="{{ projeto.publico_alvo if projeto else '' }}"
+                   placeholder="Ex: Pequenas empresas">
+          </div>
+
+          <div class="dev-form-group">
+            <label class="dev-label">Usuários ativos</label>
+            <input type="number" name="quantidade_usuarios" class="dev-input" min="0"
+                   value="{{ projeto.quantidade_usuarios if projeto and projeto.quantidade_usuarios else '' }}"
+                   placeholder="Ex: 150">
+          </div>
+
+          <div class="dev-form-group">
+            <label class="dev-label">Status</label>
+            <select name="status" class="dev-input">
+              {% for s in ['ativo', 'pausado', 'encerrado'] %}
+              <option value="{{ s }}" {{ 'selected' if projeto and projeto.status == s else '' }}>
+                {{ s | capitalize }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="dev-form-group">
+            <label class="dev-label">Data de início</label>
+            <input type="date" name="data_inicio" class="dev-input"
+                   value="{{ projeto.data_inicio.strftime('%Y-%m-%d') if projeto and projeto.data_inicio else '' }}">
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- CUSTOS -->
+    <div class="dev-card">
+      <div class="dev-card-header">
+        <i class="bi bi-receipt"></i> Custos do projeto
+        <button type="button" class="dev-btn-add-custo" id="btnAddCusto">
+          <i class="bi bi-plus-lg"></i> Adicionar custo
+        </button>
+      </div>
+      <div class="dev-card-body">
+        <div id="custosContainer"></div>
+        <div class="dev-no-custos" id="noCustosMsg">
+          Nenhum custo adicionado. Clique em "Adicionar custo" para começar.
+        </div>
+      </div>
+    </div>
+
+    <!-- TOTAL -->
+    <div class="dev-total-bar">
+      <span class="dev-total-label">Total estimado / mês</span>
+      <span class="dev-total-value" id="devTotalMensal">R$ 0,00</span>
+      <span class="dev-total-sep">=</span>
+      <span class="dev-total-label">Projeção anual</span>
+      <span class="dev-total-value" id="devTotalAnual">R$ 0,00</span>
+    </div>
+
+    <div class="dev-form-actions">
+      <a href="{{ url_for('dev.painel') }}" class="dev-btn-secondary">Cancelar</a>
+      <button type="submit" class="dev-btn-primary">
+        <i class="bi bi-check-lg me-1"></i>{{ 'Salvar alterações' if projeto else 'Criar projeto' }}
+      </button>
+    </div>
+
+  </form>
+
+</div>
+
+<!-- TEMPLATE DE LINHA DE CUSTO (hidden) -->
+<template id="custosRowTemplate">
+  <div class="dev-custo-row">
+    <div class="dev-custo-fields">
+
+      <div class="dev-form-group dev-form-group--wide">
+        <label class="dev-label">Serviço / Tipo de custo</label>
+        <select class="dev-input dev-custo-servico">
+          <optgroup label="Infraestrutura / Cloud" data-tipo="cloud">
+            <option value="cloud|Railway">Railway</option>
+            <option value="cloud|AWS">AWS</option>
+            <option value="cloud|Google Cloud">Google Cloud</option>
+            <option value="cloud|Vercel">Vercel</option>
+            <option value="cloud|DigitalOcean">DigitalOcean</option>
+            <option value="cloud|Heroku">Heroku</option>
+          </optgroup>
+          <optgroup label="Domínio" data-tipo="dominio">
+            <option value="dominio|Hostinger">Hostinger</option>
+            <option value="dominio|GoDaddy">GoDaddy</option>
+            <option value="dominio|Namecheap">Namecheap</option>
+            <option value="dominio|Registro.br">Registro.br</option>
+          </optgroup>
+          <optgroup label="CDN / Mídia" data-tipo="cdn">
+            <option value="cdn|Cloudinary">Cloudinary</option>
+            <option value="cdn|AWS S3">AWS S3</option>
+            <option value="cdn|Cloudflare">Cloudflare</option>
+          </optgroup>
+          <optgroup label="E-mail" data-tipo="email">
+            <option value="email|SendGrid">SendGrid</option>
+            <option value="email|Mailgun">Mailgun</option>
+            <option value="email|Amazon SES">Amazon SES</option>
+          </optgroup>
+          <optgroup label="Lojas de Aplicativos" data-tipo="store">
+            <option value="store|Google Play Store">Google Play Store</option>
+            <option value="store|Apple App Store">Apple App Store</option>
+          </optgroup>
+          <optgroup label="Serviços / APIs" data-tipo="api_service">
+            <option value="api_service|Stripe">Stripe</option>
+            <option value="api_service|Twilio">Twilio</option>
+            <option value="api_service|Firebase">Firebase</option>
+            <option value="api_service|Supabase">Supabase</option>
+            <option value="api_service|PlanetScale">PlanetScale</option>
+          </optgroup>
+          <optgroup label="Monitoramento" data-tipo="monitoring">
+            <option value="monitoring|Sentry">Sentry</option>
+            <option value="monitoring|Datadog">Datadog</option>
+            <option value="monitoring|New Relic">New Relic</option>
+            <option value="monitoring|LogRocket">LogRocket</option>
+          </optgroup>
+          <optgroup label="CI/CD" data-tipo="ci_cd">
+            <option value="ci_cd|GitHub Actions">GitHub Actions</option>
+            <option value="ci_cd|GitLab CI">GitLab CI</option>
+            <option value="ci_cd|CircleCI">CircleCI</option>
+          </optgroup>
+          <optgroup label="Armazenamento" data-tipo="storage">
+            <option value="storage|AWS S3">AWS S3</option>
+            <option value="storage|Google Cloud Storage">Google Cloud Storage</option>
+            <option value="storage|Backblaze B2">Backblaze B2</option>
+          </optgroup>
+          <!-- custom types injected by JS into their matching optgroup -->
+          <optgroup label="Outros" data-tipo="outro">
+            <option value="outro|">Outro (descreva abaixo)</option>
+          </optgroup>
+        </select>
+      </div>
+
+      <div class="dev-form-group dev-form-group--wide">
+        <label class="dev-label">Nome / descrição</label>
+        <input type="text" name="custo_nome[]" class="dev-input dev-custo-nome"
+               placeholder="Ex: Railway — Plano Starter" maxlength="200">
+        <input type="hidden" name="custo_tipo[]" class="dev-custo-tipo" value="outro">
+        <input type="hidden" name="custo_servico_key[]" class="dev-custo-servico-key" value="">
+      </div>
+
+      <div class="dev-form-group">
+        <label class="dev-label">Valor (R$)</label>
+        <input type="text" name="custo_valor[]" class="dev-input dev-custo-valor"
+               placeholder="0,00" inputmode="decimal">
+      </div>
+
+      <div class="dev-form-group">
+        <label class="dev-label">Recorrência</label>
+        <select name="custo_recorrencia[]" class="dev-input dev-custo-recorrencia">
+          <option value="mensal">Mensal</option>
+          <option value="anual">Anual</option>
+          <option value="unico">Único</option>
+        </select>
+      </div>
+
+      <div class="dev-form-group">
+        <label class="dev-label" title="Custo compartilhado entre N projetos no mesmo plano">
+          Dividir por
+          <span class="dev-label-hint" title="Use quando um plano é compartilhado entre múltiplos projetos. Ex: Railway Hobby com 5 projetos → Dividir por 5">?</span>
+        </label>
+        <input type="number" name="custo_compartilhado[]" class="dev-input dev-custo-compartilhado"
+               min="1" value="1" placeholder="1">
+      </div>
+
+      <div class="dev-form-group dev-custo-efetivo-wrap">
+        <label class="dev-label">Custo efetivo / mês</label>
+        <div class="dev-custo-efetivo">R$ 0,00</div>
+      </div>
+
+    </div>
+    <button type="button" class="dev-custo-remove" title="Remover custo">
+      <i class="bi bi-trash"></i>
+    </button>
+  </div>
+</template>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  window.devCustomTypes = {{ cost_types | tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/dev.js') }}?v={{ static_v }}"></script>
+<script>
+  devInit({{ (projeto.custos | tojson) if projeto else '[]' }});
+</script>
+{% endblock %}

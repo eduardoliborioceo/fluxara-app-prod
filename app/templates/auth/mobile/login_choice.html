@@ -1,0 +1,62 @@
+{% extends "layouts/auth.html" %}
+{% block title %}Fluxara{% endblock %}
+
+{% block content %}
+<section class="mobile-screen login-choice"
+    style="background-image: url('{{ url_for('static', filename='images/banners/bg-cad-log.webp') }}?v={{ static_v }}');">
+
+    <div class="mobile-actions">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="mb-3">
+              {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show mb-2" role="alert">
+                  {{ message }}
+                  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <button
+          id="install-app-btn"
+          type="button"
+          class="btn btn-outline-dark w-100 mb-3 d-none d-inline-flex align-items-center justify-content-center gap-2"
+          aria-hidden="true"
+        >
+          <img
+            src="{{ url_for('static', filename='images/logos/pwa-192.png') }}?v={{ static_v }}"
+            alt="Fluxara"
+            width="18"
+            height="18"
+            style="border-radius:4px;"
+          >
+          <span>Instalar aplicativo</span>
+        </button>
+
+        <a href="{{ url_for('auth.register_mobile_form') }}"
+           class="btn btn-success w-100 mb-3">
+           Cadastrar-se
+        </a>
+
+        <a href="{{ url_for('auth.login_mobile_form') }}"
+           class="btn btn-primary w-100 mb-4">
+           Entrar
+        </a>
+
+        <div class="legal-links-mobile text-center">
+            <a href="{{ url_for('pages.privacy_policy') }}">
+                Política de Privacidade
+            </a>
+            <span class="mx-2">·</span>
+            <a href="{{ url_for('pages.cookie_policy') }}">
+                Política de Cookies
+            </a>
+        </div>
+
+    </div>
+
+</section>
+{% endblock %}
