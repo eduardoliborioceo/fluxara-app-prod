@@ -23,99 +23,103 @@
     </div>
 
     <div class="auth-split-right">
+      <div class="auth-split-right-inner">
 
-      <div class="auth-split-brand">
-        <img src="{{ url_for('static', filename='images/logos/app_icon.svg') }}?v={{ static_v }}" alt="Fluxara" class="auth-split-brand-icon">
-        <span class="auth-split-brand-name">Fluxara</span>
-      </div>
+        <div class="auth-split-brand">
+          <img src="{{ url_for('static', filename='images/logos/app_icon.svg') }}?v={{ static_v }}" alt="Fluxara" class="auth-split-brand-icon">
+          <span class="auth-split-brand-name">Fluxara</span>
+        </div>
 
-      <button
-        id="install-app-btn"
-        type="button"
-        class="btn btn-outline-secondary btn-sm w-100 mb-3 d-none align-items-center justify-content-center gap-2"
-        aria-hidden="true"
-      >
-        <img
-          src="{{ url_for('static', filename='images/logos/pwa-192.png') }}?v={{ static_v }}"
-          alt="Fluxara"
-          width="16"
-          height="16"
-          style="border-radius:3px;"
+        <button
+          id="install-app-btn"
+          type="button"
+          class="btn btn-outline-secondary btn-sm w-100 mb-3 d-none align-items-center justify-content-center gap-2"
+          aria-hidden="true"
         >
-        <span>Instalar aplicativo</span>
-      </button>
-
-      {% with messages = get_flashed_messages(with_categories=true) %}
-        {% for category, message in messages %}
-          <div class="alert alert-{{ category }} text-center py-2 mb-3">
-            {{ message }}
-          </div>
-        {% endfor %}
-      {% endwith %}
-
-      <form method="post" action="{{ url_for('auth.login_local') }}">
-
-        <div class="mb-3">
-          <div class="input-group auth-input">
-            <span class="input-group-text">
-              <i class="bi bi-person"></i>
-            </span>
-            <input type="text"
-                   name="username"
-                   class="form-control"
-                   placeholder="Usuário"
-                   required>
-          </div>
-        </div>
-
-        <div class="mb-3">
-          <div class="input-group auth-input">
-            <span class="input-group-text">
-              <i class="bi bi-lock"></i>
-            </span>
-            <input type="password"
-                   name="password"
-                   class="form-control"
-                   placeholder="Senha"
-                   required>
-          </div>
-        </div>
-
-        <button class="btn btn-primary w-100 mb-2">
-          Entrar
+          <img
+            src="{{ url_for('static', filename='images/logos/pwa-192.png') }}?v={{ static_v }}"
+            alt="Fluxara"
+            width="16"
+            height="16"
+            style="border-radius:3px;"
+          >
+          <span>Instalar aplicativo</span>
         </button>
-      </form>
 
-      <div class="text-center mb-3">
-        <a href="{{ url_for('auth.forgot_password') }}" class="btn btn-link btn-sm p-0 text-muted">
-          Esqueci minha senha
-        </a>
-        <span class="text-muted mx-2">·</span>
-        <a href="{{ url_for('auth.register_form') }}" class="btn btn-link btn-sm p-0 text-muted">
-          Cadastrar-se
-        </a>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }} text-center py-2 mb-3">
+              {{ message }}
+            </div>
+          {% endfor %}
+        {% endwith %}
+
+        <form method="post" action="{{ url_for('auth.login_local') }}">
+
+          <div class="mb-3">
+            <div class="input-group auth-input">
+              <span class="input-group-text">
+                <i class="bi bi-person"></i>
+              </span>
+              <input type="text"
+                     name="username"
+                     class="form-control"
+                     placeholder="Usuário"
+                     required>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <div class="input-group auth-input">
+              <span class="input-group-text">
+                <i class="bi bi-lock"></i>
+              </span>
+              <input type="password"
+                     name="password"
+                     class="form-control"
+                     placeholder="Senha"
+                     required>
+            </div>
+          </div>
+
+          <button class="btn btn-primary w-100 mb-2">
+            Entrar
+          </button>
+        </form>
+
+        <div class="text-center mb-3">
+          <a href="{{ url_for('auth.register_form') }}" class="btn btn-link btn-sm p-0">
+            Cadastrar-se
+          </a>
+          <span class="mx-2">·</span>
+          <a href="{{ url_for('auth.forgot_password') }}" class="btn btn-link btn-sm p-0">
+            Esqueci minha senha
+          </a>
+        </div>
+
+        <hr>
+
+        <div class="d-grid gap-2 mb-4">
+          <a href="{{ url_for('auth.login_google') }}" class="btn btn-outline-danger">
+            <i class="bi bi-google me-2"></i> Logar com Google
+          </a>
+          <a href="{{ url_for('auth.login_github') }}" class="btn btn-outline-dark">
+            <i class="bi bi-github me-2"></i> Logar com GitHub
+          </a>
+        </div>
+
+        <div class="text-center mt-3">
+          <small class="d-block fw-bold">EDUARDO LIBÓRIO</small>
+          <small class="text-muted">Fullstack Developer</small>
+        </div>
+
+        <div class="legal-links-desktop text-center mt-3">
+          <a href="{{ url_for('pages.privacy_policy') }}">Política de Privacidade</a>
+          <span class="mx-2">·</span>
+          <a href="{{ url_for('pages.cookie_policy') }}">Política de Cookies</a>
+        </div>
+
       </div>
-
-      <div class="auth-acesso-via">
-        <span class="auth-acesso-via-label">Acesso Via</span>
-        <a href="{{ url_for('auth.login_google') }}" class="auth-acesso-via-btn" title="Google">
-          <i class="bi bi-google"></i>
-        </a>
-        <a href="{{ url_for('auth.login_github') }}" class="auth-acesso-via-btn" title="GitHub">
-          <i class="bi bi-github"></i>
-        </a>
-      </div>
-
-      <div class="text-center mt-3">
-        <small class="d-block fw-bold text-muted" style="font-size:0.7rem;">EDUARDO LIBÓRIO · Fullstack Developer</small>
-      </div>
-
-      <div class="legal-links-desktop text-center mt-2">
-        <a href="{{ url_for('pages.privacy_policy') }}">Política de Privacidade</a>
-        <span class="mx-1">·</span>
-        <a href="{{ url_for('pages.cookie_policy') }}">Política de Cookies</a>
-      </div>
-
     </div>
   </div>
 </div>
