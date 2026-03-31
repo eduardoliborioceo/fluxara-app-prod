@@ -24,6 +24,25 @@
 }
 
 /* ==================================================
+   LOGIN PAGE – VARIANTE CARD SIMPLES (register, forgot, etc.)
+================================================== */
+
+.auth-login-page--card {
+  align-items: center;
+}
+
+.auth-login-page--card .auth-card {
+  width: 100%;
+  max-width: 520px;
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 14px;
+  padding: 32px;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+/* ==================================================
    SPLIT CARD – CONTAINER PRINCIPAL
 ================================================== */
 
