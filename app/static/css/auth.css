@@ -99,8 +99,13 @@
   background: #ffffff;
   padding: 40px 36px;
   display: flex;
-  flex-direction: column;
+  align-items: center;
   justify-content: center;
+}
+
+.auth-split-right-inner {
+  width: 100%;
+  max-width: 340px;
 }
 
 /* ==================================================
@@ -124,44 +129,6 @@
   font-weight: 700;
   color: #1e293b;
   line-height: 1;
-}
-
-/* ==================================================
-   ACESSO VIA
-================================================== */
-
-.auth-acesso-via {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 4px;
-}
-
-.auth-acesso-via-label {
-  font-size: 0.8rem;
-  color: #64748b;
-  font-weight: 500;
-}
-
-.auth-acesso-via-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
-  border: 1px solid rgba(15, 23, 42, 0.12);
-  color: #1e293b;
-  font-size: 0.95rem;
-  text-decoration: none;
-  transition: background 0.15s, border-color 0.15s;
-}
-
-.auth-acesso-via-btn:hover {
-  background: #f1f5f9;
-  border-color: rgba(15, 23, 42, 0.2);
-  color: #1e293b;
 }
 
 /* ==================================================
