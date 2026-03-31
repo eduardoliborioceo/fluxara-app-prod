@@ -4,7 +4,7 @@
 
 .auth-body {
   min-height: 100vh;
-  background-color: #0f172a; 
+  background-color: #0f172a;
   background-image: url("../images/banners/bg-login-desktop.webp");
   background-size: cover;
   background-position: center;
@@ -12,81 +12,156 @@
 }
 
 /* ==================================================
-   HEADER AUTH (DESKTOP)
+   LOGIN DESKTOP – PÁGINA CENTRALIZADA
 ================================================== */
 
-.auth-header {
-  height: 64px;
-  background: #ffffff;
-  border-bottom: 1px solid rgba(0,0,0,.08);
+.auth-login-page {
+  min-height: 100vh;
   display: flex;
-  align-items: center;
-  padding: 0 24px;
-}
-
-.auth-header .brand img {
-  height: 42px;
-}
-
-.auth-header .actions {
-  margin-left: auto;
-  display: flex;
-  gap: 10px;
-}
-
-.auth-header .btn {
-  display: inline-flex;
   align-items: center;
   justify-content: center;
+  padding: 24px;
+}
+
+/* ==================================================
+   SPLIT CARD – CONTAINER PRINCIPAL
+================================================== */
+
+.auth-split-card {
+  display: flex;
+  width: 100%;
+  max-width: 840px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.28);
+}
+
+/* ==================================================
+   SPLIT CARD – PAINEL ESQUERDO (BEM-VINDO)
+================================================== */
+
+.auth-split-left {
+  flex: 0 0 42%;
+  background: linear-gradient(150deg, #1e40af 0%, #2563eb 55%, #0d6efd 100%);
+  padding: 52px 40px;
+  display: flex;
+  align-items: center;
+}
+
+.auth-split-welcome {
+  color: #ffffff;
+}
+
+.auth-split-title {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.25;
+  margin-bottom: 14px;
+}
+
+.auth-split-subtitle {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.6;
+  margin-bottom: 32px;
+  max-width: 280px;
+}
+
+.auth-split-features {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.auth-split-features li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.88rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.auth-split-features li i {
+  font-size: 1.1rem;
+  color: #93c5fd;
+  flex-shrink: 0;
+}
+
+/* ==================================================
+   SPLIT CARD – PAINEL DIREITO (FORMULÁRIO)
+================================================== */
+
+.auth-split-right {
+  flex: 1;
+  background: #ffffff;
+  padding: 40px 36px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* ==================================================
+   BRAND NO CARD (ÍCONE + NOME)
+================================================== */
+
+.auth-split-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.auth-split-brand-icon {
+  width: 38px;
+  height: 38px;
+}
+
+.auth-split-brand-name {
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #1e293b;
   line-height: 1;
 }
 
 /* ==================================================
-   CONTAINER PRINCIPAL (DESKTOP)
+   ACESSO VIA
 ================================================== */
 
-.auth-container {
-  display: grid;
-  grid-template-columns: 1.4fr 1fr;
-  min-height: calc(100vh - 64px);
-}
-
-/* ==================================================
-   VISUAL ESQUERDO
-================================================== */
-
-.auth-visual {
-  background-image: url("../images/banners/desktop-ilustraction.png");
-  background-repeat: no-repeat;
-  background-size: contain;
-  background-position: center left;
-  padding: 40px;
-}
-
-/* ==================================================
-   CARD LOGIN
-================================================== */
-
-.auth-card-wrapper {
+.auth-acesso-via {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 32px;
+  gap: 10px;
+  margin-top: 4px;
 }
 
-.auth-card {
-  width: 100%;
-  max-width: 560px;
+.auth-acesso-via-label {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 500;
+}
 
-  background: rgba(255, 255, 255, 0.94);
+.auth-acesso-via-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  color: #1e293b;
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s;
+}
 
-  border-radius: 14px;
-  padding: 28px;
-  box-shadow: 0 20px 40px rgba(0,0,0,.08);
-
-  /* opcional elegante e moderno */
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+.auth-acesso-via-btn:hover {
+  background: #f1f5f9;
+  border-color: rgba(15, 23, 42, 0.2);
+  color: #1e293b;
 }
 
 /* ==================================================
@@ -111,71 +186,6 @@
 }
 
 /* ==================================================
-   MOBILE – LOGIN CHOICE / FORM
-================================================== */
-
-.mobile-screen {
-  position: relative;
-  min-height: 100vh;
-  background-size: cover;
-  background-position: center;
-  display: flex;
-  align-items: flex-end;
-  padding: 24px;
-}
-
-.mobile-actions,
-.mobile-form {
-  width: 100%;
-  transform: translateY(-48px);
-}
-
-.mobile-form {
-  max-width: 420px;
-  margin: 0 auto;
-  background: rgba(255,255,255,.92);
-  padding: 24px;
-  border-radius: 14px;
-}
-
-/* ==================================================
-   RESPONSIVO – MOBILE
-================================================== */
-
-@media (max-width: 991px) {
-
-  .auth-header {
-    display: none;
-  }
-
-  .auth-body {
-    background-image: none;
-    background-color: #f8f9fa;
-  }
-
-   .auth-container {
-     display: flex;
-     align-items: center;
-     justify-content: center;
-     min-height: calc(100vh - 64px);
-     padding: 64px;
-   }
-
-  .auth-visual {
-    display: none;
-  }
-
-  .auth-card-wrapper {
-    padding: 0;
-  }
-
-  .auth-card {
-    max-width: 380px;
-    padding: 24px;
-  }
-}
-
-/* ==================================================
    LOGIN – INPUTS COM ÍCONE
 ================================================== */
 
@@ -195,33 +205,56 @@
 }
 
 /* ==================================================
-   LOGIN DESKTOP – CENTRALIZAÇÃO REAL
+   LINKS LEGAIS DESKTOP
 ================================================== */
 
-.auth-container-centered {
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-  min-height: calc(100vh - 64px);
+.legal-links-desktop {
+  font-size: 0.72rem;
 }
 
-.auth-container-centered .auth-card {
-  max-width: 560px;
+.legal-links-desktop a {
+  color: #94a3b8;
+  text-decoration: none;
 }
 
-.auth-container-centered .auth-card-wrapper {
-  width: 100%;
-  max-width: 560px;  
-  padding: 32px;
-}
-
-.auth-container-centered .auth-card {
-  width: 100%;
-  max-width: none;   
+.legal-links-desktop a:hover {
+  color: #64748b;
 }
 
 /* ==================================================
-   MOBILE – LOGIN CHOICE / FORM (ANTI WHITE FLASH)
+   RESPONSIVO – TABLET / MOBILE (< 992px)
+================================================== */
+
+@media (max-width: 991px) {
+
+  .auth-body {
+    background-image: none;
+    background-color: #f1f5f9;
+  }
+
+  .auth-login-page {
+    padding: 40px 20px;
+    align-items: flex-start;
+  }
+
+  .auth-split-card {
+    flex-direction: column;
+    max-width: 440px;
+    margin: 0 auto;
+    box-shadow: 0 8px 32px rgba(0,0,0,.1);
+  }
+
+  .auth-split-left {
+    display: none !important;
+  }
+
+  .auth-split-right {
+    padding: 32px 28px;
+  }
+}
+
+/* ==================================================
+   MOBILE – LOGIN CHOICE / FORM
 ================================================== */
 
 .mobile-screen {
@@ -229,8 +262,6 @@
   min-height: 100vh;
 
   background-color: #0f172a;
-
-  background-image: url("../images/banners/bg-cad-log.webp");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -238,6 +269,20 @@
   display: flex;
   align-items: flex-end;
   padding: 24px;
+}
+
+.mobile-actions,
+.mobile-form {
+  width: 100%;
+  transform: translateY(-48px);
+}
+
+.mobile-form {
+  max-width: 420px;
+  margin: 0 auto;
+  background: rgba(255,255,255,.92);
+  padding: 24px;
+  border-radius: 14px;
 }
 
 /* PÁGINAS ESPECÍFICAS */
@@ -253,9 +298,33 @@
   background-image: url("../images/banners/bg-cad-form.webp");
 }
 
-/* =========================================
+/* ==================================================
+   MOBILE BRAND (login_choice)
+================================================== */
+
+.mobile-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.mobile-brand-icon {
+  width: 40px;
+  height: 40px;
+}
+
+.mobile-brand-name {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1;
+  text-shadow: 0 1px 4px rgba(0,0,0,.4);
+}
+
+/* ==================================================
    FIX REGISTER MOBILE OVERLAP
-   ========================================= */
+================================================== */
 
 @media (max-width: 991px) {
 
