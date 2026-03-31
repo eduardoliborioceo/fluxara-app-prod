@@ -7,11 +7,6 @@
 
     <div class="mobile-actions">
 
-        <div class="mobile-brand">
-          <img src="{{ url_for('static', filename='images/logos/app_icon.svg') }}?v={{ static_v }}" alt="Fluxara" class="mobile-brand-icon">
-          <span class="mobile-brand-name">Fluxara</span>
-        </div>
-
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
             <div class="mb-3">
