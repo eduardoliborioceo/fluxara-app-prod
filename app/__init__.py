@@ -82,6 +82,28 @@ def create_app():
     app.register_blueprint(admin_bp)
     app.register_blueprint(dev_bp)
 
+    from flask import jsonify as _jsonify, request as _request
+
+    @app.errorhandler(500)
+    def internal_error(e):
+        if _request.path.startswith("/api/"):
+            return _jsonify({"error": "Erro interno do servidor"}), 500
+        from flask import render_template as _rt
+        try:
+            return _rt("errors/500.html"), 500
+        except Exception:
+            return "<h1>500 — Erro interno</h1><p>Tente novamente em instantes.</p>", 500
+
+    @app.errorhandler(404)
+    def not_found(e):
+        if _request.path.startswith("/api/"):
+            return _jsonify({"error": "Recurso não encontrado"}), 404
+        from flask import render_template as _rt
+        try:
+            return _rt("errors/404.html"), 404
+        except Exception:
+            return "<h1>404 — Página não encontrada</h1>", 404
+
     from app.services import backup_service
     backup_service.init_scheduler(app)
 

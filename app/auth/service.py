@@ -231,11 +231,22 @@ def _cloudinary_config():
         api_secret=current_app.config["CLOUDINARY_API_SECRET"]
     )
 
+_MAX_AVATAR_SIZE = 5 * 1024 * 1024
+
 def save_profile_image(user_id: int, file):
     import cloudinary.uploader
 
     if not file or file.filename == "":
         return None
+
+    if not allowed_file(file.filename):
+        raise ValueError("Formato inválido. Use: png, jpg, jpeg ou webp")
+
+    file.seek(0, 2)
+    size = file.tell()
+    file.seek(0)
+    if size > _MAX_AVATAR_SIZE:
+        raise ValueError("Imagem muito grande. Tamanho máximo: 5 MB")
 
     _cloudinary_config()
 
@@ -329,5 +340,5 @@ def reset_password(token: str, new_password: str):
     if policy_errors:
         raise ValueError(policy_errors[0])
 
-    update_user_password(token_data["user_id"], new_password)
     mark_token_as_used(token)
+    update_user_password(token_data["user_id"], new_password)
