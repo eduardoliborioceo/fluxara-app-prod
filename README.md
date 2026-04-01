@@ -12,7 +12,9 @@ Aplicação **Fullstack Flask** (MVC) para **gestão financeira pessoal**, com:
 - **Planejamento** mensal por categorias
 - **Backup automático** do banco com agendamento, criptografia AES-256 e logs
 - **PWA** (offline + manifest + service worker)
-- **Autenticação local + OAuth** (Google / GitHub)
+- **Autenticação local + OAuth** (Google / GitHub) com botões circulares, show/hide senha
+- **Cadastro com aprovação automática** — novos usuários ficam ativos imediatamente
+- **Exclusão de conta** pelo próprio usuário com confirmação
 - **Notificações push** via VAPID
 
 > 🇧🇷 Este README é a referência principal.
@@ -234,6 +236,7 @@ Acesse: `http://127.0.0.1:5000`
 - Histórico mensal com filtro de mês
 - Edição e exclusão de lançamentos
 - Suporte a receitas, despesas e transferências
+- Parcelas futuras sempre criadas como pendentes (efetivado apenas na parcela inicial)
 
 ### Extrato por Cartão
 - Histórico por fatura (mês/ano)
@@ -246,6 +249,28 @@ Acesse: `http://127.0.0.1:5000`
 - Checksum SHA-256 por backup
 - Agendamento automático (diário/semanal/mensal)
 - Download de backups pelo histórico
+
+### Auth / Perfil
+- Login desktop com split-card (painel azul + formulário)
+- Show/hide senha no login (desktop e mobile)
+- OAuth Google e GitHub com botões circulares lado a lado
+- Cadastro com aprovação automática (sem necessidade de admin aprovar)
+- Exclusão de conta pelo usuário com modal de confirmação
+- Política de privacidade e cookies com design e conteúdo atualizados
+
+---
+
+## 🔒 Segurança
+
+- Queries parametrizadas em todo o repositório (sem SQL injection)
+- Senhas com hash seguro (werkzeug)
+- Política de senha rigorosa (10+ chars, maiúscula, número, especial)
+- Rotação de senha obrigatória a cada 180 dias
+- Upload de avatar com validação de extensão e limite de 5 MB
+- Backup com criptografia AES-256 e checksum SHA-256
+- Error handlers (404/500) sem exposição de stack traces
+- Token de reset de senha marcado como usado antes do update
+- SECRET_KEY obrigatória — aplicação não inicia sem ela
 
 ---
 
