@@ -57,7 +57,7 @@
   {% if current_user.is_authenticated %}
   <div class="mobile-right d-flex align-items-center gap-2">
     <span class="fw-bold">{{ current_user.username }}</span>
-    <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-outline-danger">
+    <a href="{{ url_for('auth.logout') }}" class="mobile-logout-btn" title="Sair">
       <i class="bi bi-box-arrow-right"></i>
     </a>
   </div>
