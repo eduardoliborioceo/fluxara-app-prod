@@ -96,8 +96,10 @@ def _create_parcelas(user_id: int, tipo: str, descricao_base: str | None, valor_
             f_ano = fatura_ano_base + (m - 1) // 12
             f_mes = ((m - 1) % 12) + 1
 
+        efetivado_i = efetivado if i == 0 else False
+
         row = repo.create_lancamento(
-            user_id, tipo, desc, valor_parcela, venc_str, efetivado,
+            user_id, tipo, desc, valor_parcela, venc_str, efetivado_i,
             False, None, categoria_id, subcategoria_id,
             conta_id, cartao_id, f_mes, f_ano, grupo_id
         )
