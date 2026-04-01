@@ -29,7 +29,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/legal.css') }}?v={{ static_v }}">
 </head>
 
-<body class="auth-body">
+<body class="{% block body_class %}auth-body{% endblock %}">
   {% block content %}{% endblock %}
 
   <div class="modal fade" id="pwaInstallHelpModal" tabindex="-1" aria-hidden="true">

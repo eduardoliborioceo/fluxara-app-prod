@@ -1,125 +1,161 @@
 {% extends "layouts/auth.html" %}
-{% block title %}Política de Privacidade{% endblock %}
+{% block title %}Política de Privacidade — Fluxara{% endblock %}
+{% block body_class %}legal-body{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-  <div class="card shadow-sm p-4 legal-container">
+<div class="legal-page">
+  <div class="legal-topbar">
+    <a href="{{ url_for('auth.login') }}" class="legal-back">
+      <i class="bi bi-arrow-left"></i> Voltar
+    </a>
+    <span class="legal-brand">
+      <img src="{{ url_for('static', filename='images/logos/app_icon.svg') }}?v={{ static_v }}" alt="Fluxara" width="22" height="22">
+      Fluxara
+    </span>
+  </div>
 
-    <h3 class="mb-4 text-center">Política de Privacidade</h3>
+  <div class="container py-5">
+    <div class="legal-container">
 
-    <p>
-      Esta Política de Privacidade descreve como o sistema <strong>Fluxara</strong>
-      realiza o tratamento de dados pessoais, em conformidade com a
-      Lei nº 13.709/2018 (Lei Geral de Proteção de Dados – LGPD)
-      e demais normas aplicáveis à proteção de dados no Brasil.
-    </p>
+      <div class="legal-header">
+        <h1 class="legal-title">Política de Privacidade</h1>
+        <p class="legal-subtitle">Última atualização: 1º de abril de 2026</p>
+      </div>
 
-    <h5>1. Controlador dos Dados</h5>
-    <p>
-      O Fluxara atua como sistema corporativo interno para gestão de jornada,
-      solicitações de horas extras e fluxos administrativos.
-      O Controlador dos dados pessoais tratados por meio da plataforma é
-      a organização responsável pela sua operação e disponibilização.
-    </p>
+      <p class="legal-intro">
+        Esta Política de Privacidade descreve como o <strong>Fluxara</strong> coleta, utiliza, armazena
+        e protege os dados pessoais dos seus usuários, em conformidade com a Lei nº 13.709/2018
+        (Lei Geral de Proteção de Dados — LGPD) e demais normas aplicáveis no Brasil.
+      </p>
 
-    <h5>2. Dados Pessoais Coletados</h5>
-    <p>
-      No contexto de utilização do sistema, podem ser tratados os seguintes dados:
-    </p>
-    <ul>
-      <li>Nome completo</li>
-      <li>Matrícula funcional</li>
-      <li>Setor / Departamento</li>
-      <li>Endereço eletrônico (e-mail corporativo)</li>
-      <li>Telefone</li>
-      <li>Endereço residencial</li>
-      <li>Credenciais de autenticação (armazenadas de forma criptografada)</li>
-      <li>Registros de autenticação, logs de acesso e registros de aprovação eletrônica</li>
-    </ul>
+      <div class="legal-section">
+        <h2>1. Sobre o Fluxara</h2>
+        <p>
+          O <strong>Fluxara</strong> é uma plataforma de gestão financeira pessoal que permite ao usuário
+          organizar receitas, despesas, contas bancárias, cartões de crédito, planejamento orçamentário
+          e acompanhamento do patrimônio pessoal. O sistema é operado de forma independente pelo
+          desenvolvedor responsável pela plataforma.
+        </p>
+      </div>
 
-    <h5>3. Finalidade do Tratamento</h5>
-    <p>
-      Os dados pessoais são tratados para finalidades legítimas e específicas,
-      incluindo, mas não se limitando a:
-    </p>
-    <ul>
-      <li>Autenticação e controle de acesso ao sistema</li>
-      <li>Gestão de solicitações de horas extras</li>
-      <li>Formalização de aprovações e assinaturas eletrônicas</li>
-      <li>Controle administrativo e auditoria interna</li>
-      <li>Envio de comunicações operacionais (ex.: redefinição de senha)</li>
-    </ul>
+      <div class="legal-section">
+        <h2>2. Dados Pessoais Coletados</h2>
+        <p>Para o funcionamento da plataforma, podemos coletar e processar os seguintes dados:</p>
+        <ul>
+          <li><strong>Dados de cadastro:</strong> nome completo, nome de usuário e endereço de e-mail</li>
+          <li><strong>Dados de contato e endereço:</strong> telefone, endereço residencial (opcional)</li>
+          <li><strong>Credenciais de acesso:</strong> senha armazenada exclusivamente em formato criptografado (hash)</li>
+          <li><strong>Dados financeiros:</strong> contas bancárias, cartões de crédito, lançamentos de receitas e despesas, categorias e planejamento orçamentário</li>
+          <li><strong>Dados de uso:</strong> logs de acesso, sessão autenticada e preferências do sistema</li>
+          <li><strong>Foto de perfil:</strong> quando enviada voluntariamente pelo usuário</li>
+        </ul>
+        <p class="legal-note">
+          O Fluxara não coleta dados financeiros diretamente de bancos ou instituições financeiras.
+          Todos os dados inseridos na plataforma são fornecidos manualmente pelo próprio usuário.
+        </p>
+      </div>
 
-    <h5>4. Base Legal</h5>
-    <p>
-      O tratamento de dados pessoais no Fluxara fundamenta-se nas bases legais
-      previstas nos artigos 7º e 11 da LGPD, especialmente:
-    </p>
-    <ul>
-      <li>Cumprimento de obrigação legal ou regulatória</li>
-      <li>Execução de contrato ou de procedimentos preliminares relacionados</li>
-      <li>Legítimo interesse do controlador</li>
-    </ul>
+      <div class="legal-section">
+        <h2>3. Finalidade do Tratamento</h2>
+        <p>Os dados são utilizados exclusivamente para:</p>
+        <ul>
+          <li>Autenticação, controle de acesso e segurança da conta</li>
+          <li>Armazenamento e organização das informações financeiras inseridas pelo usuário</li>
+          <li>Geração de relatórios, projeções de saldo e resumos financeiros</li>
+          <li>Envio de comunicações operacionais, como redefinição de senha</li>
+          <li>Notificações sobre limites orçamentários e vencimentos de faturas</li>
+          <li>Melhoria contínua da plataforma e correção de erros</li>
+        </ul>
+      </div>
 
-    <h5>5. Armazenamento e Segurança</h5>
-    <p>
-      Os dados são armazenados em banco de dados PostgreSQL,
-      hospedado em infraestrutura em nuvem (Railway),
-      com aplicação de medidas técnicas e administrativas adequadas,
-      incluindo:
-    </p>
-    <ul>
-      <li>Criptografia de senhas por meio de hash seguro</li>
-      <li>Controle de acesso baseado em perfil de usuário</li>
-      <li>Proteção por autenticação e sessão segura</li>
-      <li>Registro de logs para rastreabilidade e auditoria</li>
-    </ul>
+      <div class="legal-section">
+        <h2>4. Base Legal</h2>
+        <p>O tratamento de dados pessoais fundamenta-se nas seguintes bases legais da LGPD:</p>
+        <ul>
+          <li><strong>Consentimento (art. 7º, I):</strong> ao se cadastrar, o usuário consente com o tratamento dos seus dados</li>
+          <li><strong>Execução de contrato (art. 7º, V):</strong> necessário para prestação dos serviços da plataforma</li>
+          <li><strong>Legítimo interesse (art. 7º, IX):</strong> para melhoria da segurança e funcionamento do sistema</li>
+        </ul>
+      </div>
 
-    <h5>6. Compartilhamento de Dados</h5>
-    <p>
-      O Fluxara não comercializa dados pessoais.
-      O compartilhamento poderá ocorrer apenas quando necessário para:
-    </p>
-    <ul>
-      <li>Cumprimento de obrigação legal</li>
-      <li>Determinação judicial ou requisição de autoridade competente</li>
-      <li>Prestadores de serviço essenciais à operação da infraestrutura</li>
-    </ul>
+      <div class="legal-section">
+        <h2>5. Armazenamento e Segurança</h2>
+        <p>Os dados são armazenados com as seguintes medidas de proteção:</p>
+        <ul>
+          <li>Banco de dados PostgreSQL hospedado em infraestrutura em nuvem (Railway), com backups regulares</li>
+          <li>Senhas armazenadas exclusivamente com hash seguro — nunca em texto simples</li>
+          <li>Comunicação via HTTPS com certificado SSL/TLS</li>
+          <li>Controle de acesso baseado em perfil de usuário (autenticação obrigatória)</li>
+          <li>Tokens de sessão com expiração automática</li>
+          <li>Backups criptografados com AES-256</li>
+        </ul>
+      </div>
 
-    <h5>7. Retenção dos Dados</h5>
-    <p>
-      Os dados pessoais serão mantidos pelo período necessário ao cumprimento
-      das finalidades descritas nesta política, observadas as obrigações legais
-      e regulatórias aplicáveis.
-    </p>
+      <div class="legal-section">
+        <h2>6. Compartilhamento de Dados</h2>
+        <p>
+          O Fluxara <strong>não comercializa, vende ou compartilha dados pessoais</strong> de seus usuários
+          com terceiros para fins comerciais ou publicitários.
+        </p>
+        <p>O compartilhamento poderá ocorrer somente nas seguintes situações:</p>
+        <ul>
+          <li>Cumprimento de obrigação legal ou regulatória</li>
+          <li>Determinação judicial ou requisição de autoridade competente</li>
+          <li>Provedores de infraestrutura técnica essenciais à operação (ex.: Railway, Cloudinary para imagens de perfil)</li>
+        </ul>
+      </div>
 
-    <h5>8. Direitos do Titular</h5>
-    <p>
-      Nos termos do artigo 18 da LGPD, o titular dos dados pode solicitar:
-    </p>
-    <ul>
-      <li>Confirmação da existência de tratamento</li>
-      <li>Acesso aos dados</li>
-      <li>Correção de dados incompletos ou desatualizados</li>
-      <li>Anonimização, bloqueio ou eliminação de dados desnecessários</li>
-      <li>Informações sobre compartilhamento</li>
-    </ul>
+      <div class="legal-section">
+        <h2>7. Retenção dos Dados</h2>
+        <p>
+          Os dados pessoais são mantidos enquanto a conta do usuário estiver ativa.
+          Ao solicitar a exclusão da conta, todos os dados pessoais e financeiros associados
+          são permanentemente removidos do sistema, exceto quando a retenção for exigida por obrigação legal.
+        </p>
+      </div>
 
-    <p>
-      As solicitações devem ser direcionadas ao administrador do sistema
-      ou ao responsável interno pela governança de dados.
-    </p>
+      <div class="legal-section">
+        <h2>8. Direitos do Titular</h2>
+        <p>Nos termos do artigo 18 da LGPD, o usuário tem direito a:</p>
+        <ul>
+          <li>Confirmação da existência de tratamento dos seus dados</li>
+          <li>Acesso aos dados pessoais armazenados</li>
+          <li>Correção de dados incompletos, inexatos ou desatualizados</li>
+          <li>Exclusão dos dados tratados com base em consentimento</li>
+          <li>Portabilidade dos dados para outro serviço</li>
+          <li>Revogação do consentimento a qualquer momento</li>
+        </ul>
+        <p>
+          Para exercer esses direitos, o usuário pode excluir sua própria conta diretamente
+          na página de perfil, ou entrar em contato com o responsável pela plataforma.
+        </p>
+      </div>
 
-    <h5>9. Atualizações</h5>
-    <p>
-      Esta Política poderá ser atualizada a qualquer momento para refletir
-      melhorias operacionais, adequações legais ou alterações técnicas.
-    </p>
+      <div class="legal-section">
+        <h2>9. Transferência Internacional de Dados</h2>
+        <p>
+          Os dados podem ser processados e armazenados em servidores localizados fora do Brasil
+          (ex.: Railway — infraestrutura nos EUA). Esses serviços adotam medidas adequadas de
+          proteção de dados em conformidade com padrões internacionais de segurança.
+        </p>
+      </div>
 
-    <p class="mt-4 text-muted">
-      Última atualização: {{ now().date() }}
-    </p>
+      <div class="legal-section">
+        <h2>10. Atualizações desta Política</h2>
+        <p>
+          Esta Política de Privacidade pode ser atualizada a qualquer momento. Alterações
+          relevantes serão comunicadas pelo sistema. O uso continuado da plataforma após
+          a atualização implica aceite das novas condições.
+        </p>
+      </div>
 
+      <div class="legal-footer">
+        <a href="{{ url_for('pages.cookie_policy') }}" class="legal-link">Política de Cookies</a>
+        <span class="mx-2">·</span>
+        <a href="{{ url_for('auth.login') }}" class="legal-link">Voltar ao sistema</a>
+      </div>
+
+    </div>
   </div>
 </div>
 {% endblock %}

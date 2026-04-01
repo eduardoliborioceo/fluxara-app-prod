@@ -1,70 +1,132 @@
 {% extends "layouts/auth.html" %}
-{% block title %}Política de Cookies{% endblock %}
+{% block title %}Política de Cookies — Fluxara{% endblock %}
+{% block body_class %}legal-body{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-  <div class="card shadow-sm p-4 legal-container">
+<div class="legal-page">
+  <div class="legal-topbar">
+    <a href="{{ url_for('auth.login') }}" class="legal-back">
+      <i class="bi bi-arrow-left"></i> Voltar
+    </a>
+    <span class="legal-brand">
+      <img src="{{ url_for('static', filename='images/logos/app_icon.svg') }}?v={{ static_v }}" alt="Fluxara" width="22" height="22">
+      Fluxara
+    </span>
+  </div>
 
-    <h3 class="mb-4 text-center">Política de Cookies</h3>
+  <div class="container py-5">
+    <div class="legal-container">
 
-    <p>
-      Esta Política de Cookies descreve como o sistema <strong>Fluxara</strong>
-      utiliza tecnologias de armazenamento local para garantir
-      segurança, autenticação e funcionamento adequado da aplicação.
-    </p>
+      <div class="legal-header">
+        <h1 class="legal-title">Política de Cookies</h1>
+        <p class="legal-subtitle">Última atualização: 1º de abril de 2026</p>
+      </div>
 
-    <h5>1. O que são Cookies?</h5>
-    <p>
-      Cookies são pequenos arquivos de texto armazenados no navegador
-      do usuário quando este acessa uma aplicação web.
-      Eles permitem reconhecer sessões, manter preferências e
-      assegurar o funcionamento técnico do sistema.
-    </p>
+      <p class="legal-intro">
+        Esta Política de Cookies explica como o <strong>Fluxara</strong> utiliza cookies e tecnologias
+        similares de armazenamento local para garantir o funcionamento seguro e adequado da aplicação.
+      </p>
 
-    <h5>2. Cookies Utilizados</h5>
-    <p>
-      O Fluxara utiliza exclusivamente cookies essenciais e técnicos,
-      necessários para o funcionamento da aplicação, incluindo:
-    </p>
-    <ul>
-      <li>Cookies de sessão para autenticação (Flask-Login)</li>
-      <li>Cookies de segurança contra acesso não autorizado</li>
-      <li>Cookies temporários utilizados em fluxos OAuth (Google e GitHub)</li>
-    </ul>
+      <div class="legal-section">
+        <h2>1. O que são Cookies?</h2>
+        <p>
+          Cookies são pequenos arquivos de texto armazenados pelo navegador quando o usuário acessa
+          uma aplicação web. Eles permitem que o sistema reconheça sessões, mantenha preferências
+          do usuário e garanta o funcionamento técnico seguro da plataforma.
+        </p>
+      </div>
 
-    <h5>3. Finalidade</h5>
-    <p>
-      Os cookies utilizados têm as seguintes finalidades:
-    </p>
-    <ul>
-      <li>Manter o usuário autenticado durante a sessão</li>
-      <li>Garantir integridade e segurança da navegação</li>
-      <li>Prevenir acessos indevidos</li>
-    </ul>
+      <div class="legal-section">
+        <h2>2. Cookies Utilizados pelo Fluxara</h2>
+        <p>
+          O Fluxara utiliza exclusivamente cookies essenciais e técnicos. Não utilizamos cookies
+          de rastreamento, publicidade ou análise de marketing.
+        </p>
 
-    <h5>4. Não Utilização de Cookies de Marketing</h5>
-    <p>
-      O Fluxara não utiliza cookies de rastreamento,
-      publicidade comportamental ou análise de marketing.
-      O sistema possui finalidade exclusivamente corporativa.
-    </p>
+        <div class="legal-table-wrap">
+          <table class="legal-table">
+            <thead>
+              <tr>
+                <th>Cookie</th>
+                <th>Finalidade</th>
+                <th>Duração</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>session</code></td>
+                <td>Mantém o usuário autenticado durante a navegação (Flask-Login)</td>
+                <td>Sessão do navegador</td>
+              </tr>
+              <tr>
+                <td>Cookies OAuth</td>
+                <td>Utilizados temporariamente nos fluxos de autenticação com Google e GitHub</td>
+                <td>Temporário (descartado após o login)</td>
+              </tr>
+              <tr>
+                <td>Preferências locais</td>
+                <td>Armazenamento de preferências de tema e layout (localStorage)</td>
+                <td>Persistente (local, sem envio ao servidor)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-    <h5>5. Gerenciamento de Cookies</h5>
-    <p>
-      O usuário pode, a qualquer momento, configurar seu navegador
-      para bloquear ou excluir cookies.
-      Contudo, a desativação de cookies essenciais poderá
-      comprometer o funcionamento do sistema.
-    </p>
+      <div class="legal-section">
+        <h2>3. Finalidade dos Cookies</h2>
+        <p>Os cookies utilizados têm como única finalidade:</p>
+        <ul>
+          <li>Manter o usuário autenticado durante a sessão ativa</li>
+          <li>Garantir a integridade e segurança da navegação</li>
+          <li>Proteger o acesso contra requisições não autorizadas (CSRF protection)</li>
+          <li>Armazenar preferências de interface do usuário localmente</li>
+        </ul>
+      </div>
 
-    <h5>6. Conformidade Legal</h5>
-    <p>
-      O uso de cookies está em conformidade com a Lei Geral de Proteção de Dados (LGPD)
-      e com as boas práticas de segurança da informação,
-      sendo utilizados apenas quando estritamente necessários
-      para a execução da aplicação.
-    </p>
+      <div class="legal-section">
+        <h2>4. Cookies de Marketing e Rastreamento</h2>
+        <p>
+          O Fluxara <strong>não utiliza</strong> cookies de rastreamento comportamental,
+          publicidade direcionada, pixels de conversão ou ferramentas de análise de marketing
+          de terceiros. Nenhum dado de navegação é compartilhado com plataformas publicitárias.
+        </p>
+      </div>
 
+      <div class="legal-section">
+        <h2>5. Gerenciamento de Cookies</h2>
+        <p>
+          O usuário pode, a qualquer momento, configurar seu navegador para bloquear ou excluir
+          cookies armazenados. Contudo, a desativação de cookies essenciais — especialmente o
+          cookie de sessão — irá impedir o acesso autenticado ao sistema, pois a plataforma
+          requer autenticação para todas as funcionalidades.
+        </p>
+        <p>Consulte a documentação do seu navegador para gerenciar cookies:</p>
+        <ul>
+          <li>Google Chrome: Configurações → Privacidade e segurança → Cookies</li>
+          <li>Mozilla Firefox: Configurações → Privacidade e Segurança</li>
+          <li>Safari: Preferências → Privacidade</li>
+          <li>Microsoft Edge: Configurações → Cookies e permissões do site</li>
+        </ul>
+      </div>
+
+      <div class="legal-section">
+        <h2>6. Conformidade Legal</h2>
+        <p>
+          O uso de cookies está em conformidade com a Lei Geral de Proteção de Dados (LGPD —
+          Lei nº 13.709/2018) e com as boas práticas de segurança da informação. Apenas cookies
+          estritamente necessários para a execução da aplicação são utilizados, sem necessidade
+          de consentimento explícito para cookies técnicos essenciais.
+        </p>
+      </div>
+
+      <div class="legal-footer">
+        <a href="{{ url_for('pages.privacy_policy') }}" class="legal-link">Política de Privacidade</a>
+        <span class="mx-2">·</span>
+        <a href="{{ url_for('auth.login') }}" class="legal-link">Voltar ao sistema</a>
+      </div>
+
+    </div>
   </div>
 </div>
 {% endblock %}
