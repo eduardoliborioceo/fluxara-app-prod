@@ -293,9 +293,8 @@
 .extrato-tx-desc {
   font-weight: 500;
   font-size: .9rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  word-break: break-word;
+  white-space: normal;
 }
 
 .extrato-tx-meta {
@@ -871,6 +870,99 @@
   text-transform: none;
   letter-spacing: 0;
   opacity: .75;
+}
+
+/* ========================
+   SELECTION MODE
+======================== */
+.extrato-tx-item--selected {
+  background: rgba(13, 110, 253, 0.06) !important;
+}
+
+.extrato-tx-check {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #cbd5e1;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  transition: color .15s;
+}
+
+.extrato-tx-check--on {
+  color: #0d6efd;
+}
+
+/* ========================
+   SOMA BAR (BOTTOM STICKY)
+======================== */
+.extrato-sum-bar {
+  position: fixed;
+  bottom: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e293b;
+  color: #fff;
+  border-radius: 16px;
+  padding: 12px 18px 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.28);
+  z-index: 600;
+  max-width: 440px;
+  width: calc(100% - 32px);
+}
+
+.extrato-sum-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.extrato-sum-count {
+  font-size: .72rem;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.extrato-sum-total {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.extrato-sum-total--pos { color: #4ade80; }
+.extrato-sum-total--neg { color: #f87171; }
+
+.extrato-sum-clear {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,.1);
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background .15s, color .15s;
+  font-size: .9rem;
+}
+
+.extrato-sum-clear:hover {
+  background: rgba(255,255,255,.18);
+  color: #fff;
+}
+
+@media (min-width: 768px) {
+  .extrato-sum-bar {
+    bottom: 24px;
+  }
 }
 
 [data-theme="escuro"] .extrato-date-label { color: #64748b; }

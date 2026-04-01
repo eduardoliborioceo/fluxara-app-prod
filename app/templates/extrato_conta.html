@@ -41,6 +41,9 @@
       <button class="extrato-status-pill active" data-status="todas">Todas</button>
       <button class="extrato-status-pill" data-status="efetivadas">Efetivadas</button>
       <button class="extrato-status-pill" data-status="pendentes">Pendentes</button>
+      <button class="extrato-status-pill extrato-select-toggle" id="btnSelectMode">
+        <i class="bi bi-check2-square me-1"></i>Selecionar
+      </button>
     </div>
     <div class="extrato-filtro-datas">
       <div class="extrato-data-field">
@@ -171,6 +174,16 @@
 
     </div>
   </div>
+</div>
+
+<div class="extrato-sum-bar" id="extratoSumBar" style="display:none">
+  <div class="extrato-sum-info">
+    <span id="extratoSumCount" class="extrato-sum-count"></span>
+    <span id="extratoSumTotal" class="extrato-sum-total"></span>
+  </div>
+  <button id="extratoSumClear" class="extrato-sum-clear" title="Limpar seleção">
+    <i class="bi bi-x-lg"></i>
+  </button>
 </div>
 
 {% endblock %}

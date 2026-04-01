@@ -73,6 +73,7 @@
   var year  = parseInt(params.get('ano') || now.getFullYear());
 
   var categoriasData = [];
+  var categoriasMapa = {};
   var editEfetivado = true;
   var pendingDeleteId = null;
   var pendingDeleteType = null;
@@ -82,6 +83,9 @@
   var activeStatusFilter = 'todas';
   var filterDataDe = '';
   var filterDataAte = '';
+
+  var selectMode = false;
+  var selectedIds = new Set();
 
   function esc(s) {
     return String(s || '')
@@ -170,8 +174,23 @@
     var badges = '';
     if (!tx.efetivado) badges += '<span class="extrato-badge extrato-badge--pendente">Pendente</span>';
     if (isFuture)      badges += '<span class="extrato-badge extrato-badge--futuro">Futuro</span>';
-    return '<div class="extrato-tx-item" data-id="' + tx.id + '" data-tipo="' + esc(tx.tipo) + '">'
-      + '<div class="extrato-tx-icon ' + m.cls + '"><i class="bi ' + m.icon + '"></i></div>'
+
+    var catIcon = m.icon;
+    if (tx.categoria_id && categoriasMapa[tx.categoria_id]) {
+      var cat = categoriasMapa[tx.categoria_id];
+      if (cat.icone) catIcon = cat.icone.replace(/^bi-/, '');
+    }
+
+    var isSelected = selectedIds.has(tx.id);
+    var selectedCls = isSelected ? ' extrato-tx-item--selected' : '';
+    var checkHtml = selectMode
+      ? '<div class="extrato-tx-check ' + (isSelected ? 'extrato-tx-check--on' : '') + '">'
+        + '<i class="bi ' + (isSelected ? 'bi-check-circle-fill' : 'bi-circle') + '"></i></div>'
+      : '';
+
+    return '<div class="extrato-tx-item' + selectedCls + '" data-id="' + tx.id + '" data-tipo="' + esc(tx.tipo) + '" data-valor="' + parseFloat(tx.valor || 0) + '" data-prefix="' + m.prefix + '">'
+      + checkHtml
+      + '<div class="extrato-tx-icon ' + m.cls + '"><i class="bi bi-' + catIcon + '"></i></div>'
       + '<div class="extrato-tx-info">'
       +   '<div class="extrato-tx-desc">' + esc(tx.descricao || 'Sem descrição') + badges + '</div>'
       +   '<div class="extrato-tx-meta">' + meta + '</div>'
@@ -246,14 +265,52 @@
     body.innerHTML = html;
     body.querySelectorAll('.extrato-tx-item').forEach(function (el) {
       el.addEventListener('click', function () {
-        openEditSheet(parseInt(this.dataset.id), this.dataset.tipo);
+        var id = parseInt(this.dataset.id);
+        if (selectMode) {
+          if (selectedIds.has(id)) {
+            selectedIds.delete(id);
+          } else {
+            selectedIds.add(id);
+          }
+          applyFilters();
+          updateSumBar();
+        } else {
+          openEditSheet(id, this.dataset.tipo);
+        }
       });
     });
+  }
+
+  function updateSumBar() {
+    var bar = document.getElementById('extratoSumBar');
+    var countEl = document.getElementById('extratoSumCount');
+    var totalEl = document.getElementById('extratoSumTotal');
+    if (!selectedIds.size) {
+      bar.style.display = 'none';
+      return;
+    }
+    var sum = 0;
+    document.querySelectorAll('.extrato-tx-item').forEach(function (el) {
+      var id = parseInt(el.dataset.id);
+      if (selectedIds.has(id)) {
+        var val = parseFloat(el.dataset.valor || 0);
+        var prefix = el.dataset.prefix;
+        sum += (prefix === '+' ? 1 : -1) * val;
+      }
+    });
+    var n = selectedIds.size;
+    countEl.textContent = n + (n === 1 ? ' selecionada' : ' selecionadas');
+    var prefix = sum >= 0 ? '+' : '−';
+    totalEl.textContent = prefix + ' ' + formatMoney(Math.abs(sum));
+    totalEl.className = 'extrato-sum-total ' + (sum >= 0 ? 'extrato-sum-total--pos' : 'extrato-sum-total--neg');
+    bar.style.display = 'flex';
   }
 
   async function loadExtrato() {
     var body = document.getElementById('extratoBody');
     body.innerHTML = '<div class="text-center py-4 text-muted small">Carregando...</div>';
+    selectedIds.clear();
+    document.getElementById('extratoSumBar').style.display = 'none';
     try {
       var mes = month + 1;
       var r = await fetch('/api/contas/' + contaId + '/lancamentos?mes=' + mes + '&ano=' + year);
@@ -298,12 +355,51 @@
     applyFilters();
   });
 
+  async function loadCategoriasAll() {
+    try {
+      var [rRec, rDesp] = await Promise.all([
+        fetch('/api/config/categorias?tipo=receita'),
+        fetch('/api/config/categorias?tipo=despesa'),
+      ]);
+      var rec = await rRec.json();
+      var desp = await rDesp.json();
+      var all = (Array.isArray(rec) ? rec : []).concat(Array.isArray(desp) ? desp : []);
+      all.forEach(function (c) { categoriasMapa[c.id] = c; });
+    } catch (e) {}
+  }
+
   async function loadCategorias(tipoCat) {
     if (categoriasData.length) return;
     try {
       var r = await fetch('/api/config/categorias?tipo=' + tipoCat);
       categoriasData = await r.json();
     } catch (e) {}
+  }
+
+  var btnSelect = document.getElementById('btnSelectMode');
+  if (btnSelect) {
+    btnSelect.addEventListener('click', function () {
+      selectMode = !selectMode;
+      selectedIds.clear();
+      if (selectMode) {
+        this.classList.add('active');
+        this.innerHTML = '<i class="bi bi-x-square me-1"></i>Cancelar';
+      } else {
+        this.classList.remove('active');
+        this.innerHTML = '<i class="bi bi-check2-square me-1"></i>Selecionar';
+      }
+      document.getElementById('extratoSumBar').style.display = 'none';
+      applyFilters();
+    });
+  }
+
+  var sumClear = document.getElementById('extratoSumClear');
+  if (sumClear) {
+    sumClear.addEventListener('click', function () {
+      selectedIds.clear();
+      document.getElementById('extratoSumBar').style.display = 'none';
+      applyFilters();
+    });
   }
 
   function populateCategorias(selectedId) {
@@ -506,5 +602,5 @@
   });
 
   loadContaInfo();
-  loadExtrato();
+  loadCategoriasAll().then(loadExtrato);
 })();
