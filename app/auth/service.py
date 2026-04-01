@@ -40,6 +40,7 @@ from app.auth.repository import (
     get_password_reset_token,
     mark_token_as_used,
     update_user_role as _repo_update_user_role,
+    delete_user as _repo_delete_user,
 )
 
 from app.auth.profile_repository import upsert_profile
@@ -275,6 +276,17 @@ def update_user_role(user_id: int, role: str):
         raise ValueError("O owner do sistema não pode ter seu acesso de administrador removido")
 
     _repo_update_user_role(user_id, role)
+
+# =====================================================
+# DELETE ACCOUNT
+# =====================================================
+def delete_account(user_id: int):
+    user = get_user_by_id(user_id)
+    if not user:
+        raise ValueError("Usuário não encontrado")
+    if user.get("is_owner"):
+        raise ValueError("O owner do sistema não pode excluir sua conta")
+    _repo_delete_user(user_id)
 
 # =====================================================
 # RESET SENHA

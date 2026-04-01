@@ -16,7 +16,8 @@ from app.auth.service import (
     remove_profile_image,
     update_user_role,
     request_password_reset,
-    reset_password
+    reset_password,
+    delete_account,
 )
 
 from app.auth.repository import (
@@ -180,6 +181,18 @@ def github_callback():
 @bp.route("/logout")
 def logout():
     logout_user()
+    return redirect(url_for("auth.login"))
+
+@bp.route("/excluir-conta", methods=["POST"])
+@login_required
+def delete_account_route():
+    try:
+        delete_account(current_user.id)
+        logout_user()
+        flash("Sua conta foi excluída com sucesso.", "success")
+    except ValueError as e:
+        flash(str(e), "danger")
+        return redirect(url_for("auth.my_profile"))
     return redirect(url_for("auth.login"))
 
 @bp.route("/login/local", methods=["POST"])
