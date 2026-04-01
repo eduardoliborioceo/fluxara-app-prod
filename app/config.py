@@ -2,7 +2,7 @@ import os
 
 class Config:
     DATABASE_URL = os.getenv("DATABASE_URL")
-    SECRET_KEY = os.getenv("SECRET_KEY", "dev")
+    SECRET_KEY = os.getenv("SECRET_KEY")
 
     ENVIRONMENT = os.getenv("ENVIRONMENT", "production")
 
