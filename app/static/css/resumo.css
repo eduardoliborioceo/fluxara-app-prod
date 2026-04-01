@@ -451,58 +451,116 @@
 }
 
 /* ========================
-   CARD CARTÃO CRÉDITO
+   CARD CARTÃO CRÉDITO (resumo)
 ======================== */
-.cartao-item {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 10px 0;
+.cartao-card {
+  padding: 16px 20px;
+  cursor: pointer;
   border-bottom: 1px solid rgba(0,0,0,.05);
+  transition: background .12s;
 }
 
-.cartao-item:last-child {
+.cartao-card:last-child {
   border-bottom: none;
 }
 
+.cartao-card:hover {
+  background: rgba(0,0,0,.02);
+}
+
+.cartao-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.cartao-card-nome {
+  flex: 1;
+  font-weight: 600;
+  font-size: .9rem;
+  color: var(--text, #1e293b);
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cartao-card-chevron {
+  font-size: .8rem;
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
 .cartao-bandeira {
-  width: 42px;
-  height: 42px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #1e293b, #334155);
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #334155, #1e293b);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
-.cartao-info {
-  flex: 1;
-}
-
-.cartao-nome {
+.cartao-card-fatura-label {
+  font-size: .7rem;
   font-weight: 600;
-  font-size: .9rem;
+  color: var(--text-muted, #64748b);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  margin-bottom: 2px;
 }
 
-.cartao-vencimento {
-  font-size: .78rem;
-  color: #6c757d;
-}
-
-.cartao-fatura {
-  text-align: right;
-}
-
-.cartao-fatura-valor {
+.cartao-card-fatura-valor {
+  font-size: 1.35rem;
   font-weight: 700;
-  font-size: 1rem;
-  color: #dc3545;
+  color: var(--text, #1e293b);
+  margin-bottom: 4px;
+  line-height: 1.1;
 }
 
-.cartao-fatura-limite {
+.cartao-card-fecha {
   font-size: .75rem;
-  color: #6c757d;
+  color: var(--text-muted, #64748b);
+  margin-bottom: 12px;
+}
+
+.cartao-card-divider {
+  height: 1px;
+  background: rgba(0,0,0,.06);
+  margin-bottom: 12px;
+}
+
+.cartao-card-limite-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cartao-card-limite-label {
+  font-size: .8rem;
+  color: var(--text-muted, #64748b);
+  font-weight: 500;
+}
+
+.cartao-card-limite-valor {
+  font-size: .88rem;
+  font-weight: 700;
+  color: var(--text, #1e293b);
+}
+
+[data-theme="escuro"] .cartao-card {
+  border-bottom-color: rgba(255,255,255,.06);
+}
+
+[data-theme="escuro"] .cartao-card:hover {
+  background: rgba(255,255,255,.03);
+}
+
+[data-theme="escuro"] .cartao-card-divider {
+  background: rgba(255,255,255,.06);
 }
 
 /* ========================

@@ -13,6 +13,158 @@
   z-index: 100;
 }
 
+/* Topbar simples para extrato de cartão (sem saldo inline) */
+.extrato-cartao-topbar {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px 8px;
+  background: var(--bg, #f1f5f9);
+}
+
+/* ========================
+   VISUAL CREDIT CARD
+======================== */
+.cartao-visual {
+  border-radius: 18px;
+  padding: 20px 22px 18px;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 168px;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+}
+
+.cartao-visual::before {
+  content: '';
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.07);
+  pointer-events: none;
+}
+
+.cartao-visual::after {
+  content: '';
+  position: absolute;
+  bottom: -60px;
+  left: -20px;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.05);
+  pointer-events: none;
+}
+
+.cartao-visual-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.cartao-visual-nome {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.2;
+}
+
+.cartao-visual-tipo {
+  font-size: .72rem;
+  color: rgba(255,255,255,.65);
+  margin-top: 3px;
+  font-weight: 500;
+  letter-spacing: .3px;
+}
+
+.cartao-visual-shield {
+  font-size: 1.15rem;
+  color: rgba(255,255,255,.55);
+}
+
+.cartao-visual-bottom {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-top: 18px;
+}
+
+.cartao-visual-fatura-wrap {}
+
+.cartao-visual-fatura-label {
+  font-size: .68rem;
+  color: rgba(255,255,255,.6);
+  font-weight: 600;
+  letter-spacing: .4px;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.cartao-visual-fatura-valor {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1;
+}
+
+.cartao-visual-bandeira {
+  display: flex;
+  align-items: center;
+}
+
+/* Info row below the card */
+.cartao-info-row {
+  display: flex;
+  align-items: stretch;
+  background: var(--card, #fff);
+  border: 1px solid var(--border, rgba(15,23,42,.09));
+  border-radius: 12px;
+  padding: 14px 0;
+  margin-bottom: 14px;
+}
+
+.cartao-info-cell {
+  flex: 1;
+  text-align: center;
+  padding: 0 8px;
+}
+
+.cartao-info-label {
+  font-size: .68rem;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  margin-bottom: 4px;
+}
+
+.cartao-info-value {
+  font-size: .92rem;
+  font-weight: 700;
+  color: var(--text, #1e293b);
+}
+
+.cartao-info-divider {
+  width: 1px;
+  background: var(--border, rgba(15,23,42,.09));
+  align-self: stretch;
+}
+
+[data-theme="escuro"] .cartao-info-row {
+  background: #1e293b;
+  border-color: rgba(255,255,255,.08);
+}
+
+[data-theme="escuro"] .cartao-info-divider {
+  background: rgba(255,255,255,.08);
+}
+
 .extrato-back-btn {
   width: 36px;
   height: 36px;
