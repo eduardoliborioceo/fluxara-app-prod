@@ -206,7 +206,7 @@ def register():
         user = register_user(request.form)
         attach_employee_and_profile(user["id"], request.form)
         flash(
-            f"Usuário {user['username']} criado. Aguardando aprovação",
+            f"Cadastro realizado com sucesso! Bem-vindo, {user['username']}. Você já pode fazer login.",
             "success"
         )
     except ValueError as e:
