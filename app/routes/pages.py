@@ -40,6 +40,12 @@ def mais():
     return render_template("mais.html", active_menu="mais")
 
 
+@bp.route("/surebet")
+@login_required
+def surebet():
+    return render_template("surebet.html", active_menu="surebet")
+
+
 @bp.route("/nova-transferencia")
 @login_required
 def nova_transferencia():

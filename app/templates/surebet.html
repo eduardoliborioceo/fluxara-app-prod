@@ -1,0 +1,78 @@
+{% extends "layouts/app.html" %}
+{% block title %}Fluxara · Surebet{% endblock %}
+
+{% block page_title %}
+<div class="page-header">
+  <div class="page-header-title">
+    <span class="page-header-section">Ferramentas</span>
+    <h1 class="page-header-name">Calculadora Surebet</h1>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/surebet.css') }}?v={{ static_v }}">
+
+<div class="surebet-wrapper">
+
+  <!-- Stake + outcomes -->
+  <div class="surebet-card">
+    <div class="surebet-section-label">Configuração</div>
+
+    <div class="surebet-field">
+      <label class="surebet-label">Total a apostar</label>
+      <div class="surebet-money-wrap">
+        <span class="surebet-currency">R$</span>
+        <input type="number" id="sbTotal" class="surebet-money-input"
+               placeholder="100,00" step="0.01" min="0.01" value="100">
+      </div>
+    </div>
+
+    <div class="surebet-field">
+      <label class="surebet-label">Número de resultados</label>
+      <div class="surebet-outcomes-toggle" id="sbOutcomesToggle">
+        <button type="button" class="surebet-outcome-btn active" data-n="2">2</button>
+        <button type="button" class="surebet-outcome-btn" data-n="3">3</button>
+        <button type="button" class="surebet-outcome-btn" data-n="4">4</button>
+        <button type="button" class="surebet-outcome-btn" data-n="5">5</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Odds inputs -->
+  <div class="surebet-card">
+    <div class="surebet-section-label">Odds</div>
+    <div id="sbOddsContainer"></div>
+  </div>
+
+  <!-- Result -->
+  <div class="surebet-card surebet-result-card" id="sbResultCard">
+    <div class="surebet-result-header" id="sbResultHeader">
+      <i class="bi bi-calculator" id="sbResultIcon"></i>
+      <span id="sbResultTitle">Aguardando odds...</span>
+    </div>
+
+    <div id="sbResultBody" style="display:none">
+      <div class="surebet-stakes" id="sbStakes"></div>
+
+      <div class="surebet-result-row">
+        <span class="surebet-result-label">Retorno garantido</span>
+        <span class="surebet-result-value" id="sbRetorno">—</span>
+      </div>
+      <div class="surebet-result-row">
+        <span class="surebet-result-label">Lucro</span>
+        <span class="surebet-result-value surebet-lucro" id="sbLucro">—</span>
+      </div>
+      <div class="surebet-result-row">
+        <span class="surebet-result-label">Margem</span>
+        <span class="surebet-result-value" id="sbMargem">—</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/surebet.js') }}?v={{ static_v }}"></script>
+{% endblock %}
