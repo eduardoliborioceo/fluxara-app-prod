@@ -418,6 +418,29 @@ def cartao_lancamentos(cartao_id):
     return jsonify(lancamentos_service.list_by_cartao(cartao_id, current_user.id, mes, ano))
 
 
+@bp.route("/cartoes/<int:cartao_id>/gerar-fatura-lancamento", methods=["POST"])
+@login_required
+def cartao_gerar_fatura_lancamento(cartao_id):
+    data = request.get_json() or {}
+    try:
+        mes = int(data.get("mes") or 0)
+        ano = int(data.get("ano") or 0)
+        valor = float(data.get("valor") or 0)
+        data_pagamento = str(data.get("data_pagamento") or "")
+        if not mes or not ano or not data_pagamento:
+            raise ValueError("Campos obrigatórios ausentes")
+        row = cartoes_service.gerar_lancamento_fatura(
+            cartao_id, current_user.id, mes, ano, valor, data_pagamento
+        )
+        return jsonify(row), 201
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        from flask import current_app
+        current_app.logger.error("gerar_fatura_lancamento error: %s", e)
+        return jsonify({"error": "Erro interno"}), 500
+
+
 @bp.route("/resumo/projecao-saldo", methods=["GET"])
 @login_required
 def resumo_projecao_saldo():

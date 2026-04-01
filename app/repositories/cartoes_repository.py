@@ -82,6 +82,16 @@ def get_fatura_total(cartao_id: int, user_id: int, mes: int, ano: int) -> float:
             return float(row["total"]) if row else 0.0
 
 
+def get_cartao(cartao_id: int, user_id: int):
+    with get_db() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("""
+                SELECT * FROM cartoes_credito
+                WHERE id = %s AND user_id = %s AND ativo = TRUE
+            """, (cartao_id, user_id))
+            return cur.fetchone()
+
+
 def delete_cartao(cartao_id: int, user_id: int):
     with get_db() as conn:
         with conn.cursor() as cur:

@@ -1,4 +1,6 @@
+import datetime
 from app.repositories import cartoes_repository as repo
+from app.repositories import lancamentos_repository as lanc_repo
 
 _BANDEIRAS_VALIDAS = {"visa", "mastercard", "elo", "amex", "hipercard", "outro"}
 
@@ -39,6 +41,47 @@ def edit_cartao(cartao_id: int, user_id: int, nome: str, limite, bandeira: str, 
 
 def remove_cartao(cartao_id: int, user_id: int):
     repo.delete_cartao(cartao_id, user_id)
+
+
+_MESES_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+              'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
+
+
+def gerar_lancamento_fatura(cartao_id: int, user_id: int, mes: int, ano: int,
+                            valor: float, data_pagamento: str) -> dict:
+    cartao = repo.get_cartao(cartao_id, user_id)
+    if not cartao:
+        raise ValueError("Cartão não encontrado")
+    if not cartao.get('conta_id'):
+        raise ValueError("Cartão sem conta bancária vinculada")
+    if valor <= 0:
+        raise ValueError("Valor deve ser positivo")
+
+    try:
+        data_pg = datetime.date.fromisoformat(data_pagamento)
+    except (ValueError, TypeError):
+        raise ValueError("Data de pagamento inválida")
+
+    nome_mes = _MESES_PT[mes - 1] if 1 <= mes <= 12 else str(mes)
+    descricao = f"Fatura {nome_mes}/{ano} - {cartao['nome']}"
+
+    row = lanc_repo.create_lancamento(
+        user_id=user_id,
+        tipo='despesa',
+        descricao=descricao,
+        valor=valor,
+        data_vencimento=data_pg,
+        efetivado=False,
+        recorrente=False,
+        recorrencia_tipo=None,
+        categoria_id=None,
+        subcategoria_id=None,
+        conta_id=int(cartao['conta_id']),
+        cartao_id=None,
+        fatura_mes=None,
+        fatura_ano=None,
+    )
+    return dict(row)
 
 
 def _parse_money(value) -> float:
