@@ -14,6 +14,7 @@
   var cfg = document.getElementById('extratoConfig');
   var cartaoId = parseInt(cfg.dataset.id);
   var cartaoBandeira = cfg.dataset.bandeira || 'outro';
+  var faturaAtualTotal = 0;
 
   var params = new URLSearchParams(window.location.search);
   var now = new Date();
@@ -78,6 +79,7 @@
       var faturaMes = month + 1;
       var faturaTotal = parseFloat(cartao.fatura_atual || 0);
       var limDisp = parseFloat(cartao.limite_disponivel != null ? cartao.limite_disponivel : cartao.limite) || 0;
+      faturaAtualTotal = faturaTotal;
       document.getElementById('extratoSaldoInfo').textContent =
         'Fatura ' + MESES[month] + ': ' + formatMoney(faturaTotal) + '  ·  Disponível: ' + formatMoney(limDisp);
     } catch (e) {}
@@ -252,6 +254,54 @@
       loadCartaoInfo();
     } catch (e) {}
     finally { this.disabled = false; }
+  });
+
+  var pagamentoBackdrop = document.getElementById('pagamentoBackdrop');
+
+  function openPagamentoSheet() {
+    var mes = month + 1;
+    var hoje = new Date();
+    var dataDefault = hoje.toISOString().slice(0, 10);
+    document.getElementById('pagamentoFaturaInfo').textContent =
+      'Fatura ' + MESES[month] + '/' + year + ' — Total: ' + formatMoney(faturaAtualTotal);
+    document.getElementById('pagamentoValor').value = faturaAtualTotal > 0 ? faturaAtualTotal.toFixed(2) : '';
+    document.getElementById('pagamentoData').value = dataDefault;
+    var hint = document.getElementById('pagamentoHint');
+    hint.textContent = faturaAtualTotal > 0 ? 'Total da fatura: ' + formatMoney(faturaAtualTotal) : '';
+    pagamentoBackdrop.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closePagamentoSheet() {
+    pagamentoBackdrop.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  document.getElementById('btnPagarFatura').addEventListener('click', openPagamentoSheet);
+  document.getElementById('pagamentoClose').addEventListener('click', closePagamentoSheet);
+  pagamentoBackdrop.addEventListener('click', function (e) { if (e.target === this) closePagamentoSheet(); });
+
+  document.getElementById('pagamentoBtnSalvar').addEventListener('click', async function () {
+    var valor = parseFloat(document.getElementById('pagamentoValor').value);
+    var dataPg = document.getElementById('pagamentoData').value;
+    if (!valor || valor <= 0) { alert('Informe um valor válido.'); return; }
+    if (!dataPg) { alert('Informe a data de pagamento.'); return; }
+    var btn = this;
+    btn.disabled = true;
+    try {
+      var r = await fetch('/api/cartoes/' + cartaoId + '/gerar-fatura-lancamento', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mes: month + 1, ano: year, valor: valor, data_pagamento: dataPg }),
+      });
+      var data = await r.json();
+      if (!r.ok) { alert(data.error || 'Erro ao criar lançamento.'); return; }
+      closePagamentoSheet();
+    } catch (e) {
+      alert('Erro ao criar lançamento.');
+    } finally {
+      btn.disabled = false;
+    }
   });
 
   loadCartaoInfo();

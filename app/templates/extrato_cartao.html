@@ -36,6 +36,12 @@
     </button>
   </div>
 
+  <div class="extrato-cartao-actions">
+    <button class="extrato-cartao-pay-btn" id="btnPagarFatura">
+      <i class="bi bi-cash-coin"></i> Pagar / Antecipar
+    </button>
+  </div>
+
   <div class="extrato-card" id="extratoBody">
     <div class="text-center py-4 text-muted small">
       <i class="bi bi-inbox d-block mb-1" style="font-size:1.8rem;opacity:.3"></i>
@@ -43,6 +49,50 @@
     </div>
   </div>
 
+</div>
+
+<!-- ====== FATURA PAYMENT SHEET ====== -->
+<div class="edit-sheet-backdrop" id="pagamentoBackdrop">
+  <div class="edit-sheet">
+    <div class="edit-sheet-handle"></div>
+    <div class="edit-sheet-title-row">
+      <div class="edit-sheet-type-icon edit-sheet-type-icon--cartao">
+        <i class="bi bi-cash-coin"></i>
+      </div>
+      <div class="edit-sheet-title">Pagar Fatura</div>
+      <button class="edit-sheet-close" id="pagamentoClose">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <div class="edit-sheet-body">
+
+      <div class="edit-field">
+        <label class="edit-label">Fatura</label>
+        <div class="edit-info-text" id="pagamentoFaturaInfo">—</div>
+      </div>
+
+      <div class="edit-field">
+        <label class="edit-label">Valor a pagar</label>
+        <div class="edit-valor-wrap">
+          <span class="edit-currency">R$</span>
+          <input type="number" id="pagamentoValor" class="edit-valor-input" placeholder="0,00" step="0.01" min="0.01">
+        </div>
+        <div class="pagamento-valor-hint" id="pagamentoHint"></div>
+      </div>
+
+      <div class="edit-field">
+        <label class="edit-label">Data de pagamento</label>
+        <input type="date" id="pagamentoData" class="edit-input">
+      </div>
+
+      <div class="edit-actions">
+        <button type="button" class="edit-btn-save" id="pagamentoBtnSalvar">
+          Criar lançamento
+        </button>
+      </div>
+
+    </div>
+  </div>
 </div>
 
 <!-- ====== EDIT SHEET ====== -->
