@@ -76,9 +76,13 @@
               </span>
               <input type="password"
                      name="password"
+                     id="loginPassword"
                      class="form-control"
                      placeholder="Senha"
                      required>
+              <button type="button" class="input-group-text auth-eye-btn" id="toggleLoginPassword" tabindex="-1" title="Mostrar/ocultar senha">
+                <i class="bi bi-eye" id="toggleLoginPasswordIcon"></i>
+              </button>
             </div>
           </div>
 
@@ -97,20 +101,17 @@
           </a>
         </div>
 
-        <hr>
-
-        <div class="d-grid gap-2 mb-4">
-          <a href="{{ url_for('auth.login_google') }}" class="btn btn-outline-danger">
-            <i class="bi bi-google me-2"></i> Logar com Google
-          </a>
-          <a href="{{ url_for('auth.login_github') }}" class="btn btn-outline-dark">
-            <i class="bi bi-github me-2"></i> Logar com GitHub
-          </a>
+        <div class="auth-oauth-divider">
+          <span>ou continue com</span>
         </div>
 
-        <div class="text-center mt-3">
-          <small class="d-block fw-bold">EDUARDO LIBÓRIO</small>
-          <small class="text-muted">Fullstack Developer</small>
+        <div class="d-flex justify-content-center gap-3 mb-4">
+          <a href="{{ url_for('auth.login_google') }}" class="auth-oauth-circle auth-oauth-circle--google" title="Logar com Google">
+            <i class="bi bi-google"></i>
+          </a>
+          <a href="{{ url_for('auth.login_github') }}" class="auth-oauth-circle auth-oauth-circle--github" title="Logar com GitHub">
+            <i class="bi bi-github"></i>
+          </a>
         </div>
 
         <div class="legal-links-desktop text-center mt-3">
@@ -119,11 +120,29 @@
           <a href="{{ url_for('pages.cookie_policy') }}">Política de Cookies</a>
         </div>
 
+        <div class="auth-credit text-center mt-2">
+          <img src="{{ url_for('static', filename='images/logos/app_icon.svg') }}?v={{ static_v }}" alt="Fluxara" class="auth-credit-icon">
+          Fluxara — EDUARDO LIBÓRIO Fullstack Developer
+        </div>
+
       </div>
     </div>
   </div>
 </div>
 
 <script src="{{ url_for('static', filename='js/input-masks.js') }}?v={{ static_v }}"></script>
+<script>
+(function () {
+  var btn = document.getElementById('toggleLoginPassword');
+  var input = document.getElementById('loginPassword');
+  var icon = document.getElementById('toggleLoginPasswordIcon');
+  if (!btn || !input || !icon) return;
+  btn.addEventListener('click', function () {
+    var visible = input.type === 'text';
+    input.type = visible ? 'password' : 'text';
+    icon.className = visible ? 'bi bi-eye' : 'bi bi-eye-slash';
+  });
+})();
+</script>
 
 {% endblock %}

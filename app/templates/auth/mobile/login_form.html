@@ -7,7 +7,7 @@
   <form method="post"
         action="{{ url_for('auth.login_local') }}"
         class="mobile-form">
-    
+
     <button
       id="install-app-btn"
       type="button"
@@ -35,7 +35,10 @@
       <span class="input-group-text">
         <i class="bi bi-lock"></i>
       </span>
-      <input type="password" name="password" class="form-control" placeholder="Senha" required>
+      <input type="password" name="password" id="mobileLoginPassword" class="form-control" placeholder="Senha" required>
+      <button type="button" class="input-group-text auth-eye-btn" id="toggleMobilePassword" tabindex="-1" title="Mostrar/ocultar senha">
+        <i class="bi bi-eye" id="toggleMobilePasswordIcon"></i>
+      </button>
     </div>
 
     <button class="btn btn-primary w-100 mb-3">
@@ -49,18 +52,34 @@
       </a>
     </div>
 
-    <a href="{{ url_for('auth.login_google') }}"
-       class="btn btn-outline-danger w-100 mb-2">
-      <i class="bi bi-google me-2"></i>
-      Logar com Google
-    </a>
+    <div class="auth-oauth-divider auth-oauth-divider--dark">
+      <span>ou continue com</span>
+    </div>
 
-    <a href="{{ url_for('auth.login_github') }}"
-       class="btn btn-outline-dark w-100">
-      <i class="bi bi-github me-2"></i>
-      Logar com GitHub
-    </a>
+    <div class="d-flex justify-content-center gap-3 mb-2">
+      <a href="{{ url_for('auth.login_google') }}" class="auth-oauth-circle auth-oauth-circle--google" title="Logar com Google">
+        <i class="bi bi-google"></i>
+      </a>
+      <a href="{{ url_for('auth.login_github') }}" class="auth-oauth-circle auth-oauth-circle--github" title="Logar com GitHub">
+        <i class="bi bi-github"></i>
+      </a>
+    </div>
 
   </form>
 </section>
+
+<script>
+(function () {
+  var btn = document.getElementById('toggleMobilePassword');
+  var input = document.getElementById('mobileLoginPassword');
+  var icon = document.getElementById('toggleMobilePasswordIcon');
+  if (!btn || !input || !icon) return;
+  btn.addEventListener('click', function () {
+    var visible = input.type === 'text';
+    input.type = visible ? 'password' : 'text';
+    icon.className = visible ? 'bi bi-eye' : 'bi bi-eye-slash';
+  });
+})();
+</script>
+
 {% endblock %}

@@ -128,12 +128,13 @@
 }
 
 /* ==================================================
-   BRAND NO CARD (ÍCONE + NOME)
+   BRAND NO CARD (ÍCONE + NOME) – CENTRALIZADO
 ================================================== */
 
 .auth-split-brand {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
   margin-bottom: 24px;
 }
@@ -172,7 +173,7 @@
 }
 
 /* ==================================================
-   LOGIN – INPUTS COM ÍCONE
+   LOGIN – INPUTS COM ÍCONE E EYE BUTTON
 ================================================== */
 
 .auth-input .input-group-text {
@@ -183,11 +184,117 @@
 
 .auth-input .form-control {
   border-left: none;
+  border-right: none;
 }
 
 .auth-input .form-control:focus {
   box-shadow: none;
   border-color: #ced4da;
+}
+
+.auth-eye-btn {
+  background-color: #fff;
+  border-left: none;
+  color: #6c757d;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.auth-eye-btn:hover {
+  color: #1e293b;
+}
+
+/* ==================================================
+   OAUTH – DIVIDER
+================================================== */
+
+.auth-oauth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  color: #94a3b8;
+  font-size: 0.78rem;
+}
+
+.auth-oauth-divider::before,
+.auth-oauth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e2e8f0;
+}
+
+.auth-oauth-divider--dark {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.auth-oauth-divider--dark::before,
+.auth-oauth-divider--dark::after {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ==================================================
+   OAUTH – BOTÕES CIRCULARES
+================================================== */
+
+.auth-oauth-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  font-size: 1.1rem;
+  text-decoration: none;
+  transition: transform 0.15s, box-shadow 0.15s;
+  border: 1.5px solid;
+}
+
+.auth-oauth-circle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.auth-oauth-circle--google {
+  color: #ea4335;
+  border-color: #ea4335;
+  background: #fff;
+}
+
+.auth-oauth-circle--google:hover {
+  background: #ea4335;
+  color: #fff;
+}
+
+.auth-oauth-circle--github {
+  color: #24292f;
+  border-color: #24292f;
+  background: #fff;
+}
+
+.auth-oauth-circle--github:hover {
+  background: #24292f;
+  color: #fff;
+}
+
+/* ==================================================
+   CRÉDITO DO AUTOR (RODAPÉ DO CARD)
+================================================== */
+
+.auth-credit {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.auth-credit-icon {
+  width: 13px;
+  height: 13px;
+  opacity: 0.7;
 }
 
 /* ==================================================
