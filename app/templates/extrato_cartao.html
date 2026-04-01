@@ -11,20 +11,50 @@
      data-bandeira="{{ cartao_bandeira }}"
      style="display:none"></div>
 
-<div class="extrato-page-header">
+<!-- Back button bar (replaces old extrato-page-header) -->
+<div class="extrato-cartao-topbar">
   <a href="{{ url_for('pages.resumo') }}" class="extrato-back-btn">
     <i class="bi bi-arrow-left"></i>
   </a>
-  <div class="extrato-header-info">
-    <div class="extrato-header-logo" id="extratoLogo"></div>
-    <div style="min-width:0">
-      <div class="extrato-header-nome">{{ cartao_nome }}</div>
-      <div class="extrato-header-saldo" id="extratoSaldoInfo"></div>
-    </div>
-  </div>
 </div>
 
 <div class="container-fluid px-3" style="max-width:680px;padding-bottom:100px;">
+
+  <!-- Visual credit card -->
+  <div class="cartao-visual" id="cartaoVisual">
+    <div class="cartao-visual-top">
+      <div>
+        <div class="cartao-visual-nome">{{ cartao_nome }}</div>
+        <div class="cartao-visual-tipo">Cartão de Crédito</div>
+      </div>
+      <i class="bi bi-shield-check cartao-visual-shield"></i>
+    </div>
+    <div class="cartao-visual-bottom">
+      <div class="cartao-visual-fatura-wrap">
+        <div class="cartao-visual-fatura-label">Fatura aberta</div>
+        <div class="cartao-visual-fatura-valor" id="cartaoVisualValor">—</div>
+      </div>
+      <div class="cartao-visual-bandeira" id="cartaoVisualBandeira"></div>
+    </div>
+  </div>
+
+  <!-- Info row below card -->
+  <div class="cartao-info-row">
+    <div class="cartao-info-cell">
+      <div class="cartao-info-label">Disponível</div>
+      <div class="cartao-info-value" id="cartaoInfoDisp">—</div>
+    </div>
+    <div class="cartao-info-divider"></div>
+    <div class="cartao-info-cell">
+      <div class="cartao-info-label">Vencimento</div>
+      <div class="cartao-info-value" id="cartaoInfoVenc">—</div>
+    </div>
+    <div class="cartao-info-divider"></div>
+    <div class="cartao-info-cell">
+      <div class="cartao-info-label">Fechamento</div>
+      <div class="cartao-info-value" id="cartaoInfoFecha">—</div>
+    </div>
+  </div>
 
   <div class="mes-filtro">
     <button id="btnMesAnterior" title="Fatura anterior">

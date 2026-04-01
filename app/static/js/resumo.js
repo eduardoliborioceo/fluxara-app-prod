@@ -233,28 +233,30 @@
       var totalDisp = 0;
       var mes = month + 1;
       body.innerHTML = data.map(function (c) {
-        var limite = parseFloat(c.limite) || 0;
         var limDisp = parseFloat(c.limite_disponivel != null ? c.limite_disponivel : c.limite) || 0;
         var fatAtual = parseFloat(c.fatura_atual || 0);
         if (limDisp > 0) totalDisp += limDisp;
         var b = BANDEIRAS[c.bandeira] || BANDEIRAS.outro;
-        var logoHtml = buildBandeiraLogo(b, 42);
-        return '<div class="cartao-item" data-id="' + c.id + '" data-mes="' + mes + '" data-ano="' + year + '" style="cursor:pointer">'
-          + logoHtml
-          + '<div class="cartao-info">'
-          +   '<div class="cartao-nome">' + esc(c.nome) + '</div>'
-          +   '<div class="cartao-vencimento">Fatura atual: ' + formatMoney(fatAtual) + '</div>'
-          +   '<div class="cartao-vencimento">Fecha dia ' + c.dia_fechamento + ' &bull; Vence dia ' + c.dia_vencimento + '</div>'
+        var logoHtml = buildBandeiraLogo(b, 36);
+        var fechaInfo = 'Fecha dia ' + c.dia_fechamento + ' · Vence dia ' + c.dia_vencimento;
+        return '<div class="cartao-card" data-id="' + c.id + '" data-mes="' + mes + '" data-ano="' + year + '">'
+          + '<div class="cartao-card-header">'
+          +   logoHtml
+          +   '<div class="cartao-card-nome">' + esc(c.nome) + '</div>'
+          +   '<i class="bi bi-chevron-right cartao-card-chevron"></i>'
           + '</div>'
-          + '<div class="cartao-fatura">'
-          +   '<div class="cartao-fatura-valor">' + formatMoney(fatAtual) + '</div>'
-          +   '<div class="cartao-fatura-limite">Disponível: ' + formatMoney(limDisp) + '</div>'
-          +   '<div class="cartao-fatura-limite">Limite: ' + formatMoney(limite) + '</div>'
+          + '<div class="cartao-card-fatura-label">Fatura aberta</div>'
+          + '<div class="cartao-card-fatura-valor">' + formatMoney(fatAtual) + '</div>'
+          + '<div class="cartao-card-fecha">' + esc(fechaInfo) + '</div>'
+          + '<div class="cartao-card-divider"></div>'
+          + '<div class="cartao-card-limite-row">'
+          +   '<span class="cartao-card-limite-label">Limite disponível</span>'
+          +   '<span class="cartao-card-limite-valor">' + formatMoney(limDisp) + '</span>'
           + '</div>'
           + '</div>';
       }).join('');
       totalEl.textContent = formatMoney(totalDisp);
-      body.querySelectorAll('.cartao-item').forEach(function (el) {
+      body.querySelectorAll('.cartao-card').forEach(function (el) {
         el.addEventListener('click', function () {
           var id = this.dataset.id;
           var m  = this.dataset.mes;

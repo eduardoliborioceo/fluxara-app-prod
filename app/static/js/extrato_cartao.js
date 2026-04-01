@@ -55,16 +55,21 @@
 
   updateMesLabel();
 
-  function buildBandeiraLogo(b, size) {
-    size = size || 38;
+  var BANDEIRA_GRADIENTS = {
+    visa:       'linear-gradient(135deg, #1a1f71 0%, #0d47a1 100%)',
+    mastercard: 'linear-gradient(135deg, #eb001b 0%, #f79e1b 100%)',
+    elo:        'linear-gradient(135deg, #00a4e0 0%, #0070b3 100%)',
+    amex:       'linear-gradient(135deg, #2e77bc 0%, #1a5276 100%)',
+    hipercard:  'linear-gradient(135deg, #b22222 0%, #7b0000 100%)',
+    outro:      'linear-gradient(135deg, #334155 0%, #1e293b 100%)',
+  };
+
+  function buildBandeiraVisual(b) {
     if (b && b.svg) {
-      return '<div class="extrato-header-logo" style="background:#f8fafc;width:' + size + 'px;height:' + size + 'px;border-radius:10px">'
-        + '<img src="/static/images/bank-icons-logos-svg/' + esc(b.svg) + '" style="width:65%;height:65%;object-fit:contain"></div>';
+      return '<img src="/static/images/bank-icons-logos-svg/' + esc(b.svg)
+        + '" style="height:22px;object-fit:contain;filter:brightness(0) invert(1);opacity:.9">';
     }
-    var bg = (b && b.cor) || '#6c757d';
-    var fg = (b && b.corLetra) || '#fff';
-    var nome = (b && b.nome) || 'Cartão';
-    return '<div class="extrato-header-logo" style="background:' + bg + ';color:' + fg + ';width:' + size + 'px;height:' + size + 'px;border-radius:10px;font-size:.65rem;font-weight:700">' + esc(nome) + '</div>';
+    return '<span style="font-size:.75rem;font-weight:700;opacity:.85">' + esc((b && b.nome) || 'Cartão') + '</span>';
   }
 
   async function loadCartaoInfo() {
@@ -75,13 +80,23 @@
       var cartao = Array.isArray(data) ? data.find(function (c) { return c.id === cartaoId; }) : null;
       if (!cartao) return;
       var b = BANDEIRAS[cartao.bandeira] || BANDEIRAS.outro;
-      document.getElementById('extratoLogo').outerHTML = buildBandeiraLogo(b, 38);
-      var faturaMes = month + 1;
+      var grad = BANDEIRA_GRADIENTS[cartao.bandeira] || BANDEIRA_GRADIENTS.outro;
       var faturaTotal = parseFloat(cartao.fatura_atual || 0);
       var limDisp = parseFloat(cartao.limite_disponivel != null ? cartao.limite_disponivel : cartao.limite) || 0;
       faturaAtualTotal = faturaTotal;
-      document.getElementById('extratoSaldoInfo').textContent =
-        'Fatura ' + MESES[month] + ': ' + formatMoney(faturaTotal) + '  ·  Disponível: ' + formatMoney(limDisp);
+
+      var visual = document.getElementById('cartaoVisual');
+      if (visual) visual.style.background = grad;
+      var valEl = document.getElementById('cartaoVisualValor');
+      if (valEl) valEl.textContent = formatMoney(faturaTotal);
+      var bandEl = document.getElementById('cartaoVisualBandeira');
+      if (bandEl) bandEl.innerHTML = buildBandeiraVisual(b);
+      var dispEl = document.getElementById('cartaoInfoDisp');
+      if (dispEl) dispEl.textContent = formatMoney(limDisp);
+      var vencEl = document.getElementById('cartaoInfoVenc');
+      if (vencEl) vencEl.textContent = 'Dia ' + (cartao.dia_vencimento || '—');
+      var fechaEl = document.getElementById('cartaoInfoFecha');
+      if (fechaEl) fechaEl.textContent = 'Dia ' + (cartao.dia_fechamento || '—');
     } catch (e) {}
   }
 
