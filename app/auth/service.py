@@ -137,7 +137,7 @@ def register_user(form):
         "matricula": matricula,
         "setor": form.get("setor") or "",
         "password_hash": password_hash,
-        "is_active": is_first_user,
+        "is_active": True,
         "is_admin": is_first_user,
         "is_owner": is_first_user,
         "user_type": user_type
