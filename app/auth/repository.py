@@ -300,3 +300,9 @@ def get_user_by_email(email: str):
                 (email,)
             )
             return cur.fetchone()
+
+def delete_user(user_id: int):
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM users WHERE id=%s", (user_id,))
+        conn.commit()

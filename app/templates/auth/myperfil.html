@@ -185,6 +185,38 @@
     </button>
 
   </form>
+
+  <hr class="mt-4">
+
+  <div class="mt-3">
+    <h5 class="text-danger mb-1">Zona de perigo</h5>
+    <p class="text-muted small mb-3">A exclusão é permanente e não pode ser desfeita. Você pode se cadastrar novamente a qualquer momento.</p>
+    <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteAccountModal">
+      <i class="bi bi-trash3 me-1"></i> Excluir minha conta
+    </button>
+  </div>
+
+</div>
+
+<div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-0">
+        <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Excluir conta</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>Tem certeza que deseja excluir sua conta? Todos os seus dados serão permanentemente removidos.</p>
+        <p class="text-muted small">Você pode se cadastrar novamente a qualquer momento.</p>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <form method="post" action="{{ url_for('auth.delete_account_route') }}">
+          <button type="submit" class="btn btn-danger">Excluir minha conta</button>
+        </form>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="modal fade" id="cropModal" tabindex="-1" aria-hidden="true">
