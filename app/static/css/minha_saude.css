@@ -252,6 +252,29 @@
 }
 
 /* ========================
+   CALORIE PROGRESS
+======================== */
+.saude-cal-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #16a34a, #84cc16);
+  border-radius: 99px;
+  transition: width .4s ease;
+}
+
+.saude-cal-fill--over {
+  background: linear-gradient(90deg, #f59e0b, #dc3545);
+}
+
+.saude-cal-modo {
+  font-size: .78rem;
+  color: var(--text-muted, #64748b);
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ========================
    WATER
 ======================== */
 .saude-water-bar-wrap {

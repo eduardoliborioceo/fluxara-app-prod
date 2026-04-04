@@ -41,6 +41,51 @@ def _meta_agua_ml(peso_kg) -> int:
     return max(1500, int(float(peso_kg) * 35))
 
 
+def _calcular_meta_calorias(peso_atual_kg, peso_meta_kg, imc_valor) -> dict | None:
+    if not peso_atual_kg:
+        return None
+    peso = float(peso_atual_kg)
+    manutencao = int(peso * 30)
+
+    if peso_meta_kg:
+        meta = float(peso_meta_kg)
+        if meta < peso - 0.5:
+            alvo = max(1200, manutencao - 400)
+            modo = "perda"
+            semanas = round((peso - meta) / 0.5)
+        elif meta > peso + 0.5:
+            alvo = manutencao + 300
+            modo = "ganho"
+            semanas = round((meta - peso) / 0.3)
+        else:
+            alvo = manutencao
+            modo = "manutencao"
+            semanas = None
+    elif imc_valor:
+        imc = float(imc_valor)
+        if imc >= 25:
+            alvo = max(1200, manutencao - 400)
+            modo = "perda"
+            semanas = None
+        elif imc < 18.5:
+            alvo = manutencao + 300
+            modo = "ganho"
+            semanas = None
+        else:
+            alvo = manutencao
+            modo = "manutencao"
+            semanas = None
+    else:
+        return None
+
+    return {
+        "meta_kcal": alvo,
+        "manutencao_kcal": manutencao,
+        "modo": modo,
+        "semanas_estimadas": semanas,
+    }
+
+
 def get_perfil(user_id: int) -> dict:
     row = repo.get_perfil(user_id)
     if not row:
@@ -50,10 +95,17 @@ def get_perfil(user_id: int) -> dict:
             "peso_meta_kg": None,
             "imc": {"valor": None, "categoria": None, "cor": None},
             "meta_agua_ml": 2000,
+            "meta_calorias": None,
         }
     p = dict(row)
-    p["imc"] = _calcular_imc(p.get("altura_cm"), p.get("peso_atual_kg"))
+    imc = _calcular_imc(p.get("altura_cm"), p.get("peso_atual_kg"))
+    p["imc"] = imc
     p["meta_agua_ml"] = _meta_agua_ml(p.get("peso_atual_kg"))
+    calorie_meta = _calcular_meta_calorias(
+        p.get("peso_atual_kg"), p.get("peso_meta_kg"), imc.get("valor")
+    )
+    p["meta_calorias"] = calorie_meta
+    p["meta_kcal"] = calorie_meta["meta_kcal"] if calorie_meta else None
     return p
 
 
@@ -73,8 +125,14 @@ def save_perfil(user_id: int, altura_cm, peso_atual_kg, peso_meta_kg) -> dict:
     if peso_atual_kg is not None:
         repo.registrar_peso(user_id, peso_atual_kg)
     p = dict(row)
-    p["imc"] = _calcular_imc(p.get("altura_cm"), p.get("peso_atual_kg"))
+    imc = _calcular_imc(p.get("altura_cm"), p.get("peso_atual_kg"))
+    p["imc"] = imc
     p["meta_agua_ml"] = _meta_agua_ml(p.get("peso_atual_kg"))
+    calorie_meta = _calcular_meta_calorias(
+        p.get("peso_atual_kg"), p.get("peso_meta_kg"), imc.get("valor")
+    )
+    p["meta_calorias"] = calorie_meta
+    p["meta_kcal"] = calorie_meta["meta_kcal"] if calorie_meta else None
     return p
 
 
