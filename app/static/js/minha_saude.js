@@ -387,7 +387,23 @@
       var text = el.textContent.replace(/[^\d]/g, '');
       if (text) total += parseInt(text, 10);
     });
+    _KCAL_HOJE = total;
     document.getElementById('stat-calorias').textContent = total;
+    atualizarBarraCalorias(total);
+  }
+
+  function atualizarBarraCalorias(total) {
+    var fill = document.getElementById('calFill');
+    var prog = document.getElementById('stat-cal-prog');
+    if (!fill || !_KCAL_META) return;
+    var pct = Math.min(100, Math.round((total / _KCAL_META) * 100));
+    fill.style.width = pct + '%';
+    if (pct >= 100) {
+      fill.classList.add('saude-cal-fill--over');
+    } else {
+      fill.classList.remove('saude-cal-fill--over');
+    }
+    if (prog) prog.textContent = total;
   }
 
   function atualizarDotStatus(tipo, status) {
@@ -430,6 +446,31 @@
         } else {
           imcResult.style.display = 'none';
           document.getElementById('stat-imc').textContent = '—';
+        }
+
+        if (data.meta_kcal) {
+          _KCAL_META = data.meta_kcal;
+          var cardMeta = document.getElementById('cardCaloriaMeta');
+          if (cardMeta) cardMeta.style.display = '';
+          var metaTexto = document.getElementById('metaKcalTexto');
+          if (metaTexto) metaTexto.textContent = data.meta_kcal + ' kcal';
+          atualizarBarraCalorias(_KCAL_HOJE);
+          var mc = data.meta_calorias;
+          var modoEl = document.getElementById('calModoTexto');
+          if (modoEl && mc) {
+            var icone = mc.modo === 'perda' ? 'bi-arrow-down-circle text-warning'
+                      : mc.modo === 'ganho' ? 'bi-arrow-up-circle text-success'
+                      : 'bi-check-circle text-success';
+            var diff = mc.modo === 'perda' ? (mc.manutencao_kcal - mc.meta_kcal)
+                     : mc.modo === 'ganho' ? (mc.meta_kcal - mc.manutencao_kcal)
+                     : 0;
+            var semanas = mc.semanas_estimadas ? ' · ~' + mc.semanas_estimadas + ' semanas' : '';
+            var texto = mc.modo === 'perda' ? 'Déficit de ' + diff + ' kcal para perda de peso' + semanas
+                      : mc.modo === 'ganho' ? 'Superávit de ' + diff + ' kcal para ganho de peso' + semanas
+                      : 'Manutenção do peso atual';
+            modoEl.innerHTML = '<i class="bi ' + icone + '"></i> ' + texto;
+            modoEl.style.display = '';
+          }
         }
 
         if (peso) {

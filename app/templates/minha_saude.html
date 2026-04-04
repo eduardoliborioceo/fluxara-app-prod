@@ -63,6 +63,46 @@
       </div>
     </div>
 
+    <!-- Barra de progresso calórico -->
+    {% if dados.perfil.meta_kcal %}
+    <div class="saude-card" id="cardCaloriaMeta">
+      <div class="saude-card-label">Meta calórica</div>
+      <div class="saude-water-bar-wrap">
+        <div class="saude-water-track">
+          <div class="saude-cal-fill" id="calFill"
+               style="width: {{ [[((dados.calorias_dia / dados.perfil.meta_kcal) * 100) | round | int, 0] | max, 100] | min }}%"></div>
+        </div>
+        <div class="saude-water-meta">
+          <span id="calProgressLabel">
+            <strong id="stat-cal-prog">{{ dados.calorias_dia }}</strong> kcal
+          </span>
+          <span>meta: <strong id="metaKcalTexto">{{ dados.perfil.meta_kcal }} kcal</strong></span>
+        </div>
+      </div>
+      {% if dados.perfil.meta_calorias %}
+      <div class="saude-cal-modo" id="calModoTexto">
+        {% set mc = dados.perfil.meta_calorias %}
+        {% if mc.modo == 'perda' %}
+          <i class="bi bi-arrow-down-circle text-warning"></i>
+          Déficit de {{ mc.manutencao_kcal - mc.meta_kcal }} kcal para perda de peso
+          {% if mc.semanas_estimadas %} · ~{{ mc.semanas_estimadas }} semanas{% endif %}
+        {% elif mc.modo == 'ganho' %}
+          <i class="bi bi-arrow-up-circle text-success"></i>
+          Superávit de {{ mc.meta_kcal - mc.manutencao_kcal }} kcal para ganho de peso
+          {% if mc.semanas_estimadas %} · ~{{ mc.semanas_estimadas }} semanas{% endif %}
+        {% else %}
+          <i class="bi bi-check-circle text-success"></i>
+          Manutenção do peso atual
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+    {% else %}
+    <div class="saude-card saude-card--hint" id="cardCaloriaMeta" style="display:none">
+      <div class="saude-card-label">Meta calórica</div>
+    </div>
+    {% endif %}
+
     <!-- Acordei -->
     <div class="saude-card">
       <div class="saude-card-label">Início do dia</div>
@@ -405,8 +445,10 @@
 
 {% block scripts %}
 <script>
-  var _AGUA_META_ML = {{ dados.perfil.meta_agua_ml }};
+  var _AGUA_META_ML  = {{ dados.perfil.meta_agua_ml }};
   var _AGUA_TOTAL_ML = {{ dados.agua.total_ml }};
+  var _KCAL_META     = {{ dados.perfil.meta_kcal or 'null' }};
+  var _KCAL_HOJE     = {{ dados.calorias_dia }};
 </script>
 <script src="{{ url_for('static', filename='js/minha_saude.js') }}?v={{ static_v }}"></script>
 {% endblock %}
