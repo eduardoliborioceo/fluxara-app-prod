@@ -805,6 +805,92 @@
 .saude-meal-entry-del:hover { color: #dc3545; }
 
 /* ========================
+   PRODUCT SEARCH
+======================== */
+.saude-produto-search-wrap {
+  position: relative;
+}
+
+.saude-produto-search-wrap input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.saude-produto-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--card, #fff);
+  border: 1.5px solid var(--border, rgba(15,23,42,.09));
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.1);
+  z-index: 100;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.saude-produto-option {
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border, rgba(15,23,42,.06));
+  transition: background .1s;
+}
+
+.saude-produto-option:last-child { border-bottom: none; }
+
+.saude-produto-option:hover {
+  background: rgba(13,110,253,.05);
+}
+
+.saude-produto-option-nome {
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--text, #1e293b);
+}
+
+.saude-produto-option-info {
+  font-size: .75rem;
+  color: var(--text-muted, #64748b);
+  margin-top: 2px;
+}
+
+.saude-produto-empty {
+  padding: 12px 14px;
+  font-size: .82rem;
+  color: var(--text-muted, #64748b);
+  text-align: center;
+}
+
+.saude-produto-clear-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  font-size: .78rem;
+  color: #dc3545;
+  cursor: pointer;
+  padding: 4px 0;
+  margin-top: 8px;
+  font-family: inherit;
+}
+
+.saude-produto-salvo-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: rgba(22,163,74,.08);
+  border: 1px solid rgba(22,163,74,.25);
+  border-radius: 8px;
+  font-size: .82rem;
+  font-weight: 600;
+  color: #16a34a;
+  margin-bottom: 10px;
+}
+
+/* ========================
    DARK THEME
 ======================== */
 [data-theme="escuro"] .saude-card,
@@ -850,4 +936,14 @@
 
 [data-theme="escuro"] .saude-modal-overlay {
   background: rgba(0,0,0,.6);
+}
+
+[data-theme="escuro"] .saude-produto-dropdown {
+  background: #1e293b;
+  border-color: rgba(255,255,255,.1);
+  box-shadow: 0 8px 24px rgba(0,0,0,.3);
+}
+
+[data-theme="escuro"] .saude-produto-option:hover {
+  background: rgba(59,130,246,.1);
 }

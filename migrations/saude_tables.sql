@@ -48,3 +48,20 @@ CREATE TABLE IF NOT EXISTS saude_agua (
     registrado_em  TIMESTAMP DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_saude_agua_user ON saude_agua (user_id, registrado_em DESC);
+
+CREATE TABLE IF NOT EXISTS saude_produtos (
+    id                  SERIAL PRIMARY KEY,
+    user_id             INTEGER NOT NULL,
+    nome                VARCHAR(200) NOT NULL,
+    marca               VARCHAR(100),
+    porcao_g            NUMERIC(6,1),
+    calorias_por_porcao INTEGER,
+    proteinas_g         NUMERIC(6,2),
+    carboidratos_g      NUMERIC(6,2),
+    gorduras_totais_g   NUMERIC(6,2),
+    sodio_mg            NUMERIC(8,1),
+    fibras_g            NUMERIC(6,2),
+    criado_em           TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_saude_produtos_user ON saude_produtos (user_id);
+CREATE INDEX IF NOT EXISTS idx_saude_produtos_nome ON saude_produtos (user_id, nome);

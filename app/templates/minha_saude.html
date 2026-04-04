@@ -115,9 +115,8 @@
         <div class="saude-acordei-info" id="acordeiInfo">
           {% if dados.acordei %}
             <span>Hoje às </span>
-            <span class="saude-acordei-time">
-              {{ dados.acordei.hora_acordou.strftime('%H:%M') if dados.acordei.hora_acordou else '' }}
-            </span>
+            <time class="saude-acordei-time saude-local-time"
+                  data-utc="{{ dados.acordei.hora_acordou.isoformat() }}Z"></time>
           {% else %}
             <span>Toque ao acordar para rastrear suas refeições do dia</span>
           {% endif %}
@@ -202,9 +201,8 @@
         {% for r in dados.agua.registros %}
         <div class="saude-water-registro" id="agua-{{ r.id }}">
           <span class="saude-water-registro-ml">{{ r.quantidade_ml }} ml</span>
-          <span class="saude-water-registro-hora">
-            {{ r.registrado_em.strftime('%H:%M') if r.registrado_em else '' }}
-          </span>
+          <time class="saude-water-registro-hora saude-local-time"
+                data-utc="{{ r.registrado_em.isoformat() }}Z"></time>
           <button class="saude-water-del" onclick="deletarAgua({{ r.id }})" title="Remover">
             <i class="bi bi-x"></i>
           </button>
@@ -308,6 +306,34 @@
 
     <!-- Fonte: manual -->
     <div id="fonte-manual">
+      <!-- Busca na base de produtos -->
+      <div class="saude-modal-field">
+        <label>Buscar produto salvo</label>
+        <div class="saude-produto-search-wrap">
+          <input type="text" id="buscaProduto" placeholder="Digite para buscar..." autocomplete="off"
+                 oninput="buscarProdutos(this.value)">
+          <div class="saude-produto-dropdown" id="produtoDropdown" style="display:none"></div>
+        </div>
+      </div>
+
+      <!-- Seletor de porções (aparece após selecionar produto da base) -->
+      <div id="produtoSelecionadoWrap" style="display:none">
+        <div class="saude-ai-result" id="produtoSelecionadoInfo" style="margin-bottom:10px"></div>
+        <div class="saude-porcao-wrap">
+          <span class="saude-porcao-label">Porções:</span>
+          <div class="saude-porcao-steps" id="porcaoManualSteps">
+            <button class="saude-porcao-btn" data-porcao="0.5">½</button>
+            <button class="saude-porcao-btn active" data-porcao="1">1</button>
+            <button class="saude-porcao-btn" data-porcao="1.5">1½</button>
+            <button class="saude-porcao-btn" data-porcao="2">2</button>
+            <button class="saude-porcao-btn" data-porcao="3">3</button>
+          </div>
+        </div>
+        <button class="saude-produto-clear-btn" onclick="limparProdutoSelecionado()">
+          <i class="bi bi-x-circle"></i> Remover seleção
+        </button>
+      </div>
+
       <div class="saude-modal-field">
         <label>Descrição</label>
         <textarea id="descricaoManual" placeholder="Ex: Arroz, feijão, frango grelhado..."></textarea>
@@ -332,7 +358,7 @@
       </div>
     </div>
 
-    <!-- Fonte: foto embalagem -->
+    <!-- Fonte: foto embalagem — adiciona produto à base -->
     <div id="fonte-foto_produto" style="display:none">
       <div class="saude-modal-field">
         <label>Foto da tabela nutricional</label>
@@ -345,11 +371,14 @@
         </label>
         <button class="saude-btn-submit" id="btnAnalisarEmbalagem" onclick="analisarEmbalagem()" style="margin-top:10px;display:none">
           <span class="saude-spinner" id="spinnerEmbalagem" style="display:none"></span>
-          Analisar com IA
+          Analisar e salvar na base
         </button>
       </div>
 
       <div id="resultadoEmbalagem" style="display:none">
+        <div class="saude-produto-salvo-badge" id="produtoSalvoBadge" style="display:none">
+          <i class="bi bi-check-circle-fill"></i> Produto salvo na sua base
+        </div>
         <div class="saude-ai-result">
           <div class="saude-ai-result-title" id="produtoNome"></div>
           <div class="saude-ai-result-row">
