@@ -46,6 +46,20 @@ def surebet():
     return render_template("surebet.html", active_menu="surebet")
 
 
+@bp.route("/minha-saude")
+@login_required
+def minha_saude():
+    from app.services import saude_service
+    dados = saude_service.get_dados_hoje(current_user.id)
+    historico_peso = saude_service.get_peso_historico(current_user.id)
+    return render_template(
+        "minha_saude.html",
+        active_menu="minha_saude",
+        dados=dados,
+        historico_peso=historico_peso,
+    )
+
+
 @bp.route("/nova-transferencia")
 @login_required
 def nova_transferencia():

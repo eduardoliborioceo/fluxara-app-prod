@@ -52,3 +52,8 @@ class Config:
     # BACKUP
     # ==========================
     BACKUP_ENCRYPTION_KEY = os.getenv("BACKUP_ENCRYPTION_KEY")
+
+    # ==========================
+    # AI (Claude API)
+    # ==========================
+    ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")

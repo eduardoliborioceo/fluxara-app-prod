@@ -1,0 +1,412 @@
+{% extends "layouts/app.html" %}
+{% block title %}Fluxara · Minha Saúde{% endblock %}
+
+{% block page_title %}
+<div class="page-header">
+  <div class="page-header-title">
+    <span class="page-header-section">Ferramentas</span>
+    <h1 class="page-header-name">Minha Saúde</h1>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/minha_saude.css') }}?v={{ static_v }}">
+
+<div class="saude-wrapper">
+
+  <!-- TABS -->
+  <div class="saude-tabs" role="tablist">
+    <button class="saude-tab-btn active" data-tab="hoje" role="tab">
+      <i class="bi bi-calendar-check"></i> Hoje
+    </button>
+    <button class="saude-tab-btn" data-tab="perfil" role="tab">
+      <i class="bi bi-person-vcard"></i> Perfil & Histórico
+    </button>
+  </div>
+
+  <!-- ===================== TAB: HOJE ===================== -->
+  <div id="tab-hoje">
+
+    <!-- Stat cards -->
+    <div class="saude-stats-row">
+      <div class="saude-stat">
+        <div class="saude-stat-icon saude-stat-icon--green">
+          <i class="bi bi-fire"></i>
+        </div>
+        <div class="saude-stat-value" id="stat-calorias">{{ dados.calorias_dia }}</div>
+        <div class="saude-stat-label">kcal hoje</div>
+      </div>
+
+      <div class="saude-stat">
+        <div class="saude-stat-icon saude-stat-icon--blue">
+          <i class="bi bi-droplet-half"></i>
+        </div>
+        <div class="saude-stat-value" id="stat-agua">
+          {% if dados.agua.total_ml >= 1000 %}
+            {{ "%.1f"|format(dados.agua.total_ml / 1000) }}L
+          {% else %}
+            {{ dados.agua.total_ml }}ml
+          {% endif %}
+        </div>
+        <div class="saude-stat-label">água hoje</div>
+      </div>
+
+      <div class="saude-stat">
+        <div class="saude-stat-icon saude-stat-icon--purple">
+          <i class="bi bi-heart-pulse"></i>
+        </div>
+        <div class="saude-stat-value" id="stat-imc">
+          {% if dados.perfil.imc.valor %}{{ dados.perfil.imc.valor }}{% else %}—{% endif %}
+        </div>
+        <div class="saude-stat-label">IMC</div>
+      </div>
+    </div>
+
+    <!-- Acordei -->
+    <div class="saude-card">
+      <div class="saude-card-label">Início do dia</div>
+      <div class="saude-acordei-wrap">
+        <button class="saude-acordei-btn" id="btnAcordei"
+                {% if dados.acordei %}disabled{% endif %}>
+          <i class="bi bi-sunrise"></i>
+          {% if dados.acordei %}Acordei registrado{% else %}Acordei{% endif %}
+        </button>
+        <div class="saude-acordei-info" id="acordeiInfo">
+          {% if dados.acordei %}
+            <span>Hoje às </span>
+            <span class="saude-acordei-time">
+              {{ dados.acordei.hora_acordou.strftime('%H:%M') if dados.acordei.hora_acordou else '' }}
+            </span>
+          {% else %}
+            <span>Toque ao acordar para rastrear suas refeições do dia</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Refeições -->
+    <div class="saude-card">
+      <div class="saude-card-label">Refeições do dia</div>
+
+      {% for item in dados.schedule %}
+      <div class="saude-meal-item" data-tipo="{{ item.tipo }}" onclick="abrirModalRefeicao('{{ item.tipo }}', '{{ item.label }}')">
+        <div class="saude-meal-dot saude-meal-dot--{{ item.status }}"></div>
+        <div class="saude-meal-info">
+          <div class="saude-meal-name {% if item.status == 'passado' %}saude-meal-name--passado{% endif %}">
+            {{ item.label }}
+          </div>
+          <div class="saude-meal-time {% if item.status == 'agora' %}saude-meal-time--agora{% endif %}">
+            {{ item.inicio }} – {{ item.fim }}
+            {% if item.status == 'agora' %} · Agora{% endif %}
+          </div>
+          {% if item.registros %}
+          <div class="saude-meal-entries" id="entries-{{ item.tipo }}">
+            {% for r in item.registros %}
+            <div class="saude-meal-entry" id="entry-{{ r.id }}">
+              <span class="saude-meal-entry-desc">{{ r.descricao or 'Refeição registrada' }}</span>
+              <span class="saude-meal-entry-cal">{% if r.calorias %}{{ r.calorias }} kcal{% endif %}</span>
+              <button class="saude-meal-entry-del" onclick="deletarRefeicao(event, {{ r.id }}, '{{ item.tipo }}')" title="Remover">
+                <i class="bi bi-x"></i>
+              </button>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="saude-meal-entries" id="entries-{{ item.tipo }}"></div>
+          {% endif %}
+        </div>
+        <div class="saude-meal-cal {% if item.status == 'registrado' %}saude-meal-cal--registrado{% endif %}"
+             id="cal-{{ item.tipo }}">
+          {% if item.calorias_total %}{{ item.calorias_total }} kcal{% endif %}
+        </div>
+        <button class="saude-meal-add-btn" title="Registrar {{ item.label }}">
+          <i class="bi bi-plus-lg"></i>
+        </button>
+      </div>
+      {% endfor %}
+
+    </div>
+
+    <!-- Água -->
+    <div class="saude-card">
+      <div class="saude-card-label">Consumo de água</div>
+
+      <div class="saude-water-bar-wrap">
+        <div class="saude-water-track">
+          <div class="saude-water-fill" id="waterFill"
+               style="width: {{ [[(dados.agua.total_ml / dados.perfil.meta_agua_ml * 100) | round | int, 0] | max, 100] | min }}%"></div>
+        </div>
+        <div class="saude-water-meta">
+          <span class="saude-water-total" id="waterTotal">
+            {% if dados.agua.total_ml >= 1000 %}
+              {{ "%.1f"|format(dados.agua.total_ml / 1000) }} L
+            {% else %}
+              {{ dados.agua.total_ml }} ml
+            {% endif %}
+          </span>
+          <span>meta: <strong>{{ dados.perfil.meta_agua_ml }} ml</strong></span>
+        </div>
+      </div>
+
+      <div class="saude-water-quick">
+        <button class="saude-water-btn" onclick="registrarAgua(150)">+150 ml</button>
+        <button class="saude-water-btn" onclick="registrarAgua(200)">+200 ml</button>
+        <button class="saude-water-btn" onclick="registrarAgua(300)">+300 ml</button>
+        <button class="saude-water-btn" onclick="registrarAgua(500)">+500 ml</button>
+        <button class="saude-water-btn" onclick="registrarAgua(1000)">+1 L</button>
+        <button class="saude-water-btn" onclick="abrirModalAgua()">outro</button>
+      </div>
+
+      <div class="saude-water-list" id="waterList">
+        {% for r in dados.agua.registros %}
+        <div class="saude-water-registro" id="agua-{{ r.id }}">
+          <span class="saude-water-registro-ml">{{ r.quantidade_ml }} ml</span>
+          <span class="saude-water-registro-hora">
+            {{ r.registrado_em.strftime('%H:%M') if r.registrado_em else '' }}
+          </span>
+          <button class="saude-water-del" onclick="deletarAgua({{ r.id }})" title="Remover">
+            <i class="bi bi-x"></i>
+          </button>
+        </div>
+        {% endfor %}
+      </div>
+
+    </div>
+
+  </div><!-- /tab-hoje -->
+
+  <!-- ===================== TAB: PERFIL ===================== -->
+  <div id="tab-perfil" style="display:none">
+
+    <div class="saude-card">
+      <div class="saude-card-label">Meus dados</div>
+
+      <div class="saude-form-grid">
+        <div class="saude-form-group">
+          <label>Altura (cm)</label>
+          <input type="number" id="inputAltura" placeholder="ex: 175"
+                 value="{{ dados.perfil.altura_cm or '' }}" min="50" max="300" step="0.1">
+        </div>
+        <div class="saude-form-group">
+          <label>Peso atual (kg)</label>
+          <input type="number" id="inputPeso" placeholder="ex: 70.5"
+                 value="{{ dados.perfil.peso_atual_kg or '' }}" min="20" max="500" step="0.1">
+        </div>
+        <div class="saude-form-group">
+          <label>Peso meta (kg)</label>
+          <input type="number" id="inputPesoMeta" placeholder="ex: 65"
+                 value="{{ dados.perfil.peso_meta_kg or '' }}" min="20" max="500" step="0.1">
+        </div>
+      </div>
+
+      <button class="saude-btn-save" onclick="salvarPerfil()">
+        Salvar dados
+      </button>
+
+      <div id="imcResult" class="saude-imc-result" style="{% if not dados.perfil.imc.valor %}display:none{% endif %}">
+        <div>
+          <div class="saude-imc-value saude-imc-value--{{ dados.perfil.imc.cor or 'success' }}" id="imcValor">
+            {{ dados.perfil.imc.valor or '' }}
+          </div>
+          <div class="saude-imc-cat" id="imcCat">{{ dados.perfil.imc.categoria or '' }}</div>
+        </div>
+        <div style="font-size:.75rem;color:var(--text-muted)">
+          <div>Água recomendada:</div>
+          <strong id="metaAguaTexto">{{ dados.perfil.meta_agua_ml }} ml/dia</strong>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="saude-card">
+      <div class="saude-card-label">Histórico de peso</div>
+      <div class="saude-peso-list" id="pesoList">
+        {% if historico_peso %}
+          {% for item in historico_peso %}
+          <div class="saude-peso-item">
+            <span class="saude-peso-item-kg">{{ item.peso_kg }} kg</span>
+            <span class="saude-peso-item-data">
+              {{ item.registrado_em.strftime('%d/%m/%Y') if item.registrado_em else '' }}
+            </span>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div style="color:var(--text-muted);font-size:.83rem;text-align:center;padding:12px 0">
+            Nenhum registro de peso ainda
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div><!-- /tab-perfil -->
+
+</div>
+
+<!-- ========================== MODAL REFEIÇÃO ========================== -->
+<div class="saude-modal-overlay" id="modalRefeicao" style="display:none" onclick="fecharModalRefeicao(event)">
+  <div class="saude-modal" onclick="event.stopPropagation()">
+    <button class="saude-modal-close" onclick="fecharModalRefeicao()">&times;</button>
+    <div class="saude-modal-title" id="modalRefeicaoTitulo">Registrar refeição</div>
+
+    <input type="hidden" id="modalTipoRefeicao">
+
+    <div class="saude-modal-field">
+      <label>Fonte</label>
+      <div class="saude-modal-source-toggle">
+        <button class="saude-source-btn active" data-fonte="manual" onclick="selecionarFonte(this)">
+          <i class="bi bi-pencil"></i> Manual
+        </button>
+        <button class="saude-source-btn" data-fonte="foto_produto" onclick="selecionarFonte(this)">
+          <i class="bi bi-upc-scan"></i> Foto embalagem
+        </button>
+        <button class="saude-source-btn" data-fonte="foto_prato" onclick="selecionarFonte(this)">
+          <i class="bi bi-camera"></i> Foto do prato
+        </button>
+      </div>
+    </div>
+
+    <!-- Fonte: manual -->
+    <div id="fonte-manual">
+      <div class="saude-modal-field">
+        <label>Descrição</label>
+        <textarea id="descricaoManual" placeholder="Ex: Arroz, feijão, frango grelhado..."></textarea>
+      </div>
+      <div class="saude-modal-field">
+        <label>Calorias (kcal)</label>
+        <input type="number" id="caloriasManual" placeholder="Ex: 650" min="0">
+      </div>
+      <div class="saude-modal-field" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div>
+          <label>Proteínas (g)</label>
+          <input type="number" id="proteinasManual" placeholder="0" min="0" step="0.1">
+        </div>
+        <div>
+          <label>Carboidratos (g)</label>
+          <input type="number" id="carbosManual" placeholder="0" min="0" step="0.1">
+        </div>
+        <div>
+          <label>Gorduras (g)</label>
+          <input type="number" id="gordurasManual" placeholder="0" min="0" step="0.1">
+        </div>
+      </div>
+    </div>
+
+    <!-- Fonte: foto embalagem -->
+    <div id="fonte-foto_produto" style="display:none">
+      <div class="saude-modal-field">
+        <label>Foto da tabela nutricional</label>
+        <label class="saude-photo-area" id="areaEmbalagem">
+          <input type="file" id="fotoEmbalagem" accept="image/*" capture="environment" onchange="previewFotoEmbalagem(this)">
+          <div id="previewAreaEmbalagem">
+            <div class="saude-photo-area-icon"><i class="bi bi-upc-scan"></i></div>
+            <div class="saude-photo-area-text">Toque para tirar foto ou selecionar arquivo</div>
+          </div>
+        </label>
+        <button class="saude-btn-submit" id="btnAnalisarEmbalagem" onclick="analisarEmbalagem()" style="margin-top:10px;display:none">
+          <span class="saude-spinner" id="spinnerEmbalagem" style="display:none"></span>
+          Analisar com IA
+        </button>
+      </div>
+
+      <div id="resultadoEmbalagem" style="display:none">
+        <div class="saude-ai-result">
+          <div class="saude-ai-result-title" id="produtoNome"></div>
+          <div class="saude-ai-result-row">
+            <span class="saude-ai-result-key">Por porção</span>
+            <span class="saude-ai-result-val" id="embPorcao"></span>
+          </div>
+          <div class="saude-ai-result-row">
+            <span class="saude-ai-result-key">Calorias</span>
+            <span class="saude-ai-result-val" id="embCalorias"></span>
+          </div>
+          <div class="saude-ai-result-row">
+            <span class="saude-ai-result-key">Proteínas</span>
+            <span class="saude-ai-result-val" id="embProteinas"></span>
+          </div>
+          <div class="saude-ai-result-row">
+            <span class="saude-ai-result-key">Carboidratos</span>
+            <span class="saude-ai-result-val" id="embCarbos"></span>
+          </div>
+          <div class="saude-ai-result-row">
+            <span class="saude-ai-result-key">Gorduras</span>
+            <span class="saude-ai-result-val" id="embGorduras"></span>
+          </div>
+        </div>
+        <div class="saude-porcao-wrap">
+          <span class="saude-porcao-label">Porções:</span>
+          <div class="saude-porcao-steps" id="porcaoSteps">
+            <button class="saude-porcao-btn active" data-porcao="0.5">½</button>
+            <button class="saude-porcao-btn" data-porcao="1">1</button>
+            <button class="saude-porcao-btn" data-porcao="1.5">1½</button>
+            <button class="saude-porcao-btn" data-porcao="2">2</button>
+            <button class="saude-porcao-btn" data-porcao="3">3</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fonte: foto prato -->
+    <div id="fonte-foto_prato" style="display:none">
+      <div class="saude-modal-field">
+        <label>Foto do prato</label>
+        <label class="saude-photo-area" id="areaPrato">
+          <input type="file" id="fotoPrato" accept="image/*" capture="environment" onchange="previewFotoPrato(this)">
+          <div id="previewAreaPrato">
+            <div class="saude-photo-area-icon"><i class="bi bi-camera"></i></div>
+            <div class="saude-photo-area-text">Toque para tirar foto ou selecionar arquivo</div>
+          </div>
+        </label>
+        <button class="saude-btn-submit" id="btnAnalisarPrato" onclick="analisarPrato()" style="margin-top:10px;display:none">
+          <span class="saude-spinner" id="spinnerPrato" style="display:none"></span>
+          Estimar calorias com IA
+        </button>
+      </div>
+
+      <div id="resultadoPrato" style="display:none">
+        <div class="saude-ai-result">
+          <div class="saude-ai-result-title" id="pratoDescricao"></div>
+          <div id="pratoItens"></div>
+          <div class="saude-ai-result-row" style="margin-top:8px">
+            <span class="saude-ai-result-key">Calorias estimadas</span>
+            <span class="saude-ai-result-val" id="pratoCalorias"></span>
+          </div>
+          <div class="saude-ai-result-row" style="font-size:.75rem;color:var(--text-muted);padding:4px 0 0">
+            <span>Confiança: <span id="pratoConfianca"></span></span>
+          </div>
+        </div>
+        <div class="saude-modal-field" style="margin-top:12px">
+          <label>Ajustar calorias (opcional)</label>
+          <input type="number" id="caloriasAjustePrato" placeholder="Calorias estimadas" min="0">
+        </div>
+      </div>
+    </div>
+
+    <button class="saude-btn-submit" id="btnSalvarRefeicao" onclick="salvarRefeicao()">
+      Salvar refeição
+    </button>
+  </div>
+</div>
+
+<!-- ========================== MODAL ÁGUA CUSTOM ========================== -->
+<div class="saude-modal-overlay" id="modalAgua" style="display:none" onclick="fecharModalAgua(event)">
+  <div class="saude-modal" onclick="event.stopPropagation()" style="max-height:auto">
+    <button class="saude-modal-close" onclick="fecharModalAgua()">&times;</button>
+    <div class="saude-modal-title">Registrar água</div>
+    <div class="saude-modal-field">
+      <label>Quantidade (ml)</label>
+      <input type="number" id="aguaCustom" placeholder="Ex: 350" min="50" max="5000">
+    </div>
+    <button class="saude-btn-submit" onclick="salvarAguaCustom()">Salvar</button>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  var _AGUA_META_ML = {{ dados.perfil.meta_agua_ml }};
+  var _AGUA_TOTAL_ML = {{ dados.agua.total_ml }};
+</script>
+<script src="{{ url_for('static', filename='js/minha_saude.js') }}?v={{ static_v }}"></script>
+{% endblock %}

@@ -46,7 +46,9 @@
       "perfil":        "Meu perfil",
       "mais":          "Mais",
       "dev_painel":    "Painel Dev",
-      "dev_novo":      "Novo Projeto"
+      "dev_novo":      "Novo Projeto",
+      "minha_saude":   "Minha Saúde",
+      "surebet":       "Surebet"
     } %}
 
     <span class="username fw-bold">
@@ -74,6 +76,7 @@
 
     {% set cfg_active = active_menu in ['contas', 'configuracoes', 'usuario', 'admin'] %}
     {% set dev_active = active_menu in ['dev_painel', 'dev_novo'] %}
+    {% set ferramentas_active = active_menu in ['minha_saude', 'surebet'] %}
     <nav>
       <a href="{{ url_for('pages.resumo') }}"
          class="{% if active_menu == 'resumo' %}active{% endif %}">
@@ -84,6 +87,26 @@
          class="{% if active_menu == 'planejamento' %}active{% endif %}">
         <i class="bi bi-bar-chart-line"></i> Planejamento
       </a>
+
+      <div class="sidebar-group">
+        <button class="sidebar-group-btn{% if ferramentas_active %} active{% endif %}"
+                onclick="toggleSidebarGroup(this)"
+                aria-expanded="{{ 'true' if ferramentas_active else 'false' }}">
+          <i class="bi bi-grid-3x3-gap"></i>
+          <span>Ferramentas</span>
+          <i class="bi bi-chevron-down sidebar-chevron"></i>
+        </button>
+        <div class="sidebar-group-items{% if ferramentas_active %} open{% endif %}">
+          <a href="{{ url_for('pages.minha_saude') }}"
+             class="sidebar-subitem{% if active_menu == 'minha_saude' %} active{% endif %}">
+            <i class="bi bi-heart-pulse"></i> Minha Saúde
+          </a>
+          <a href="{{ url_for('pages.surebet') }}"
+             class="sidebar-subitem{% if active_menu == 'surebet' %} active{% endif %}">
+            <i class="bi bi-calculator"></i> Surebet
+          </a>
+        </div>
+      </div>
 
       <div class="sidebar-group">
         <button class="sidebar-group-btn{% if dev_active %} active{% endif %}"

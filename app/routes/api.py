@@ -737,3 +737,158 @@ def api_confirm_extra():
 
     result = confirm_employee_extra(matricula, password)
     return jsonify(result), (200 if result["success"] else 401)
+
+
+# =============================================================
+# MINHA SAÚDE
+# =============================================================
+
+@bp.route("/saude/perfil", methods=["GET"])
+@login_required
+def saude_get_perfil():
+    from app.services import saude_service
+    return jsonify(saude_service.get_perfil(current_user.id))
+
+
+@bp.route("/saude/perfil", methods=["POST"])
+@login_required
+def saude_save_perfil():
+    from app.services import saude_service
+    data = request.get_json() or {}
+    try:
+        perfil = saude_service.save_perfil(
+            current_user.id,
+            data.get("altura_cm"),
+            data.get("peso_atual_kg"),
+            data.get("peso_meta_kg"),
+        )
+        return jsonify(perfil)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@bp.route("/saude/peso-historico", methods=["GET"])
+@login_required
+def saude_peso_historico():
+    from app.services import saude_service
+    return jsonify(saude_service.get_peso_historico(current_user.id))
+
+
+@bp.route("/saude/acordei", methods=["POST"])
+@login_required
+def saude_acordei():
+    from app.services import saude_service
+    registro = saude_service.registrar_acordei(current_user.id)
+    return jsonify(registro)
+
+
+@bp.route("/saude/refeicao", methods=["POST"])
+@login_required
+def saude_add_refeicao():
+    from app.services import saude_service
+    data = request.get_json() or {}
+    try:
+        refeicao = saude_service.registrar_refeicao(
+            current_user.id,
+            data.get("tipo_refeicao", ""),
+            data.get("descricao", ""),
+            data.get("calorias"),
+            data.get("proteinas_g"),
+            data.get("carboidratos_g"),
+            data.get("gorduras_g"),
+            data.get("fonte", "manual"),
+        )
+        return jsonify(refeicao)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@bp.route("/saude/refeicao/<int:refeicao_id>", methods=["DELETE"])
+@login_required
+def saude_delete_refeicao(refeicao_id):
+    from app.services import saude_service
+    saude_service.delete_refeicao(current_user.id, refeicao_id)
+    return jsonify({"ok": True})
+
+
+@bp.route("/saude/agua", methods=["POST"])
+@login_required
+def saude_add_agua():
+    from app.services import saude_service
+    data = request.get_json() or {}
+    try:
+        registro = saude_service.registrar_agua(
+            current_user.id,
+            int(data.get("quantidade_ml", 0)),
+        )
+        total_ml = saude_service.get_agua_hoje(current_user.id)["total_ml"]
+        return jsonify({"registro": registro, "total_ml": total_ml})
+    except (ValueError, TypeError) as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@bp.route("/saude/agua/<int:registro_id>", methods=["DELETE"])
+@login_required
+def saude_delete_agua(registro_id):
+    from app.services import saude_service
+    saude_service.delete_agua(current_user.id, registro_id)
+    total_ml = saude_service.get_agua_hoje(current_user.id)["total_ml"]
+    return jsonify({"ok": True, "total_ml": total_ml})
+
+
+@bp.route("/saude/analisar-embalagem", methods=["POST"])
+@login_required
+def saude_analisar_embalagem():
+    from flask import current_app
+    from app.services import saude_service
+
+    if "foto" not in request.files:
+        return jsonify({"error": "Foto não enviada"}), 400
+
+    foto = request.files["foto"]
+    allowed = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+    mime_type = foto.mimetype or "image/jpeg"
+    if mime_type not in allowed:
+        return jsonify({"error": "Formato de imagem inválido"}), 400
+
+    image_bytes = foto.read()
+    if len(image_bytes) > 10 * 1024 * 1024:
+        return jsonify({"error": "Imagem muito grande (máx 10 MB)"}), 400
+
+    try:
+        resultado = saude_service.analisar_foto_embalagem(image_bytes, mime_type)
+        return jsonify(resultado)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        current_app.logger.error("analisar_embalagem error: %s", e)
+        return jsonify({"error": "Não foi possível analisar a imagem"}), 500
+
+
+@bp.route("/saude/analisar-prato", methods=["POST"])
+@login_required
+def saude_analisar_prato():
+    from flask import current_app
+    from app.services import saude_service
+
+    if "foto" not in request.files:
+        return jsonify({"error": "Foto não enviada"}), 400
+
+    foto = request.files["foto"]
+    allowed = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+    mime_type = foto.mimetype or "image/jpeg"
+    if mime_type not in allowed:
+        return jsonify({"error": "Formato de imagem inválido"}), 400
+
+    image_bytes = foto.read()
+    if len(image_bytes) > 10 * 1024 * 1024:
+        return jsonify({"error": "Imagem muito grande (máx 10 MB)"}), 400
+
+    try:
+        resultado = saude_service.analisar_foto_prato(image_bytes, mime_type)
+        return jsonify(resultado)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        current_app.logger.error("analisar_prato error: %s", e)
+        return jsonify({"error": "Não foi possível analisar a imagem"}), 500
