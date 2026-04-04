@@ -14,6 +14,20 @@
     });
   });
 
+  /* ========== TIMEZONE HELPER ========== */
+  function formatLocalTime(utcStr) {
+    // Garante que a string seja interpretada como UTC
+    var s = (utcStr && !utcStr.endsWith('Z') && !utcStr.includes('+')) ? utcStr + 'Z' : utcStr;
+    var dt = new Date(s);
+    if (isNaN(dt.getTime())) return '';
+    return dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  // Corrige todos os elementos com data-utc no carregamento da página
+  document.querySelectorAll('[data-utc]').forEach(function (el) {
+    el.textContent = formatLocalTime(el.dataset.utc);
+  });
+
   /* ========== ACORDEI ========== */
   var btnAcordei = document.getElementById('btnAcordei');
   if (btnAcordei) {
@@ -23,11 +37,8 @@
         .then(function (r) { return r.json(); })
         .then(function (data) {
           if (data.hora_acordou) {
-            var dt = new Date(data.hora_acordou);
-            var hh = String(dt.getHours()).padStart(2, '0');
-            var mm = String(dt.getMinutes()).padStart(2, '0');
             document.getElementById('acordeiInfo').innerHTML =
-              'Hoje às <span class="saude-acordei-time">' + hh + ':' + mm + '</span>';
+              'Hoje às <span class="saude-acordei-time">' + formatLocalTime(data.hora_acordou) + '</span>';
           }
           btnAcordei.innerHTML = '<i class="bi bi-sunrise"></i> Acordei registrado';
         })
@@ -86,15 +97,12 @@
   function atualizarAguaUI(totalMl, registro) {
     atualizarAguaBarraTotal(totalMl);
     if (registro) {
-      var dt = new Date(registro.registrado_em);
-      var hh = String(dt.getHours()).padStart(2, '0');
-      var mm = String(dt.getMinutes()).padStart(2, '0');
       var item = document.createElement('div');
       item.className = 'saude-water-registro';
       item.id = 'agua-' + registro.id;
       item.innerHTML =
         '<span class="saude-water-registro-ml">' + registro.quantidade_ml + ' ml</span>' +
-        '<span class="saude-water-registro-hora">' + hh + ':' + mm + '</span>' +
+        '<span class="saude-water-registro-hora">' + formatLocalTime(registro.registrado_em) + '</span>' +
         '<button class="saude-water-del" onclick="deletarAgua(' + registro.id + ')" title="Remover"><i class="bi bi-x"></i></button>';
       var list = document.getElementById('waterList');
       list.insertBefore(item, list.firstChild);
@@ -114,6 +122,9 @@
   var _embalagemData = null;
   var _pratoData = null;
   var _porcaoAtual = 0.5;
+  var _produtoSelecionado = null;
+  var _porcaoManualAtual = 1;
+  var _buscaTimer = null;
 
   window.abrirModalRefeicao = function (tipo, label) {
     document.getElementById('modalTipoRefeicao').value = tipo;
@@ -133,6 +144,11 @@
   };
 
   function limparModalRefeicao() {
+    document.getElementById('buscaProduto').value = '';
+    document.getElementById('produtoDropdown').style.display = 'none';
+    document.getElementById('produtoSelecionadoWrap').style.display = 'none';
+    _produtoSelecionado = null;
+    _porcaoManualAtual = 1;
     document.getElementById('descricaoManual').value = '';
     document.getElementById('caloriasManual').value = '';
     document.getElementById('proteinasManual').value = '';
@@ -143,6 +159,8 @@
     document.getElementById('btnAnalisarEmbalagem').style.display = 'none';
     document.getElementById('btnAnalisarPrato').style.display = 'none';
     document.getElementById('resultadoEmbalagem').style.display = 'none';
+    var badge = document.getElementById('produtoSalvoBadge');
+    if (badge) badge.style.display = 'none';
     document.getElementById('resultadoPrato').style.display = 'none';
     document.getElementById('previewAreaEmbalagem').innerHTML =
       '<div class="saude-photo-area-icon"><i class="bi bi-upc-scan"></i></div>' +
@@ -169,6 +187,91 @@
       if (el) el.style.display = f === fonte ? '' : 'none';
     });
   }
+
+  /* ========== BUSCA DE PRODUTO (modo manual) ========== */
+  window.buscarProdutos = function (q) {
+    clearTimeout(_buscaTimer);
+    var dropdown = document.getElementById('produtoDropdown');
+    if (!q || q.length < 2) { dropdown.style.display = 'none'; return; }
+    _buscaTimer = setTimeout(function () {
+      fetch('/api/saude/produtos?q=' + encodeURIComponent(q))
+        .then(function (r) { return r.json(); })
+        .then(function (lista) {
+          dropdown.innerHTML = '';
+          if (!lista.length) {
+            dropdown.innerHTML = '<div class="saude-produto-empty">Nenhum produto encontrado</div>';
+          } else {
+            lista.forEach(function (p) {
+              var opt = document.createElement('div');
+              opt.className = 'saude-produto-option';
+              opt.innerHTML =
+                '<div class="saude-produto-option-nome">' + p.nome + '</div>' +
+                '<div class="saude-produto-option-info">' +
+                (p.calorias_por_porcao ? p.calorias_por_porcao + ' kcal' : '') +
+                (p.porcao_g ? ' · ' + p.porcao_g + 'g/porção' : '') +
+                '</div>';
+              opt.onclick = function () { selecionarProduto(p); };
+              dropdown.appendChild(opt);
+            });
+          }
+          dropdown.style.display = '';
+        }).catch(function () { dropdown.style.display = 'none'; });
+    }, 300);
+  };
+
+  function selecionarProduto(produto) {
+    _produtoSelecionado = produto;
+    _porcaoManualAtual = 1;
+    document.getElementById('buscaProduto').value = produto.nome;
+    document.getElementById('produtoDropdown').style.display = 'none';
+
+    var info = document.getElementById('produtoSelecionadoInfo');
+    info.innerHTML =
+      '<div class="saude-ai-result-title">' + produto.nome + '</div>' +
+      '<div class="saude-ai-result-row"><span class="saude-ai-result-key">Por porção (' + (produto.porcao_g || '?') + 'g)</span>' +
+      '<span class="saude-ai-result-val">' + (produto.calorias_por_porcao || '—') + ' kcal</span></div>';
+    document.getElementById('produtoSelecionadoWrap').style.display = '';
+
+    // Configura os botões de porção do manual
+    document.querySelectorAll('#porcaoManualSteps .saude-porcao-btn').forEach(function (btn) {
+      btn.classList.toggle('active', parseFloat(btn.dataset.porcao) === _porcaoManualAtual);
+      btn.onclick = function () {
+        _porcaoManualAtual = parseFloat(this.dataset.porcao);
+        document.querySelectorAll('#porcaoManualSteps .saude-porcao-btn').forEach(function (b) {
+          b.classList.toggle('active', parseFloat(b.dataset.porcao) === _porcaoManualAtual);
+        });
+        preencherCamposProduto(produto, _porcaoManualAtual);
+      };
+    });
+    preencherCamposProduto(produto, _porcaoManualAtual);
+  }
+
+  function preencherCamposProduto(produto, porcao) {
+    document.getElementById('descricaoManual').value = produto.nome + ' (' + porcao + ' porção' + (porcao !== 1 ? 'ões' : '') + ')';
+    document.getElementById('caloriasManual').value = Math.round((produto.calorias_por_porcao || 0) * porcao) || '';
+    document.getElementById('proteinasManual').value = produto.proteinas_g ? (produto.proteinas_g * porcao).toFixed(1) : '';
+    document.getElementById('carbosManual').value = produto.carboidratos_g ? (produto.carboidratos_g * porcao).toFixed(1) : '';
+    document.getElementById('gordurasManual').value = produto.gorduras_totais_g ? (produto.gorduras_totais_g * porcao).toFixed(1) : '';
+  }
+
+  window.limparProdutoSelecionado = function () {
+    _produtoSelecionado = null;
+    document.getElementById('buscaProduto').value = '';
+    document.getElementById('produtoSelecionadoWrap').style.display = 'none';
+    document.getElementById('descricaoManual').value = '';
+    document.getElementById('caloriasManual').value = '';
+    document.getElementById('proteinasManual').value = '';
+    document.getElementById('carbosManual').value = '';
+    document.getElementById('gordurasManual').value = '';
+  };
+
+  // Fecha dropdown ao clicar fora
+  document.addEventListener('click', function (e) {
+    var wrap = document.querySelector('.saude-produto-search-wrap');
+    if (wrap && !wrap.contains(e.target)) {
+      document.getElementById('produtoDropdown').style.display = 'none';
+    }
+  });
 
   window.previewFotoEmbalagem = function (input) {
     if (!input.files || !input.files[0]) return;
@@ -209,6 +312,18 @@
         _embalagemData = data;
         _porcaoAtual = 0.5;
         exibirResultadoEmbalagem(data);
+        // Auto-salva na base de produtos
+        fetch('/api/saude/produto', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        }).then(function (r) { return r.json(); })
+          .then(function (prod) {
+            if (!prod.error) {
+              var badge = document.getElementById('produtoSalvoBadge');
+              if (badge) badge.style.display = 'flex';
+            }
+          }).catch(function () {});
       })
       .catch(function () {
         spinner.style.display = 'none';

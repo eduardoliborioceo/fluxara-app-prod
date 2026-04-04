@@ -892,3 +892,33 @@ def saude_analisar_prato():
     except Exception as e:
         current_app.logger.error("analisar_prato error: %s", e)
         return jsonify({"error": "Não foi possível analisar a imagem"}), 500
+
+
+@bp.route("/saude/produtos", methods=["GET"])
+@login_required
+def saude_search_produtos():
+    from app.services import saude_service
+    q = request.args.get("q", "").strip()
+    if q:
+        return jsonify(saude_service.search_produtos(current_user.id, q))
+    return jsonify(saude_service.get_produtos(current_user.id))
+
+
+@bp.route("/saude/produto", methods=["POST"])
+@login_required
+def saude_save_produto():
+    from app.services import saude_service
+    data = request.get_json() or {}
+    try:
+        produto = saude_service.save_produto_from_analise(current_user.id, data)
+        return jsonify(produto)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@bp.route("/saude/produto/<int:produto_id>", methods=["DELETE"])
+@login_required
+def saude_delete_produto(produto_id):
+    from app.services import saude_service
+    saude_service.delete_produto(current_user.id, produto_id)
+    return jsonify({"ok": True})

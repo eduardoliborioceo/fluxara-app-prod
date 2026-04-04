@@ -171,3 +171,66 @@ def delete_agua(user_id: int, registro_id: int):
                 (registro_id, user_id)
             )
             conn.commit()
+
+
+# ── Produtos ────────────────────────────────────────────────────────────────
+
+def search_produtos(user_id: int, query: str, limit: int = 20):
+    with get_db() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("""
+                SELECT id, nome, marca, porcao_g, calorias_por_porcao,
+                       proteinas_g, carboidratos_g, gorduras_totais_g
+                FROM saude_produtos
+                WHERE user_id = %s AND (
+                    nome ILIKE %s OR marca ILIKE %s
+                )
+                ORDER BY nome
+                LIMIT %s
+            """, (user_id, f"%{query}%", f"%{query}%", limit))
+            return cur.fetchall()
+
+
+def get_produtos(user_id: int, limit: int = 50):
+    with get_db() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("""
+                SELECT id, nome, marca, porcao_g, calorias_por_porcao,
+                       proteinas_g, carboidratos_g, gorduras_totais_g,
+                       sodio_mg, fibras_g, criado_em
+                FROM saude_produtos
+                WHERE user_id = %s
+                ORDER BY nome
+                LIMIT %s
+            """, (user_id, limit))
+            return cur.fetchall()
+
+
+def save_produto(user_id: int, nome: str, marca: str, porcao_g,
+                 calorias_por_porcao, proteinas_g, carboidratos_g,
+                 gorduras_totais_g, sodio_mg, fibras_g):
+    with get_db() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("""
+                INSERT INTO saude_produtos
+                    (user_id, nome, marca, porcao_g, calorias_por_porcao,
+                     proteinas_g, carboidratos_g, gorduras_totais_g,
+                     sodio_mg, fibras_g, criado_em)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
+                RETURNING *
+            """, (user_id, nome, marca, porcao_g, calorias_por_porcao,
+                  proteinas_g, carboidratos_g, gorduras_totais_g,
+                  sodio_mg, fibras_g))
+            row = cur.fetchone()
+            conn.commit()
+            return row
+
+
+def delete_produto(user_id: int, produto_id: int):
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "DELETE FROM saude_produtos WHERE id = %s AND user_id = %s",
+                (produto_id, user_id)
+            )
+            conn.commit()

@@ -321,3 +321,38 @@ def analisar_foto_prato(image_bytes: bytes, mime_type: str = "image/jpeg") -> di
         lines = text.split("\n")
         text = "\n".join(lines[1:-1])
     return json.loads(text)
+
+
+# ── Produtos ─────────────────────────────────────────────────────────────────
+
+def search_produtos(user_id: int, query: str) -> list:
+    if not query or len(query.strip()) < 2:
+        return []
+    return [dict(r) for r in repo.search_produtos(user_id, query.strip())]
+
+
+def get_produtos(user_id: int) -> list:
+    return [dict(r) for r in repo.get_produtos(user_id)]
+
+
+def save_produto_from_analise(user_id: int, analise: dict) -> dict:
+    nome = (analise.get("produto_nome") or "").strip()
+    if not nome:
+        raise ValueError("Nome do produto não identificado")
+    row = repo.save_produto(
+        user_id,
+        nome=nome,
+        marca=None,
+        porcao_g=analise.get("porcao_g"),
+        calorias_por_porcao=analise.get("calorias_por_porcao"),
+        proteinas_g=analise.get("proteinas_g"),
+        carboidratos_g=analise.get("carboidratos_g"),
+        gorduras_totais_g=analise.get("gorduras_totais_g"),
+        sodio_mg=analise.get("sodio_mg"),
+        fibras_g=analise.get("fibras_g"),
+    )
+    return dict(row)
+
+
+def delete_produto(user_id: int, produto_id: int):
+    repo.delete_produto(user_id, produto_id)
