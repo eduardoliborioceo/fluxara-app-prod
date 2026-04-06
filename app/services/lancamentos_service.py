@@ -4,6 +4,14 @@ from app.repositories import lancamentos_repository as repo
 
 _TIPOS_VALIDOS = {'receita', 'despesa', 'despesa_cartao'}
 
+_FIXA_HORIZONTE = {
+    'mensal': 36,
+    'trimestral': 20,
+    'anual': 10,
+    'semanal': 52,
+    'diario': 90,
+}
+
 
 def add_lancamento(user_id: int, data: dict) -> dict:
     tipo = data.get('tipo', '')
@@ -22,12 +30,15 @@ def add_lancamento(user_id: int, data: dict) -> dict:
     if recorrencia_modo == 'parcela':
         return _create_parcelas(user_id, tipo, descricao, valor, data)
 
+    if recorrencia_modo == 'fixa':
+        return _expand_fixa(user_id, tipo, descricao, valor, data)
+
     data_venc = data.get('data_vencimento') or None
     efetivado = bool(data.get('efetivado', False))
-    recorrente = recorrencia_modo == 'fixa'
-    recorrencia_tipo = data.get('periodicidade') if recorrente else None
+    recorrente = False
+    recorrencia_tipo = None
 
-    if not recorrente and data.get('recorrente'):
+    if data.get('recorrente'):
         recorrente = True
         recorrencia_tipo = data.get('recorrencia_tipo')
 
@@ -101,6 +112,54 @@ def _create_parcelas(user_id: int, tipo: str, descricao_base: str | None, valor_
         row = repo.create_lancamento(
             user_id, tipo, desc, valor_parcela, venc_str, efetivado_i,
             False, None, categoria_id, subcategoria_id,
+            conta_id, cartao_id, f_mes, f_ano, grupo_id
+        )
+        if first_row is None:
+            first_row = row
+
+    return dict(first_row) if first_row else {}
+
+
+def _expand_fixa(user_id: int, tipo: str, descricao: str | None, valor: float, data: dict) -> dict:
+    periodicidade = data.get('periodicidade', 'mensal')
+    horizonte = _FIXA_HORIZONTE.get(periodicidade, 36)
+
+    efetivado_inicial = bool(data.get('efetivado', False))
+    categoria_id = int(data['categoria_id']) if data.get('categoria_id') else None
+    subcategoria_id = int(data['subcategoria_id']) if data.get('subcategoria_id') else None
+    conta_id = int(data['conta_id']) if data.get('conta_id') else None
+    cartao_id = int(data['cartao_id']) if data.get('cartao_id') else None
+    fatura_mes_base = int(data['fatura_mes']) if data.get('fatura_mes') else None
+    fatura_ano_base = int(data['fatura_ano']) if data.get('fatura_ano') else None
+
+    data_base = None
+    data_venc_raw = data.get('data_vencimento')
+    if data_venc_raw:
+        try:
+            data_base = datetime.date.fromisoformat(data_venc_raw)
+        except ValueError:
+            pass
+
+    grupo_id = str(uuid.uuid4())
+    first_row = None
+
+    for i in range(horizonte):
+        venc_str = None
+        if data_base:
+            venc_str = _avancar_data(data_base, periodicidade, i).isoformat()
+
+        f_mes = fatura_mes_base
+        f_ano = fatura_ano_base
+        if fatura_mes_base and fatura_ano_base and tipo == 'despesa_cartao' and i > 0:
+            m = fatura_mes_base + i
+            f_ano = fatura_ano_base + (m - 1) // 12
+            f_mes = ((m - 1) % 12) + 1
+
+        efetivado = efetivado_inicial if i == 0 else False
+
+        row = repo.create_lancamento(
+            user_id, tipo, descricao, valor, venc_str, efetivado,
+            True, periodicidade, categoria_id, subcategoria_id,
             conta_id, cartao_id, f_mes, f_ano, grupo_id
         )
         if first_row is None:

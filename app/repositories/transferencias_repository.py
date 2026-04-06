@@ -3,16 +3,19 @@ from psycopg.rows import dict_row
 
 
 def create_transferencia(user_id, descricao, valor, data_vencimento, efetivado,
-                         recorrente, recorrencia_tipo, conta_origem_id, conta_destino_id):
+                         recorrente, recorrencia_tipo, conta_origem_id, conta_destino_id,
+                         grupo_recorrencia_id=None):
     with get_db() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("""
                 INSERT INTO transferencias (user_id, descricao, valor, data_vencimento,
-                    efetivado, recorrente, recorrencia_tipo, conta_origem_id, conta_destino_id)
-                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                    efetivado, recorrente, recorrencia_tipo, conta_origem_id, conta_destino_id,
+                    grupo_recorrencia_id)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                 RETURNING *
             """, (user_id, descricao, valor, data_vencimento, efetivado,
-                  recorrente, recorrencia_tipo, conta_origem_id, conta_destino_id))
+                  recorrente, recorrencia_tipo, conta_origem_id, conta_destino_id,
+                  grupo_recorrencia_id))
             row = cur.fetchone()
             conn.commit()
             return row
