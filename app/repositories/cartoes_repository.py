@@ -92,6 +92,27 @@ def get_cartao(cartao_id: int, user_id: int):
             return cur.fetchone()
 
 
+def get_open_invoices_for_conta(conta_id: int, user_id: int, mes: int, ano: int) -> list:
+    with get_db() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("""
+                SELECT sub.id, sub.nome, sub.bandeira, sub.dia_vencimento, sub.fatura_total
+                FROM (
+                    SELECT cc.id, cc.nome, cc.bandeira, cc.dia_vencimento,
+                        COALESCE((
+                            SELECT SUM(l.valor) FROM lancamentos l
+                            WHERE l.cartao_id = cc.id AND l.tipo = 'despesa_cartao'
+                              AND l.ativo = true
+                              AND l.fatura_mes = %s AND l.fatura_ano = %s
+                        ), 0) AS fatura_total
+                    FROM cartoes_credito cc
+                    WHERE cc.conta_id = %s AND cc.user_id = %s AND cc.ativo = TRUE
+                ) sub
+                WHERE sub.fatura_total > 0
+            """, (mes, ano, conta_id, user_id))
+            return cur.fetchall()
+
+
 def delete_cartao(cartao_id: int, user_id: int):
     with get_db() as conn:
         with conn.cursor() as cur:

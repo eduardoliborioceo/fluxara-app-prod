@@ -776,11 +776,55 @@ body {
   .content {
     padding-top: calc(var(--header-height) + 16px);
     padding-bottom: calc(var(--bottom-nav-height) + 16px);
+    padding-left: 10px;
+    padding-right: 10px;
   }
 
   .desktop-header {
     display: none;
   }
+}
+
+/* =========================
+   BACK BAR (sub-pages)
+========================= */
+.page-back-bar {
+  display: flex;
+  align-items: center;
+  padding: 0 0 10px;
+}
+
+.page-back-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--card, #fff);
+  border: 1px solid var(--border, rgba(15,23,42,.09));
+  color: var(--text, #1e293b);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  font-size: 1rem;
+  transition: background .15s, color .15s;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.page-back-btn:hover {
+  background: rgba(13,110,253,.06);
+  color: var(--primary, #0d6efd);
+}
+
+[data-theme="escuro"] .page-back-btn {
+  background: #1e293b;
+  border-color: rgba(255,255,255,.1);
+  color: #e2e8f0;
+}
+
+[data-theme="escuro"] .page-back-btn:hover {
+  background: rgba(59,130,246,.1);
+  color: #93c5fd;
 }
 
 /* ==========================

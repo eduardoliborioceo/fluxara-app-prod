@@ -13,6 +13,12 @@
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/surebet.css') }}?v={{ static_v }}">
 
+<div class="page-back-bar">
+  <a href="javascript:history.back()" class="page-back-btn" title="Voltar">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+</div>
+
 <div class="surebet-wrapper">
 
   <!-- Stake + outcomes -->
@@ -67,6 +73,65 @@
         <span class="surebet-result-label">Margem</span>
         <span class="surebet-result-value" id="sbMargem">—</span>
       </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== ALAVANCAGEM =================== -->
+<div class="surebet-wrapper" style="margin-top:8px">
+
+  <div class="surebet-card">
+    <div class="surebet-section-label">Simulador de Alavancagem</div>
+
+    <div class="alavancagem-config-grid">
+      <div class="surebet-field">
+        <label class="surebet-label">Aposta inicial</label>
+        <div class="surebet-money-wrap">
+          <span class="surebet-currency">R$</span>
+          <input type="number" id="alvInicial" class="surebet-money-input"
+                 placeholder="20,00" step="0.01" min="0.01" value="20">
+        </div>
+      </div>
+
+      <div class="surebet-field">
+        <label class="surebet-label">Odd</label>
+        <div class="surebet-money-wrap">
+          <span class="surebet-currency" style="min-width:auto;padding:10px 10px">@</span>
+          <input type="number" id="alvOdd" class="surebet-money-input"
+                 placeholder="2.50" step="0.01" min="1.01" value="2.50">
+        </div>
+      </div>
+
+      <div class="surebet-field">
+        <label class="surebet-label">Nº de rodadas</label>
+        <div class="surebet-money-wrap">
+          <span class="surebet-currency" style="min-width:auto;padding:10px 10px">#</span>
+          <input type="number" id="alvRodadas" class="surebet-money-input"
+                 placeholder="3" step="1" min="1" max="20" value="3">
+        </div>
+      </div>
+    </div>
+
+    <button class="alv-btn-simular" onclick="alvSimular()">
+      <i class="bi bi-lightning-charge"></i> Simular alavancagem
+    </button>
+  </div>
+
+  <div class="surebet-card" id="alvResultCard" style="display:none">
+    <div class="surebet-section-label">Sequência</div>
+
+    <div class="alv-summary-row" id="alvSummary"></div>
+
+    <div id="alvRoundsTable"></div>
+
+    <div class="alv-actions">
+      <button class="alv-btn-certo" id="alvBtnCerto" onclick="alvDeuCerto()">
+        <i class="bi bi-check-circle"></i> Deu certo!
+      </button>
+      <button class="alv-btn-reiniciar" onclick="alvReiniciar()">
+        <i class="bi bi-arrow-counterclockwise"></i> Reiniciar
+      </button>
     </div>
   </div>
 

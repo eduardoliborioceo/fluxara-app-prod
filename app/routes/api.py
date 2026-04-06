@@ -402,6 +402,21 @@ def conta_lancamentos(conta_id):
     return jsonify(lancamentos_service.list_by_conta(conta_id, current_user.id, mes, ano))
 
 
+@bp.route("/contas/<int:conta_id>/fatura-aberta", methods=["GET"])
+@login_required
+def conta_fatura_aberta(conta_id):
+    from datetime import date
+    try:
+        mes = int(request.args.get("mes", 0) or 0)
+        ano = int(request.args.get("ano", 0) or 0)
+        if mes < 1 or mes > 12 or ano < 2000:
+            raise ValueError()
+    except (ValueError, TypeError):
+        today = date.today()
+        mes, ano = today.month, today.year
+    return jsonify(cartoes_service.get_fatura_aberta_para_conta(conta_id, current_user.id, mes, ano))
+
+
 @bp.route("/cartoes/<int:cartao_id>/lancamentos", methods=["GET"])
 @login_required
 def cartao_lancamentos(cartao_id):

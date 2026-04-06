@@ -165,6 +165,19 @@
   };
 
   function renderTx(tx) {
+    if (tx.is_fatura_aberta) {
+      var dateStr = formatDate(tx.data_vencimento);
+      var badge = '<span class="extrato-badge extrato-badge--pendente">Fatura em aberto</span>';
+      return '<div class="extrato-tx-item extrato-tx-item--fatura" data-id="' + esc(tx.id) + '" data-tipo="despesa" data-valor="' + parseFloat(tx.valor || 0) + '" data-prefix="−">'
+        + '<div class="extrato-tx-icon extrato-tx-icon--despesa"><i class="bi bi-credit-card-2-front"></i></div>'
+        + '<div class="extrato-tx-info">'
+        +   '<div class="extrato-tx-desc">' + esc(tx.descricao || 'Fatura em aberto') + badge + '</div>'
+        +   '<div class="extrato-tx-meta">Vencimento: ' + dateStr + '</div>'
+        + '</div>'
+        + '<div class="extrato-tx-valor extrato-tx-valor--despesa">− ' + formatMoney(tx.valor) + '</div>'
+        + '</div>';
+    }
+
     var m = tipoMap[tx.tipo] || tipoMap.despesa;
     var dateStr = formatDate(tx.data_vencimento);
     var isFuture = tx.data_vencimento && parseDate(tx.data_vencimento) > now;
@@ -250,6 +263,7 @@
       var groupCls = isSemData ? ' extrato-date-group--sem-data' : '';
       var groupTotal = 0;
       txs.forEach(function (tx) {
+        if (tx.is_fatura_aberta) { groupTotal -= parseFloat(tx.valor || 0); return; }
         var m = tipoMap[tx.tipo] || tipoMap.despesa;
         groupTotal += (m.prefix === '+' ? 1 : -1) * parseFloat(tx.valor || 0);
       });
@@ -265,6 +279,7 @@
     body.innerHTML = html;
     body.querySelectorAll('.extrato-tx-item').forEach(function (el) {
       el.addEventListener('click', function () {
+        if (this.classList.contains('extrato-tx-item--fatura')) return;
         var id = parseInt(this.dataset.id);
         if (selectMode) {
           if (selectedIds.has(id)) {
@@ -313,9 +328,23 @@
     document.getElementById('extratoSumBar').style.display = 'none';
     try {
       var mes = month + 1;
-      var r = await fetch('/api/contas/' + contaId + '/lancamentos?mes=' + mes + '&ano=' + year);
-      var data = await r.json();
-      allTransactions = Array.isArray(data) ? data : [];
+      var results = await Promise.all([
+        fetch('/api/contas/' + contaId + '/lancamentos?mes=' + mes + '&ano=' + year).then(function (r) { return r.json(); }),
+        fetch('/api/contas/' + contaId + '/fatura-aberta?mes=' + mes + '&ano=' + year).then(function (r) { return r.json(); }).catch(function () { return []; }),
+      ]);
+      allTransactions = Array.isArray(results[0]) ? results[0] : [];
+      var faturas = Array.isArray(results[1]) ? results[1] : [];
+      faturas.forEach(function (f) {
+        allTransactions.push({
+          id: 'fatura_' + f.cartao_id,
+          tipo: 'despesa',
+          descricao: 'Fatura em aberto \u2014 ' + f.cartao_nome,
+          valor: f.fatura_total,
+          data_vencimento: f.data_vencimento,
+          efetivado: false,
+          is_fatura_aberta: true,
+        });
+      });
       if (!allTransactions.length) {
         body.innerHTML = '<div class="text-center py-4 text-muted small">'
           + '<i class="bi bi-inbox d-block mb-1" style="font-size:1.8rem;opacity:.3"></i>'

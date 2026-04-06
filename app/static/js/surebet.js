@@ -105,3 +105,102 @@
 
   buildOddsInputs();
 })();
+
+/* =============================================
+   ALAVANCAGEM
+============================================= */
+(function () {
+  var alvRounds = [];
+  var alvRodadaAtual = 0;
+
+  function fmtAlv(v) {
+    return 'R$ ' + parseFloat(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function buildRounds(inicial, odd, n) {
+    var rounds = [];
+    var aposta = parseFloat(inicial);
+    for (var i = 0; i < n; i++) {
+      var retorno = aposta * parseFloat(odd);
+      var guardar = aposta;
+      var proximo = retorno - parseFloat(inicial);
+      rounds.push({
+        num: i + 1,
+        aposta: aposta,
+        retorno: retorno,
+        guardar: guardar,
+      });
+      aposta = proximo;
+    }
+    return rounds;
+  }
+
+  function renderRounds() {
+    var container = document.getElementById('alvRoundsTable');
+    if (!container) return;
+    var html = '';
+    alvRounds.forEach(function (r, i) {
+      var status = i < alvRodadaAtual ? 'passado' : (i === alvRodadaAtual ? 'ativa' : 'futura');
+      var rowCls = status === 'passado' ? ' alv-round-row--passado' : '';
+      var badgeCls = status === 'ativa' ? ' alv-round-badge--ativa' : (status === 'passado' ? ' alv-round-badge--certo' : '');
+      var badgeContent = status === 'passado'
+        ? '<i class="bi bi-check-lg"></i>'
+        : (status === 'ativa' ? r.num : r.num);
+      html += '<div class="alv-round-row' + rowCls + '">'
+        + '<div class="alv-round-badge' + badgeCls + '">' + badgeContent + '</div>'
+        + '<div class="alv-round-info">'
+        +   '<div class="alv-round-title">Rodada ' + r.num + ' — Apostar ' + fmtAlv(r.aposta) + '</div>'
+        +   '<div class="alv-round-sub">Guardar: ' + fmtAlv(r.guardar) + '</div>'
+        + '</div>'
+        + '<div class="alv-round-right">'
+        +   '<div class="alv-round-retorno">' + fmtAlv(r.retorno) + '</div>'
+        +   '<div class="alv-round-guardar">se ganhar</div>'
+        + '</div>'
+        + '</div>';
+    });
+    container.innerHTML = html;
+
+    var totalGuardado = alvRounds.slice(0, alvRodadaAtual).reduce(function (s, r) { return s + r.guardar; }, 0);
+    var rodadaObj = alvRounds[alvRodadaAtual] || null;
+    var summary = document.getElementById('alvSummary');
+    summary.innerHTML = ''
+      + '<div class="alv-summary-chip">'
+      +   '<span class="alv-summary-chip-label">Rodada atual</span>'
+      +   '<span class="alv-summary-chip-val">' + (alvRodadaAtual + 1) + ' / ' + alvRounds.length + '</span>'
+      + '</div>'
+      + (rodadaObj ? '<div class="alv-summary-chip">'
+      +   '<span class="alv-summary-chip-label">Apostar agora</span>'
+      +   '<span class="alv-summary-chip-val">' + fmtAlv(rodadaObj.aposta) + '</span>'
+      + '</div>' : '')
+      + '<div class="alv-summary-chip">'
+      +   '<span class="alv-summary-chip-label">Guardado</span>'
+      +   '<span class="alv-summary-chip-val alv-summary-chip-val--green">' + fmtAlv(totalGuardado) + '</span>'
+      + '</div>';
+
+    var btnCerto = document.getElementById('alvBtnCerto');
+    if (btnCerto) btnCerto.disabled = alvRodadaAtual >= alvRounds.length - 1;
+  }
+
+  window.alvSimular = function () {
+    var inicial = parseFloat(document.getElementById('alvInicial').value) || 0;
+    var odd = parseFloat(document.getElementById('alvOdd').value) || 0;
+    var n = parseInt(document.getElementById('alvRodadas').value, 10) || 0;
+    if (inicial <= 0 || odd <= 1 || n < 1) { alert('Preencha valores válidos (aposta > 0, odd > 1, rodadas ≥ 1).'); return; }
+    alvRounds = buildRounds(inicial, odd, n);
+    alvRodadaAtual = 0;
+    document.getElementById('alvResultCard').style.display = '';
+    renderRounds();
+  };
+
+  window.alvDeuCerto = function () {
+    if (alvRodadaAtual < alvRounds.length - 1) {
+      alvRodadaAtual++;
+      renderRounds();
+    }
+  };
+
+  window.alvReiniciar = function () {
+    alvRodadaAtual = 0;
+    renderRounds();
+  };
+})();

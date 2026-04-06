@@ -84,6 +84,26 @@ def gerar_lancamento_fatura(cartao_id: int, user_id: int, mes: int, ano: int,
     return dict(row)
 
 
+def get_fatura_aberta_para_conta(conta_id: int, user_id: int, mes: int, ano: int) -> list:
+    rows = repo.get_open_invoices_for_conta(conta_id, user_id, mes, ano)
+    result = []
+    for r in rows:
+        r = dict(r)
+        dia_v = int(r.get('dia_vencimento') or 1)
+        try:
+            due = datetime.date(ano, mes, min(dia_v, 28))
+        except ValueError:
+            due = datetime.date(ano, mes, 28)
+        result.append({
+            'cartao_id': r['id'],
+            'cartao_nome': r['nome'],
+            'bandeira': r.get('bandeira', 'outro'),
+            'fatura_total': float(r['fatura_total']),
+            'data_vencimento': due.isoformat(),
+        })
+    return result
+
+
 def _parse_money(value) -> float:
     if value is None:
         return 0.0
