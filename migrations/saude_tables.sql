@@ -54,6 +54,7 @@ CREATE TABLE IF NOT EXISTS saude_produtos (
     user_id             INTEGER NOT NULL,
     nome                VARCHAR(200) NOT NULL,
     marca               VARCHAR(100),
+    porcao_descricao    TEXT,
     porcao_g            NUMERIC(6,1),
     calorias_por_porcao INTEGER,
     proteinas_g         NUMERIC(6,2),
