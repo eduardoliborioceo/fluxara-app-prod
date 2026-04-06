@@ -266,47 +266,6 @@
 .surebet-lucro--neg { color: #dc3545; }
 
 /* ========================
-   DARK THEME
-======================== */
-[data-theme="escuro"] .surebet-card {
-  background: #1e293b;
-  border-color: rgba(255,255,255,.08);
-}
-
-[data-theme="escuro"] .surebet-money-wrap {
-  border-color: rgba(255,255,255,.1);
-}
-
-[data-theme="escuro"] .surebet-currency {
-  background: rgba(255,255,255,.04);
-  border-right-color: rgba(255,255,255,.1);
-}
-
-[data-theme="escuro"] .surebet-odd-input {
-  border-color: rgba(255,255,255,.1);
-  color: #e2e8f0;
-}
-
-[data-theme="escuro"] .surebet-stakes {
-  background: rgba(255,255,255,.04);
-}
-
-[data-theme="escuro"] .surebet-outcome-btn {
-  border-color: rgba(255,255,255,.1);
-  color: #94a3b8;
-}
-
-[data-theme="escuro"] .surebet-result-card--ok {
-  border-color: #16a34a;
-  background: rgba(22,163,74,.08);
-}
-
-[data-theme="escuro"] .surebet-result-card--no {
-  border-color: #f59e0b;
-  background: rgba(245,158,11,.08);
-}
-
-/* ========================
    TABS
 ======================== */
 .surebet-tabs {
@@ -348,18 +307,8 @@
   color: var(--primary, #0d6efd);
 }
 
-[data-theme="escuro"] .surebet-tabs {
-  background: #1e293b;
-  border-color: rgba(255,255,255,.08);
-}
-
-[data-theme="escuro"] .surebet-tab-btn:hover:not(.active) {
-  background: rgba(59,130,246,.1);
-  color: #93c5fd;
-}
-
 /* ========================
-   ALAVANCAGEM
+   ALAVANCAGEM — RODADAS
 ======================== */
 .alv-btn-simular {
   width: 100%;
@@ -381,6 +330,7 @@
 }
 
 .alv-btn-simular:hover { opacity: .88; }
+.alv-btn-simular:disabled { opacity: .5; cursor: default; }
 
 .alv-summary-row {
   display: flex;
@@ -528,8 +478,244 @@
 
 .alv-btn-certo:hover    { opacity: .88; }
 .alv-btn-reiniciar:hover { background: #e2e8f0; }
-
 .alv-btn-certo:disabled { opacity: .4; cursor: not-allowed; }
+
+/* ========================
+   ALAVANCAGEM — LISTA
+======================== */
+.alv-lista-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.alv-btn-nova {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: none;
+  background: var(--primary, #0d6efd);
+  color: #fff;
+  font-size: .8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity .15s;
+  font-family: inherit;
+}
+
+.alv-btn-nova:hover { opacity: .88; }
+
+.alv-text-input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1.5px solid var(--border, rgba(15,23,42,.09));
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: .95rem;
+  background: transparent;
+  color: var(--text, #1e293b);
+  outline: none;
+  transition: border-color .15s;
+  font-family: inherit;
+}
+
+.alv-text-input:focus {
+  border-color: var(--primary, #0d6efd);
+}
+
+.alv-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.alv-lista-vazio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 20px 16px;
+  color: var(--text-muted, #64748b);
+  font-size: .85rem;
+  text-align: center;
+}
+
+.alv-lista-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1.5px solid var(--border, rgba(15,23,42,.06));
+  transition: border-color .15s;
+}
+
+.alv-lista-item--ativa {
+  border-color: var(--primary, #0d6efd);
+  background: rgba(13,110,253,.04);
+}
+
+.alv-lista-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.alv-lista-item-nome {
+  font-size: .88rem;
+  font-weight: 700;
+  color: var(--text, #1e293b);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.alv-lista-item-meta {
+  font-size: .75rem;
+  color: var(--text-muted, #64748b);
+  margin-top: 3px;
+}
+
+.alv-lista-item-acoes {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.alv-lista-item-badge {
+  font-size: .74rem;
+  font-weight: 700;
+  color: var(--primary, #0d6efd);
+  background: rgba(13,110,253,.1);
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+.alv-lista-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 7px;
+  border: 1.5px solid var(--border, rgba(15,23,42,.09));
+  background: transparent;
+  font-size: .78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+  font-family: inherit;
+  color: var(--text, #1e293b);
+}
+
+.alv-lista-btn--abrir {
+  border-color: var(--primary, #0d6efd);
+  color: var(--primary, #0d6efd);
+  background: rgba(13,110,253,.05);
+}
+
+.alv-lista-btn--abrir:hover {
+  background: rgba(13,110,253,.12);
+}
+
+.alv-lista-btn--del {
+  color: #cbd5e1;
+  border-color: transparent;
+  padding: 6px 8px;
+}
+
+.alv-lista-btn--del:hover {
+  color: #dc3545;
+  background: rgba(220,53,69,.07);
+  border-color: transparent;
+}
+
+.alv-ativa-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.alv-ativa-nome {
+  font-size: .95rem;
+  font-weight: 800;
+  color: var(--text, #1e293b);
+}
+
+.alv-btn-fechar {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid var(--border, rgba(15,23,42,.09));
+  background: transparent;
+  color: var(--text-muted, #64748b);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .8rem;
+  transition: background .15s, color .15s;
+}
+
+.alv-btn-fechar:hover {
+  background: #f1f5f9;
+  color: var(--text, #1e293b);
+}
+
+/* ========================
+   DARK THEME
+======================== */
+[data-theme="escuro"] .surebet-card {
+  background: #1e293b;
+  border-color: rgba(255,255,255,.08);
+}
+
+[data-theme="escuro"] .surebet-tabs {
+  background: #1e293b;
+  border-color: rgba(255,255,255,.08);
+}
+
+[data-theme="escuro"] .surebet-tab-btn:hover:not(.active) {
+  background: rgba(59,130,246,.1);
+  color: #93c5fd;
+}
+
+[data-theme="escuro"] .surebet-money-wrap {
+  border-color: rgba(255,255,255,.1);
+}
+
+[data-theme="escuro"] .surebet-currency {
+  background: rgba(255,255,255,.04);
+  border-right-color: rgba(255,255,255,.1);
+}
+
+[data-theme="escuro"] .surebet-odd-input {
+  border-color: rgba(255,255,255,.1);
+  color: #e2e8f0;
+}
+
+[data-theme="escuro"] .surebet-stakes {
+  background: rgba(255,255,255,.04);
+}
+
+[data-theme="escuro"] .surebet-outcome-btn {
+  border-color: rgba(255,255,255,.1);
+  color: #94a3b8;
+}
+
+[data-theme="escuro"] .surebet-result-card--ok {
+  border-color: #16a34a;
+  background: rgba(22,163,74,.08);
+}
+
+[data-theme="escuro"] .surebet-result-card--no {
+  border-color: #f59e0b;
+  background: rgba(245,158,11,.08);
+}
 
 [data-theme="escuro"] .alv-summary-chip {
   background: rgba(255,255,255,.04);
@@ -547,4 +733,25 @@
 
 [data-theme="escuro"] .alv-btn-reiniciar:hover {
   background: rgba(255,255,255,.1);
+}
+
+[data-theme="escuro"] .alv-lista-item {
+  background: rgba(255,255,255,.04);
+  border-color: rgba(255,255,255,.07);
+}
+
+[data-theme="escuro"] .alv-lista-item--ativa {
+  border-color: var(--primary, #0d6efd);
+  background: rgba(13,110,253,.08);
+}
+
+[data-theme="escuro"] .alv-text-input {
+  background: #0f172a;
+  border-color: rgba(255,255,255,.12);
+  color: #e2e8f0;
+}
+
+[data-theme="escuro"] .alv-btn-fechar:hover {
+  background: rgba(255,255,255,.07);
+  color: #e2e8f0;
 }

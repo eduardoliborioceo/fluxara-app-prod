@@ -2,6 +2,8 @@
    TABS
 ============================================= */
 (function () {
+  var _alvCarregado = false;
+
   document.querySelectorAll('.surebet-tab-btn').forEach(function (btn) {
     btn.addEventListener('click', function () {
       document.querySelectorAll('.surebet-tab-btn').forEach(function (b) { b.classList.remove('active'); });
@@ -9,6 +11,10 @@
       var tab = btn.dataset.tab;
       document.getElementById('tab-calculadora').style.display = tab === 'calculadora' ? '' : 'none';
       document.getElementById('tab-alavancagem').style.display = tab === 'alavancagem' ? '' : 'none';
+      if (tab === 'alavancagem' && !_alvCarregado) {
+        _alvCarregado = true;
+        alvCarregarLista();
+      }
     });
   });
 })();
@@ -124,43 +130,48 @@
 })();
 
 /* =============================================
-   ALAVANCAGEM
+   ALAVANCAGEM — PERSISTÊNCIA
 ============================================= */
 (function () {
-  var alvRounds = [];
-  var alvRodadaAtual = 0;
-  var alvNumRodadas = 3;
+  var _alvAtualId = null;
+  var _alvRounds = [];
+  var _alvRodadaAtual = 0;
+  var _alvNumRodadas = 3;
+  var _alvFormAberto = false;
 
   function fmtAlv(v) {
     return 'R$ ' + parseFloat(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
+  /* ---- Rodadas toggle ---- */
   document.getElementById('alvRodadasToggle').addEventListener('click', function (e) {
     var btn = e.target.closest('.surebet-outcome-btn');
     if (!btn) return;
     document.querySelectorAll('#alvRodadasToggle .surebet-outcome-btn').forEach(function (b) { b.classList.remove('active'); });
     btn.classList.add('active');
-    alvNumRodadas = parseInt(btn.dataset.n);
+    _alvNumRodadas = parseInt(btn.dataset.n);
   });
 
+  /* ---- Calcula sequência de rodadas ---- */
   function buildRounds(inicial, odd, n) {
     var rounds = [];
     var aposta = parseFloat(inicial);
     for (var i = 0; i < n; i++) {
       var retorno = aposta * parseFloat(odd);
-      var guardar = aposta;
+      var guardar = parseFloat(inicial);
       rounds.push({ num: i + 1, aposta: aposta, retorno: retorno, guardar: guardar });
       aposta = retorno - parseFloat(inicial);
     }
     return rounds;
   }
 
+  /* ---- Render rodadas ---- */
   function renderRounds() {
     var container = document.getElementById('alvRoundsTable');
     if (!container) return;
     var html = '';
-    alvRounds.forEach(function (r, i) {
-      var status = i < alvRodadaAtual ? 'passado' : (i === alvRodadaAtual ? 'ativa' : 'futura');
+    _alvRounds.forEach(function (r, i) {
+      var status = i < _alvRodadaAtual ? 'passado' : (i === _alvRodadaAtual ? 'ativa' : 'futura');
       var rowCls = status === 'passado' ? ' alv-round-row--passado' : '';
       var badgeCls = status === 'ativa' ? ' alv-round-badge--ativa' : (status === 'passado' ? ' alv-round-badge--certo' : '');
       var badgeContent = status === 'passado' ? '<i class="bi bi-check-lg"></i>' : r.num;
@@ -178,12 +189,12 @@
     });
     container.innerHTML = html;
 
-    var totalGuardado = alvRounds.slice(0, alvRodadaAtual).reduce(function (s, r) { return s + r.guardar; }, 0);
-    var rodadaObj = alvRounds[alvRodadaAtual] || null;
+    var totalGuardado = _alvRounds.slice(0, _alvRodadaAtual).reduce(function (s, r) { return s + r.guardar; }, 0);
+    var rodadaObj = _alvRounds[_alvRodadaAtual] || null;
     document.getElementById('alvSummary').innerHTML = ''
       + '<div class="alv-summary-chip">'
       +   '<span class="alv-summary-chip-label">Rodada</span>'
-      +   '<span class="alv-summary-chip-val">' + (alvRodadaAtual + 1) + ' / ' + alvRounds.length + '</span>'
+      +   '<span class="alv-summary-chip-val">' + (_alvRodadaAtual + 1) + ' / ' + _alvRounds.length + '</span>'
       + '</div>'
       + (rodadaObj ? '<div class="alv-summary-chip">'
       +   '<span class="alv-summary-chip-label">Apostar agora</span>'
@@ -195,28 +206,193 @@
       + '</div>';
 
     var btnCerto = document.getElementById('alvBtnCerto');
-    if (btnCerto) btnCerto.disabled = alvRodadaAtual >= alvRounds.length - 1;
+    if (btnCerto) btnCerto.disabled = _alvRodadaAtual >= _alvRounds.length;
   }
 
-  window.alvSimular = function () {
-    var inicial = parseFloat(document.getElementById('alvInicial').value) || 0;
-    var odd = parseFloat(document.getElementById('alvOdd').value) || 0;
-    if (inicial <= 0 || odd <= 1) { alert('Preencha valores válidos (aposta > 0, odd > 1).'); return; }
-    alvRounds = buildRounds(inicial, odd, alvNumRodadas);
-    alvRodadaAtual = 0;
+  /* ---- Abre uma alavancagem ---- */
+  function alvAbrir(alv) {
+    _alvAtualId = alv.id;
+    _alvRodadaAtual = alv.rodada_atual || 0;
+    _alvRounds = buildRounds(alv.aposta_inicial, alv.odd, alv.num_rodadas);
+    document.getElementById('alvAtivaNome').textContent = alv.nome;
     document.getElementById('alvResultCard').style.display = '';
     renderRounds();
+    document.getElementById('alvResultCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    renderLista();
+  }
+
+  /* ---- Fecha alavancagem ativa ---- */
+  window.alvFechar = function () {
+    _alvAtualId = null;
+    document.getElementById('alvResultCard').style.display = 'none';
+    renderLista();
   };
 
-  window.alvDeuCerto = function () {
-    if (alvRodadaAtual < alvRounds.length - 1) {
-      alvRodadaAtual++;
-      renderRounds();
+  /* ---- Render lista ---- */
+  function renderLista() {
+    var container = document.getElementById('alvLista');
+    var vazio = document.getElementById('alvListaVazio');
+    if (!_alvListaCache || !_alvListaCache.length) {
+      container.innerHTML = '';
+      vazio.style.display = 'flex';
+      return;
     }
+    vazio.style.display = 'none';
+    container.innerHTML = _alvListaCache.map(function (alv) {
+      var progresso = (alv.rodada_atual || 0) + 1;
+      var total = alv.num_rodadas;
+      var isAtiva = alv.id === _alvAtualId;
+      return '<div class="alv-lista-item' + (isAtiva ? ' alv-lista-item--ativa' : '') + '">'
+        + '<div class="alv-lista-item-info">'
+        +   '<div class="alv-lista-item-nome">' + escAlv(alv.nome) + '</div>'
+        +   '<div class="alv-lista-item-meta">'
+        +     fmtAlv(alv.aposta_inicial) + ' @ ' + parseFloat(alv.odd).toFixed(2)
+        +     ' &middot; Rodada ' + progresso + '/' + total
+        +   '</div>'
+        + '</div>'
+        + '<div class="alv-lista-item-acoes">'
+        + (isAtiva
+            ? '<span class="alv-lista-item-badge">Aberta</span>'
+            : '<button class="alv-lista-btn alv-lista-btn--abrir" onclick=\'alvAbrirById(' + JSON.stringify(alv) + ')\'><i class="bi bi-play-fill"></i> Abrir</button>'
+          )
+        + '<button class="alv-lista-btn alv-lista-btn--del" onclick="alvExcluir(' + alv.id + ')" title="Excluir"><i class="bi bi-trash"></i></button>'
+        + '</div>'
+        + '</div>';
+    }).join('');
+  }
+
+  function escAlv(str) {
+    return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  /* ---- Cache da lista ---- */
+  var _alvListaCache = [];
+
+  /* ---- Carrega lista do servidor ---- */
+  function alvCarregarLista() {
+    fetch('/api/surebet/alavancagem')
+      .then(function (r) { return r.json(); })
+      .then(function (lista) {
+        _alvListaCache = lista;
+        renderLista();
+        if (!lista.length) alvMostrarForm();
+      })
+      .catch(function () {});
+  }
+
+  window.alvCarregarLista = alvCarregarLista;
+
+  /* ---- Toggle formulário nova ---- */
+  window.alvToggleForm = function () {
+    _alvFormAberto = !_alvFormAberto;
+    document.getElementById('alvFormCard').style.display = _alvFormAberto ? '' : 'none';
   };
 
+  function alvMostrarForm() {
+    _alvFormAberto = true;
+    document.getElementById('alvFormCard').style.display = '';
+  }
+
+  /* ---- Abrir por objeto (inline onclick) ---- */
+  window.alvAbrirById = function (alv) {
+    alvAbrir(alv);
+  };
+
+  /* ---- Criar nova alavancagem ---- */
+  window.alvCriar = function () {
+    var inicial = parseFloat(document.getElementById('alvInicial').value) || 0;
+    var odd = parseFloat(document.getElementById('alvOdd').value) || 0;
+    var nome = (document.getElementById('alvNome').value || '').trim();
+    if (inicial <= 0 || odd <= 1) {
+      alert('Preencha valores válidos (aposta > 0, odd > 1).');
+      return;
+    }
+    var btn = document.getElementById('alvBtnCriar');
+    btn.disabled = true;
+
+    fetch('/api/surebet/alavancagem', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nome: nome || null,
+        aposta_inicial: inicial,
+        odd: odd,
+        num_rodadas: _alvNumRodadas,
+      }),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        btn.disabled = false;
+        if (data.error) { alert(data.error); return; }
+        _alvListaCache.unshift(data);
+        document.getElementById('alvNome').value = '';
+        document.getElementById('alvFormCard').style.display = 'none';
+        _alvFormAberto = false;
+        alvAbrir(data);
+      })
+      .catch(function () {
+        btn.disabled = false;
+        alert('Erro ao criar. Tente novamente.');
+      });
+  };
+
+  /* ---- Deu certo → avança rodada ---- */
+  window.alvDeuCerto = function () {
+    if (!_alvAtualId) return;
+    var novaRodada = _alvRodadaAtual + 1;
+    if (novaRodada >= _alvRounds.length) return;
+
+    fetch('/api/surebet/alavancagem/' + _alvAtualId + '/rodada', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rodada_atual: novaRodada }),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.error) { alert(data.error); return; }
+        _alvRodadaAtual = novaRodada;
+        var item = _alvListaCache.find(function (a) { return a.id === _alvAtualId; });
+        if (item) item.rodada_atual = novaRodada;
+        renderRounds();
+        renderLista();
+      });
+  };
+
+  /* ---- Reiniciar → volta para rodada 0 ---- */
   window.alvReiniciar = function () {
-    alvRodadaAtual = 0;
-    renderRounds();
+    if (!_alvAtualId) return;
+    if (!confirm('Reiniciar esta alavancagem do início?')) return;
+
+    fetch('/api/surebet/alavancagem/' + _alvAtualId + '/rodada', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rodada_atual: 0 }),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.error) { alert(data.error); return; }
+        _alvRodadaAtual = 0;
+        var item = _alvListaCache.find(function (a) { return a.id === _alvAtualId; });
+        if (item) item.rodada_atual = 0;
+        renderRounds();
+        renderLista();
+      });
+  };
+
+  /* ---- Excluir ---- */
+  window.alvExcluir = function (id) {
+    if (!confirm('Excluir esta alavancagem?')) return;
+    fetch('/api/surebet/alavancagem/' + id, { method: 'DELETE' })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.error) { alert(data.error); return; }
+        _alvListaCache = _alvListaCache.filter(function (a) { return a.id !== id; });
+        if (_alvAtualId === id) {
+          _alvAtualId = null;
+          document.getElementById('alvResultCard').style.display = 'none';
+        }
+        renderLista();
+        if (!_alvListaCache.length) alvMostrarForm();
+      });
   };
 })();

@@ -959,3 +959,54 @@ def saude_delete_produto(produto_id):
     from app.services import saude_service
     saude_service.delete_produto(current_user.id, produto_id)
     return jsonify({"ok": True})
+
+
+# =============================================================
+# SUREBET — ALAVANCAGEM
+# =============================================================
+
+@bp.route("/surebet/alavancagem", methods=["GET"])
+@login_required
+def surebet_list_alavancagem():
+    from app.services import surebet_service
+    return jsonify(surebet_service.list_alavancagens(current_user.id))
+
+
+@bp.route("/surebet/alavancagem", methods=["POST"])
+@login_required
+def surebet_create_alavancagem():
+    from app.services import surebet_service
+    data = request.get_json() or {}
+    try:
+        alv = surebet_service.create_alavancagem(
+            current_user.id,
+            nome=data.get("nome"),
+            aposta_inicial=data.get("aposta_inicial"),
+            odd=data.get("odd"),
+            num_rodadas=data.get("num_rodadas"),
+        )
+        return jsonify(alv), 201
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@bp.route("/surebet/alavancagem/<int:alv_id>/rodada", methods=["PATCH"])
+@login_required
+def surebet_update_rodada(alv_id):
+    from app.services import surebet_service
+    data = request.get_json() or {}
+    try:
+        alv = surebet_service.update_rodada(
+            alv_id, current_user.id, data.get("rodada_atual", 0)
+        )
+        return jsonify(alv)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@bp.route("/surebet/alavancagem/<int:alv_id>", methods=["DELETE"])
+@login_required
+def surebet_delete_alavancagem(alv_id):
+    from app.services import surebet_service
+    surebet_service.delete_alavancagem(alv_id, current_user.id)
+    return jsonify({"ok": True})

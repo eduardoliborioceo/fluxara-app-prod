@@ -91,8 +91,31 @@
   <!-- ================== TAB: ALAVANCAGEM ================== -->
   <div id="tab-alavancagem" style="display:none">
 
+    <!-- Lista de alavancagens salvas -->
     <div class="surebet-card">
-      <div class="surebet-section-label">Configuração da Alavancagem</div>
+      <div class="alv-lista-header">
+        <div class="surebet-section-label" style="margin-bottom:0">Minhas alavancagens</div>
+        <button class="alv-btn-nova" onclick="alvToggleForm()">
+          <i class="bi bi-plus-lg"></i> Nova
+        </button>
+      </div>
+      <div class="alv-lista" id="alvLista">
+        <div class="alv-lista-vazio" id="alvListaVazio">
+          <i class="bi bi-lightning-charge" style="font-size:1.5rem;color:var(--text-muted)"></i>
+          <div>Nenhuma alavancagem salva</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Formulário nova alavancagem (colapsável) -->
+    <div class="surebet-card" id="alvFormCard" style="display:none">
+      <div class="surebet-section-label">Nova alavancagem</div>
+
+      <div class="surebet-field">
+        <label class="surebet-label">Nome (opcional)</label>
+        <input type="text" id="alvNome" class="alv-text-input"
+               placeholder="Ex: Rodada de novembro">
+      </div>
 
       <div class="surebet-field">
         <label class="surebet-label">Aposta inicial</label>
@@ -123,16 +146,22 @@
         </div>
       </div>
 
-      <button class="alv-btn-simular" onclick="alvSimular()">
-        <i class="bi bi-lightning-charge"></i> Simular alavancagem
+      <button class="alv-btn-simular" id="alvBtnCriar" onclick="alvCriar()">
+        <i class="bi bi-lightning-charge"></i> Criar e salvar
       </button>
     </div>
 
+    <!-- Alavancagem ativa (rodadas) -->
     <div class="surebet-card" id="alvResultCard" style="display:none">
-      <div class="surebet-section-label">Sequência</div>
+      <div class="alv-ativa-header">
+        <div class="alv-ativa-nome" id="alvAtivaNome"></div>
+        <button class="alv-btn-fechar" onclick="alvFechar()" title="Fechar">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
 
+      <div class="surebet-section-label" style="margin-top:14px">Sequência</div>
       <div class="alv-summary-row" id="alvSummary"></div>
-
       <div id="alvRoundsTable"></div>
 
       <div class="alv-actions">
