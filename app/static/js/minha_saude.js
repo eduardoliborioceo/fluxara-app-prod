@@ -2,6 +2,8 @@
   'use strict';
 
   /* ========== TABS ========== */
+  var _produtosCarregados = false;
+
   document.querySelectorAll('.saude-tab-btn').forEach(function (btn) {
     btn.addEventListener('click', function () {
       document.querySelectorAll('.saude-tab-btn').forEach(function (b) {
@@ -11,6 +13,10 @@
       var tab = btn.dataset.tab;
       document.getElementById('tab-hoje').style.display = tab === 'hoje' ? '' : 'none';
       document.getElementById('tab-perfil').style.display = tab === 'perfil' ? '' : 'none';
+      document.getElementById('tab-produtos').style.display = tab === 'produtos' ? '' : 'none';
+      if (tab === 'produtos' && !_produtosCarregados) {
+        carregarProdutos();
+      }
     });
   });
 
@@ -243,11 +249,14 @@
             lista.forEach(function (p) {
               var opt = document.createElement('div');
               opt.className = 'saude-produto-option';
+              var porcaoInfo = p.porcao_descricao || (p.porcao_g ? p.porcao_g + 'g' : '');
               opt.innerHTML =
-                '<div class="saude-produto-option-nome">' + p.nome + '</div>' +
+                '<div class="saude-produto-option-nome">' + p.nome +
+                (p.marca ? ' <span style="font-weight:400;color:var(--text-muted)">· ' + p.marca + '</span>' : '') +
+                '</div>' +
                 '<div class="saude-produto-option-info">' +
                 (p.calorias_por_porcao ? p.calorias_por_porcao + ' kcal' : '') +
-                (p.porcao_g ? ' · ' + p.porcao_g + 'g/porção' : '') +
+                (porcaoInfo ? ' · ' + porcaoInfo : '') +
                 '</div>';
               opt.onclick = function () { selecionarProduto(p); };
               dropdown.appendChild(opt);
@@ -265,9 +274,10 @@
     document.getElementById('produtoDropdown').style.display = 'none';
 
     var info = document.getElementById('produtoSelecionadoInfo');
+    var porcaoLabel = produto.porcao_descricao || (produto.porcao_g ? produto.porcao_g + 'g' : '?');
     info.innerHTML =
       '<div class="saude-ai-result-title">' + produto.nome + '</div>' +
-      '<div class="saude-ai-result-row"><span class="saude-ai-result-key">Por porção (' + (produto.porcao_g || '?') + 'g)</span>' +
+      '<div class="saude-ai-result-row"><span class="saude-ai-result-key">Por porção (' + porcaoLabel + ')</span>' +
       '<span class="saude-ai-result-val">' + (produto.calorias_por_porcao || '—') + ' kcal</span></div>';
     document.getElementById('produtoSelecionadoWrap').style.display = '';
 
@@ -647,6 +657,146 @@
       })
       .catch(function () {
         alert('Erro ao salvar. Tente novamente.');
+      });
+  };
+
+  /* ========== PRODUTOS ========== */
+  var _todosProdutos = [];
+
+  function carregarProdutos() {
+    fetch('/api/saude/produtos')
+      .then(function (r) { return r.json(); })
+      .then(function (lista) {
+        _todosProdutos = lista;
+        _produtosCarregados = true;
+        renderizarProdutos(lista);
+      })
+      .catch(function () {});
+  }
+
+  window.carregarProdutos = carregarProdutos;
+
+  function renderizarProdutos(lista) {
+    var container = document.getElementById('produtoLista');
+    if (!container) return;
+    if (!lista.length) {
+      container.innerHTML =
+        '<div class="saude-produto-lista-vazio">' +
+        '<i class="bi bi-box-seam" style="font-size:1.6rem;color:var(--text-muted)"></i>' +
+        '<div>Nenhum produto cadastrado</div>' +
+        '<div style="font-size:.78rem">Adicione produtos para usá-los ao lançar refeições</div>' +
+        '</div>';
+      return;
+    }
+    container.innerHTML = lista.map(function (p) {
+      var porcaoTexto = '';
+      if (p.porcao_descricao) porcaoTexto = p.porcao_descricao;
+      else if (p.porcao_g) porcaoTexto = p.porcao_g + 'g';
+      var macros = [];
+      if (p.proteinas_g) macros.push(p.proteinas_g + 'g prot');
+      if (p.carboidratos_g) macros.push(p.carboidratos_g + 'g carb');
+      if (p.gorduras_totais_g) macros.push(p.gorduras_totais_g + 'g gord');
+      return '<div class="saude-produto-item" id="prod-' + p.id + '">' +
+        '<div class="saude-produto-item-info">' +
+        '<div class="saude-produto-item-nome">' + escapeHtml(p.nome) +
+        (p.marca ? '<span class="saude-produto-item-marca"> · ' + escapeHtml(p.marca) + '</span>' : '') +
+        '</div>' +
+        '<div class="saude-produto-item-meta">' +
+        (p.calorias_por_porcao ? '<strong>' + p.calorias_por_porcao + ' kcal</strong>' : '') +
+        (porcaoTexto ? ' · ' + escapeHtml(porcaoTexto) : '') +
+        (macros.length ? '<span class="saude-produto-item-macros"> · ' + macros.join(' / ') + '</span>' : '') +
+        '</div>' +
+        '</div>' +
+        '<button class="saude-produto-item-del" onclick="deletarProduto(' + p.id + ')" title="Remover">' +
+        '<i class="bi bi-trash"></i></button>' +
+        '</div>';
+    }).join('');
+  }
+
+  function escapeHtml(str) {
+    return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  window.filtrarProdutosTab = function (q) {
+    var filtrado = q.trim().length < 1
+      ? _todosProdutos
+      : _todosProdutos.filter(function (p) {
+          var haystack = (p.nome + ' ' + (p.marca || '')).toLowerCase();
+          return haystack.indexOf(q.trim().toLowerCase()) !== -1;
+        });
+    renderizarProdutos(filtrado);
+  };
+
+  window.abrirModalProduto = function () {
+    document.getElementById('prodNome').value = '';
+    document.getElementById('prodMarca').value = '';
+    document.getElementById('prodPorcaoDesc').value = '';
+    document.getElementById('prodPorcaoG').value = '';
+    document.getElementById('prodCalorias').value = '';
+    document.getElementById('prodProteinas').value = '';
+    document.getElementById('prodCarbos').value = '';
+    document.getElementById('prodGorduras').value = '';
+    document.getElementById('modalProduto').style.display = 'flex';
+    setTimeout(function () { document.getElementById('prodNome').focus(); }, 100);
+  };
+
+  window.fecharModalProduto = function (evt) {
+    if (!evt || evt.target === document.getElementById('modalProduto')) {
+      document.getElementById('modalProduto').style.display = 'none';
+    }
+  };
+
+  window.salvarProdutoManual = function () {
+    var nome = (document.getElementById('prodNome').value || '').trim();
+    var calorias = document.getElementById('prodCalorias').value;
+    if (!nome) { alert('Nome é obrigatório'); return; }
+    if (!calorias) { alert('Calorias por porção são obrigatórias'); return; }
+
+    var btn = document.getElementById('btnSalvarProduto');
+    btn.disabled = true;
+
+    var payload = {
+      nome: nome,
+      marca: (document.getElementById('prodMarca').value || '').trim() || null,
+      porcao_descricao: (document.getElementById('prodPorcaoDesc').value || '').trim() || null,
+      porcao_g: parseFloat(document.getElementById('prodPorcaoG').value) || null,
+      calorias_por_porcao: parseInt(calorias, 10),
+      proteinas_g: parseFloat(document.getElementById('prodProteinas').value) || null,
+      carboidratos_g: parseFloat(document.getElementById('prodCarbos').value) || null,
+      gorduras_g: parseFloat(document.getElementById('prodGorduras').value) || null,
+    };
+
+    fetch('/api/saude/produto/manual', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        btn.disabled = false;
+        if (data.error) { alert(data.error); return; }
+        document.getElementById('modalProduto').style.display = 'none';
+        _todosProdutos.unshift(data);
+        var filtro = document.getElementById('filtroProdutos');
+        renderizarProdutos(filtro && filtro.value.trim() ? _todosProdutos.filter(function (p) {
+          return (p.nome + ' ' + (p.marca || '')).toLowerCase().indexOf(filtro.value.trim().toLowerCase()) !== -1;
+        }) : _todosProdutos);
+      })
+      .catch(function () {
+        btn.disabled = false;
+        alert('Erro ao salvar. Tente novamente.');
+      });
+  };
+
+  window.deletarProduto = function (id) {
+    fetch('/api/saude/produto/' + id, { method: 'DELETE' })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.error) { alert(data.error); return; }
+        _todosProdutos = _todosProdutos.filter(function (p) { return p.id !== id; });
+        var el = document.getElementById('prod-' + id);
+        if (el) el.remove();
+        if (!_todosProdutos.length) renderizarProdutos([]);
       });
   };
 

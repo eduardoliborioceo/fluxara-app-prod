@@ -27,7 +27,10 @@
       <i class="bi bi-calendar-check"></i> Hoje
     </button>
     <button class="saude-tab-btn" data-tab="perfil" role="tab">
-      <i class="bi bi-person-vcard"></i> Perfil & Histórico
+      <i class="bi bi-person-vcard"></i> Perfil
+    </button>
+    <button class="saude-tab-btn" data-tab="produtos" role="tab">
+      <i class="bi bi-box-seam"></i> Produtos
     </button>
   </div>
 
@@ -291,6 +294,33 @@
 
   </div><!-- /tab-perfil -->
 
+  <!-- ===================== TAB: PRODUTOS ===================== -->
+  <div id="tab-produtos" style="display:none">
+
+    <div class="saude-card">
+      <div class="saude-card-header-row">
+        <div class="saude-card-label" style="margin-bottom:0">Minha base de produtos</div>
+        <button class="saude-produto-novo-btn" onclick="abrirModalProduto()">
+          <i class="bi bi-plus-lg"></i> Novo
+        </button>
+      </div>
+
+      <div class="saude-produto-search-tab-wrap" style="margin:14px 0 10px">
+        <input type="text" id="filtroProdutos" placeholder="Filtrar produtos..."
+               oninput="filtrarProdutosTab(this.value)">
+      </div>
+
+      <div class="saude-produto-lista" id="produtoLista">
+        <div class="saude-produto-lista-vazio">
+          <i class="bi bi-box-seam" style="font-size:1.6rem;color:var(--text-muted)"></i>
+          <div>Nenhum produto cadastrado</div>
+          <div style="font-size:.78rem">Adicione produtos para usá-los ao lançar refeições</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /tab-produtos -->
+
 </div>
 
 <!-- ========================== MODAL REFEIÇÃO ========================== -->
@@ -479,6 +509,55 @@
       <input type="number" id="aguaCustom" placeholder="Ex: 350" min="50" max="5000">
     </div>
     <button class="saude-btn-submit" onclick="salvarAguaCustom()">Salvar</button>
+  </div>
+</div>
+
+<!-- ========================== MODAL PRODUTO ========================== -->
+<div class="saude-modal-overlay" id="modalProduto" style="display:none" onclick="fecharModalProduto(event)">
+  <div class="saude-modal" onclick="event.stopPropagation()">
+    <button class="saude-modal-close" onclick="fecharModalProduto()">&times;</button>
+    <div class="saude-modal-title">Cadastrar produto</div>
+
+    <div class="saude-modal-field">
+      <label>Nome <span style="color:#dc3545">*</span></label>
+      <input type="text" id="prodNome" placeholder="Ex: Aveia em flocos">
+    </div>
+    <div class="saude-modal-field">
+      <label>Marca</label>
+      <input type="text" id="prodMarca" placeholder="Ex: Quaker">
+    </div>
+    <div class="saude-modal-field">
+      <label>Descrição da porção</label>
+      <input type="text" id="prodPorcaoDesc" placeholder="Ex: 1 colher de sopa, 1 xícara, 100g">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="saude-modal-field">
+        <label>Peso da porção (g)</label>
+        <input type="number" id="prodPorcaoG" placeholder="Ex: 30" min="0" step="0.1">
+      </div>
+      <div class="saude-modal-field">
+        <label>Calorias por porção <span style="color:#dc3545">*</span></label>
+        <input type="number" id="prodCalorias" placeholder="Ex: 110" min="0">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+      <div class="saude-modal-field">
+        <label>Proteínas (g)</label>
+        <input type="number" id="prodProteinas" placeholder="0" min="0" step="0.1">
+      </div>
+      <div class="saude-modal-field">
+        <label>Carboidratos (g)</label>
+        <input type="number" id="prodCarbos" placeholder="0" min="0" step="0.1">
+      </div>
+      <div class="saude-modal-field">
+        <label>Gorduras (g)</label>
+        <input type="number" id="prodGorduras" placeholder="0" min="0" step="0.1">
+      </div>
+    </div>
+
+    <button class="saude-btn-submit" id="btnSalvarProduto" onclick="salvarProdutoManual()">
+      Salvar produto
+    </button>
   </div>
 </div>
 

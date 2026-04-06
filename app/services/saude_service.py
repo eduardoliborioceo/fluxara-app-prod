@@ -343,6 +343,7 @@ def save_produto_from_analise(user_id: int, analise: dict) -> dict:
         user_id,
         nome=nome,
         marca=None,
+        porcao_descricao=None,
         porcao_g=analise.get("porcao_g"),
         calorias_por_porcao=analise.get("calorias_por_porcao"),
         proteinas_g=analise.get("proteinas_g"),
@@ -350,6 +351,30 @@ def save_produto_from_analise(user_id: int, analise: dict) -> dict:
         gorduras_totais_g=analise.get("gorduras_totais_g"),
         sodio_mg=analise.get("sodio_mg"),
         fibras_g=analise.get("fibras_g"),
+    )
+    return dict(row)
+
+
+def save_produto_manual(user_id: int, nome: str, marca: str, porcao_descricao: str,
+                        porcao_g, calorias_por_porcao,
+                        proteinas_g=None, carboidratos_g=None, gorduras_g=None) -> dict:
+    nome = (nome or "").strip()
+    if not nome:
+        raise ValueError("Nome obrigatório")
+    if not calorias_por_porcao:
+        raise ValueError("Calorias por porção obrigatórias")
+    row = repo.save_produto(
+        user_id,
+        nome=nome,
+        marca=(marca or "").strip() or None,
+        porcao_descricao=(porcao_descricao or "").strip() or None,
+        porcao_g=float(porcao_g) if porcao_g else None,
+        calorias_por_porcao=int(calorias_por_porcao),
+        proteinas_g=float(proteinas_g) if proteinas_g else None,
+        carboidratos_g=float(carboidratos_g) if carboidratos_g else None,
+        gorduras_totais_g=float(gorduras_g) if gorduras_g else None,
+        sodio_mg=None,
+        fibras_g=None,
     )
     return dict(row)
 
