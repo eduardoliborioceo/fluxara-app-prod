@@ -179,25 +179,23 @@ def search_produtos(user_id: int, query: str, limit: int = 20):
     with get_db() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("""
-                SELECT id, nome, marca, porcao_g, calorias_por_porcao,
-                       proteinas_g, carboidratos_g, gorduras_totais_g
+                SELECT id, nome, marca, porcao_descricao, porcao_g,
+                       calorias_por_porcao, proteinas_g, carboidratos_g, gorduras_totais_g
                 FROM saude_produtos
-                WHERE user_id = %s AND (
-                    nome ILIKE %s OR marca ILIKE %s
-                )
+                WHERE user_id = %s AND (nome ILIKE %s OR marca ILIKE %s)
                 ORDER BY nome
                 LIMIT %s
             """, (user_id, f"%{query}%", f"%{query}%", limit))
             return cur.fetchall()
 
 
-def get_produtos(user_id: int, limit: int = 50):
+def get_produtos(user_id: int, limit: int = 200):
     with get_db() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("""
-                SELECT id, nome, marca, porcao_g, calorias_por_porcao,
-                       proteinas_g, carboidratos_g, gorduras_totais_g,
-                       sodio_mg, fibras_g, criado_em
+                SELECT id, nome, marca, porcao_descricao, porcao_g,
+                       calorias_por_porcao, proteinas_g, carboidratos_g,
+                       gorduras_totais_g, sodio_mg, fibras_g, criado_em
                 FROM saude_produtos
                 WHERE user_id = %s
                 ORDER BY nome
@@ -206,21 +204,21 @@ def get_produtos(user_id: int, limit: int = 50):
             return cur.fetchall()
 
 
-def save_produto(user_id: int, nome: str, marca: str, porcao_g,
-                 calorias_por_porcao, proteinas_g, carboidratos_g,
+def save_produto(user_id: int, nome: str, marca: str, porcao_descricao: str,
+                 porcao_g, calorias_por_porcao, proteinas_g, carboidratos_g,
                  gorduras_totais_g, sodio_mg, fibras_g):
     with get_db() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("""
                 INSERT INTO saude_produtos
-                    (user_id, nome, marca, porcao_g, calorias_por_porcao,
-                     proteinas_g, carboidratos_g, gorduras_totais_g,
-                     sodio_mg, fibras_g, criado_em)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
+                    (user_id, nome, marca, porcao_descricao, porcao_g,
+                     calorias_por_porcao, proteinas_g, carboidratos_g,
+                     gorduras_totais_g, sodio_mg, fibras_g, criado_em)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
                 RETURNING *
-            """, (user_id, nome, marca, porcao_g, calorias_por_porcao,
-                  proteinas_g, carboidratos_g, gorduras_totais_g,
-                  sodio_mg, fibras_g))
+            """, (user_id, nome, marca, porcao_descricao, porcao_g,
+                  calorias_por_porcao, proteinas_g, carboidratos_g,
+                  gorduras_totais_g, sodio_mg, fibras_g))
             row = cur.fetchone()
             conn.commit()
             return row

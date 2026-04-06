@@ -891,6 +891,127 @@
 }
 
 /* ========================
+   PRODUTO TAB
+======================== */
+.saude-card-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0;
+}
+
+.saude-produto-novo-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: none;
+  background: var(--primary, #0d6efd);
+  color: #fff;
+  font-size: .8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity .15s;
+  font-family: inherit;
+}
+
+.saude-produto-novo-btn:hover { opacity: .88; }
+
+.saude-produto-search-tab-wrap input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1.5px solid var(--border, rgba(15,23,42,.09));
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: .88rem;
+  background: transparent;
+  color: var(--text, #1e293b);
+  outline: none;
+  transition: border-color .15s;
+  font-family: inherit;
+}
+
+.saude-produto-search-tab-wrap input:focus {
+  border-color: var(--primary, #0d6efd);
+}
+
+.saude-produto-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+.saude-produto-lista-vazio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 28px 16px;
+  color: var(--text-muted, #64748b);
+  font-size: .85rem;
+  text-align: center;
+}
+
+.saude-produto-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid var(--border, rgba(15,23,42,.06));
+}
+
+.saude-produto-item-info { flex: 1; min-width: 0; }
+
+.saude-produto-item-nome {
+  font-size: .87rem;
+  font-weight: 700;
+  color: var(--text, #1e293b);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.saude-produto-item-marca {
+  font-weight: 500;
+  color: var(--text-muted, #64748b);
+}
+
+.saude-produto-item-meta {
+  font-size: .76rem;
+  color: var(--text-muted, #64748b);
+  margin-top: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.saude-produto-item-macros {
+  font-size: .72rem;
+}
+
+.saude-produto-item-del {
+  border: none;
+  background: transparent;
+  color: #cbd5e1;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  font-size: .85rem;
+  flex-shrink: 0;
+  transition: color .15s, background .15s;
+}
+
+.saude-produto-item-del:hover {
+  color: #dc3545;
+  background: rgba(220,53,69,.07);
+}
+
+/* ========================
    DARK THEME
 ======================== */
 [data-theme="escuro"] .saude-card,
@@ -946,4 +1067,15 @@
 
 [data-theme="escuro"] .saude-produto-option:hover {
   background: rgba(59,130,246,.1);
+}
+
+[data-theme="escuro"] .saude-produto-item {
+  background: rgba(255,255,255,.04);
+  border-color: rgba(255,255,255,.07);
+}
+
+[data-theme="escuro"] .saude-produto-search-tab-wrap input {
+  background: #0f172a;
+  border-color: rgba(255,255,255,.12);
+  color: #e2e8f0;
 }

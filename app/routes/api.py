@@ -931,6 +931,28 @@ def saude_save_produto():
         return jsonify({"error": str(e)}), 400
 
 
+@bp.route("/saude/produto/manual", methods=["POST"])
+@login_required
+def saude_save_produto_manual():
+    from app.services import saude_service
+    data = request.get_json() or {}
+    try:
+        produto = saude_service.save_produto_manual(
+            current_user.id,
+            nome=data.get("nome"),
+            marca=data.get("marca"),
+            porcao_descricao=data.get("porcao_descricao"),
+            porcao_g=data.get("porcao_g"),
+            calorias_por_porcao=data.get("calorias_por_porcao"),
+            proteinas_g=data.get("proteinas_g"),
+            carboidratos_g=data.get("carboidratos_g"),
+            gorduras_g=data.get("gorduras_g"),
+        )
+        return jsonify(produto), 201
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+
 @bp.route("/saude/produto/<int:produto_id>", methods=["DELETE"])
 @login_required
 def saude_delete_produto(produto_id):
