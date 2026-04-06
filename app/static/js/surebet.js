@@ -1,3 +1,21 @@
+/* =============================================
+   TABS
+============================================= */
+(function () {
+  document.querySelectorAll('.surebet-tab-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.surebet-tab-btn').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      var tab = btn.dataset.tab;
+      document.getElementById('tab-calculadora').style.display = tab === 'calculadora' ? '' : 'none';
+      document.getElementById('tab-alavancagem').style.display = tab === 'alavancagem' ? '' : 'none';
+    });
+  });
+})();
+
+/* =============================================
+   CALCULADORA SUREBET
+============================================= */
 (function () {
   var numOutcomes = 2;
   var LABELS = ['A', 'B', 'C', 'D', 'E'];
@@ -33,7 +51,6 @@
   function calculate() {
     var total = parseFloat(document.getElementById('sbTotal').value) || 0;
     var resultCard = document.getElementById('sbResultCard');
-    var resultHeader = document.getElementById('sbResultHeader');
     var resultIcon = document.getElementById('sbResultIcon');
     var resultTitle = document.getElementById('sbResultTitle');
     var resultBody = document.getElementById('sbResultBody');
@@ -94,7 +111,7 @@
   document.getElementById('sbOutcomesToggle').addEventListener('click', function (e) {
     var btn = e.target.closest('.surebet-outcome-btn');
     if (!btn) return;
-    document.querySelectorAll('.surebet-outcome-btn').forEach(function (b) { b.classList.remove('active'); });
+    document.querySelectorAll('#sbOutcomesToggle .surebet-outcome-btn').forEach(function (b) { b.classList.remove('active'); });
     btn.classList.add('active');
     numOutcomes = parseInt(btn.dataset.n);
     buildOddsInputs();
@@ -112,10 +129,19 @@
 (function () {
   var alvRounds = [];
   var alvRodadaAtual = 0;
+  var alvNumRodadas = 3;
 
   function fmtAlv(v) {
     return 'R$ ' + parseFloat(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
+
+  document.getElementById('alvRodadasToggle').addEventListener('click', function (e) {
+    var btn = e.target.closest('.surebet-outcome-btn');
+    if (!btn) return;
+    document.querySelectorAll('#alvRodadasToggle .surebet-outcome-btn').forEach(function (b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    alvNumRodadas = parseInt(btn.dataset.n);
+  });
 
   function buildRounds(inicial, odd, n) {
     var rounds = [];
@@ -123,14 +149,8 @@
     for (var i = 0; i < n; i++) {
       var retorno = aposta * parseFloat(odd);
       var guardar = aposta;
-      var proximo = retorno - parseFloat(inicial);
-      rounds.push({
-        num: i + 1,
-        aposta: aposta,
-        retorno: retorno,
-        guardar: guardar,
-      });
-      aposta = proximo;
+      rounds.push({ num: i + 1, aposta: aposta, retorno: retorno, guardar: guardar });
+      aposta = retorno - parseFloat(inicial);
     }
     return rounds;
   }
@@ -143,18 +163,16 @@
       var status = i < alvRodadaAtual ? 'passado' : (i === alvRodadaAtual ? 'ativa' : 'futura');
       var rowCls = status === 'passado' ? ' alv-round-row--passado' : '';
       var badgeCls = status === 'ativa' ? ' alv-round-badge--ativa' : (status === 'passado' ? ' alv-round-badge--certo' : '');
-      var badgeContent = status === 'passado'
-        ? '<i class="bi bi-check-lg"></i>'
-        : (status === 'ativa' ? r.num : r.num);
+      var badgeContent = status === 'passado' ? '<i class="bi bi-check-lg"></i>' : r.num;
       html += '<div class="alv-round-row' + rowCls + '">'
         + '<div class="alv-round-badge' + badgeCls + '">' + badgeContent + '</div>'
         + '<div class="alv-round-info">'
-        +   '<div class="alv-round-title">Rodada ' + r.num + ' — Apostar ' + fmtAlv(r.aposta) + '</div>'
-        +   '<div class="alv-round-sub">Guardar: ' + fmtAlv(r.guardar) + '</div>'
+        +   '<div class="alv-round-title">Rodada ' + r.num + ' \u2014 Apostar ' + fmtAlv(r.aposta) + '</div>'
+        +   '<div class="alv-round-sub">Guardar se ganhar: ' + fmtAlv(r.guardar) + '</div>'
         + '</div>'
         + '<div class="alv-round-right">'
         +   '<div class="alv-round-retorno">' + fmtAlv(r.retorno) + '</div>'
-        +   '<div class="alv-round-guardar">se ganhar</div>'
+        +   '<div class="alv-round-guardar">retorno</div>'
         + '</div>'
         + '</div>';
     });
@@ -162,10 +180,9 @@
 
     var totalGuardado = alvRounds.slice(0, alvRodadaAtual).reduce(function (s, r) { return s + r.guardar; }, 0);
     var rodadaObj = alvRounds[alvRodadaAtual] || null;
-    var summary = document.getElementById('alvSummary');
-    summary.innerHTML = ''
+    document.getElementById('alvSummary').innerHTML = ''
       + '<div class="alv-summary-chip">'
-      +   '<span class="alv-summary-chip-label">Rodada atual</span>'
+      +   '<span class="alv-summary-chip-label">Rodada</span>'
       +   '<span class="alv-summary-chip-val">' + (alvRodadaAtual + 1) + ' / ' + alvRounds.length + '</span>'
       + '</div>'
       + (rodadaObj ? '<div class="alv-summary-chip">'
@@ -184,9 +201,8 @@
   window.alvSimular = function () {
     var inicial = parseFloat(document.getElementById('alvInicial').value) || 0;
     var odd = parseFloat(document.getElementById('alvOdd').value) || 0;
-    var n = parseInt(document.getElementById('alvRodadas').value, 10) || 0;
-    if (inicial <= 0 || odd <= 1 || n < 1) { alert('Preencha valores válidos (aposta > 0, odd > 1, rodadas ≥ 1).'); return; }
-    alvRounds = buildRounds(inicial, odd, n);
+    if (inicial <= 0 || odd <= 1) { alert('Preencha valores válidos (aposta > 0, odd > 1).'); return; }
+    alvRounds = buildRounds(inicial, odd, alvNumRodadas);
     alvRodadaAtual = 0;
     document.getElementById('alvResultCard').style.display = '';
     renderRounds();

@@ -307,23 +307,60 @@
 }
 
 /* ========================
+   TABS
+======================== */
+.surebet-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--card, #fff);
+  border: 1px solid var(--border, rgba(15,23,42,.09));
+  border-radius: 12px;
+  padding: 6px;
+  margin-bottom: 16px;
+}
+
+.surebet-tab-btn {
+  flex: 1;
+  padding: 9px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+  cursor: pointer;
+  transition: background .15s, color .15s;
+  font-family: inherit;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.surebet-tab-btn.active {
+  background: var(--primary, #0d6efd);
+  color: #fff;
+}
+
+.surebet-tab-btn:hover:not(.active) {
+  background: rgba(13,110,253,.07);
+  color: var(--primary, #0d6efd);
+}
+
+[data-theme="escuro"] .surebet-tabs {
+  background: #1e293b;
+  border-color: rgba(255,255,255,.08);
+}
+
+[data-theme="escuro"] .surebet-tab-btn:hover:not(.active) {
+  background: rgba(59,130,246,.1);
+  color: #93c5fd;
+}
+
+/* ========================
    ALAVANCAGEM
 ======================== */
-.alavancagem-config-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 12px;
-}
-
-@media (max-width: 480px) {
-  .alavancagem-config-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-  .alavancagem-config-grid .surebet-field:last-child {
-    grid-column: 1 / -1;
-  }
-}
-
 .alv-btn-simular {
   width: 100%;
   padding: 11px;
