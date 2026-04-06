@@ -16,17 +16,56 @@
 
   /* ========== TIMEZONE HELPER ========== */
   function formatLocalTime(utcStr) {
-    // Garante que a string seja interpretada como UTC
     var s = (utcStr && !utcStr.endsWith('Z') && !utcStr.includes('+')) ? utcStr + 'Z' : utcStr;
     var dt = new Date(s);
     if (isNaN(dt.getTime())) return '';
     return dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   }
 
-  // Corrige todos os elementos com data-utc no carregamento da página
   document.querySelectorAll('[data-utc]').forEach(function (el) {
     el.textContent = formatLocalTime(el.dataset.utc);
   });
+
+  /* ========== TIMEZONE: corrige status das refeições com hora local ========== */
+  function atualizarStatusRefeicoes() {
+    var agora = new Date();
+    var minAtual = agora.getHours() * 60 + agora.getMinutes();
+
+    document.querySelectorAll('.saude-meal-item').forEach(function (item) {
+      if (item.dataset.registrado === 'true') return;
+
+      var inicio = item.dataset.inicio || '';
+      var fim = item.dataset.fim || '';
+      if (!inicio || !fim) return;
+
+      var partsIni = inicio.split(':');
+      var partsFim = fim.split(':');
+      var minIni = parseInt(partsIni[0], 10) * 60 + parseInt(partsIni[1], 10);
+      var minFim = parseInt(partsFim[0], 10) * 60 + parseInt(partsFim[1], 10);
+
+      var dot = item.querySelector('.saude-meal-dot');
+      var timeEl = item.querySelector('.saude-meal-time');
+      if (!dot || !timeEl) return;
+
+      var baseText = inicio + ' \u2013 ' + fim;
+      dot.className = 'saude-meal-dot';
+      timeEl.className = 'saude-meal-time';
+
+      if (minAtual >= minIni && minAtual <= minFim) {
+        dot.classList.add('saude-meal-dot--agora');
+        timeEl.classList.add('saude-meal-time--agora');
+        timeEl.textContent = baseText + ' \u00b7 Agora';
+      } else if (minAtual < minIni) {
+        dot.classList.add('saude-meal-dot--pendente');
+        timeEl.textContent = baseText;
+      } else {
+        dot.classList.add('saude-meal-dot--passado');
+        timeEl.textContent = baseText;
+      }
+    });
+  }
+
+  atualizarStatusRefeicoes();
 
   /* ========== ACORDEI ========== */
   var btnAcordei = document.getElementById('btnAcordei');

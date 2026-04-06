@@ -13,6 +13,12 @@
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/minha_saude.css') }}?v={{ static_v }}">
 
+<div class="page-back-bar">
+  <a href="javascript:history.back()" class="page-back-btn" title="Voltar">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+</div>
+
 <div class="saude-wrapper">
 
   <!-- TABS -->
@@ -129,7 +135,13 @@
       <div class="saude-card-label">Refeições do dia</div>
 
       {% for item in dados.schedule %}
-      <div class="saude-meal-item" data-tipo="{{ item.tipo }}" onclick="abrirModalRefeicao('{{ item.tipo }}', '{{ item.label }}')">
+      <div class="saude-meal-item"
+           data-tipo="{{ item.tipo }}"
+           data-inicio="{{ item.inicio }}"
+           data-fim="{{ item.fim }}"
+           data-registrado="{{ 'true' if item.status == 'registrado' else 'false' }}"
+           onclick="abrirModalRefeicao('{{ item.tipo }}', '{{ item.label }}')"
+      >
         <div class="saude-meal-dot saude-meal-dot--{{ item.status }}"></div>
         <div class="saude-meal-info">
           <div class="saude-meal-name {% if item.status == 'passado' %}saude-meal-name--passado{% endif %}">
