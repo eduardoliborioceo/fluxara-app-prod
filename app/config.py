@@ -57,3 +57,9 @@ class Config:
     # AI (Claude API)
     # ==========================
     ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+
+    # ==========================
+    # NOTIFICAÇÕES E SCHEDULER
+    # ==========================
+    ADMIN_NOTIFY_EMAIL = os.getenv("ADMIN_NOTIFY_EMAIL")
+    SCHEDULER_TIMEZONE = os.getenv("SCHEDULER_TIMEZONE", "America/Manaus")
