@@ -49,6 +49,11 @@ class Config:
     VAPID_CLAIMS_SUB = os.getenv("VAPID_CLAIMS_SUB", "mailto:admin@fluxara.app")
 
     # ==========================
+    # ALERTAS DE SISTEMA
+    # ==========================
+    ADMIN_NOTIFY_EMAIL = os.getenv("ADMIN_NOTIFY_EMAIL")
+
+    # ==========================
     # BACKUP
     # ==========================
     BACKUP_ENCRYPTION_KEY = os.getenv("BACKUP_ENCRYPTION_KEY")

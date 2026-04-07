@@ -1,6 +1,11 @@
 {% extends "layouts/app.html" %}
 {% block title %}Fluxara · Meu Perfil{% endblock %}
 
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/myperfil.css') }}?v={{ static_v }}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
+{% endblock %}
+
 {% block page_title %}Meu Perfil{% endblock %}
 
 {% block content %}
@@ -252,9 +257,6 @@
     </div>
   </div>
 </div>
-
-<link rel="stylesheet" href="{{ url_for('static', filename='css/myperfil.css') }}?v={{ static_v }}">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
 
 {% endblock %}
 

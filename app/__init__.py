@@ -84,8 +84,24 @@ def create_app():
 
     from flask import jsonify as _jsonify, request as _request
 
+    def _notify_admin_error(e, status_code):
+        try:
+            admin_email = app.config.get("ADMIN_NOTIFY_EMAIL")
+            if not admin_email:
+                return
+            from app.services.email_service import send_email
+            send_email(
+                admin_email,
+                f"[Fluxara] Erro {status_code} detectado",
+                f"Um erro {status_code} ocorreu.\n\nPath: {_request.path}\nMétodo: {_request.method}\nErro: {e}"
+            )
+        except Exception:
+            pass
+
     @app.errorhandler(500)
     def internal_error(e):
+        app.logger.error(f"500 error: {e}", exc_info=True)
+        _notify_admin_error(e, 500)
         if _request.path.startswith("/api/"):
             return _jsonify({"error": "Erro interno do servidor"}), 500
         from flask import render_template as _rt
@@ -103,6 +119,16 @@ def create_app():
             return _rt("errors/404.html"), 404
         except Exception:
             return "<h1>404 — Página não encontrada</h1>", 404
+
+    @app.errorhandler(403)
+    def forbidden(e):
+        if _request.path.startswith("/api/"):
+            return _jsonify({"error": "Acesso negado"}), 403
+        from flask import render_template as _rt
+        try:
+            return _rt("errors/403.html"), 403
+        except Exception:
+            return "<h1>403 — Acesso negado</h1>", 403
 
     from app.services import backup_service
     backup_service.init_scheduler(app)
