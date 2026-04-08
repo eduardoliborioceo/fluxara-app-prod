@@ -339,21 +339,44 @@
     }
     el.innerHTML = cartoes.map(c => {
       const b = BANDEIRAS[c.bandeira] || BANDEIRAS.outro;
-      return `<div class="cat-item">
-        <div class="cat-header">
-          <span class="cat-icon" style="color:${b.cor}"><i class="bi bi-credit-card-fill"></i></span>
-          <span class="cat-nome">${esc(c.nome)}</span>
-          <div class="cat-actions" onclick="event.stopPropagation()">
-            <button class="btn btn-sm btn-outline-secondary py-0 px-1"
-              onclick="abrirEditarCartao(${c.id})"><i class="bi bi-pencil"></i></button>
-            <button class="btn btn-sm btn-outline-danger py-0 px-1"
-              onclick="deletarCartaoConfig(${c.id})"><i class="bi bi-trash"></i></button>
+      const gradients = {
+        visa:       'linear-gradient(135deg, #1A1F71, #3b4bc8)',
+        mastercard: 'linear-gradient(135deg, #EB001B, #FF5F00)',
+        elo:        'linear-gradient(135deg, #FFD700, #c8a700)',
+        amex:       'linear-gradient(135deg, #2E77BC, #1a4f8a)',
+        hipercard:  'linear-gradient(135deg, #B22222, #8b0000)',
+        outro:      'linear-gradient(135deg, #475569, #1e293b)',
+      };
+      const grad = gradients[c.bandeira] || gradients.outro;
+      const limit = parseFloat(c.limite || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+      const textColor = c.bandeira === 'elo' ? '#1e293b' : '#fff';
+      return `<div class="px-3 pb-2">
+        <div class="cartao-visual" style="background:${grad};color:${textColor}">
+          <div class="cartao-visual-top">
+            <span class="cartao-visual-nome">${esc(c.nome)}</span>
+            <span class="cartao-visual-bandeira"><i class="bi bi-credit-card-fill"></i></span>
+          </div>
+          <div class="cartao-visual-bottom">
+            <div class="cartao-visual-limite">
+              Limite disponível
+              <strong>R$ ${limit}</strong>
+            </div>
+            <div class="cartao-visual-datas">
+              <span>Fecha dia ${c.dia_fechamento}</span><br>
+              <span>Vence dia ${c.dia_vencimento}</span>
+              ${c.conta_nome ? '<br><span>' + esc(c.conta_nome) + '</span>' : ''}
+            </div>
           </div>
         </div>
-        <div class="px-3 pb-2 pt-1" style="font-size:.82rem;color:#6c757d">
-          ${esc(b.nome)} · Limite R$ ${parseFloat(c.limite||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}
-          · Fecha dia ${c.dia_fechamento} · Vence dia ${c.dia_vencimento}
-          ${c.conta_nome ? '· ' + esc(c.conta_nome) : ''}
+        <div class="cartao-visual-actions mb-2">
+          <button class="btn btn-outline-secondary btn-sm"
+            onclick="abrirEditarCartao(${c.id})">
+            <i class="bi bi-pencil me-1"></i>Editar
+          </button>
+          <button class="btn btn-outline-danger btn-sm"
+            onclick="deletarCartaoConfig(${c.id})">
+            <i class="bi bi-trash me-1"></i>Excluir
+          </button>
         </div>
       </div>`;
     }).join('');
