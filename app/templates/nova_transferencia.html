@@ -1,6 +1,18 @@
 {% extends "layouts/app.html" %}
 {% block title %}Fluxara · Nova Transferência{% endblock %}
-{% block page_title %}Nova Transferência{% endblock %}
+{% block page_title %}
+<div class="page-header">
+  <div class="page-header-title">
+    <span class="page-header-section">Lançamentos</span>
+    <h1 class="page-header-name">Nova Transferência</h1>
+  </div>
+  <div class="page-header-actions">
+    <a href="{{ url_for('pages.resumo') }}" class="btn-header-icon" title="Voltar">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+  </div>
+</div>
+{% endblock %}
 
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/lancamento.css') }}?v={{ static_v }}">
