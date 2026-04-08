@@ -509,3 +509,107 @@
 [data-theme="escuro"] .cartao-conta-option:hover {
   background: rgba(255,255,255,.05) !important;
 }
+
+/* ========================
+   CREDIT CARD VISUAL
+======================== */
+.cartao-visual {
+  position: relative;
+  border-radius: 14px;
+  padding: 18px 20px 14px;
+  margin-bottom: 12px;
+  color: #fff;
+  overflow: hidden;
+  min-height: 130px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+}
+
+.cartao-visual::before {
+  content: '';
+  position: absolute;
+  top: -30px;
+  right: -30px;
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+}
+
+.cartao-visual::after {
+  content: '';
+  position: absolute;
+  bottom: -40px;
+  right: 20px;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.05);
+}
+
+.cartao-visual-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  position: relative;
+  z-index: 1;
+}
+
+.cartao-visual-nome {
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.3px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.cartao-visual-bandeira {
+  font-size: 1.4rem;
+  opacity: 0.9;
+}
+
+.cartao-visual-bottom {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  position: relative;
+  z-index: 1;
+}
+
+.cartao-visual-limite {
+  font-size: 0.78rem;
+  opacity: 0.85;
+  line-height: 1.4;
+}
+
+.cartao-visual-limite strong {
+  font-size: 1rem;
+  font-weight: 700;
+  display: block;
+}
+
+.cartao-visual-datas {
+  text-align: right;
+  font-size: 0.72rem;
+  opacity: 0.8;
+  line-height: 1.6;
+}
+
+.cartao-visual-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.cartao-visual-actions .btn {
+  flex: 1;
+  font-size: 0.8rem;
+  border-radius: 8px;
+  padding: 6px;
+  font-weight: 500;
+}
+
+[data-theme="escuro"] .cartao-visual {
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
