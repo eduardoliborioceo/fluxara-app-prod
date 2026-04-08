@@ -79,7 +79,15 @@
     </div>
   </div>
 
-  <div class="dev-table-wrap">
+  <!-- BOTÃO NOVO PROJETO — visível em todos os dispositivos -->
+  <div class="mb-3">
+    <a href="{{ url_for('dev.novo_projeto') }}" class="btn btn-primary btn-sm">
+      <i class="bi bi-plus-lg me-1"></i>Novo projeto
+    </a>
+  </div>
+
+  <!-- TABELA — desktop -->
+  <div class="dev-table-wrap d-none d-md-block">
     <table class="dev-table">
       <thead>
         <tr>
@@ -142,6 +150,58 @@
         {% endfor %}
       </tbody>
     </table>
+  </div>
+
+  <!-- CARDS — mobile -->
+  <div class="d-md-none">
+    {% for p in projects %}
+    {% set fase = p.fase_infra %}
+    <div class="dev-mobile-card">
+      <div class="dev-mobile-card-header">
+        <div>
+          <span class="dev-mobile-card-nome">{{ p.nome }}</span>
+          <span class="dev-status dev-status--{{ p.status }} ms-2">{{ p.status | capitalize }}</span>
+        </div>
+        <div class="dev-mobile-card-actions">
+          <a href="{{ url_for('dev.editar_projeto', project_id=p.id) }}" class="dev-btn-icon" title="Editar">
+            <i class="bi bi-pencil"></i>
+          </a>
+          <form action="{{ url_for('dev.excluir_projeto', project_id=p.id) }}" method="post"
+                onsubmit="return confirm('Excluir projeto {{ p.nome | e }}?')" style="display:inline">
+            <button type="submit" class="dev-btn-icon dev-btn-icon--danger" title="Excluir">
+              <i class="bi bi-trash"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+      {% if p.publico_alvo %}
+      <div class="dev-mobile-card-row">
+        <span class="dev-mobile-card-label">Público-alvo</span>
+        <span>{{ p.publico_alvo }}</span>
+      </div>
+      {% endif %}
+      <div class="dev-mobile-card-row">
+        <span class="dev-mobile-card-label">Infraestrutura</span>
+        <span class="dev-fase dev-fase--{{ fase.fase }}">
+          <i class="bi {{ fase.icon }}"></i> {{ fase.label }}
+        </span>
+      </div>
+      <div class="dev-mobile-card-row">
+        <span class="dev-mobile-card-label">Despesa / mês</span>
+        <span class="dev-td-valor">R$ {{ "%.2f" | format(p.despesa_mensal) | replace('.', ',') }}</span>
+      </div>
+      <div class="dev-mobile-card-row">
+        <span class="dev-mobile-card-label">Projeção anual</span>
+        <span class="dev-td-valor">R$ {{ "%.2f" | format(p.projecao_anual) | replace('.', ',') }}</span>
+      </div>
+      {% if p.quantidade_usuarios %}
+      <div class="dev-mobile-card-row">
+        <span class="dev-mobile-card-label">Usuários</span>
+        <span>{{ "{:,}".format(p.quantidade_usuarios).replace(',', '.') }}</span>
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
   </div>
 
   {% else %}

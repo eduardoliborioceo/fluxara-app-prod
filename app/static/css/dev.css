@@ -697,3 +697,52 @@
 
 .gdev-inline-save  { color: #16a34a; }
 .gdev-inline-cancel { color: #dc3545; }
+
+/* ========================
+   PROJECT MOBILE CARDS
+======================== */
+.dev-mobile-card {
+  background: var(--card, #fff);
+  border: 1px solid var(--border, rgba(15,23,42,0.09));
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+
+.dev-mobile-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.dev-mobile-card-nome {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text, #1e293b);
+}
+
+.dev-mobile-card-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.dev-mobile-card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+  border-top: 1px solid var(--border, rgba(15,23,42,0.06));
+  font-size: 0.85rem;
+}
+
+.dev-mobile-card-label {
+  color: var(--text-muted, #64748b);
+  font-size: 0.78rem;
+}
+
+[data-theme="escuro"] .dev-mobile-card {
+  background: #1e293b;
+  border-color: rgba(255,255,255,0.08);
+}
