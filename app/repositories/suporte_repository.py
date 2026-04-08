@@ -22,6 +22,7 @@ def get_tickets_by_user(user_id: int) -> list:
                 SELECT * FROM ouvidoria_tickets
                 WHERE user_id = %s
                 ORDER BY criado_em DESC
+                LIMIT 100
             """, (user_id,))
             return [dict(r) for r in cur.fetchall()]
 
@@ -95,6 +96,7 @@ def get_chat_by_user_id(user_id: int) -> list:
                 SELECT * FROM chat_suporte
                 WHERE user_id = %s
                 ORDER BY criado_em ASC
+                LIMIT 500
             """, (user_id,))
             return [dict(r) for r in cur.fetchall()]
 
@@ -107,6 +109,7 @@ def get_all_tickets() -> list:
                 FROM ouvidoria_tickets ot
                 JOIN users u ON u.id = ot.user_id
                 ORDER BY ot.criado_em DESC
+                LIMIT 500
             """)
             return [dict(r) for r in cur.fetchall()]
 
