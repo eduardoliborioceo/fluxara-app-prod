@@ -11,11 +11,30 @@ _REFEICOES_NOTIF = [
 ]
 
 
+def _acquire_scheduler_lock(lock_path: str) -> bool:
+    import sys
+    if sys.platform == "win32":
+        return True
+    try:
+        import fcntl
+        fd = open(lock_path, "w")
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        return True
+    except (IOError, OSError):
+        return False
+
+
 def _notificar_refeicao(app, tipo: str, label: str, horario: str):
     with app.app_context():
         try:
             from app.repositories import saude_repository as repo
+            from app.repositories.push_repository import is_saude_push_sent, mark_saude_push_sent
+            from datetime import date
+
+            hoje = str(date.today())
             for user_id in get_distinct_subscribed_users():
+                if is_saude_push_sent(user_id, tipo, hoje):
+                    continue
                 registros = repo.get_refeicoes_hoje(user_id)
                 ja_registrou = any(r["tipo_refeicao"] == tipo for r in registros)
                 if not ja_registrou:
@@ -25,6 +44,7 @@ def _notificar_refeicao(app, tipo: str, label: str, horario: str):
                         f"Horário: {horario}. Prepare-se para a refeição!",
                         "/minha-saude",
                     )
+                    mark_saude_push_sent(user_id, tipo, hoje)
         except Exception as e:
             app.logger.error("saude_notif refeicao=%s error: %s", tipo, e)
 
@@ -33,9 +53,16 @@ def _notificar_resumo_calorias(app):
     with app.app_context():
         try:
             from app.repositories import saude_repository as repo
+            from app.repositories.push_repository import is_saude_push_sent, mark_saude_push_sent
             from app.services import saude_service
+            from datetime import date
+
+            hoje = str(date.today())
+            tipo = "resumo_calorias"
 
             for user_id in get_distinct_subscribed_users():
+                if is_saude_push_sent(user_id, tipo, hoje):
+                    continue
                 total_kcal = sum(
                     (r.get("calorias") or 0)
                     for r in repo.get_refeicoes_hoje(user_id)
@@ -61,14 +88,19 @@ def _notificar_resumo_calorias(app):
                     body,
                     "/minha-saude",
                 )
+                mark_saude_push_sent(user_id, tipo, hoje)
         except Exception as e:
             app.logger.error("saude_notif resumo_calorias error: %s", e)
 
 
 def init_saude_notifications(app):
+    if not _acquire_scheduler_lock("/tmp/fluxara_saude_notif.lock"):
+        return
+
     from apscheduler.schedulers.background import BackgroundScheduler
 
-    scheduler = BackgroundScheduler(timezone="America/Sao_Paulo")
+    tz = app.config.get("SCHEDULER_TIMEZONE", "America/Manaus")
+    scheduler = BackgroundScheduler(timezone=tz)
 
     for tipo, _, hora, minuto, label, horario in _REFEICOES_NOTIF:
         scheduler.add_job(
