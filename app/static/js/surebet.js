@@ -24,7 +24,7 @@
 ============================================= */
 (function () {
   var numOutcomes = 2;
-  var LABELS = ['A', 'B', 'C', 'D', 'E'];
+  var LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
 
   function fmt(v) {
     return 'R$ ' + parseFloat(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });

@@ -88,10 +88,20 @@
 .surebet-outcomes-toggle {
   display: flex;
   gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 2px;
+}
+
+.surebet-outcomes-toggle::-webkit-scrollbar {
+  display: none;
 }
 
 .surebet-outcome-btn {
-  flex: 1;
+  flex-shrink: 0;
+  min-width: 44px;
   padding: 10px;
   border-radius: 8px;
   border: 1.5px solid var(--border, rgba(15,23,42,.09));
@@ -102,6 +112,8 @@
   cursor: pointer;
   transition: border-color .15s, background .15s, color .15s;
   font-family: inherit;
+  scroll-snap-align: start;
+  text-align: center;
 }
 
 .surebet-outcome-btn:hover {
