@@ -1010,3 +1010,57 @@ def surebet_delete_alavancagem(alv_id):
     from app.services import surebet_service
     surebet_service.delete_alavancagem(alv_id, current_user.id)
     return jsonify({"ok": True})
+
+
+@bp.route("/surebet/partida", methods=["GET"])
+@login_required
+def surebet_list_partidas():
+    from app.services import surebet_service
+    return jsonify(surebet_service.list_partidas(current_user.id))
+
+
+@bp.route("/surebet/partida", methods=["POST"])
+@login_required
+def surebet_create_partida():
+    from app.services import surebet_service
+    data = request.get_json() or {}
+    try:
+        partida = surebet_service.create_partida(
+            current_user.id,
+            nome=data.get("nome"),
+            odd_mandante=data.get("odd_mandante"),
+            odd_visitante=data.get("odd_visitante"),
+            odd_empate_gols=data.get("odd_empate_gols"),
+            total_apostar=data.get("total_apostar", 100),
+        )
+        return jsonify(partida), 201
+    except (ValueError, TypeError) as exc:
+        return jsonify({"error": str(exc)}), 400
+
+
+@bp.route("/surebet/partida/<int:partida_id>", methods=["PUT"])
+@login_required
+def surebet_update_partida(partida_id):
+    from app.services import surebet_service
+    data = request.get_json() or {}
+    try:
+        partida = surebet_service.update_partida(
+            partida_id,
+            current_user.id,
+            nome=data.get("nome"),
+            odd_mandante=data.get("odd_mandante"),
+            odd_visitante=data.get("odd_visitante"),
+            odd_empate_gols=data.get("odd_empate_gols"),
+            total_apostar=data.get("total_apostar", 100),
+        )
+        return jsonify(partida)
+    except (ValueError, TypeError) as exc:
+        return jsonify({"error": str(exc)}), 400
+
+
+@bp.route("/surebet/partida/<int:partida_id>", methods=["DELETE"])
+@login_required
+def surebet_delete_partida(partida_id):
+    from app.services import surebet_service
+    surebet_service.delete_partida(partida_id, current_user.id)
+    return jsonify({"ok": True})

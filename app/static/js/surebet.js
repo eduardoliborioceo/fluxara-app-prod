@@ -3,6 +3,7 @@
 ============================================= */
 (function () {
   var _alvCarregado = false;
+  var _monCarregado = false;
 
   document.querySelectorAll('.surebet-tab-btn').forEach(function (btn) {
     btn.addEventListener('click', function () {
@@ -10,10 +11,15 @@
       btn.classList.add('active');
       var tab = btn.dataset.tab;
       document.getElementById('tab-calculadora').style.display = tab === 'calculadora' ? '' : 'none';
+      document.getElementById('tab-monitorar').style.display  = tab === 'monitorar'  ? '' : 'none';
       document.getElementById('tab-alavancagem').style.display = tab === 'alavancagem' ? '' : 'none';
       if (tab === 'alavancagem' && !_alvCarregado) {
         _alvCarregado = true;
         alvCarregarLista();
+      }
+      if (tab === 'monitorar' && !_monCarregado) {
+        _monCarregado = true;
+        monCarregarLista();
       }
     });
   });
@@ -394,5 +400,265 @@
         renderLista();
         if (!_alvListaCache.length) alvMostrarForm();
       });
+  };
+})();
+
+/* =============================================
+   MONITORAR PARTIDAS
+============================================= */
+(function () {
+  var _monCache = [];
+  var _monAbertaId = null;
+  var _monEditandoId = null;
+  var _monFormAberto = false;
+
+  function fmtMon(v) {
+    return 'R$ ' + parseFloat(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function fmtPctMon(v) {
+    return (v >= 0 ? '+' : '') + parseFloat(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+  }
+
+  function escMon(str) {
+    return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  /* ---- Render lista ---- */
+  function renderLista() {
+    var container = document.getElementById('monLista');
+    var vazio = document.getElementById('monListaVazio');
+    if (!_monCache.length) {
+      container.innerHTML = '';
+      vazio.style.display = 'flex';
+      return;
+    }
+    vazio.style.display = 'none';
+    container.innerHTML = _monCache.map(function (p) {
+      var s = p.status;
+      var isAberta = p.id === _monAbertaId;
+      var badgeCls = s.is_surebet ? 'mon-badge--ok' : 'mon-badge--no';
+      var badgeTxt = s.is_surebet ? 'SUREBET' : 'Sem surebet';
+      return '<div class="alv-lista-item' + (isAberta ? ' alv-lista-item--ativa' : '') + '">'
+        + '<div class="alv-lista-item-info">'
+        +   '<div class="alv-lista-item-nome">' + escMon(p.nome) + '</div>'
+        +   '<div class="alv-lista-item-meta">'
+        +     parseFloat(p.odd_mandante).toFixed(2) + ' · '
+        +     parseFloat(p.odd_visitante).toFixed(2) + ' · '
+        +     parseFloat(p.odd_empate_gols).toFixed(2)
+        +   '</div>'
+        + '</div>'
+        + '<div class="alv-lista-item-acoes">'
+        + '<span class="alv-lista-item-badge ' + badgeCls + '">' + badgeTxt + '</span>'
+        + (isAberta
+            ? ''
+            : '<button class="alv-lista-btn alv-lista-btn--abrir" onclick=\'monAbrirById(' + JSON.stringify(p) + ')\'><i class="bi bi-eye"></i></button>'
+          )
+        + '<button class="alv-lista-btn alv-lista-btn--del" onclick="monExcluir(' + p.id + ')" title="Excluir"><i class="bi bi-trash"></i></button>'
+        + '</div>'
+        + '</div>';
+    }).join('');
+  }
+
+  /* ---- Carrega lista ---- */
+  function monCarregarLista() {
+    fetch('/api/surebet/partida')
+      .then(function (r) { return r.json(); })
+      .then(function (lista) {
+        _monCache = lista;
+        renderLista();
+      })
+      .catch(function () {});
+  }
+
+  window.monCarregarLista = monCarregarLista;
+
+  /* ---- Toggle formulário ---- */
+  window.monToggleForm = function () {
+    if (_monFormAberto && !_monEditandoId) {
+      monFecharForm();
+      return;
+    }
+    _monEditandoId = null;
+    document.getElementById('monFormLabel').textContent = 'Nova partida';
+    document.getElementById('monBtnSalvarLabel').textContent = 'Salvar partida';
+    document.getElementById('monNome').value = '';
+    document.getElementById('monTotal').value = '100';
+    document.getElementById('monOddMandante').value = '';
+    document.getElementById('monOddVisitante').value = '';
+    document.getElementById('monOddEmpate').value = '';
+    document.getElementById('monPreview').style.display = 'none';
+    _monFormAberto = true;
+    document.getElementById('monFormCard').style.display = '';
+    document.getElementById('monFormCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  };
+
+  window.monFecharForm = function () {
+    _monFormAberto = false;
+    _monEditandoId = null;
+    document.getElementById('monFormCard').style.display = 'none';
+    document.getElementById('monPreview').style.display = 'none';
+  };
+
+  /* ---- Preview inline ao preencher odds ---- */
+  function atualizarPreview() {
+    var m = parseFloat(document.getElementById('monOddMandante').value);
+    var v = parseFloat(document.getElementById('monOddVisitante').value);
+    var e = parseFloat(document.getElementById('monOddEmpate').value);
+    var total = parseFloat(document.getElementById('monTotal').value) || 100;
+    var preview = document.getElementById('monPreview');
+    if (!m || m <= 1 || !v || v <= 1 || !e || e <= 1 || total <= 0) {
+      preview.style.display = 'none';
+      return;
+    }
+    var invSum = 1 / m + 1 / v + 1 / e;
+    var isSurebet = invSum < 1;
+    var margem = (1 - invSum) * 100;
+    preview.style.display = '';
+    preview.className = 'mon-preview ' + (isSurebet ? 'mon-preview--ok' : 'mon-preview--no');
+    preview.innerHTML = (isSurebet
+      ? '<i class="bi bi-check-circle-fill"></i> <strong>Surebet!</strong> Margem: ' + fmtPctMon(margem)
+      : '<i class="bi bi-x-circle-fill"></i> Não é surebet — margem: ' + fmtPctMon(margem));
+  }
+
+  ['monOddMandante', 'monOddVisitante', 'monOddEmpate', 'monTotal'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', atualizarPreview);
+  });
+
+  /* ---- Salvar (criar ou editar) ---- */
+  window.monSalvar = function () {
+    var nome = (document.getElementById('monNome').value || '').trim();
+    var total = parseFloat(document.getElementById('monTotal').value) || 0;
+    var m = parseFloat(document.getElementById('monOddMandante').value) || 0;
+    var v = parseFloat(document.getElementById('monOddVisitante').value) || 0;
+    var e = parseFloat(document.getElementById('monOddEmpate').value) || 0;
+
+    if (m <= 1 || v <= 1 || e <= 1) {
+      alert('Preencha todas as odds (mínimo 1.01).');
+      return;
+    }
+    if (total <= 0) {
+      alert('Informe o total a apostar.');
+      return;
+    }
+
+    var btn = document.getElementById('monBtnSalvar');
+    btn.disabled = true;
+
+    var url = _monEditandoId ? '/api/surebet/partida/' + _monEditandoId : '/api/surebet/partida';
+    var method = _monEditandoId ? 'PUT' : 'POST';
+
+    fetch(url, {
+      method: method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nome: nome || null,
+        total_apostar: total,
+        odd_mandante: m,
+        odd_visitante: v,
+        odd_empate_gols: e,
+      }),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        btn.disabled = false;
+        if (data.error) { alert(data.error); return; }
+        if (_monEditandoId) {
+          _monCache = _monCache.map(function (p) { return p.id === _monEditandoId ? data : p; });
+        } else {
+          _monCache.unshift(data);
+        }
+        monFecharForm();
+        renderLista();
+        monAbrirById(data);
+      })
+      .catch(function () {
+        btn.disabled = false;
+        alert('Erro ao salvar. Tente novamente.');
+      });
+  };
+
+  /* ---- Abrir detalhe ---- */
+  function monAbrirDetalhe(p) {
+    _monAbertaId = p.id;
+    var s = p.status;
+    document.getElementById('monDetalheNome').textContent = p.nome;
+
+    var statusCard = document.getElementById('monDetalheStatus');
+    statusCard.className = 'surebet-result-card' + (s.is_surebet ? ' surebet-result-card--ok' : ' surebet-result-card--no');
+
+    var header = document.getElementById('monDetalheStatusHeader');
+    header.innerHTML = s.is_surebet
+      ? '<i class="bi bi-check-circle-fill"></i> Surebet confirmada — lucro garantido!'
+      : '<i class="bi bi-exclamation-triangle-fill"></i> Não é surebet ainda';
+
+    var stakesLabels = ['Mandante', 'Visitante', 'Empate c/ gols'];
+    document.getElementById('monDetalheStakes').innerHTML = s.stakes.map(function (st, i) {
+      return '<div class="surebet-stake-row">'
+        + '<span class="surebet-stake-label">' + stakesLabels[i] + ' (@ ' + st.odd.toFixed(2) + ')</span>'
+        + '<span class="surebet-stake-value">' + fmtMon(st.stake) + '</span>'
+        + '</div>';
+    }).join('');
+
+    document.getElementById('monDetalheRetorno').textContent = fmtMon(s.retorno);
+
+    var lucroEl = document.getElementById('monDetalheLucro');
+    lucroEl.textContent = fmtMon(s.lucro);
+    lucroEl.className = 'surebet-result-value ' + (s.lucro >= 0 ? 'surebet-lucro--pos' : 'surebet-lucro--neg');
+
+    var margemEl = document.getElementById('monDetalheMargem');
+    margemEl.textContent = fmtPctMon(s.margem);
+    margemEl.style.color = s.is_surebet ? '#16a34a' : '#dc3545';
+
+    document.getElementById('monDetalheCard').style.display = '';
+    renderLista();
+    document.getElementById('monDetalheCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  window.monAbrirById = function (p) { monAbrirDetalhe(p); };
+
+  window.monFecharDetalhe = function () {
+    _monAbertaId = null;
+    document.getElementById('monDetalheCard').style.display = 'none';
+    renderLista();
+  };
+
+  /* ---- Editar partida aberta ---- */
+  window.monEditarAberta = function () {
+    var p = _monCache.find(function (x) { return x.id === _monAbertaId; });
+    if (!p) return;
+    _monEditandoId = p.id;
+    document.getElementById('monFormLabel').textContent = 'Editar partida';
+    document.getElementById('monBtnSalvarLabel').textContent = 'Atualizar odds';
+    document.getElementById('monNome').value = p.nome || '';
+    document.getElementById('monTotal').value = parseFloat(p.total_apostar).toFixed(2);
+    document.getElementById('monOddMandante').value = parseFloat(p.odd_mandante).toFixed(2);
+    document.getElementById('monOddVisitante').value = parseFloat(p.odd_visitante).toFixed(2);
+    document.getElementById('monOddEmpate').value = parseFloat(p.odd_empate_gols).toFixed(2);
+    _monFormAberto = true;
+    document.getElementById('monFormCard').style.display = '';
+    atualizarPreview();
+    document.getElementById('monFormCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  };
+
+  /* ---- Excluir partida ---- */
+  window.monExcluir = function (id) {
+    if (!confirm('Excluir esta partida monitorada?')) return;
+    fetch('/api/surebet/partida/' + id, { method: 'DELETE' })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.error) { alert(data.error); return; }
+        _monCache = _monCache.filter(function (p) { return p.id !== id; });
+        if (_monAbertaId === id) {
+          _monAbertaId = null;
+          document.getElementById('monDetalheCard').style.display = 'none';
+        }
+        renderLista();
+      });
+  };
+
+  window.monExcluirAberta = function () {
+    if (_monAbertaId) monExcluir(_monAbertaId);
   };
 })();
