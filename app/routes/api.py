@@ -1,8 +1,12 @@
+import logging
+
 from flask_login import login_required, current_user
 from flask import Blueprint, request, jsonify
 from app.auth.service import confirm_employee_extra
 from app.services import config_service
 from app.services import contas_service, cartoes_service
+
+logger = logging.getLogger(__name__)
 
 bp = Blueprint("api", __name__)
 
@@ -1064,3 +1068,23 @@ def surebet_delete_partida(partida_id):
     from app.services import surebet_service
     surebet_service.delete_partida(partida_id, current_user.id)
     return jsonify({"ok": True})
+
+
+@bp.route("/surebet/betano/fetch", methods=["POST"])
+@login_required
+def surebet_betano_fetch():
+    from app.services import betano_service
+    data = request.get_json() or {}
+    url = (data.get("url") or "").strip()
+    if not url:
+        return jsonify({"error": "URL não informada"}), 400
+    if "betano" not in url.lower():
+        return jsonify({"error": "URL inválida — deve ser uma URL do Betano"}), 400
+    try:
+        odds = betano_service.fetch_odds(url)
+        return jsonify(odds)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 422
+    except Exception as exc:
+        logger.exception("Erro ao buscar odds Betano: %s", exc)
+        return jsonify({"error": "Erro interno ao buscar odds. Tente novamente."}), 500

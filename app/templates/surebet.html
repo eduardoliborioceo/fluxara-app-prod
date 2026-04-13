@@ -128,7 +128,23 @@
         </button>
       </div>
 
-      <div class="surebet-field" style="margin-top:14px">
+      <!-- Busca automática via URL Betano -->
+      <div class="mon-url-section">
+        <div class="surebet-section-label" style="margin-bottom:8px">Buscar odds automaticamente</div>
+        <div class="mon-url-row">
+          <input type="url" id="monBetanoUrl" class="alv-text-input"
+                 placeholder="https://www.betano.bet.br/odds/time-a-vs-time-b/12345678/">
+          <button class="mon-btn-buscar" id="monBtnBuscar" onclick="monBuscarOdds()">
+            <i class="bi bi-search" id="monBuscarIcon"></i>
+            <span id="monBuscarLabel">Buscar</span>
+          </button>
+        </div>
+        <div class="mon-url-error" id="monUrlError" style="display:none"></div>
+      </div>
+
+      <div class="mon-divider"><span>ou preencha manualmente</span></div>
+
+      <div class="surebet-field">
         <label class="surebet-label">Nome da partida</label>
         <input type="text" id="monNome" class="alv-text-input" placeholder="Ex: Flamengo vs Palmeiras">
       </div>
