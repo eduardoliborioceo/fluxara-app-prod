@@ -679,6 +679,62 @@
 }
 
 /* ========================
+   MONITORAR PARTIDAS
+======================== */
+.mon-info-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: rgba(13,110,253,.06);
+  border: 1px solid rgba(13,110,253,.15);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: .78rem;
+  color: var(--text-muted, #64748b);
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+
+.mon-info-banner i {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--primary, #0d6efd);
+}
+
+.mon-badge--ok {
+  background: rgba(22,163,74,.12);
+  color: #16a34a;
+}
+
+.mon-badge--no {
+  background: rgba(245,158,11,.12);
+  color: #b45309;
+}
+
+.mon-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: .85rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.mon-preview--ok {
+  background: rgba(22,163,74,.08);
+  color: #16a34a;
+  border: 1px solid rgba(22,163,74,.2);
+}
+
+.mon-preview--no {
+  background: rgba(245,158,11,.08);
+  color: #b45309;
+  border: 1px solid rgba(245,158,11,.2);
+}
+
+/* ========================
    DARK THEME
 ======================== */
 [data-theme="escuro"] .surebet-card {
@@ -766,4 +822,19 @@
 [data-theme="escuro"] .alv-btn-fechar:hover {
   background: rgba(255,255,255,.07);
   color: #e2e8f0;
+}
+
+[data-theme="escuro"] .mon-info-banner {
+  background: rgba(59,130,246,.08);
+  border-color: rgba(59,130,246,.2);
+}
+
+[data-theme="escuro"] .mon-preview--ok {
+  background: rgba(22,163,74,.12);
+  border-color: rgba(22,163,74,.25);
+}
+
+[data-theme="escuro"] .mon-preview--no {
+  background: rgba(245,158,11,.12);
+  border-color: rgba(245,158,11,.25);
 }

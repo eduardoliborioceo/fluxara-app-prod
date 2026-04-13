@@ -26,6 +26,9 @@
     <button class="surebet-tab-btn active" data-tab="calculadora" role="tab">
       <i class="bi bi-calculator"></i> Surebet
     </button>
+    <button class="surebet-tab-btn" data-tab="monitorar" role="tab">
+      <i class="bi bi-radar"></i> Monitorar
+    </button>
     <button class="surebet-tab-btn" data-tab="alavancagem" role="tab">
       <i class="bi bi-lightning-charge"></i> Alavancagem
     </button>
@@ -92,6 +95,126 @@
     </div>
 
   </div><!-- /tab-calculadora -->
+
+  <!-- ================== TAB: MONITORAR ================== -->
+  <div id="tab-monitorar" style="display:none">
+
+    <!-- Lista de partidas monitoradas -->
+    <div class="surebet-card">
+      <div class="alv-lista-header">
+        <div class="surebet-section-label" style="margin-bottom:0">Partidas monitoradas</div>
+        <button class="alv-btn-nova" onclick="monToggleForm()">
+          <i class="bi bi-plus-lg"></i> Adicionar
+        </button>
+      </div>
+      <div class="mon-info-banner">
+        <i class="bi bi-info-circle"></i>
+        Monitora os 3 mercados da estratégia Betano: mandante ganha · visitante ganha · empate c/ gols. Perde só no 0×0.
+      </div>
+      <div class="alv-lista" id="monLista">
+        <div class="alv-lista-vazio" id="monListaVazio">
+          <i class="bi bi-radar" style="font-size:1.5rem;color:var(--text-muted)"></i>
+          <div>Nenhuma partida monitorada</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Formulário nova / editar partida -->
+    <div class="surebet-card" id="monFormCard" style="display:none">
+      <div class="alv-lista-header">
+        <div class="surebet-section-label" style="margin-bottom:0" id="monFormLabel">Nova partida</div>
+        <button class="alv-btn-fechar" onclick="monFecharForm()" title="Fechar">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+
+      <div class="surebet-field" style="margin-top:14px">
+        <label class="surebet-label">Nome da partida</label>
+        <input type="text" id="monNome" class="alv-text-input" placeholder="Ex: Flamengo vs Palmeiras">
+      </div>
+
+      <div class="surebet-field">
+        <label class="surebet-label">Total a apostar</label>
+        <div class="surebet-money-wrap">
+          <span class="surebet-currency">R$</span>
+          <input type="number" id="monTotal" class="surebet-money-input" placeholder="100,00" step="0.01" min="0.01" value="100">
+        </div>
+      </div>
+
+      <div class="surebet-section-label" style="margin-top:8px;margin-bottom:10px">Odds dos 3 mercados</div>
+
+      <div class="surebet-field">
+        <label class="surebet-label">Mandante vence (1×2)</label>
+        <div class="surebet-odd-row" style="padding:0;border:none">
+          <div class="surebet-odd-input-wrap">
+            <input type="number" id="monOddMandante" class="surebet-odd-input" placeholder="ex: 2.10" step="0.01" min="1.01">
+          </div>
+        </div>
+      </div>
+
+      <div class="surebet-field">
+        <label class="surebet-label">Visitante vence (1×2)</label>
+        <div class="surebet-odd-row" style="padding:0;border:none">
+          <div class="surebet-odd-input-wrap">
+            <input type="number" id="monOddVisitante" class="surebet-odd-input" placeholder="ex: 3.50" step="0.01" min="1.01">
+          </div>
+        </div>
+      </div>
+
+      <div class="surebet-field">
+        <label class="surebet-label">Empate c/ gols — placar correto (especiais)</label>
+        <div class="surebet-odd-row" style="padding:0;border:none">
+          <div class="surebet-odd-input-wrap">
+            <input type="number" id="monOddEmpate" class="surebet-odd-input" placeholder="ex: 5.80" step="0.01" min="1.01">
+          </div>
+        </div>
+      </div>
+
+      <!-- Preview rápido inline -->
+      <div class="mon-preview" id="monPreview" style="display:none"></div>
+
+      <button class="alv-btn-simular" id="monBtnSalvar" onclick="monSalvar()">
+        <i class="bi bi-floppy"></i> <span id="monBtnSalvarLabel">Salvar partida</span>
+      </button>
+    </div>
+
+    <!-- Detalhe de partida aberta -->
+    <div class="surebet-card" id="monDetalheCard" style="display:none">
+      <div class="alv-ativa-header">
+        <div class="alv-ativa-nome" id="monDetalheNome"></div>
+        <button class="alv-btn-fechar" onclick="monFecharDetalhe()" title="Fechar">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+
+      <div class="surebet-result-card" id="monDetalheStatus" style="margin-top:14px;padding:14px 16px">
+        <div class="surebet-result-header" id="monDetalheStatusHeader"></div>
+        <div class="surebet-stakes" id="monDetalheStakes" style="margin-bottom:12px"></div>
+        <div class="surebet-result-row">
+          <span class="surebet-result-label">Retorno garantido</span>
+          <span class="surebet-result-value" id="monDetalheRetorno">—</span>
+        </div>
+        <div class="surebet-result-row">
+          <span class="surebet-result-label">Lucro</span>
+          <span class="surebet-result-value" id="monDetalheLucro">—</span>
+        </div>
+        <div class="surebet-result-row">
+          <span class="surebet-result-label">Margem</span>
+          <span class="surebet-result-value" id="monDetalheMargem">—</span>
+        </div>
+      </div>
+
+      <div class="alv-actions" style="margin-top:14px">
+        <button class="alv-btn-reiniciar" style="flex:1" onclick="monEditarAberta()">
+          <i class="bi bi-pencil"></i> Editar odds
+        </button>
+        <button class="alv-btn-reiniciar" style="flex:0 0 auto;padding:11px 14px" onclick="monExcluirAberta()" title="Excluir">
+          <i class="bi bi-trash" style="color:#dc3545"></i>
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /tab-monitorar -->
 
   <!-- ================== TAB: ALAVANCAGEM ================== -->
   <div id="tab-alavancagem" style="display:none">
