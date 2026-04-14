@@ -32,12 +32,14 @@ def fetch_odds(betano_url: str) -> dict:
     if not response_text:
         raise ValueError("Flaresolverr retornou resposta vazia.")
 
+    logger.info("Betano response preview: %s", response_text[:300])
+
     try:
         data = json.loads(response_text)
     except json.JSONDecodeError:
         raise ValueError(
-            "Betano nao retornou JSON valido. "
-            "A sessao pode ter expirado ou a URL esta incorreta."
+            f"Betano nao retornou JSON valido. "
+            f"Inicio da resposta: {response_text[:200]}"
         )
 
     odds = _parse_betano_response(data)
@@ -72,7 +74,13 @@ def _flaresolverr_get(url: str, referer: str = None) -> dict:
             f"Flaresolverr retornou erro: {data.get('message', 'desconhecido')}"
         )
 
-    return data["solution"]
+    solution = data["solution"]
+    logger.info(
+        "Flaresolverr solution status=%s url=%s",
+        solution.get("status"),
+        solution.get("url"),
+    )
+    return solution
 
 
 def _extract_slug_and_id(url: str) -> tuple[str, str]:
