@@ -139,7 +139,4 @@ def create_app():
     from app.services import saude_notification_service
     saude_notification_service.init_saude_notifications(app)
 
-    from app.services import betano_session_service
-    betano_session_service.init_scheduler(app)
-
     return app
