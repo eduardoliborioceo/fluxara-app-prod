@@ -484,6 +484,8 @@
     document.getElementById('monBtnSalvarLabel').textContent = 'Salvar partida';
     document.getElementById('monNome').value = '';
     document.getElementById('monTotal').value = '100';
+    document.getElementById('monBetanoUrl').value = '';
+    document.getElementById('monUrlError').style.display = 'none';
     document.getElementById('monOddMandante').value = '';
     document.getElementById('monOddVisitante').value = '';
     document.getElementById('monOddEmpate').value = '';
@@ -498,6 +500,64 @@
     _monEditandoId = null;
     document.getElementById('monFormCard').style.display = 'none';
     document.getElementById('monPreview').style.display = 'none';
+  };
+
+  /* ---- Buscar odds via URL Betano ---- */
+  window.monBuscarOdds = function () {
+    var url = (document.getElementById('monBetanoUrl').value || '').trim();
+    var errorEl = document.getElementById('monUrlError');
+    var buscarBtn = document.getElementById('monBtnBuscar');
+    var buscarIcon = document.getElementById('monBuscarIcon');
+    var buscarLabel = document.getElementById('monBuscarLabel');
+
+    errorEl.style.display = 'none';
+
+    if (!url) {
+      errorEl.textContent = 'Cole a URL da partida no Betano.';
+      errorEl.style.display = '';
+      return;
+    }
+    if (!url.includes('betano')) {
+      errorEl.textContent = 'URL inválida — deve ser uma URL do Betano.';
+      errorEl.style.display = '';
+      return;
+    }
+
+    buscarBtn.disabled = true;
+    buscarIcon.className = 'bi bi-hourglass-split';
+    buscarLabel.textContent = 'Buscando...';
+
+    fetch('/api/surebet/betano/fetch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: url }),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        buscarBtn.disabled = false;
+        buscarIcon.className = 'bi bi-search';
+        buscarLabel.textContent = 'Buscar';
+
+        if (data.error) {
+          errorEl.textContent = data.error;
+          errorEl.style.display = '';
+          return;
+        }
+
+        if (data.nome) document.getElementById('monNome').value = data.nome;
+        if (data.odd_mandante)   document.getElementById('monOddMandante').value = parseFloat(data.odd_mandante).toFixed(2);
+        if (data.odd_visitante)  document.getElementById('monOddVisitante').value = parseFloat(data.odd_visitante).toFixed(2);
+        if (data.odd_empate_gols) document.getElementById('monOddEmpate').value = parseFloat(data.odd_empate_gols).toFixed(2);
+
+        atualizarPreview();
+      })
+      .catch(function () {
+        buscarBtn.disabled = false;
+        buscarIcon.className = 'bi bi-search';
+        buscarLabel.textContent = 'Buscar';
+        errorEl.textContent = 'Erro de conexão. Tente novamente.';
+        errorEl.style.display = '';
+      });
   };
 
   /* ---- Preview inline ao preencher odds ---- */

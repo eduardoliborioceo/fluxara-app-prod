@@ -52,3 +52,8 @@ cryptography>=42.0.0
 # AI (Claude API)
 # ========================
 anthropic>=0.40.0
+
+# ========================
+# Web Scraping (Betano)
+# ========================
+playwright>=1.40.0
