@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 _BETANO_BASE = "https://www.betano.bet.br"
 _FLARESOLVERR_URL = os.environ.get(
-    "FLARESOLVERR_URL", "http://flaresolverr.railway.internal:8191"
+    "FLARESOLVERR_URL", "http://flaresolverr.railway.internal:8080"
 )
 
 
