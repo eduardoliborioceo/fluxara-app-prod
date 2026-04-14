@@ -1,1 +1,1 @@
-web: gunicorn run:app -c gunicorn.conf.py
+web: gunicorn run:app --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120
