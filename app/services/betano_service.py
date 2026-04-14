@@ -2,7 +2,6 @@ import json
 import logging
 import os
 import re
-import uuid
 
 import requests
 
@@ -18,11 +17,15 @@ def fetch_odds(betano_url: str) -> dict:
     slug, event_id = _extract_slug_and_id(betano_url)
     api_url = f"{_BETANO_BASE}/api/odds/{slug}/{event_id}/?bt=3&req=s,stnf,c,mb"
 
-    session_id = f"betano-{uuid.uuid4().hex[:8]}"
+    cookies = _build_cookies()
+    if not cookies:
+        raise ValueError(
+            "Cookies da Betano nao configurados. "
+            "Adicione BETANO_DATADOME e BETANO_POCAAUTH no Railway."
+        )
+
     try:
-        _flaresolverr_create_session(session_id)
-        _flaresolverr_get(betano_url, session_id=session_id)
-        solution = _flaresolverr_get(api_url, referer=betano_url, session_id=session_id)
+        solution = _flaresolverr_get(api_url, referer=betano_url, cookies=cookies)
     except ValueError as exc:
         raise ValueError(str(exc))
     except Exception as exc:
@@ -31,14 +34,18 @@ def fetch_odds(betano_url: str) -> dict:
             "Nao foi possivel conectar ao Flaresolverr. "
             "Verifique se o servico esta ativo no Railway."
         )
-    finally:
-        _flaresolverr_destroy_session(session_id)
 
     response_text = solution.get("response", "")
     if not response_text:
         raise ValueError("Flaresolverr retornou resposta vazia.")
 
     logger.info("Betano response preview: %s", response_text[:300])
+
+    if response_text.strip().startswith("<"):
+        raise ValueError(
+            "Betano retornou HTML em vez de JSON. "
+            "Os cookies (BETANO_DATADOME / BETANO_POCAAUTH) podem ter expirado — atualize-os no Railway."
+        )
 
     try:
         data = json.loads(response_text)
@@ -58,47 +65,36 @@ def fetch_odds(betano_url: str) -> dict:
     )
 
 
-def _flaresolverr_create_session(session_id: str) -> None:
-    resp = requests.post(
-        f"{_FLARESOLVERR_URL}/v1",
-        json={"cmd": "sessions.create", "session": session_id},
-        timeout=30,
-    )
-    resp.raise_for_status()
-    data = resp.json()
-    if data.get("status") != "ok":
-        raise ValueError(
-            f"Flaresolverr nao criou sessao: {data.get('message', 'desconhecido')}"
-        )
-    logger.info("Flaresolverr sessao criada: %s", session_id)
+def _build_cookies() -> list[dict]:
+    domain = ".betano.bet.br"
+    cookies = []
+
+    datadome = os.environ.get("BETANO_DATADOME", "").strip()
+    pocaauth = os.environ.get("BETANO_POCAAUTH", "").strip()
+
+    if datadome:
+        cookies.append({"name": "datadome", "value": datadome, "domain": domain})
+    if pocaauth:
+        cookies.append({"name": "pocaauth", "value": pocaauth, "domain": domain})
+
+    return cookies
 
 
-def _flaresolverr_destroy_session(session_id: str) -> None:
-    try:
-        requests.post(
-            f"{_FLARESOLVERR_URL}/v1",
-            json={"cmd": "sessions.destroy", "session": session_id},
-            timeout=10,
-        )
-    except Exception:
-        pass
-
-
-def _flaresolverr_get(url: str, referer: str = None, session_id: str = None) -> dict:
+def _flaresolverr_get(url: str, referer: str = None, cookies: list = None) -> dict:
     payload: dict = {
         "cmd": "request.get",
         "url": url,
-        "maxTimeout": 60000,
+        "maxTimeout": 45000,
     }
     if referer:
         payload["headers"] = {"Referer": referer}
-    if session_id:
-        payload["session"] = session_id
+    if cookies:
+        payload["cookies"] = cookies
 
     resp = requests.post(
         f"{_FLARESOLVERR_URL}/v1",
         json=payload,
-        timeout=75,
+        timeout=60,
     )
     resp.raise_for_status()
     data = resp.json()
@@ -109,11 +105,7 @@ def _flaresolverr_get(url: str, referer: str = None, session_id: str = None) -> 
         )
 
     solution = data["solution"]
-    logger.info(
-        "Flaresolverr url=%s status=%s",
-        solution.get("url"),
-        solution.get("status"),
-    )
+    logger.info("Flaresolverr url=%s status=%s", solution.get("url"), solution.get("status"))
     return solution
 
 
