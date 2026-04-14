@@ -1,9 +1,10 @@
 import json
 import logging
-import os
 import re
 
 import requests
+
+from app.services import betano_session_service
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +21,9 @@ _HEADERS = {
     "Accept-Encoding": "gzip, deflate, br, zstd",
     "cache-control": "no-cache",
     "pragma": "no-cache",
+    "sec-ch-ua": '"Google Chrome";v="147", "Not.A/Brand";v="8", "Chromium";v="147"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
     "sec-fetch-dest": "empty",
     "sec-fetch-mode": "cors",
     "sec-fetch-site": "same-origin",
@@ -28,57 +32,66 @@ _HEADERS = {
 
 def fetch_odds(betano_url: str) -> dict:
     slug, event_id = _extract_slug_and_id(betano_url)
-
     api_url = f"{_BETANO_BASE}/api/odds/{slug}/{event_id}/?bt=3&req=s,stnf,c,mb"
 
     session = requests.Session()
     session.headers.update(_HEADERS)
     session.headers["Referer"] = betano_url
 
-    cookie_str = os.environ.get("BETANO_COOKIES", "")
-    if cookie_str:
-        for part in cookie_str.split(";"):
-            part = part.strip()
-            if "=" in part:
-                name, _, value = part.partition("=")
-                session.cookies.set(name.strip(), value.strip(), domain="www.betano.bet.br")
+    cookies = betano_session_service.get_valid_cookies()
+    if not cookies:
+        betano_session_service.login()
+        cookies = betano_session_service.get_valid_cookies()
+
+    if cookies:
+        for name, value in cookies.items():
+            session.cookies.set(name, value, domain="www.betano.bet.br")
 
     try:
-        resp = session.get(api_url, timeout=15)
+        resp = session.get(api_url, timeout=15, allow_redirects=False)
+
         if resp.status_code in (301, 302, 303, 307, 308):
             raise ValueError(
                 "Betano redirecionou para login. "
-                "Configure a variavel BETANO_COOKIES com os cookies da sua sessao."
+                "A sessao expirou — o sistema tentara renovar automaticamente."
             )
+
+        if resp.status_code == 403:
+            raise ValueError(
+                "Acesso negado pela Betano (403). "
+                "Pode ser bloqueio por Cloudflare. Tente novamente em instantes."
+            )
+
         if not resp.ok:
             raise ValueError(
-                f"API Betano retornou status {resp.status_code}. "
-                "Verifique se a URL esta correta e se os cookies estao validos."
+                f"API Betano retornou status {resp.status_code}."
             )
+
         if "json" not in resp.headers.get("content-type", ""):
             raise ValueError(
                 "Betano nao retornou JSON. A sessao pode ter expirado."
             )
+
         odds = _parse_betano_response(resp.json())
         if odds:
             return odds
+
         raise ValueError(
-            "Resposta recebida mas nao foi possivel extrair os mercados. "
-            "O jogo pode nao ter os mercados necessarios (1x2 + Resultado Correto)."
+            "Resposta recebida mas sem mercados necessarios. "
+            "O jogo pode nao ter 1x2 e Resultado Correto disponiveis."
         )
+
     except ValueError:
         raise
     except Exception as exc:
         logger.warning("Erro ao buscar odds Betano: %s", exc)
-        raise ValueError(
-            "Nao foi possivel conectar a API da Betano. Tente novamente."
-        )
+        raise ValueError("Nao foi possivel conectar a API da Betano.")
 
 
 def _extract_slug_and_id(url: str) -> tuple[str, str]:
-    m = re.search(r"/odds/([^/]+)/(\d{7,})(?:/|$|\?)", url)
+    m = re.search(r"/odds/([^/?]+)/(\d{7,})(?:/|$|\?)", url)
     if not m:
-        raise ValueError("URL invalida - formato esperado: /odds/{partida}/{id}/")
+        raise ValueError("URL invalida — formato esperado: betano.bet.br/odds/{partida}/{id}/")
     return m.group(1), m.group(2)
 
 
