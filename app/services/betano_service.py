@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import re
 
 import requests
@@ -14,114 +15,71 @@ _HEADERS = {
         "AppleWebKit/537.36 (KHTML, like Gecko) "
         "Chrome/147.0.0.0 Safari/537.36"
     ),
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8",
-    "Accept-Encoding": "gzip, deflate, br",
-    "Referer": "https://www.betano.bet.br/",
-    "sec-fetch-dest": "document",
-    "sec-fetch-mode": "navigate",
-    "sec-fetch-site": "same-origin",
-    "upgrade-insecure-requests": "1",
-}
-
-_API_HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/147.0.0.0 Safari/537.36"
-    ),
-    "Accept": "application/json, */*",
-    "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8",
-    "Referer": "https://www.betano.bet.br/",
+    "Accept": "application/json, text/plain, */*",
+    "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
+    "Accept-Encoding": "gzip, deflate, br, zstd",
+    "cache-control": "no-cache",
+    "pragma": "no-cache",
     "sec-fetch-dest": "empty",
     "sec-fetch-mode": "cors",
     "sec-fetch-site": "same-origin",
 }
 
-_API_PATTERNS = [
-    "{base}/api/sport/events/{id}/",
-    "{base}/api/events/{id}/",
-    "{base}/api/sport/event/{id}/",
-    "{base}/api/sb/v1/events/{id}/",
-    "{base}/api/sb/v2/events/{id}/",
-    "{base}/api/br/sport/events/{id}/",
-    "{base}/api/sport/events/{id}/?withMarkets=true",
-]
-
 
 def fetch_odds(betano_url: str) -> dict:
-    event_id = _extract_event_id(betano_url)
+    slug, event_id = _extract_slug_and_id(betano_url)
+
+    api_url = f"{_BETANO_BASE}/api/odds/{slug}/{event_id}/?bt=3&req=s,stnf,c,mb"
+
     session = requests.Session()
-
-    session.headers.update(_API_HEADERS)
-    for pattern in _API_PATTERNS:
-        url = pattern.format(base=_BETANO_BASE, id=event_id)
-        try:
-            resp = session.get(url, timeout=10)
-            if resp.ok and "json" in resp.headers.get("content-type", ""):
-                odds = _parse_betano_response(resp.json())
-                if odds:
-                    return odds
-        except Exception:
-            continue
-
     session.headers.update(_HEADERS)
+    session.headers["Referer"] = betano_url
+
+    cookie_str = os.environ.get("BETANO_COOKIES", "")
+    if cookie_str:
+        for part in cookie_str.split(";"):
+            part = part.strip()
+            if "=" in part:
+                name, _, value = part.partition("=")
+                session.cookies.set(name.strip(), value.strip(), domain="www.betano.bet.br")
+
     try:
-        resp = session.get(betano_url, timeout=15)
-        if resp.ok:
-            odds = _parse_html(resp.text)
-            if odds:
-                return odds
-    except Exception as exc:
-        logger.warning("Falha ao carregar pagina Betano: %s", exc)
-
-    raise ValueError(
-        "Nao foi possivel extrair as odds desta partida. "
-        "Verifique se a URL esta correta e se os mercados estao disponiveis."
-    )
-
-
-def _extract_event_id(url: str) -> str:
-    m = re.search(r"/(\d{7,})(?:/|$|\?)", url)
-    if not m:
-        raise ValueError("URL invalida - ID do evento nao encontrado")
-    return m.group(1)
-
-
-def _parse_html(html: str) -> dict | None:
-    m = re.search(
-        r'<script[^>]*id=["\']__NEXT_DATA__["\'][^>]*>(.*?)</script>',
-        html,
-        re.DOTALL,
-    )
-    if not m:
-        return None
-    try:
-        data = json.loads(m.group(1))
-    except Exception:
-        return None
-    return _search_and_extract(data, depth=0)
-
-
-def _search_and_extract(obj, depth: int = 0) -> dict | None:
-    if depth > 10 or obj is None:
-        return None
-    if isinstance(obj, dict):
-        odds = _parse_betano_response(obj)
+        resp = session.get(api_url, timeout=15)
+        if resp.status_code in (301, 302, 303, 307, 308):
+            raise ValueError(
+                "Betano redirecionou para login. "
+                "Configure a variavel BETANO_COOKIES com os cookies da sua sessao."
+            )
+        if not resp.ok:
+            raise ValueError(
+                f"API Betano retornou status {resp.status_code}. "
+                "Verifique se a URL esta correta e se os cookies estao validos."
+            )
+        if "json" not in resp.headers.get("content-type", ""):
+            raise ValueError(
+                "Betano nao retornou JSON. A sessao pode ter expirado."
+            )
+        odds = _parse_betano_response(resp.json())
         if odds:
             return odds
-        for val in obj.values():
-            if isinstance(val, (dict, list)):
-                result = _search_and_extract(val, depth + 1)
-                if result:
-                    return result
-    elif isinstance(obj, list):
-        for item in obj:
-            if isinstance(item, (dict, list)):
-                result = _search_and_extract(item, depth + 1)
-                if result:
-                    return result
-    return None
+        raise ValueError(
+            "Resposta recebida mas nao foi possivel extrair os mercados. "
+            "O jogo pode nao ter os mercados necessarios (1x2 + Resultado Correto)."
+        )
+    except ValueError:
+        raise
+    except Exception as exc:
+        logger.warning("Erro ao buscar odds Betano: %s", exc)
+        raise ValueError(
+            "Nao foi possivel conectar a API da Betano. Tente novamente."
+        )
+
+
+def _extract_slug_and_id(url: str) -> tuple[str, str]:
+    m = re.search(r"/odds/([^/]+)/(\d{7,})(?:/|$|\?)", url)
+    if not m:
+        raise ValueError("URL invalida - formato esperado: /odds/{partida}/{id}/")
+    return m.group(1), m.group(2)
 
 
 def _parse_betano_response(data: dict) -> dict | None:
