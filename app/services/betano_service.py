@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import re
+import uuid
 
 import requests
 
@@ -17,8 +18,11 @@ def fetch_odds(betano_url: str) -> dict:
     slug, event_id = _extract_slug_and_id(betano_url)
     api_url = f"{_BETANO_BASE}/api/odds/{slug}/{event_id}/?bt=3&req=s,stnf,c,mb"
 
+    session_id = f"betano-{uuid.uuid4().hex[:8]}"
     try:
-        solution = _flaresolverr_get(api_url, referer=betano_url)
+        _flaresolverr_create_session(session_id)
+        _flaresolverr_get(betano_url, session_id=session_id)
+        solution = _flaresolverr_get(api_url, referer=betano_url, session_id=session_id)
     except ValueError as exc:
         raise ValueError(str(exc))
     except Exception as exc:
@@ -27,6 +31,8 @@ def fetch_odds(betano_url: str) -> dict:
             "Nao foi possivel conectar ao Flaresolverr. "
             "Verifique se o servico esta ativo no Railway."
         )
+    finally:
+        _flaresolverr_destroy_session(session_id)
 
     response_text = solution.get("response", "")
     if not response_text:
@@ -52,19 +58,47 @@ def fetch_odds(betano_url: str) -> dict:
     )
 
 
-def _flaresolverr_get(url: str, referer: str = None) -> dict:
+def _flaresolverr_create_session(session_id: str) -> None:
+    resp = requests.post(
+        f"{_FLARESOLVERR_URL}/v1",
+        json={"cmd": "sessions.create", "session": session_id},
+        timeout=30,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+    if data.get("status") != "ok":
+        raise ValueError(
+            f"Flaresolverr nao criou sessao: {data.get('message', 'desconhecido')}"
+        )
+    logger.info("Flaresolverr sessao criada: %s", session_id)
+
+
+def _flaresolverr_destroy_session(session_id: str) -> None:
+    try:
+        requests.post(
+            f"{_FLARESOLVERR_URL}/v1",
+            json={"cmd": "sessions.destroy", "session": session_id},
+            timeout=10,
+        )
+    except Exception:
+        pass
+
+
+def _flaresolverr_get(url: str, referer: str = None, session_id: str = None) -> dict:
     payload: dict = {
         "cmd": "request.get",
         "url": url,
-        "maxTimeout": 45000,
+        "maxTimeout": 60000,
     }
     if referer:
         payload["headers"] = {"Referer": referer}
+    if session_id:
+        payload["session"] = session_id
 
     resp = requests.post(
         f"{_FLARESOLVERR_URL}/v1",
         json=payload,
-        timeout=60,
+        timeout=75,
     )
     resp.raise_for_status()
     data = resp.json()
@@ -76,9 +110,9 @@ def _flaresolverr_get(url: str, referer: str = None) -> dict:
 
     solution = data["solution"]
     logger.info(
-        "Flaresolverr solution status=%s url=%s",
-        solution.get("status"),
+        "Flaresolverr url=%s status=%s",
         solution.get("url"),
+        solution.get("status"),
     )
     return solution
 
