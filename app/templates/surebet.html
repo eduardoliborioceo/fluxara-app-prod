@@ -131,18 +131,52 @@
         </button>
       </div>
 
-      <!-- Busca automática via URL Betano -->
+      <!-- Modo de busca: toggle -->
       <div class="mon-url-section">
-        <div class="surebet-section-label" style="margin-bottom:8px">Buscar odds automaticamente</div>
-        <div class="mon-url-row">
-          <input type="url" id="monBetanoUrl" class="alv-text-input"
-                 placeholder="https://www.betano.bet.br/odds/time-a-vs-time-b/12345678/">
-          <button class="mon-btn-buscar" id="monBtnBuscar" onclick="monBuscarOdds()">
-            <i class="bi bi-search" id="monBuscarIcon"></i>
-            <span id="monBuscarLabel">Buscar</span>
+        <div class="clip-mode-toggle" id="monModeToggle">
+          <button type="button" class="clip-mode-btn active" data-mode="url">
+            <i class="bi bi-link-45deg"></i> Via URL
+          </button>
+          <button type="button" class="clip-mode-btn" data-mode="browser">
+            <i class="bi bi-browser-chrome"></i> Via Browser
           </button>
         </div>
-        <div class="mon-url-error" id="monUrlError" style="display:none"></div>
+
+        <!-- URL mode -->
+        <div id="monModeUrl">
+          <div class="surebet-section-label" style="margin-bottom:8px;margin-top:14px">Buscar via Flaresolverr</div>
+          <div class="mon-url-row">
+            <input type="url" id="monBetanoUrl" class="alv-text-input"
+                   placeholder="https://www.betano.bet.br/odds/time-a-vs-time-b/12345678/">
+            <button class="mon-btn-buscar" id="monBtnBuscar" onclick="monBuscarOdds()">
+              <i class="bi bi-search" id="monBuscarIcon"></i>
+              <span id="monBuscarLabel">Buscar</span>
+            </button>
+          </div>
+          <div class="mon-url-error" id="monUrlError" style="display:none"></div>
+        </div>
+
+        <!-- Browser mode -->
+        <div id="monModeBrowser" style="display:none">
+          <div class="surebet-section-label" style="margin-bottom:8px;margin-top:14px">Buscar via seu browser</div>
+          <div class="clip-snippet-box">
+            <code id="monSnippetCode">copy(JSON.stringify(window.__NEXT_DATA__))</code>
+            <button class="clip-copy-btn" onclick="clipCopySnippet('monSnippetCode')" title="Copiar snippet">
+              <i class="bi bi-clipboard"></i>
+            </button>
+          </div>
+          <p class="clip-hint">
+            1. Abra a página da partida no Betano<br>
+            2. Aperte F12 → Console → cole e pressione Enter<br>
+            3. Cole o resultado abaixo
+          </p>
+          <textarea id="monClipboard" class="clip-textarea" rows="3"
+                    placeholder="Cole aqui o resultado do console..."></textarea>
+          <button class="alv-btn-simular" style="margin-top:10px" onclick="monProcessarClipboard()">
+            <i class="bi bi-cpu"></i> Processar
+          </button>
+          <div class="mon-url-error" id="monClipError" style="display:none"></div>
+        </div>
       </div>
 
       <div class="mon-divider"><span>ou preencha manualmente</span></div>
@@ -326,8 +360,41 @@
   <!-- ================== TAB: ESCANEAR ================== -->
   <div id="tab-escanear" style="display:none">
 
+    <!-- Toggle modo scan -->
+    <div class="clip-mode-toggle" style="margin-bottom:14px" id="scanModeToggle">
+      <button type="button" class="clip-mode-btn active" data-mode="flare">
+        <i class="bi bi-robot"></i> Via Flaresolverr
+      </button>
+      <button type="button" class="clip-mode-btn" data-mode="browser">
+        <i class="bi bi-browser-chrome"></i> Via Browser
+      </button>
+    </div>
+
+    <!-- Modo Browser manual -->
+    <div class="surebet-card" id="scanBrowserCard" style="display:none">
+      <div class="surebet-section-label">Extração via browser</div>
+      <div class="clip-snippet-box">
+        <code id="scanSnippetCode">copy(JSON.stringify(window.__NEXT_DATA__))</code>
+        <button class="clip-copy-btn" onclick="clipCopySnippet('scanSnippetCode')" title="Copiar snippet">
+          <i class="bi bi-clipboard"></i>
+        </button>
+      </div>
+      <p class="clip-hint">
+        <strong>Para varredura do dia:</strong> abra<br>
+        <code class="clip-url-example">betano.bet.br/upcomingcoupon/?sid=FOOT&amp;day=Wednesday</code><br>
+        rode o snippet → cole abaixo → veja a lista de partidas<br><br>
+        <strong>Para verificar uma partida:</strong> abra a página dela → snippet → cole
+      </p>
+      <textarea id="scanClipboard" class="clip-textarea" rows="4"
+                placeholder="Cole aqui o resultado do console..."></textarea>
+      <button class="alv-btn-simular" style="margin-top:10px" onclick="scanProcessarClipboard()">
+        <i class="bi bi-cpu"></i> Processar
+      </button>
+      <div class="mon-url-error" id="scanClipError" style="display:none"></div>
+    </div>
+
     <!-- Seletor de dia -->
-    <div class="surebet-card">
+    <div class="surebet-card" id="scanFlareCard">
       <div class="surebet-section-label">Dia da semana</div>
       <div class="surebet-outcomes-toggle" id="scanDayToggle">
         <button type="button" class="surebet-outcome-btn" data-day="Monday">Seg</button>
@@ -344,7 +411,7 @@
         <span id="scanBuscarLabel">Buscar partidas</span>
       </button>
       <div class="mon-url-error" id="scanError" style="display:none"></div>
-    </div>
+    </div><!-- /scanFlareCard -->
 
     <!-- Lista de partidas + progresso -->
     <div class="surebet-card" id="scanResultsCard" style="display:none">

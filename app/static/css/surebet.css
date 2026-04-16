@@ -911,6 +911,137 @@
 }
 
 /* ========================
+   CLIPBOARD / BROWSER MODE
+======================== */
+.clip-mode-toggle {
+  display: flex;
+  gap: 6px;
+  background: #f1f5f9;
+  border-radius: 10px;
+  padding: 5px;
+}
+
+.clip-mode-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+  cursor: pointer;
+  transition: background .15s, color .15s;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.clip-mode-btn.active {
+  background: #fff;
+  color: var(--primary, #0d6efd);
+  box-shadow: 0 1px 4px rgba(15,23,42,.10);
+}
+
+.clip-snippet-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #0f172a;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+}
+
+.clip-snippet-box code {
+  flex: 1;
+  font-size: .82rem;
+  color: #7dd3fc;
+  font-family: 'Courier New', monospace;
+  word-break: break-all;
+}
+
+.clip-copy-btn {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  border: 1px solid rgba(255,255,255,.15);
+  background: rgba(255,255,255,.08);
+  color: #94a3b8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .8rem;
+  transition: background .15s, color .15s;
+}
+
+.clip-copy-btn:hover {
+  background: rgba(255,255,255,.15);
+  color: #fff;
+}
+
+.clip-hint {
+  font-size: .78rem;
+  color: var(--text-muted, #64748b);
+  line-height: 1.6;
+  margin: 0 0 10px;
+}
+
+.clip-url-example {
+  font-size: .74rem;
+  background: #f1f5f9;
+  border-radius: 5px;
+  padding: 2px 6px;
+  color: var(--text, #1e293b);
+  word-break: break-all;
+}
+
+.clip-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1.5px solid var(--border, rgba(15,23,42,.09));
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: .82rem;
+  background: transparent;
+  color: var(--text, #1e293b);
+  outline: none;
+  resize: vertical;
+  transition: border-color .15s;
+  font-family: 'Courier New', monospace;
+  line-height: 1.4;
+}
+
+.clip-textarea:focus {
+  border-color: var(--primary, #0d6efd);
+}
+
+[data-theme="escuro"] .clip-mode-toggle {
+  background: rgba(255,255,255,.05);
+}
+
+[data-theme="escuro"] .clip-mode-btn.active {
+  background: rgba(255,255,255,.10);
+  box-shadow: none;
+}
+
+[data-theme="escuro"] .clip-url-example {
+  background: rgba(255,255,255,.06);
+  color: #e2e8f0;
+}
+
+[data-theme="escuro"] .clip-textarea {
+  background: #0f172a;
+  border-color: rgba(255,255,255,.12);
+  color: #e2e8f0;
+}
+
+/* ========================
    ESCANEAR — PROGRESS
 ======================== */
 .scan-progress-track {
