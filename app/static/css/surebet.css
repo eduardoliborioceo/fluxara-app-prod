@@ -909,3 +909,197 @@
   background: rgba(245,158,11,.12);
   border-color: rgba(245,158,11,.25);
 }
+
+/* ========================
+   ESCANEAR — PROGRESS
+======================== */
+.scan-progress-track {
+  height: 6px;
+  background: rgba(13,110,253,.12);
+  border-radius: 99px;
+  margin: 12px 0 6px;
+  overflow: hidden;
+}
+
+.scan-progress-fill {
+  height: 100%;
+  background: var(--primary, #0d6efd);
+  border-radius: 99px;
+  transition: width .4s ease;
+}
+
+.scan-progress-label {
+  font-size: .75rem;
+  color: var(--text-muted, #64748b);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+/* ========================
+   ESCANEAR — MATCH LIST
+======================== */
+.scan-match-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border, rgba(15,23,42,.06));
+}
+
+.scan-match-row:last-child { border-bottom: none; }
+
+.scan-match-info { flex: 1; min-width: 0; }
+
+.scan-match-nome {
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--text, #1e293b);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.scan-match-meta {
+  font-size: .73rem;
+  color: var(--text-muted, #64748b);
+  margin-top: 2px;
+}
+
+.scan-match-status { flex-shrink: 0; }
+
+.scan-match-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: .74rem;
+  font-weight: 700;
+}
+
+.scan-badge--wait {
+  background: rgba(100,116,139,.1);
+  color: var(--text-muted, #64748b);
+}
+
+.scan-badge--scan {
+  background: rgba(13,110,253,.1);
+  color: var(--primary, #0d6efd);
+  animation: alv-pulse 1.4s ease-in-out infinite;
+}
+
+.scan-badge--ok {
+  background: rgba(22,163,74,.12);
+  color: #16a34a;
+}
+
+.scan-badge--no {
+  background: rgba(15,23,42,.06);
+  color: var(--text-muted, #64748b);
+}
+
+.scan-badge--err {
+  background: rgba(220,53,69,.1);
+  color: #dc3545;
+  cursor: help;
+}
+
+/* ========================
+   ESCANEAR — SUREBETS
+======================== */
+.scan-surebets-card {
+  border-color: #16a34a;
+  background: rgba(22,163,74,.03);
+}
+
+.scan-sb-item {
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(22,163,74,.15);
+}
+
+.scan-sb-item:last-child { border-bottom: none; padding-bottom: 0; }
+
+.scan-sb-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.scan-sb-nome {
+  font-size: .9rem;
+  font-weight: 700;
+  color: var(--text, #1e293b);
+  flex: 1;
+}
+
+.scan-sb-margem {
+  font-size: .82rem;
+  font-weight: 800;
+  color: #16a34a;
+  flex-shrink: 0;
+}
+
+.scan-sb-odds {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 2px 0;
+  margin-bottom: 10px;
+}
+
+.scan-sb-stake {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 12px;
+  border-bottom: 1px solid rgba(0,0,0,.04);
+}
+
+.scan-sb-stake:last-child { border-bottom: none; }
+
+.scan-sb-stake-label {
+  font-size: .78rem;
+  color: var(--text-muted, #64748b);
+}
+
+.scan-sb-stake-value {
+  font-size: .82rem;
+  font-weight: 700;
+  color: var(--text, #1e293b);
+}
+
+.scan-sb-footer {
+  font-size: .78rem;
+  color: var(--text-muted, #64748b);
+  margin-bottom: 10px;
+}
+
+.scan-sb-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--primary, #0d6efd);
+  text-decoration: none;
+}
+
+.scan-sb-link:hover { text-decoration: underline; }
+
+/* ========================
+   DARK — ESCANEAR
+======================== */
+[data-theme="escuro"] .scan-progress-track {
+  background: rgba(59,130,246,.12);
+}
+
+[data-theme="escuro"] .scan-sb-odds {
+  background: rgba(255,255,255,.04);
+}
+
+[data-theme="escuro"] .scan-surebets-card {
+  border-color: #16a34a;
+  background: rgba(22,163,74,.06);
+}
