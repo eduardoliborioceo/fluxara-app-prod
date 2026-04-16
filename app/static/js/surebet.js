@@ -10,9 +10,10 @@
       document.querySelectorAll('.surebet-tab-btn').forEach(function (b) { b.classList.remove('active'); });
       btn.classList.add('active');
       var tab = btn.dataset.tab;
-      document.getElementById('tab-calculadora').style.display = tab === 'calculadora' ? '' : 'none';
-      document.getElementById('tab-monitorar').style.display  = tab === 'monitorar'  ? '' : 'none';
-      document.getElementById('tab-alavancagem').style.display = tab === 'alavancagem' ? '' : 'none';
+      document.getElementById('tab-calculadora').style.display  = tab === 'calculadora'  ? '' : 'none';
+      document.getElementById('tab-monitorar').style.display    = tab === 'monitorar'    ? '' : 'none';
+      document.getElementById('tab-alavancagem').style.display  = tab === 'alavancagem'  ? '' : 'none';
+      document.getElementById('tab-escanear').style.display     = tab === 'escanear'     ? '' : 'none';
       if (tab === 'alavancagem' && !_alvCarregado) {
         _alvCarregado = true;
         alvCarregarLista();
@@ -720,5 +721,263 @@
 
   window.monExcluirAberta = function () {
     if (_monAbertaId) monExcluir(_monAbertaId);
+  };
+})();
+
+/* =============================================
+   ESCANEAR SUREBETS
+============================================= */
+(function () {
+  var DAYS_EN = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  var _scanDay = DAYS_EN[new Date().getDay()];
+  var _scanMatches = [];
+  var _scanRunning = false;
+  var _scanAbort = false;
+
+  /* ---- Seleciona dia automaticamente (hoje) ---- */
+  (function initDayToggle() {
+    var toggle = document.getElementById('scanDayToggle');
+    if (!toggle) return;
+    toggle.querySelectorAll('.surebet-outcome-btn').forEach(function (btn) {
+      if (btn.dataset.day === _scanDay) btn.classList.add('active');
+      btn.addEventListener('click', function () {
+        toggle.querySelectorAll('.surebet-outcome-btn').forEach(function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        _scanDay = btn.dataset.day;
+      });
+    });
+  })();
+
+  /* ---- Helpers ---- */
+  function esc(str) {
+    return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function fmt(v) {
+    return 'R$ ' + parseFloat(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function fmtPct(v) {
+    return (v >= 0 ? '+' : '') + parseFloat(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+  }
+
+  function calcSurebet(m, v, e) {
+    var inv = 1 / m + 1 / v + 1 / e;
+    var total = 100;
+    return {
+      isSurebet: inv < 1,
+      inv: inv,
+      margem: (1 - inv) * 100,
+      retorno: total / inv,
+      lucro: total / inv - total,
+      stakes: [
+        { label: 'Mandante', odd: m, stake: total * (1 / m) / inv },
+        { label: 'Visitante', odd: v, stake: total * (1 / v) / inv },
+        { label: 'Empate c/ gols', odd: e, stake: total * (1 / e) / inv },
+      ],
+    };
+  }
+
+  function fmtHora(raw) {
+    if (!raw) return '';
+    try {
+      var d = new Date(raw);
+      return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    } catch (e) { return ''; }
+  }
+
+  /* ---- Render match list ---- */
+  function renderMatches() {
+    var container = document.getElementById('scanMatchList');
+    if (!container) return;
+    if (!_scanMatches.length) {
+      container.innerHTML = '<div class="alv-lista-vazio"><div>Nenhuma partida encontrada.</div></div>';
+      return;
+    }
+    container.innerHTML = _scanMatches.map(function (m, i) {
+      var statusHtml = '';
+      if (m.status === 'waiting') {
+        statusHtml = '<span class="scan-match-badge scan-badge--wait"><i class="bi bi-clock"></i></span>';
+      } else if (m.status === 'scanning') {
+        statusHtml = '<span class="scan-match-badge scan-badge--scan"><i class="bi bi-hourglass-split"></i></span>';
+      } else if (m.status === 'surebet') {
+        statusHtml = '<span class="scan-match-badge scan-badge--ok"><i class="bi bi-check-circle-fill"></i> Surebet</span>';
+      } else if (m.status === 'no') {
+        statusHtml = '<span class="scan-match-badge scan-badge--no"><i class="bi bi-x-circle"></i></span>';
+      } else if (m.status === 'error') {
+        statusHtml = '<span class="scan-match-badge scan-badge--err" title="' + esc(m.error || '') + '"><i class="bi bi-exclamation-triangle"></i></span>';
+      }
+      var hora = fmtHora(m.hora);
+      return '<div class="scan-match-row" id="scan-row-' + i + '">'
+        + '<div class="scan-match-info">'
+        +   '<div class="scan-match-nome">' + esc(m.nome) + '</div>'
+        +   (m.liga || hora
+              ? '<div class="scan-match-meta">'
+                + (hora ? hora + ' ' : '')
+                + (m.liga ? '· ' + esc(m.liga) : '')
+                + '</div>'
+              : '')
+        + '</div>'
+        + '<div class="scan-match-status">' + statusHtml + '</div>'
+        + '</div>';
+    }).join('');
+  }
+
+  /* ---- Render surebets ---- */
+  function renderSurebets() {
+    var surebets = _scanMatches.filter(function (m) { return m.status === 'surebet' && m.sb; });
+    var card = document.getElementById('scanSurebetsCard');
+    var list = document.getElementById('scanSurebetsList');
+    if (!card || !list) return;
+    if (!surebets.length) { card.style.display = 'none'; return; }
+    card.style.display = '';
+    list.innerHTML = surebets.map(function (m) {
+      var sb = m.sb;
+      return '<div class="scan-sb-item">'
+        + '<div class="scan-sb-header">'
+        +   '<span class="scan-sb-nome">' + esc(m.nome) + '</span>'
+        +   '<span class="scan-sb-margem">' + fmtPct(sb.margem) + '</span>'
+        + '</div>'
+        + '<div class="scan-sb-odds">'
+        +   sb.stakes.map(function (st) {
+              return '<div class="scan-sb-stake">'
+                + '<span class="scan-sb-stake-label">' + esc(st.label) + ' @ ' + parseFloat(st.odd).toFixed(2) + '</span>'
+                + '<span class="scan-sb-stake-value">' + fmt(st.stake) + '</span>'
+                + '</div>';
+            }).join('')
+        + '</div>'
+        + '<div class="scan-sb-footer">'
+        +   'Retorno: <strong>' + fmt(sb.retorno) + '</strong>'
+        +   ' &nbsp;·&nbsp; Lucro: <strong style="color:#16a34a">' + fmt(sb.lucro) + '</strong>'
+        + '</div>'
+        + '<a href="' + esc(m.url) + '" target="_blank" class="scan-sb-link">'
+        +   '<i class="bi bi-box-arrow-up-right"></i> Abrir na Betano'
+        + '</a>'
+        + '</div>';
+    }).join('');
+  }
+
+  /* ---- Buscar lista de partidas ---- */
+  window.scanBuscarPartidas = function () {
+    var errorEl = document.getElementById('scanError');
+    var buscarBtn = document.getElementById('scanBtnBuscar');
+    var buscarIcon = document.getElementById('scanBuscarIcon');
+    var buscarLabel = document.getElementById('scanBuscarLabel');
+
+    errorEl.style.display = 'none';
+    buscarBtn.disabled = true;
+    buscarIcon.className = 'bi bi-hourglass-split';
+    buscarLabel.textContent = 'Buscando...';
+
+    fetch('/api/surebet/betano/upcoming?day=' + encodeURIComponent(_scanDay))
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        buscarBtn.disabled = false;
+        buscarIcon.className = 'bi bi-search';
+        buscarLabel.textContent = 'Buscar partidas';
+
+        if (data.error) {
+          errorEl.textContent = data.error;
+          errorEl.style.display = '';
+          return;
+        }
+
+        _scanMatches = data.map(function (m) {
+          return Object.assign({}, m, { status: 'waiting', sb: null, error: null });
+        });
+        _scanAbort = false;
+
+        var resultsCard = document.getElementById('scanResultsCard');
+        var scanBtn = document.getElementById('scanBtnScan');
+        var progressBar = document.getElementById('scanProgressBar');
+        var label = document.getElementById('scanListaLabel');
+        var surebetsCard = document.getElementById('scanSurebetsCard');
+
+        resultsCard.style.display = '';
+        progressBar.style.display = 'none';
+        surebetsCard.style.display = 'none';
+        scanBtn.style.display = '';
+        document.getElementById('scanBtnScanLabel').textContent = 'Escanear';
+        label.textContent = _scanMatches.length + ' partidas encontradas';
+
+        renderMatches();
+      })
+      .catch(function () {
+        buscarBtn.disabled = false;
+        buscarIcon.className = 'bi bi-search';
+        buscarLabel.textContent = 'Buscar partidas';
+        errorEl.textContent = 'Erro de conexão. Tente novamente.';
+        errorEl.style.display = '';
+      });
+  };
+
+  /* ---- Escanear todas sequencialmente (async) ---- */
+  window.scanIniciar = async function () {
+    if (_scanRunning) {
+      _scanAbort = true;
+      document.getElementById('scanBtnScanLabel').textContent = 'Parando...';
+      return;
+    }
+
+    _scanRunning = true;
+    _scanAbort = false;
+
+    var scanBtn = document.getElementById('scanBtnScan');
+    var progressBar = document.getElementById('scanProgressBar');
+    var progressFill = document.getElementById('scanProgressFill');
+    var progressLabel = document.getElementById('scanProgressLabel');
+
+    scanBtn.querySelector('i').className = 'bi bi-stop-circle';
+    document.getElementById('scanBtnScanLabel').textContent = 'Parar';
+    progressBar.style.display = '';
+
+    var total = _scanMatches.length;
+
+    for (var i = 0; i < total; i++) {
+      if (_scanAbort) break;
+
+      _scanMatches[i].status = 'scanning';
+      renderMatches();
+
+      var pct = Math.round((i / total) * 100);
+      progressFill.style.width = pct + '%';
+      progressLabel.textContent = i + ' / ' + total + ' verificadas';
+
+      try {
+        var resp = await fetch('/api/surebet/betano/fetch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: _scanMatches[i].url }),
+        });
+        var result = await resp.json();
+
+        if (result.error) {
+          _scanMatches[i].status = 'error';
+          _scanMatches[i].error = result.error;
+        } else {
+          var sb = calcSurebet(
+            parseFloat(result.odd_mandante),
+            parseFloat(result.odd_visitante),
+            parseFloat(result.odd_empate_gols)
+          );
+          _scanMatches[i].status = sb.isSurebet ? 'surebet' : 'no';
+          _scanMatches[i].sb = sb;
+        }
+      } catch (e) {
+        _scanMatches[i].status = 'error';
+        _scanMatches[i].error = 'Erro de rede';
+      }
+
+      renderMatches();
+      renderSurebets();
+    }
+
+    progressFill.style.width = '100%';
+    progressLabel.textContent = total + ' / ' + total + ' verificadas';
+    document.getElementById('scanListaLabel').textContent = 'Verificação concluída';
+    scanBtn.querySelector('i').className = 'bi bi-radar';
+    document.getElementById('scanBtnScanLabel').textContent = 'Escanear novamente';
+    _scanRunning = false;
+    _scanAbort = false;
   };
 })();

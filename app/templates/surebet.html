@@ -24,13 +24,16 @@
   <!-- TABS -->
   <div class="surebet-tabs" role="tablist">
     <button class="surebet-tab-btn active" data-tab="calculadora" role="tab">
-      <i class="bi bi-calculator"></i> Surebet
+      <i class="bi bi-calculator"></i> Calc
     </button>
     <button class="surebet-tab-btn" data-tab="monitorar" role="tab">
-      <i class="bi bi-radar"></i> Monitorar
+      <i class="bi bi-radar"></i> Monitor
     </button>
     <button class="surebet-tab-btn" data-tab="alavancagem" role="tab">
-      <i class="bi bi-lightning-charge"></i> Alavancagem
+      <i class="bi bi-lightning-charge"></i> Alav.
+    </button>
+    <button class="surebet-tab-btn" data-tab="escanear" role="tab">
+      <i class="bi bi-search-heart"></i> Scan
     </button>
   </div>
 
@@ -319,6 +322,65 @@
     </div>
 
   </div><!-- /tab-alavancagem -->
+
+  <!-- ================== TAB: ESCANEAR ================== -->
+  <div id="tab-escanear" style="display:none">
+
+    <!-- Seletor de dia -->
+    <div class="surebet-card">
+      <div class="surebet-section-label">Dia da semana</div>
+      <div class="surebet-outcomes-toggle" id="scanDayToggle">
+        <button type="button" class="surebet-outcome-btn" data-day="Monday">Seg</button>
+        <button type="button" class="surebet-outcome-btn" data-day="Tuesday">Ter</button>
+        <button type="button" class="surebet-outcome-btn" data-day="Wednesday">Qua</button>
+        <button type="button" class="surebet-outcome-btn" data-day="Thursday">Qui</button>
+        <button type="button" class="surebet-outcome-btn" data-day="Friday">Sex</button>
+        <button type="button" class="surebet-outcome-btn" data-day="Saturday">Sáb</button>
+        <button type="button" class="surebet-outcome-btn" data-day="Sunday">Dom</button>
+      </div>
+
+      <button class="alv-btn-simular" id="scanBtnBuscar" onclick="scanBuscarPartidas()" style="margin-top:16px">
+        <i class="bi bi-search" id="scanBuscarIcon"></i>
+        <span id="scanBuscarLabel">Buscar partidas</span>
+      </button>
+      <div class="mon-url-error" id="scanError" style="display:none"></div>
+    </div>
+
+    <!-- Lista de partidas + progresso -->
+    <div class="surebet-card" id="scanResultsCard" style="display:none">
+      <div class="alv-lista-header">
+        <div class="surebet-section-label" style="margin-bottom:0" id="scanListaLabel">Partidas encontradas</div>
+        <button class="alv-btn-nova" id="scanBtnScan" onclick="scanIniciar()" style="display:none">
+          <i class="bi bi-radar"></i> <span id="scanBtnScanLabel">Escanear</span>
+        </button>
+      </div>
+
+      <!-- Barra de progresso -->
+      <div id="scanProgressBar" style="display:none">
+        <div class="scan-progress-track">
+          <div class="scan-progress-fill" id="scanProgressFill" style="width:0%"></div>
+        </div>
+        <div class="scan-progress-label" id="scanProgressLabel">Verificando...</div>
+      </div>
+
+      <div class="mon-info-banner" style="margin-top:12px">
+        <i class="bi bi-info-circle"></i>
+        Cada partida leva ~1 min via Flaresolverr. Use "Escanear" para verificar todas automaticamente.
+      </div>
+
+      <div id="scanMatchList" style="margin-top:4px"></div>
+    </div>
+
+    <!-- Surebets encontradas -->
+    <div class="surebet-card scan-surebets-card" id="scanSurebetsCard" style="display:none">
+      <div class="surebet-section-label">
+        <i class="bi bi-check-circle-fill" style="color:#16a34a;margin-right:6px"></i>
+        Surebets encontradas
+      </div>
+      <div id="scanSurebetsList"></div>
+    </div>
+
+  </div><!-- /tab-escanear -->
 
 </div>
 {% endblock %}

@@ -1070,6 +1070,23 @@ def surebet_delete_partida(partida_id):
     return jsonify({"ok": True})
 
 
+@bp.route("/surebet/betano/upcoming", methods=["GET"])
+@login_required
+def surebet_betano_upcoming():
+    from app.services import betano_service
+    day = request.args.get("day", "").strip()
+    if not day:
+        return jsonify({"error": "Parametro 'day' obrigatorio"}), 400
+    try:
+        matches = betano_service.fetch_upcoming(day)
+        return jsonify(matches)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 422
+    except Exception as exc:
+        logger.exception("Erro ao buscar partidas Betano: %s", exc)
+        return jsonify({"error": "Erro interno ao buscar partidas."}), 500
+
+
 @bp.route("/surebet/betano/fetch", methods=["POST"])
 @login_required
 def surebet_betano_fetch():

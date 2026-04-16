@@ -13,6 +13,10 @@ _FLARESOLVERR_URL = os.environ.get(
     "FLARESOLVERR_URL", "http://flaresolverr.railway.internal:8080"
 )
 
+_VALID_DAYS = frozenset({
+    "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
+})
+
 _session_lock = threading.Lock()
 _session_state: dict = {"id": None, "warmed": False}
 
@@ -259,3 +263,125 @@ def _safe_price(sel: dict) -> float | None:
         return f if f > 1.01 else None
     except (TypeError, ValueError):
         return None
+
+
+# ─── Upcoming matches ────────────────────────────────────────────────────────
+
+def fetch_upcoming(day: str) -> list[dict]:
+    if day not in _VALID_DAYS:
+        raise ValueError(
+            "Dia invalido. Use: Monday, Tuesday, Wednesday, "
+            "Thursday, Friday, Saturday, Sunday"
+        )
+
+    url = f"{_BETANO_BASE}/upcomingcoupon/?sid=FOOT&day={day}"
+
+    try:
+        solution = _get_with_session(url, referer=f"{_BETANO_BASE}/sport/futebol/")
+    except ValueError:
+        raise
+    except Exception as exc:
+        logger.warning("Flaresolverr erro ao buscar coupon: %s", exc)
+        raise ValueError("Nao foi possivel conectar ao Flaresolverr.")
+
+    response_text = solution.get("response", "")
+    if not response_text:
+        raise ValueError("Flaresolverr retornou resposta vazia.")
+
+    logger.info("Betano coupon preview: %s", response_text[:400])
+
+    if "<title>Betano Splash Screen</title>" in response_text:
+        _reset_session()
+        raise ValueError(
+            "DataDome bloqueou. Tente novamente em alguns segundos."
+        )
+
+    next_data = _extract_next_data(response_text)
+    if next_data:
+        matches = _collect_events_from_next_data(next_data)
+        if matches:
+            return matches
+
+    fallback = _extract_events_from_raw_html(response_text)
+    if fallback:
+        return fallback
+
+    raise ValueError(
+        "Nenhuma partida encontrada para este dia. "
+        "O dia pode nao ter jogos ou a estrutura da pagina mudou."
+    )
+
+
+def _collect_events_from_next_data(data: dict) -> list[dict]:
+    results: list[dict] = []
+    seen: set[str] = set()
+    _walk_for_events(data, results, seen, depth=0)
+    return results
+
+
+def _walk_for_events(obj, results: list, seen: set, depth: int) -> None:
+    if depth > 10:
+        return
+    if isinstance(obj, dict):
+        obj_id = obj.get("id") or obj.get("eventId") or obj.get("eventID")
+        obj_name = obj.get("name") or obj.get("eventName")
+        obj_slug = (
+            obj.get("slug") or obj.get("seoUrl")
+            or obj.get("eventSlug") or obj.get("urlAlias")
+        )
+
+        if obj_id and obj_name and obj_slug:
+            id_str = str(obj_id)
+            if re.match(r"^\d{7,}$", id_str) and id_str not in seen:
+                seen.add(id_str)
+                start_raw = (
+                    obj.get("startTime") or obj.get("startDate")
+                    or obj.get("kickOff") or obj.get("date")
+                )
+                competition: str | None = None
+                comp_obj = (
+                    obj.get("competition") or obj.get("league")
+                    or obj.get("category") or obj.get("tournament")
+                )
+                if isinstance(comp_obj, dict):
+                    competition = comp_obj.get("name") or comp_obj.get("title")
+                elif isinstance(comp_obj, str):
+                    competition = comp_obj
+
+                results.append({
+                    "nome": str(obj_name),
+                    "url": f"{_BETANO_BASE}/odds/{obj_slug}/{id_str}/",
+                    "event_id": id_str,
+                    "hora": str(start_raw) if start_raw else None,
+                    "liga": str(competition) if competition else None,
+                })
+                return
+
+        for val in obj.values():
+            _walk_for_events(val, results, seen, depth + 1)
+    elif isinstance(obj, list):
+        for item in obj:
+            _walk_for_events(item, results, seen, depth + 1)
+
+
+def _extract_events_from_raw_html(html: str) -> list[dict]:
+    results: list[dict] = []
+    seen: set[str] = set()
+    pattern = re.compile(
+        r'"(?:slug|seoUrl|eventSlug)"\s*:\s*"([a-z0-9][a-z0-9-]+)"'
+        r'(?:(?!"markets").){0,500}'
+        r'"id"\s*:\s*(\d{7,})',
+        re.DOTALL,
+    )
+    for m in pattern.finditer(html):
+        slug, event_id = m.group(1), m.group(2)
+        if event_id not in seen and "-" in slug:
+            seen.add(event_id)
+            results.append({
+                "nome": slug.replace("-", " ").title(),
+                "url": f"{_BETANO_BASE}/odds/{slug}/{event_id}/",
+                "event_id": event_id,
+                "hora": None,
+                "liga": None,
+            })
+    return results
