@@ -1105,6 +1105,24 @@ def surebet_betano_debug():
     return jsonify(result)
 
 
+@bp.route("/surebet/betano/parse-clipboard", methods=["POST"])
+@login_required
+def surebet_betano_parse_clipboard():
+    from app.services import betano_service
+    data = request.get_json() or {}
+    raw = (data.get("next_data") or "").strip()
+    if not raw:
+        return jsonify({"error": "Campo next_data obrigatorio"}), 400
+    try:
+        result = betano_service.parse_clipboard_data(raw)
+        return jsonify(result)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 422
+    except Exception as exc:
+        logger.exception("Erro ao processar clipboard Betano: %s", exc)
+        return jsonify({"error": "Erro interno ao processar dados."}), 500
+
+
 @bp.route("/surebet/betano/upcoming", methods=["GET"])
 @login_required
 def surebet_betano_upcoming():

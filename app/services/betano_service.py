@@ -346,6 +346,39 @@ def _safe_price(sel: dict) -> float | None:
         return None
 
 
+# ─── Browser clipboard parsing ───────────────────────────────────────────────
+
+def parse_clipboard_data(raw_json: str) -> dict:
+    """
+    Parses __NEXT_DATA__ JSON pasted from the browser console.
+    Auto-detects whether it came from a match page or the coupon/upcoming page.
+    Returns {"type": "odds", ...} or {"type": "upcoming", "matches": [...]}.
+    """
+    try:
+        data = json.loads(raw_json)
+    except (json.JSONDecodeError, ValueError):
+        raise ValueError(
+            "JSON invalido. Certifique-se de ter rodado "
+            "copy(JSON.stringify(window.__NEXT_DATA__)) no console."
+        )
+
+    if not isinstance(data, dict):
+        raise ValueError("Formato inesperado. Execute o snippet na pagina correta do Betano.")
+
+    odds = _parse_next_data(data)
+    if odds:
+        return {"type": "odds", **odds}
+
+    matches = _collect_events_from_next_data(data)
+    if matches:
+        return {"type": "upcoming", "matches": matches}
+
+    raise ValueError(
+        "Nenhum dado reconhecido. "
+        "Execute o snippet em uma pagina de partida ou na pagina de coupon do Betano."
+    )
+
+
 # ─── Upcoming matches ────────────────────────────────────────────────────────
 
 def _collect_events_from_next_data(data: dict) -> list[dict]:

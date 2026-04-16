@@ -725,6 +725,92 @@
 })();
 
 /* =============================================
+   CLIPBOARD / BROWSER MODE — HELPERS
+============================================= */
+(function () {
+  /* ---- Copiar snippet ---- */
+  window.clipCopySnippet = function (elementId) {
+    var text = document.getElementById(elementId).textContent;
+    navigator.clipboard.writeText(text).then(function () {
+      var btn = document.querySelector('[onclick="clipCopySnippet(\'' + elementId + '\')"]');
+      if (btn) {
+        btn.innerHTML = '<i class="bi bi-check2"></i>';
+        setTimeout(function () { btn.innerHTML = '<i class="bi bi-clipboard"></i>'; }, 1500);
+      }
+    });
+  };
+
+  /* ---- Toggle modo Monitor ---- */
+  var monToggle = document.getElementById('monModeToggle');
+  if (monToggle) {
+    monToggle.addEventListener('click', function (e) {
+      var btn = e.target.closest('.clip-mode-btn');
+      if (!btn) return;
+      monToggle.querySelectorAll('.clip-mode-btn').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      var mode = btn.dataset.mode;
+      document.getElementById('monModeUrl').style.display = mode === 'url' ? '' : 'none';
+      document.getElementById('monModeBrowser').style.display = mode === 'browser' ? '' : 'none';
+    });
+  }
+
+  /* ---- Toggle modo Scan ---- */
+  var scanToggle = document.getElementById('scanModeToggle');
+  if (scanToggle) {
+    scanToggle.addEventListener('click', function (e) {
+      var btn = e.target.closest('.clip-mode-btn');
+      if (!btn) return;
+      scanToggle.querySelectorAll('.clip-mode-btn').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      var mode = btn.dataset.mode;
+      document.getElementById('scanBrowserCard').style.display = mode === 'browser' ? '' : 'none';
+      document.getElementById('scanFlareCard').style.display = mode === 'flare' ? '' : 'none';
+    });
+  }
+
+  /* ---- Processar clipboard no Monitor ---- */
+  window.monProcessarClipboard = function () {
+    var raw = (document.getElementById('monClipboard').value || '').trim();
+    var errEl = document.getElementById('monClipError');
+    errEl.style.display = 'none';
+
+    if (!raw) {
+      errEl.textContent = 'Cole o resultado do console antes de processar.';
+      errEl.style.display = '';
+      return;
+    }
+
+    fetch('/api/surebet/betano/parse-clipboard', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ next_data: raw }),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.error) {
+          errEl.textContent = data.error;
+          errEl.style.display = '';
+          return;
+        }
+        if (data.type === 'odds') {
+          if (data.odd_mandante)    document.getElementById('monOddMandante').value = parseFloat(data.odd_mandante).toFixed(2);
+          if (data.odd_visitante)   document.getElementById('monOddVisitante').value = parseFloat(data.odd_visitante).toFixed(2);
+          if (data.odd_empate_gols) document.getElementById('monOddEmpate').value = parseFloat(data.odd_empate_gols).toFixed(2);
+          document.getElementById('monClipboard').value = '';
+          if (typeof atualizarPreview === 'function') atualizarPreview();
+        } else {
+          errEl.textContent = 'Esta pagina nao e de uma partida individual. Use a pagina de odds de uma partida especifica.';
+          errEl.style.display = '';
+        }
+      })
+      .catch(function () {
+        errEl.textContent = 'Erro de conexao. Tente novamente.';
+        errEl.style.display = '';
+      });
+  };
+})();
+
+/* =============================================
    ESCANEAR SUREBETS
 ============================================= */
 (function () {
@@ -908,6 +994,96 @@
         buscarLabel.textContent = 'Buscar partidas';
         errorEl.textContent = 'Erro de conexão. Tente novamente.';
         errorEl.style.display = '';
+      });
+  };
+
+  /* ---- Processar clipboard no Scan ---- */
+  window.scanProcessarClipboard = function () {
+    var raw = (document.getElementById('scanClipboard').value || '').trim();
+    var errEl = document.getElementById('scanClipError');
+    errEl.style.display = 'none';
+
+    if (!raw) {
+      errEl.textContent = 'Cole o resultado do console antes de processar.';
+      errEl.style.display = '';
+      return;
+    }
+
+    fetch('/api/surebet/betano/parse-clipboard', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ next_data: raw }),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.error) {
+          errEl.textContent = data.error;
+          errEl.style.display = '';
+          return;
+        }
+
+        document.getElementById('scanClipboard').value = '';
+
+        if (data.type === 'upcoming') {
+          // Coupon page — carrega lista de partidas
+          _scanMatches = data.matches.map(function (m) {
+            return Object.assign({}, m, { status: 'waiting', sb: null, error: null });
+          });
+          _scanAbort = false;
+
+          var resultsCard = document.getElementById('scanResultsCard');
+          var scanBtn = document.getElementById('scanBtnScan');
+          var progressBar = document.getElementById('scanProgressBar');
+          var surebetsCard = document.getElementById('scanSurebetsCard');
+
+          resultsCard.style.display = '';
+          progressBar.style.display = 'none';
+          surebetsCard.style.display = 'none';
+          scanBtn.style.display = 'none';
+          document.getElementById('scanListaLabel').textContent =
+            _scanMatches.length + ' partidas encontradas (via browser)';
+          renderMatches();
+
+        } else if (data.type === 'odds') {
+          // Match page — verifica surebet para esta partida
+          var sb = calcSurebet(
+            parseFloat(data.odd_mandante),
+            parseFloat(data.odd_visitante),
+            parseFloat(data.odd_empate_gols)
+          );
+
+          // Tenta encontrar na lista existente, senão adiciona como anônima
+          var found = false;
+          for (var i = 0; i < _scanMatches.length; i++) {
+            if (_scanMatches[i].status === 'waiting' || _scanMatches[i].status === 'error') {
+              _scanMatches[i].status = sb.isSurebet ? 'surebet' : 'no';
+              _scanMatches[i].sb = sb;
+              found = true;
+              break;
+            }
+          }
+          if (!found) {
+            _scanMatches.push({
+              nome: 'Partida verificada',
+              url: '',
+              hora: null,
+              liga: null,
+              status: sb.isSurebet ? 'surebet' : 'no',
+              sb: sb,
+              error: null,
+            });
+          }
+
+          var resultsCard = document.getElementById('scanResultsCard');
+          resultsCard.style.display = '';
+          document.getElementById('scanBtnScan').style.display = 'none';
+          renderMatches();
+          renderSurebets();
+        }
+      })
+      .catch(function () {
+        errEl.textContent = 'Erro de conexao. Tente novamente.';
+        errEl.style.display = '';
       });
   };
 
