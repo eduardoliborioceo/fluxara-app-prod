@@ -21,33 +21,13 @@ _session_lock = threading.Lock()
 _session_state: dict = {"id": None, "warmed": False}
 
 
+# ─── Public API ──────────────────────────────────────────────────────────────
+
 def fetch_odds(betano_url: str) -> dict:
     slug, event_id = _extract_slug_and_id(betano_url)
     page_url = f"{_BETANO_BASE}/odds/{slug}/{event_id}/"
 
-    try:
-        solution = _get_with_session(page_url, referer=_BETANO_BASE + "/")
-    except ValueError as exc:
-        raise
-    except Exception as exc:
-        logger.warning("Flaresolverr erro: %s", exc)
-        raise ValueError(
-            "Nao foi possivel conectar ao Flaresolverr. "
-            "Verifique se o servico esta ativo no Railway."
-        )
-
-    response_text = solution.get("response", "")
-    if not response_text:
-        raise ValueError("Flaresolverr retornou resposta vazia.")
-
-    logger.info("Betano response preview: %s", response_text[:300])
-
-    if "<title>Betano Splash Screen</title>" in response_text:
-        _reset_session()
-        raise ValueError(
-            "DataDome bloqueou a requisicao. "
-            "A sessao foi reiniciada — tente novamente em alguns segundos."
-        )
+    response_text = _fetch_page(page_url, referer=_BETANO_BASE + "/")
 
     next_data = _extract_next_data(response_text)
     if next_data:
@@ -60,6 +40,95 @@ def fetch_odds(betano_url: str) -> dict:
         "O jogo pode nao ter os mercados disponiveis ou a estrutura da pagina mudou."
     )
 
+
+def fetch_upcoming(day: str) -> list[dict]:
+    if day not in _VALID_DAYS:
+        raise ValueError(
+            "Dia invalido. Use: Monday, Tuesday, Wednesday, "
+            "Thursday, Friday, Saturday, Sunday"
+        )
+
+    url = f"{_BETANO_BASE}/upcomingcoupon/?sid=FOOT&day={day}"
+    response_text = _fetch_page(url, referer=f"{_BETANO_BASE}/sport/futebol/")
+
+    next_data = _extract_next_data(response_text)
+    if next_data:
+        matches = _collect_events_from_next_data(next_data)
+        if matches:
+            return matches
+
+    fallback = _extract_events_from_raw_html(response_text)
+    if fallback:
+        return fallback
+
+    raise ValueError(
+        "Nenhuma partida encontrada para este dia. "
+        "O dia pode nao ter jogos ou a estrutura da pagina mudou."
+    )
+
+
+# ─── Core fetch with DataDome fallback ───────────────────────────────────────
+
+def _fetch_page(url: str, referer: str = None) -> str:
+    """
+    Tries two strategies in order:
+      1. Flaresolverr persistent session (no injected cookies)
+      2. Flaresolverr with injected datadome cookie from BETANO_DATADOME env var
+    Returns the response HTML/text or raises ValueError.
+    """
+    # Strategy 1: persistent session
+    try:
+        solution = _get_with_session(url, referer=referer)
+        text = solution.get("response", "")
+        if text and "<title>Betano Splash Screen</title>" not in text:
+            logger.info("Betano response preview (session): %s", text[:300])
+            return text
+        logger.warning("Session bloqueada pelo DataDome, tentando com cookie injetado.")
+        _reset_session()
+    except Exception as exc:
+        logger.warning("Flaresolverr session erro: %s — tentando fallback com cookie.", exc)
+        _reset_session()
+
+    # Strategy 2: injected datadome cookie
+    datadome = os.environ.get("BETANO_DATADOME", "").strip()
+    if not datadome:
+        raise ValueError(
+            "DataDome bloqueou a sessao automatica e nenhum cookie manual foi configurado. "
+            "Adicione BETANO_DATADOME no Railway com o valor atual do cookie datadome "
+            "do seu browser (veja instrucoes em /surebet)."
+        )
+
+    cookies = [{"name": "datadome", "value": datadome, "domain": ".betano.bet.br"}]
+    pocaauth = os.environ.get("BETANO_POCAAUTH", "").strip()
+    if pocaauth:
+        cookies.append({"name": "pocaauth", "value": pocaauth, "domain": ".betano.bet.br"})
+
+    try:
+        solution = _flaresolverr_get(url, referer=referer, cookies=cookies)
+    except Exception as exc:
+        logger.warning("Flaresolverr cookie fallback erro: %s", exc)
+        raise ValueError(
+            "Nao foi possivel conectar ao Flaresolverr. "
+            "Verifique se o servico esta ativo no Railway."
+        )
+
+    text = solution.get("response", "")
+    if not text:
+        raise ValueError("Flaresolverr retornou resposta vazia.")
+
+    logger.info("Betano response preview (cookie): %s", text[:300])
+
+    if "<title>Betano Splash Screen</title>" in text:
+        raise ValueError(
+            "DataDome bloqueou mesmo com cookie manual. "
+            "O cookie BETANO_DATADOME pode ter expirado — "
+            "atualize-o no Railway com um cookie fresco do seu browser."
+        )
+
+    return text
+
+
+# ─── Flaresolverr session management ─────────────────────────────────────────
 
 def _get_with_session(url: str, referer: str = None) -> dict:
     session_id = _ensure_session()
@@ -91,7 +160,7 @@ def _ensure_session() -> str:
         return _session_state["id"]
 
 
-def _reset_session():
+def _reset_session() -> None:
     with _session_lock:
         _session_state["id"] = None
         _session_state["warmed"] = False
@@ -112,7 +181,12 @@ def _create_session() -> str:
     return session_id
 
 
-def _flaresolverr_get(url: str, referer: str = None, session: str = None) -> dict:
+def _flaresolverr_get(
+    url: str,
+    referer: str = None,
+    session: str = None,
+    cookies: list = None,
+) -> dict:
     payload: dict = {
         "cmd": "request.get",
         "url": url,
@@ -122,6 +196,8 @@ def _flaresolverr_get(url: str, referer: str = None, session: str = None) -> dic
         payload["headers"] = {"Referer": referer}
     if session:
         payload["session"] = session
+    if cookies:
+        payload["cookies"] = cookies
 
     resp = requests.post(
         f"{_FLARESOLVERR_URL}/v1",
@@ -145,6 +221,8 @@ def _flaresolverr_get(url: str, referer: str = None, session: str = None) -> dic
     return solution
 
 
+# ─── URL parsing ─────────────────────────────────────────────────────────────
+
 def _extract_slug_and_id(url: str) -> tuple[str, str]:
     m = re.search(r"/odds/([^/?]+)/(\d{7,})(?:/|$|\?)", url)
     if not m:
@@ -153,6 +231,8 @@ def _extract_slug_and_id(url: str) -> tuple[str, str]:
         )
     return m.group(1), m.group(2)
 
+
+# ─── HTML / Next.js data parsing ─────────────────────────────────────────────
 
 def _extract_next_data(html: str) -> dict | None:
     m = re.search(
@@ -266,51 +346,6 @@ def _safe_price(sel: dict) -> float | None:
 
 
 # ─── Upcoming matches ────────────────────────────────────────────────────────
-
-def fetch_upcoming(day: str) -> list[dict]:
-    if day not in _VALID_DAYS:
-        raise ValueError(
-            "Dia invalido. Use: Monday, Tuesday, Wednesday, "
-            "Thursday, Friday, Saturday, Sunday"
-        )
-
-    url = f"{_BETANO_BASE}/upcomingcoupon/?sid=FOOT&day={day}"
-
-    try:
-        solution = _get_with_session(url, referer=f"{_BETANO_BASE}/sport/futebol/")
-    except ValueError:
-        raise
-    except Exception as exc:
-        logger.warning("Flaresolverr erro ao buscar coupon: %s", exc)
-        raise ValueError("Nao foi possivel conectar ao Flaresolverr.")
-
-    response_text = solution.get("response", "")
-    if not response_text:
-        raise ValueError("Flaresolverr retornou resposta vazia.")
-
-    logger.info("Betano coupon preview: %s", response_text[:400])
-
-    if "<title>Betano Splash Screen</title>" in response_text:
-        _reset_session()
-        raise ValueError(
-            "DataDome bloqueou. Tente novamente em alguns segundos."
-        )
-
-    next_data = _extract_next_data(response_text)
-    if next_data:
-        matches = _collect_events_from_next_data(next_data)
-        if matches:
-            return matches
-
-    fallback = _extract_events_from_raw_html(response_text)
-    if fallback:
-        return fallback
-
-    raise ValueError(
-        "Nenhuma partida encontrada para este dia. "
-        "O dia pode nao ter jogos ou a estrutura da pagina mudou."
-    )
-
 
 def _collect_events_from_next_data(data: dict) -> list[dict]:
     results: list[dict] = []
