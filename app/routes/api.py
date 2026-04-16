@@ -1070,6 +1070,41 @@ def surebet_delete_partida(partida_id):
     return jsonify({"ok": True})
 
 
+@bp.route("/surebet/betano/debug", methods=["GET"])
+@login_required
+def surebet_betano_debug():
+    import os
+    import requests as _req
+
+    if not current_user.is_admin:
+        return jsonify({"error": "Acesso negado"}), 403
+
+    flaresolverr_url = os.environ.get("FLARESOLVERR_URL", "http://flaresolverr.railway.internal:8080")
+    datadome_set = bool(os.environ.get("BETANO_DATADOME", "").strip())
+    pocaauth_set = bool(os.environ.get("BETANO_POCAAUTH", "").strip())
+
+    result = {
+        "flaresolverr_url": flaresolverr_url,
+        "betano_datadome_set": datadome_set,
+        "betano_pocaauth_set": pocaauth_set,
+        "flaresolverr_ping": None,
+        "flaresolverr_error": None,
+    }
+
+    try:
+        resp = _req.post(
+            f"{flaresolverr_url}/v1",
+            json={"cmd": "sessions.list"},
+            timeout=10,
+        )
+        result["flaresolverr_ping"] = resp.status_code
+        result["flaresolverr_response"] = resp.json()
+    except Exception as exc:
+        result["flaresolverr_error"] = str(exc)
+
+    return jsonify(result)
+
+
 @bp.route("/surebet/betano/upcoming", methods=["GET"])
 @login_required
 def surebet_betano_upcoming():
