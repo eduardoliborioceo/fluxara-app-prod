@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import re
+import threading
 
 import requests
 
@@ -12,22 +13,18 @@ _FLARESOLVERR_URL = os.environ.get(
     "FLARESOLVERR_URL", "http://flaresolverr.railway.internal:8080"
 )
 
+_session_lock = threading.Lock()
+_session_state: dict = {"id": None, "warmed": False}
+
 
 def fetch_odds(betano_url: str) -> dict:
     slug, event_id = _extract_slug_and_id(betano_url)
-    api_url = f"{_BETANO_BASE}/api/odds/{slug}/{event_id}/?bt=3&req=s,stnf,c,mb"
-
-    cookies = _build_cookies()
-    if not cookies:
-        raise ValueError(
-            "Cookies da Betano nao configurados. "
-            "Adicione BETANO_DATADOME e BETANO_POCAAUTH no Railway."
-        )
+    page_url = f"{_BETANO_BASE}/odds/{slug}/{event_id}/"
 
     try:
-        solution = _flaresolverr_get(api_url, referer=betano_url, cookies=cookies)
+        solution = _get_with_session(page_url, referer=_BETANO_BASE + "/")
     except ValueError as exc:
-        raise ValueError(str(exc))
+        raise
     except Exception as exc:
         logger.warning("Flaresolverr erro: %s", exc)
         raise ValueError(
@@ -41,60 +38,91 @@ def fetch_odds(betano_url: str) -> dict:
 
     logger.info("Betano response preview: %s", response_text[:300])
 
-    if response_text.strip().startswith("<"):
+    if "<title>Betano Splash Screen</title>" in response_text:
+        _reset_session()
         raise ValueError(
-            "Betano retornou HTML em vez de JSON. "
-            "Os cookies (BETANO_DATADOME / BETANO_POCAAUTH) podem ter expirado — atualize-os no Railway."
+            "DataDome bloqueou a requisicao. "
+            "A sessao foi reiniciada — tente novamente em alguns segundos."
         )
 
-    try:
-        data = json.loads(response_text)
-    except json.JSONDecodeError:
-        raise ValueError(
-            f"Betano nao retornou JSON valido. "
-            f"Inicio da resposta: {response_text[:200]}"
-        )
-
-    odds = _parse_betano_response(data)
-    if odds:
-        return odds
+    next_data = _extract_next_data(response_text)
+    if next_data:
+        odds = _parse_next_data(next_data)
+        if odds:
+            return odds
 
     raise ValueError(
-        "Resposta recebida mas sem mercados necessarios. "
-        "O jogo pode nao ter 1x2 e Resultado Correto disponiveis."
+        "Resposta recebida mas sem mercados necessarios (1x2 + Resultado Correto). "
+        "O jogo pode nao ter os mercados disponiveis ou a estrutura da pagina mudou."
     )
 
 
-def _build_cookies() -> list[dict]:
-    domain = ".betano.bet.br"
-    cookies = []
-
-    datadome = os.environ.get("BETANO_DATADOME", "").strip()
-    pocaauth = os.environ.get("BETANO_POCAAUTH", "").strip()
-
-    if datadome:
-        cookies.append({"name": "datadome", "value": datadome, "domain": domain})
-    if pocaauth:
-        cookies.append({"name": "pocaauth", "value": pocaauth, "domain": domain})
-
-    return cookies
+def _get_with_session(url: str, referer: str = None) -> dict:
+    session_id = _ensure_session()
+    try:
+        return _flaresolverr_get(url, referer=referer, session=session_id)
+    except ValueError as exc:
+        if "session" in str(exc).lower() or "invalid" in str(exc).lower():
+            _reset_session()
+            session_id = _ensure_session()
+            return _flaresolverr_get(url, referer=referer, session=session_id)
+        raise
 
 
-def _flaresolverr_get(url: str, referer: str = None, cookies: list = None) -> dict:
+def _ensure_session() -> str:
+    with _session_lock:
+        if not _session_state["id"]:
+            sid = _create_session()
+            _session_state["id"] = sid
+            _session_state["warmed"] = False
+
+        if not _session_state["warmed"]:
+            try:
+                _flaresolverr_get(_BETANO_BASE + "/", session=_session_state["id"])
+                _session_state["warmed"] = True
+                logger.info("Flaresolverr session aquecida na homepage Betano")
+            except Exception as exc:
+                logger.warning("Warmup falhou (continuando): %s", exc)
+
+        return _session_state["id"]
+
+
+def _reset_session():
+    with _session_lock:
+        _session_state["id"] = None
+        _session_state["warmed"] = False
+
+
+def _create_session() -> str:
+    resp = requests.post(
+        f"{_FLARESOLVERR_URL}/v1",
+        json={"cmd": "sessions.create"},
+        timeout=30,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+    session_id = data.get("session")
+    if not session_id:
+        raise ValueError("Flaresolverr nao retornou session ID.")
+    logger.info("Flaresolverr nova sessao: %s", session_id)
+    return session_id
+
+
+def _flaresolverr_get(url: str, referer: str = None, session: str = None) -> dict:
     payload: dict = {
         "cmd": "request.get",
         "url": url,
-        "maxTimeout": 45000,
+        "maxTimeout": 60000,
     }
     if referer:
         payload["headers"] = {"Referer": referer}
-    if cookies:
-        payload["cookies"] = cookies
+    if session:
+        payload["session"] = session
 
     resp = requests.post(
         f"{_FLARESOLVERR_URL}/v1",
         json=payload,
-        timeout=60,
+        timeout=75,
     )
     resp.raise_for_status()
     data = resp.json()
@@ -105,7 +133,11 @@ def _flaresolverr_get(url: str, referer: str = None, cookies: list = None) -> di
         )
 
     solution = data["solution"]
-    logger.info("Flaresolverr url=%s status=%s", solution.get("url"), solution.get("status"))
+    logger.info(
+        "Flaresolverr url=%s status=%s",
+        solution.get("url"),
+        solution.get("status"),
+    )
     return solution
 
 
@@ -118,26 +150,58 @@ def _extract_slug_and_id(url: str) -> tuple[str, str]:
     return m.group(1), m.group(2)
 
 
-def _parse_betano_response(data: dict) -> dict | None:
-    event = _get_event(data)
-    if not event:
+def _extract_next_data(html: str) -> dict | None:
+    m = re.search(
+        r'<script[^>]+id=["\']__NEXT_DATA__["\'][^>]*>(.*?)</script>',
+        html,
+        re.DOTALL,
+    )
+    if not m:
         return None
-    markets = event.get("markets")
-    if not isinstance(markets, list) or not markets:
+    try:
+        return json.loads(m.group(1).strip())
+    except json.JSONDecodeError:
         return None
-    return _extract_odds(markets)
 
 
-def _get_event(data: dict) -> dict | None:
-    if not isinstance(data, dict):
+def _parse_next_data(data: dict) -> dict | None:
+    props = data.get("props", {})
+    page_props = props.get("pageProps", {})
+
+    for key in ("event", "eventData", "data", "initialData", "sportEvent"):
+        candidate = page_props.get(key)
+        if isinstance(candidate, dict):
+            if "markets" in candidate:
+                result = _extract_odds(candidate["markets"])
+                if result:
+                    return result
+            nested = candidate.get("event")
+            if isinstance(nested, dict) and "markets" in nested:
+                result = _extract_odds(nested["markets"])
+                if result:
+                    return result
+
+    return _deep_search_markets(data)
+
+
+def _deep_search_markets(obj, depth: int = 0) -> dict | None:
+    if depth > 7:
         return None
-    inner = data.get("data")
-    if isinstance(inner, dict):
-        event = inner.get("event")
-        if isinstance(event, dict) and "markets" in event:
-            return event
-    if "markets" in data and isinstance(data.get("markets"), list):
-        return data
+    if isinstance(obj, dict):
+        markets = obj.get("markets")
+        if isinstance(markets, list) and markets:
+            result = _extract_odds(markets)
+            if result:
+                return result
+        for val in obj.values():
+            result = _deep_search_markets(val, depth + 1)
+            if result:
+                return result
+    elif isinstance(obj, list):
+        for item in obj:
+            result = _deep_search_markets(item, depth + 1)
+            if result:
+                return result
     return None
 
 
@@ -168,7 +232,12 @@ def _extract_odds(markets: list) -> dict | None:
                 price = _safe_price(sel)
                 if price is None:
                     continue
-                if hs is not None and as_ is not None and int(hs) == int(as_) and int(hs) >= 1:
+                if (
+                    hs is not None
+                    and as_ is not None
+                    and int(hs) == int(as_)
+                    and int(hs) >= 1
+                ):
                     if odd_empate_gols is None or price < odd_empate_gols:
                         odd_empate_gols = price
 
