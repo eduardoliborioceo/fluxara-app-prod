@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 _BETANO_BASE = "https://www.betano.bet.br"
 _FLARESOLVERR_URL = os.environ.get(
     "FLARESOLVERR_URL", "http://flaresolverr.railway.internal:8080"
-)
+).strip()
 
 _VALID_DAYS = frozenset({
     "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
@@ -105,11 +105,12 @@ def _fetch_page(url: str, referer: str = None) -> str:
 
     try:
         solution = _flaresolverr_get(url, referer=referer, cookies=cookies)
+    except ValueError:
+        raise
     except Exception as exc:
         logger.warning("Flaresolverr cookie fallback erro: %s", exc)
         raise ValueError(
-            "Nao foi possivel conectar ao Flaresolverr. "
-            "Verifique se o servico esta ativo no Railway."
+            f"Nao foi possivel conectar ao Flaresolverr: {exc}"
         )
 
     text = solution.get("response", "")
