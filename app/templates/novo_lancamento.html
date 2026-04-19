@@ -160,6 +160,17 @@
       </select>
     </div>
 
+    <div class="lancamento-section">
+      <div class="lancamento-field-label">Tags</div>
+      <div class="lanc-tags-selected" id="lancTagsSelected"></div>
+      <div class="lanc-tags-existing" id="lancTagsExisting"></div>
+      <div class="lanc-tags-new">
+        <input type="text" id="lancTagInput" class="form-control lancamento-text"
+               placeholder="Nova tag… (Enter para criar)" maxlength="30" autocomplete="off">
+        <div class="lanc-tag-colors" id="lancTagColors"></div>
+      </div>
+    </div>
+
     <div class="lancamento-actions">
       <a href="{{ url_for('pages.resumo') }}" class="btn-cancelar" title="Cancelar">
         <i class="bi bi-x-lg"></i>

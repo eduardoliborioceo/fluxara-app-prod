@@ -618,13 +618,16 @@
 
   async function saveEditTags(lancamentoId) {
     try {
-      await fetch('/api/lancamentos/' + lancamentoId + '/tags', {
+      var r = await fetch('/api/lancamentos/' + lancamentoId + '/tags', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tag_ids: editCurrentTags.map(function (t) { return t.id; }) }),
       });
-      lancamentoTagsMapa[lancamentoId] = editCurrentTags.slice();
-      renderTagsBar();
+      if (r.ok) {
+        lancamentoTagsMapa[lancamentoId] = editCurrentTags.slice();
+        applyFilters();
+        renderTagsBar();
+      }
     } catch (e) {}
   }
 

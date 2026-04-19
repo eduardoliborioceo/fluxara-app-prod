@@ -74,10 +74,10 @@ def set_lancamento_tags(lancamento_id: int, tag_ids: list):
                 "DELETE FROM lancamento_tags WHERE lancamento_id = %s",
                 (lancamento_id,),
             )
-            if tag_ids:
-                cur.executemany(
+            for tid in tag_ids:
+                cur.execute(
                     "INSERT INTO lancamento_tags (lancamento_id, tag_id) VALUES (%s, %s) ON CONFLICT DO NOTHING",
-                    [(lancamento_id, tid) for tid in tag_ids],
+                    (lancamento_id, tid),
                 )
             conn.commit()
 
