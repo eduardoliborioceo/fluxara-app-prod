@@ -865,8 +865,15 @@
         document.getElementById('editData').value = tx.data_vencimento ? String(tx.data_vencimento).substring(0, 10) : '';
         setEditStatus(!!tx.efetivado);
         pendingGrupoId = tx.grupo_recorrencia_id || null;
+        var saveScopeEl = document.getElementById('editSaveScope');
         if (pendingGrupoId) {
           document.getElementById('editDeleteScope').style.display = '';
+          if (saveScopeEl) {
+            saveScopeEl.style.display = '';
+            saveScopeEl.querySelectorAll('input[name="saveEscopo"]').forEach(function (r) { r.checked = r.value === 'este'; });
+          }
+        } else {
+          if (saveScopeEl) saveScopeEl.style.display = 'none';
         }
         if (!isTransf) {
           populateCategorias(tx.categoria_id || null);
@@ -901,6 +908,11 @@
     var subCatId = document.getElementById('editSubcategoria') && document.getElementById('editFieldSubcategoria').style.display !== 'none'
       ? (document.getElementById('editSubcategoria').value || null)
       : null;
+    var saveEscopo = 'este';
+    if (pendingGrupoId) {
+      var checkedSave = document.querySelector('input[name="saveEscopo"]:checked');
+      if (checkedSave) saveEscopo = checkedSave.value;
+    }
     var payload = {
       descricao: document.getElementById('editDescricao').value.trim(),
       valor: valor,
@@ -908,7 +920,7 @@
       efetivado: editEfetivado,
       categoria_id: catId,
       subcategoria_id: subCatId,
-      escopo: 'este',
+      escopo: saveEscopo,
     };
     var btn = this;
     btn.disabled = true;
@@ -918,7 +930,22 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      if (r.ok) { closeEditSheet(); loadExtrato(); loadContaInfo(); }
+      if (r.ok) {
+        if (pendingGrupoId && saveEscopo !== 'este') {
+          await fetch('/api/lancamentos/' + id + '/tags', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              tag_ids: editCurrentTags.map(function (t) { return t.id; }),
+              escopo: saveEscopo,
+              grupo_id: pendingGrupoId,
+            }),
+          }).catch(function () {});
+        }
+        closeEditSheet();
+        loadExtrato();
+        loadContaInfo();
+      }
     } catch (e) {}
     finally { btn.disabled = false; }
   });
