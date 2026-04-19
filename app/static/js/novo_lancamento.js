@@ -11,6 +11,13 @@
   var calculoTipo = 'parcela';
   var parcelaConfirmada = false;
 
+  function showSaveToast() {
+    var toast = document.getElementById('lancSaveToast');
+    if (!toast) return;
+    toast.classList.add('show');
+    setTimeout(function () { toast.classList.remove('show'); }, 2000);
+  }
+
   var allUserTags = [];
   var selectedTags = [];
   var selectedTagColor = '#6366f1';
@@ -623,6 +630,7 @@
             body: JSON.stringify({ tag_ids: selectedTags.map(function (t) { return t.id; }) }),
           }).catch(function () {});
         }
+        showSaveToast();
         resetForm();
       }
     } catch (e) {}
