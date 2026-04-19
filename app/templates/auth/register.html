@@ -61,20 +61,32 @@
 
         <h6 class="fw-bold mt-3 mb-2">Senha</h6>
 
-        <input type="password"
-               id="regPassword"
-               name="password"
-               class="form-control mb-2"
-               placeholder="Senha"
-               required>
+        <div class="input-group auth-input mb-2">
+          <input type="password"
+                 id="regPassword"
+                 name="password"
+                 class="form-control"
+                 placeholder="Senha"
+                 required>
+          <button type="button" class="input-group-text auth-eye-btn" id="regTogglePwd" tabindex="-1" title="Mostrar/ocultar senha">
+            <i class="bi bi-eye" id="regTogglePwdIcon"></i>
+          </button>
+        </div>
 
         <div id="regPwdPolicy" class="pwd-policy-box mb-2"></div>
 
-        <input type="password"
-               name="password_confirm"
-               class="form-control mb-3"
-               placeholder="Confirmar senha"
-               required>
+        <div class="input-group auth-input mb-1">
+          <input type="password"
+                 id="regPasswordConfirm"
+                 name="password_confirm"
+                 class="form-control"
+                 placeholder="Confirmar senha"
+                 required>
+          <button type="button" class="input-group-text auth-eye-btn" id="regToggleConfirm" tabindex="-1" title="Mostrar/ocultar senha">
+            <i class="bi bi-eye" id="regToggleConfirmIcon"></i>
+          </button>
+        </div>
+        <div id="regConfirmFeedback" class="mb-3" style="font-size:.78rem;min-height:18px;padding-left:2px;"></div>
 
         <button class="btn btn-primary w-100 mb-2">
           Solicitar cadastro
@@ -95,11 +107,44 @@
 <script src="{{ url_for('static', filename='js/register.js') }}?v={{ static_v }}"></script>
 <script src="{{ url_for('static', filename='js/password-policy.js') }}?v={{ static_v }}"></script>
 <script>
+(function () {
   PasswordPolicy.init(
     document.getElementById('regPassword'),
     document.getElementById('regPwdPolicy'),
     ''
   );
+
+  function wireEye(btnId, iconId, inputId) {
+    var btn = document.getElementById(btnId);
+    var icon = document.getElementById(iconId);
+    var input = document.getElementById(inputId);
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      var visible = input.type === 'text';
+      input.type = visible ? 'password' : 'text';
+      icon.className = visible ? 'bi bi-eye' : 'bi bi-eye-slash';
+    });
+  }
+
+  wireEye('regTogglePwd', 'regTogglePwdIcon', 'regPassword');
+  wireEye('regToggleConfirm', 'regToggleConfirmIcon', 'regPasswordConfirm');
+
+  var pwdInput = document.getElementById('regPassword');
+  var confirmInput = document.getElementById('regPasswordConfirm');
+  var feedback = document.getElementById('regConfirmFeedback');
+
+  function checkMatch() {
+    if (!confirmInput.value) { feedback.textContent = ''; return; }
+    if (pwdInput.value === confirmInput.value) {
+      feedback.innerHTML = '<span style="color:#198754"><i class="bi bi-check-circle-fill"></i> Senhas conferem</span>';
+    } else {
+      feedback.innerHTML = '<span style="color:#dc3545"><i class="bi bi-x-circle-fill"></i> Senhas não conferem</span>';
+    }
+  }
+
+  confirmInput.addEventListener('input', checkMatch);
+  pwdInput.addEventListener('input', checkMatch);
+})();
 </script>
 
 {% endblock %}
