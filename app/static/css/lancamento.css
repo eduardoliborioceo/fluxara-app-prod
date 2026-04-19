@@ -615,3 +615,88 @@
 [data-theme="escuro"] .sug-item { border-bottom-color: rgba(255,255,255,.06); }
 [data-theme="escuro"] .sug-item:hover,
 [data-theme="escuro"] .sug-item:focus { background: rgba(13,110,253,.12); }
+
+/* ===== TAGS NO FORMULÁRIO ===== */
+.lanc-tags-selected {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 24px;
+  margin-bottom: 8px;
+}
+
+.lanc-tag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: .78rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  transition: opacity .15s;
+}
+
+.lanc-tag-pill:hover { opacity: .8; }
+
+.lanc-tag-pill--remove::after {
+  content: '×';
+  font-size: .95rem;
+  line-height: 1;
+  margin-left: 2px;
+}
+
+.lanc-tags-existing {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 8px;
+  min-height: 0;
+}
+
+.lanc-tags-new {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lanc-tag-colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.lanc-tag-color-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2.5px solid transparent;
+  cursor: pointer;
+  transition: transform .12s, border-color .12s;
+  flex-shrink: 0;
+  padding: 0;
+  background-clip: padding-box;
+}
+
+.lanc-tag-color-dot:hover { transform: scale(1.15); }
+
+.lanc-tag-color-dot.selected {
+  border-color: #1e293b;
+  transform: scale(1.1);
+}
+
+.lanc-tags-existing-label {
+  font-size: .7rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  width: 100%;
+  margin-bottom: 2px;
+}
+
+[data-theme="escuro"] .lanc-tag-color-dot.selected {
+  border-color: #e2e8f0;
+}
