@@ -82,6 +82,32 @@ def set_lancamento_tags(lancamento_id: int, tag_ids: list):
             conn.commit()
 
 
+def set_tags_for_group(grupo_id: str, user_id: int, tag_ids: list, escopo: str, data_ref) -> None:
+    with get_db() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            if escopo == 'futuros' and data_ref:
+                cur.execute(
+                    """SELECT id FROM lancamentos
+                       WHERE grupo_recorrencia_id = %s AND user_id = %s AND ativo = TRUE
+                         AND (data_vencimento >= %s OR data_vencimento IS NULL)""",
+                    (grupo_id, user_id, data_ref),
+                )
+            else:
+                cur.execute(
+                    "SELECT id FROM lancamentos WHERE grupo_recorrencia_id = %s AND user_id = %s AND ativo = TRUE",
+                    (grupo_id, user_id),
+                )
+            ids = [row['id'] for row in cur.fetchall()]
+            for lid in ids:
+                cur.execute("DELETE FROM lancamento_tags WHERE lancamento_id = %s", (lid,))
+                for tid in tag_ids:
+                    cur.execute(
+                        "INSERT INTO lancamento_tags (lancamento_id, tag_id) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+                        (lid, tid),
+                    )
+            conn.commit()
+
+
 def get_lancamentos_by_tag(tag_id: int, user_id: int) -> list:
     with get_db() as conn:
         with conn.cursor(row_factory=dict_row) as cur:

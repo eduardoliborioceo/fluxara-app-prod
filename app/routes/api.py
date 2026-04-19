@@ -1231,6 +1231,11 @@ def api_set_lancamento_tags(lancamento_id):
     try:
         tag_ids = [int(i) for i in (data.get("tag_ids") or [])]
         tags_service.set_lancamento_tags(lancamento_id, current_user.id, tag_ids)
+        escopo = data.get("escopo", "este")
+        grupo_id = data.get("grupo_id")
+        if escopo in ("futuros", "todos") and grupo_id:
+            data_ref = row.get("data_vencimento")
+            tags_service.set_group_lancamento_tags(grupo_id, current_user.id, tag_ids, escopo, data_ref)
         return jsonify({"ok": True})
     except Exception as e:
         logger.error("set_lancamento_tags error lancamento=%s: %s", lancamento_id, e)

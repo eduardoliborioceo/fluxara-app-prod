@@ -38,3 +38,11 @@ def set_lancamento_tags(lancamento_id: int, user_id: int, tag_ids: list) -> None
     if not isinstance(tag_ids, list):
         raise ValueError("tag_ids deve ser uma lista")
     tags_repository.set_lancamento_tags(lancamento_id, tag_ids)
+
+
+def set_group_lancamento_tags(grupo_id: str, user_id: int, tag_ids: list, escopo: str, data_ref) -> None:
+    if not isinstance(tag_ids, list):
+        raise ValueError("tag_ids deve ser uma lista")
+    if escopo not in ('futuros', 'todos'):
+        return
+    tags_repository.set_tags_for_group(grupo_id, user_id, tag_ids, escopo, data_ref)
