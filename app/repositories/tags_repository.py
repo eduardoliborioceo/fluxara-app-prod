@@ -6,7 +6,7 @@ def get_tags_by_user(user_id: int) -> list:
     with get_db() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
-                "SELECT id, nome, cor FROM tags WHERE usuario_id = %s ORDER BY nome",
+                "SELECT id, nome, cor FROM tags WHERE user_id = %s ORDER BY nome",
                 (user_id,),
             )
             return cur.fetchall()
@@ -16,7 +16,7 @@ def get_tag(tag_id: int, user_id: int):
     with get_db() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
-                "SELECT id, nome, cor FROM tags WHERE id = %s AND usuario_id = %s",
+                "SELECT id, nome, cor FROM tags WHERE id = %s AND user_id = %s",
                 (tag_id, user_id),
             )
             return cur.fetchone()
@@ -27,9 +27,9 @@ def create_tag(user_id: int, nome: str, cor: str):
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
                 """
-                INSERT INTO tags (usuario_id, nome, cor)
+                INSERT INTO tags (user_id, nome, cor)
                 VALUES (%s, %s, %s)
-                ON CONFLICT (usuario_id, nome) DO NOTHING
+                ON CONFLICT (user_id, nome) DO NOTHING
                 RETURNING id, nome, cor
                 """,
                 (user_id, nome.strip(), cor),
@@ -43,7 +43,7 @@ def delete_tag(tag_id: int, user_id: int) -> bool:
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute(
-                "DELETE FROM tags WHERE id = %s AND usuario_id = %s",
+                "DELETE FROM tags WHERE id = %s AND user_id = %s",
                 (tag_id, user_id),
             )
             affected = cur.rowcount
