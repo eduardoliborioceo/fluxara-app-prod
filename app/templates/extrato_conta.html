@@ -60,6 +60,8 @@
     </div>
   </div>
 
+  <div id="extratoTagsBar" class="extrato-tags-bar" style="display:none"></div>
+
   <div class="extrato-card" id="extratoBody">
     <div class="text-center py-4 text-muted small">
       <i class="bi bi-inbox d-block mb-1" style="font-size:1.8rem;opacity:.3"></i>
@@ -116,6 +118,15 @@
           </button>
         </div>
         <input type="hidden" id="editEfetivado" value="true">
+      </div>
+
+      <div class="edit-field" id="editFieldTags">
+        <label class="edit-label">Tags</label>
+        <div class="edit-tags-wrap" id="editTagsWrap"></div>
+        <div class="edit-tags-add" id="editTagsAdd">
+          <input type="text" id="editTagInput" class="edit-tags-input" placeholder="Nova tag..." maxlength="30">
+          <div class="edit-tags-colors" id="editTagColors"></div>
+        </div>
       </div>
 
       <div class="edit-field" id="editFieldCategoria">

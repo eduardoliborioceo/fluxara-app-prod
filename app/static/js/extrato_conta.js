@@ -87,10 +87,28 @@
   var selectMode = false;
   var selectedIds = new Set();
 
+  var allUserTags = [];
+  var lancamentoTagsMapa = {};
+  var activeTagFilter = null;
+  var editCurrentTags = [];
+  var editSelectedColor = '#6366f1';
+
+  var TAG_COLORS = [
+    '#6366f1', '#0d6efd', '#198754', '#dc3545', '#fd7e14',
+    '#f59e0b', '#0891b2', '#7c3aed', '#db2777', '#64748b',
+  ];
+
   function esc(s) {
     return String(s || '')
       .replace(/&/g,'&amp;').replace(/</g,'&lt;')
       .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function hexToAlpha(hex, alpha) {
+    var r = parseInt(hex.slice(1,3), 16);
+    var g = parseInt(hex.slice(3,5), 16);
+    var b = parseInt(hex.slice(5,7), 16);
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
   }
 
   function formatMoney(v) {
@@ -157,6 +175,53 @@
     } catch (e) {}
   }
 
+  async function loadUserTags() {
+    try {
+      var r = await fetch('/api/tags');
+      var data = await r.json();
+      allUserTags = Array.isArray(data) ? data : [];
+    } catch (e) { allUserTags = []; }
+    renderTagsBar();
+  }
+
+  function renderTagsBar() {
+    var bar = document.getElementById('extratoTagsBar');
+    if (!allUserTags.length) { bar.style.display = 'none'; return; }
+    bar.style.display = 'flex';
+    bar.innerHTML = allUserTags.map(function (t) {
+      var isActive = activeTagFilter === t.id;
+      var bg = isActive ? t.cor : hexToAlpha(t.cor, 0.1);
+      var color = isActive ? '#fff' : t.cor;
+      return '<button class="extrato-tag-filter-pill' + (isActive ? ' active' : '') + '" data-tag-id="' + t.id + '"'
+        + ' style="background:' + bg + ';color:' + color + ';border-color:' + t.cor + '">'
+        + '<i class="bi bi-tag-fill" style="font-size:.7rem"></i>' + esc(t.nome)
+        + '</button>';
+    }).join('');
+
+    bar.querySelectorAll('.extrato-tag-filter-pill').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = parseInt(this.dataset.tagId);
+        activeTagFilter = (activeTagFilter === id) ? null : id;
+        renderTagsBar();
+        applyFilters();
+      });
+    });
+  }
+
+  async function loadAllLancamentoTags(transactions) {
+    var ids = transactions.filter(function (tx) { return !tx.is_fatura_aberta && typeof tx.id === 'number'; }).map(function (tx) { return tx.id; });
+    if (!ids.length) return;
+    try {
+      var r = await fetch('/api/lancamentos/tags/batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: ids }),
+      });
+      var data = r.ok ? await r.json() : {};
+      ids.forEach(function (id) { lancamentoTagsMapa[id] = data[id] || []; });
+    } catch (e) {}
+  }
+
   var tipoMap = {
     receita:               { icon: 'bi-arrow-down-circle',  cls: 'extrato-tx-icon--receita',        valCls: 'extrato-tx-valor--receita',        prefix: '+', label: 'Receita' },
     despesa:               { icon: 'bi-arrow-up-circle',    cls: 'extrato-tx-icon--despesa',         valCls: 'extrato-tx-valor--despesa',         prefix: '−', label: 'Despesa' },
@@ -201,12 +266,24 @@
         + '<i class="bi ' + (isSelected ? 'bi-check-circle-fill' : 'bi-circle') + '"></i></div>'
       : '';
 
+    var txTags = lancamentoTagsMapa[tx.id] || [];
+    var tagsHtml = '';
+    if (txTags.length) {
+      tagsHtml = '<div class="extrato-tx-tags">'
+        + txTags.map(function (t) {
+            return '<span class="extrato-tx-tag" style="background:' + hexToAlpha(t.cor, 0.13) + ';color:' + t.cor + '">'
+              + '<i class="bi bi-tag-fill" style="font-size:.55rem"></i>' + esc(t.nome) + '</span>';
+          }).join('')
+        + '</div>';
+    }
+
     return '<div class="extrato-tx-item' + selectedCls + '" data-id="' + tx.id + '" data-tipo="' + esc(tx.tipo) + '" data-valor="' + parseFloat(tx.valor || 0) + '" data-prefix="' + m.prefix + '">'
       + checkHtml
       + '<div class="extrato-tx-icon ' + m.cls + '"><i class="bi bi-' + catIcon + '"></i></div>'
       + '<div class="extrato-tx-info">'
       +   '<div class="extrato-tx-desc">' + esc(tx.descricao || 'Sem descrição') + badges + '</div>'
       +   '<div class="extrato-tx-meta">' + meta + '</div>'
+      +   tagsHtml
       + '</div>'
       + '<div class="extrato-tx-valor ' + m.valCls + '">' + m.prefix + ' ' + formatMoney(tx.valor) + '</div>'
       + '</div>';
@@ -232,6 +309,10 @@
       if (filterDataAte) {
         var d = parseDate(tx.data_vencimento);
         if (!d || d > new Date(filterDataAte + 'T23:59:59')) return false;
+      }
+      if (activeTagFilter !== null) {
+        var txTags = lancamentoTagsMapa[tx.id] || [];
+        if (!txTags.some(function (t) { return t.id === activeTagFilter; })) return false;
       }
       return true;
     });
@@ -351,6 +432,7 @@
           + 'Nenhuma transação neste mês</div>';
         return;
       }
+      await loadAllLancamentoTags(allTransactions);
       applyFilters();
     } catch (e) {
       body.innerHTML = '<div class="text-center py-4 text-muted small">Erro ao carregar transações.</div>';
@@ -462,6 +544,132 @@
 
   var backdrop = document.getElementById('editBackdrop');
 
+  function renderEditTags(lancamentoId) {
+    var wrap = document.getElementById('editTagsWrap');
+    var addSection = document.getElementById('editTagsAdd');
+    if (!wrap) return;
+
+    wrap.innerHTML = editCurrentTags.length
+      ? editCurrentTags.map(function (t) {
+          return '<button type="button" class="edit-tag-pill edit-tag-pill--remove" data-tag-id="' + t.id + '"'
+            + ' style="background:' + hexToAlpha(t.cor, 0.14) + ';color:' + t.cor + '">'
+            + esc(t.nome) + '</button>';
+        }).join('')
+      : '<span style="font-size:.78rem;color:#94a3b8">Nenhuma tag</span>';
+
+    wrap.querySelectorAll('.edit-tag-pill--remove').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = parseInt(this.dataset.tagId);
+        editCurrentTags = editCurrentTags.filter(function (t) { return t.id !== id; });
+        renderEditTags(lancamentoId);
+        saveEditTags(lancamentoId);
+      });
+    });
+
+    var existingInAdd = addSection.querySelector('.edit-tag-existing-list');
+    var labelEl = addSection.querySelector('.edit-tag-existing-label');
+    if (existingInAdd) existingInAdd.remove();
+    if (labelEl) labelEl.remove();
+
+    var available = allUserTags.filter(function (t) {
+      return !editCurrentTags.some(function (ct) { return ct.id === t.id; });
+    });
+
+    if (available.length) {
+      var lbl = document.createElement('div');
+      lbl.className = 'edit-tag-existing-label';
+      lbl.textContent = 'Adicionar tag existente';
+      var list = document.createElement('div');
+      list.className = 'edit-tag-existing-list';
+      list.innerHTML = available.map(function (t) {
+        return '<button type="button" class="edit-tag-pill" data-tag-id="' + t.id + '" data-tag-nome="' + esc(t.nome) + '" data-tag-cor="' + esc(t.cor) + '"'
+          + ' style="background:' + hexToAlpha(t.cor, 0.14) + ';color:' + t.cor + '">'
+          + esc(t.nome) + '</button>';
+      }).join('');
+      list.querySelectorAll('.edit-tag-pill').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          editCurrentTags.push({ id: parseInt(this.dataset.tagId), nome: this.dataset.tagNome, cor: this.dataset.tagCor });
+          renderEditTags(lancamentoId);
+          saveEditTags(lancamentoId);
+        });
+      });
+      addSection.appendChild(lbl);
+      addSection.appendChild(list);
+    }
+  }
+
+  function buildColorPicker() {
+    var container = document.getElementById('editTagColors');
+    if (!container || container.children.length) return;
+    TAG_COLORS.forEach(function (c) {
+      var dot = document.createElement('button');
+      dot.type = 'button';
+      dot.className = 'edit-tag-color-dot' + (c === editSelectedColor ? ' selected' : '');
+      dot.style.background = c;
+      dot.dataset.color = c;
+      dot.addEventListener('click', function () {
+        editSelectedColor = c;
+        container.querySelectorAll('.edit-tag-color-dot').forEach(function (d) { d.classList.remove('selected'); });
+        this.classList.add('selected');
+      });
+      container.appendChild(dot);
+    });
+  }
+
+  async function saveEditTags(lancamentoId) {
+    try {
+      await fetch('/api/lancamentos/' + lancamentoId + '/tags', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tag_ids: editCurrentTags.map(function (t) { return t.id; }) }),
+      });
+      lancamentoTagsMapa[lancamentoId] = editCurrentTags.slice();
+      renderTagsBar();
+    } catch (e) {}
+  }
+
+  async function initTagInput(lancamentoId) {
+    var input = document.getElementById('editTagInput');
+    if (!input) return;
+    buildColorPicker();
+
+    var existingHandler = input._tagHandler;
+    if (existingHandler) input.removeEventListener('keydown', existingHandler);
+
+    input._tagHandler = async function (e) {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      var nome = input.value.trim();
+      if (!nome) return;
+      var existing = allUserTags.find(function (t) { return t.nome.toLowerCase() === nome.toLowerCase(); });
+      if (existing) {
+        if (!editCurrentTags.some(function (ct) { return ct.id === existing.id; })) {
+          editCurrentTags.push(existing);
+          renderEditTags(lancamentoId);
+          saveEditTags(lancamentoId);
+        }
+        input.value = '';
+        return;
+      }
+      try {
+        var r = await fetch('/api/tags', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nome: nome, cor: editSelectedColor }),
+        });
+        if (!r.ok) return;
+        var tag = await r.json();
+        allUserTags.push(tag);
+        editCurrentTags.push(tag);
+        input.value = '';
+        renderEditTags(lancamentoId);
+        saveEditTags(lancamentoId);
+        renderTagsBar();
+      } catch (err) {}
+    };
+    input.addEventListener('keydown', input._tagHandler);
+  }
+
   function setEditStatus(val) {
     editEfetivado = val;
     document.getElementById('editEfetivado').value = String(val);
@@ -509,6 +717,14 @@
     document.getElementById('editFieldStatus').style.display      = '';
     document.getElementById('editFieldValor').style.display       = isTransf ? 'none' : '';
     document.getElementById('editBtnSave').style.display          = isTransf ? 'none' : '';
+    document.getElementById('editFieldTags').style.display        = isTransf ? 'none' : '';
+    editCurrentTags = [];
+    var tagsWrap = document.getElementById('editTagsWrap');
+    if (tagsWrap) tagsWrap.innerHTML = '<span style="font-size:.78rem;color:#94a3b8">Carregando...</span>';
+    var tagsAddEl = document.getElementById('editTagsAdd');
+    if (tagsAddEl) { tagsAddEl.querySelector('.edit-tag-existing-label') && tagsAddEl.querySelector('.edit-tag-existing-label').remove(); tagsAddEl.querySelector('.edit-tag-existing-list') && tagsAddEl.querySelector('.edit-tag-existing-list').remove(); }
+    var tagInput = document.getElementById('editTagInput');
+    if (tagInput) tagInput.value = '';
 
     document.getElementById('editDescricao').value = '';
     document.getElementById('editValor').value = '';
@@ -554,6 +770,10 @@
             var cat = categoriasData.find(function (c) { return c.id === tx.categoria_id; });
             populateSubcategorias(cat, tx.subcategoria_id || null);
           }
+          var tagResp = await fetch('/api/lancamentos/' + id + '/tags');
+          editCurrentTags = tagResp.ok ? (await tagResp.json() || []) : [];
+          renderEditTags(id);
+          initTagInput(id);
         }
       }
     } catch (e) {}
@@ -631,5 +851,6 @@
   });
 
   loadContaInfo();
+  loadUserTags();
   loadCategoriasAll().then(loadExtrato);
 })();

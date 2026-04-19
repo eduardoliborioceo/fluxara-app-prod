@@ -1158,3 +1158,79 @@ def surebet_betano_fetch():
     except Exception as exc:
         logger.exception("Erro ao buscar odds Betano: %s", exc)
         return jsonify({"error": "Erro interno ao buscar odds. Tente novamente."}), 500
+
+
+# ============================================================
+# TAGS
+# ============================================================
+
+@bp.route("/tags", methods=["GET"])
+@login_required
+def api_get_tags():
+    from app.services import tags_service
+    return jsonify(tags_service.get_tags(current_user.id))
+
+
+@bp.route("/tags", methods=["POST"])
+@login_required
+def api_create_tag():
+    from app.services import tags_service
+    data = request.get_json() or {}
+    try:
+        tag = tags_service.create_tag(
+            current_user.id,
+            data.get("nome", ""),
+            data.get("cor", "#6366f1"),
+        )
+        return jsonify(tag), 201
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@bp.route("/tags/<int:tag_id>", methods=["DELETE"])
+@login_required
+def api_delete_tag(tag_id):
+    from app.services import tags_service
+    tags_service.delete_tag(tag_id, current_user.id)
+    return jsonify({"ok": True})
+
+
+@bp.route("/lancamentos/tags/batch", methods=["POST"])
+@login_required
+def api_get_lancamento_tags_batch():
+    from app.services import tags_service
+    from app.repositories import tags_repository
+    data = request.get_json() or {}
+    ids = [int(i) for i in (data.get("ids") or []) if str(i).isdigit()]
+    if not ids:
+        return jsonify({})
+    result = {}
+    for lid in ids:
+        result[lid] = tags_service.get_lancamento_tags(lid)
+    return jsonify(result)
+
+
+@bp.route("/lancamentos/<int:lancamento_id>/tags", methods=["GET"])
+@login_required
+def api_get_lancamento_tags(lancamento_id):
+    from app.services import tags_service, lancamentos_service
+    row = lancamentos_service.get_lancamento(lancamento_id, current_user.id)
+    if not row:
+        return jsonify({"error": "Não encontrado"}), 404
+    return jsonify(tags_service.get_lancamento_tags(lancamento_id))
+
+
+@bp.route("/lancamentos/<int:lancamento_id>/tags", methods=["PUT"])
+@login_required
+def api_set_lancamento_tags(lancamento_id):
+    from app.services import tags_service, lancamentos_service
+    row = lancamentos_service.get_lancamento(lancamento_id, current_user.id)
+    if not row:
+        return jsonify({"error": "Não encontrado"}), 404
+    data = request.get_json() or {}
+    try:
+        tag_ids = [int(i) for i in (data.get("tag_ids") or [])]
+        tags_service.set_lancamento_tags(lancamento_id, current_user.id, tag_ids)
+        return jsonify({"ok": True})
+    except (ValueError, TypeError) as e:
+        return jsonify({"error": str(e)}), 400
