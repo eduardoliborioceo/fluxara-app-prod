@@ -194,6 +194,45 @@
   </div>
 </div>
 
+<!-- ====== FAB ====== -->
+<div class="fab-wrapper">
+  <div class="fab-menu" id="fabMenu">
+
+    <a href="{{ url_for('pages.nova_transferencia') }}" class="fab-option">
+      <span class="fab-option-label">Transferência</span>
+      <span class="fab-option-icon" style="background:#e0f2fe;color:#0284c7">
+        <i class="bi bi-arrow-left-right"></i>
+      </span>
+    </a>
+
+    <a href="{{ url_for('pages.novo_lancamento', tipo='despesa_cartao') }}" class="fab-option">
+      <span class="fab-option-label">Despesa Cartão</span>
+      <span class="fab-option-icon" style="background:#fef9c3;color:#b45309">
+        <i class="bi bi-credit-card-fill"></i>
+      </span>
+    </a>
+
+    <a href="{{ url_for('pages.novo_lancamento', tipo='despesa') }}" class="fab-option">
+      <span class="fab-option-label">Despesa</span>
+      <span class="fab-option-icon" style="background:#fee2e2;color:#dc2626">
+        <i class="bi bi-arrow-up-circle-fill"></i>
+      </span>
+    </a>
+
+    <a href="{{ url_for('pages.novo_lancamento', tipo='receita') }}" class="fab-option">
+      <span class="fab-option-label">Receita</span>
+      <span class="fab-option-icon" style="background:#dcfce7;color:#16a34a">
+        <i class="bi bi-arrow-down-circle-fill"></i>
+      </span>
+    </a>
+
+  </div>
+
+  <button class="fab-btn" id="fabBtn" aria-label="Novo lançamento">
+    <i class="bi bi-plus fab-icon"></i>
+  </button>
+</div>
+
 <div class="extrato-sum-bar" id="extratoSumBar" style="display:none">
   <div class="extrato-sum-info">
     <span id="extratoSumCount" class="extrato-sum-count"></span>

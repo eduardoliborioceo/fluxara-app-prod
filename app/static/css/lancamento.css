@@ -700,3 +700,33 @@
 [data-theme="escuro"] .lanc-tag-color-dot.selected {
   border-color: #e2e8f0;
 }
+
+/* ========================
+   SAVE TOAST
+======================== */
+.lanc-save-toast {
+  position: fixed;
+  bottom: calc(var(--bottom-nav-height, 64px) + 16px);
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #198754;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 30px;
+  font-size: .9rem;
+  font-weight: 600;
+  box-shadow: 0 4px 20px rgba(25,135,84,.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s, transform .25s;
+  z-index: 9000;
+  white-space: nowrap;
+}
+
+.lanc-save-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}

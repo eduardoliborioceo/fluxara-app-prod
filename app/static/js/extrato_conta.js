@@ -955,6 +955,22 @@
     finally { this.disabled = false; }
   });
 
+  var fabBtn  = document.getElementById('fabBtn');
+  var fabMenu = document.getElementById('fabMenu');
+  if (fabBtn && fabMenu) {
+    fabBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var isOpen = fabMenu.classList.contains('open');
+      fabMenu.classList.toggle('open', !isOpen);
+      fabBtn.classList.toggle('open', !isOpen);
+    });
+    document.addEventListener('click', function () {
+      fabMenu.classList.remove('open');
+      fabBtn.classList.remove('open');
+    });
+    fabMenu.addEventListener('click', function (e) { e.stopPropagation(); });
+  }
+
   loadContaInfo();
   loadUserTags();
   loadCategoriasAll().then(loadExtrato);
