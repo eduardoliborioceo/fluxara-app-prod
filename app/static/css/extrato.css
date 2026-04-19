@@ -442,22 +442,28 @@
    TRANSACTION LIST
 ======================== */
 .extrato-card {
-  border-radius: 12px;
-  background: #fff;
-  border: 1px solid var(--border, rgba(15,23,42,0.09));
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  overflow: visible;
+  margin-bottom: 0;
+}
+
+.extrato-tx-list {
+  background: var(--card, #fff);
+  border-radius: 14px;
   overflow: hidden;
-  margin-bottom: 16px;
+  border: 1px solid var(--border, rgba(15,23,42,.08));
 }
 
 .extrato-tx-item {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 14px 18px;
+  gap: 12px;
+  padding: 12px 14px;
   border-bottom: 1px solid rgba(0,0,0,.05);
   cursor: pointer;
   transition: background .12s;
-  min-height: 68px;
 }
 
 .extrato-tx-item:hover {
@@ -468,22 +474,24 @@
   border-bottom: none;
 }
 
+/* Icon — circular, more vibrant */
 .extrato-tx-icon {
-  width: 46px;
-  height: 46px;
-  border-radius: 14px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1rem;
+  font-size: 1rem;
   flex-shrink: 0;
 }
 
-.extrato-tx-icon--receita         { background: rgba(25,135,84,.12);  color: #198754; }
-.extrato-tx-icon--despesa         { background: rgba(220,53,69,.12);  color: #dc3545; }
-.extrato-tx-icon--transferencia   { background: rgba(13,110,253,.12); color: #0d6efd; }
-.extrato-tx-icon--despesa-cartao  { background: rgba(253,126,20,.12); color: #fd7e14; }
+.extrato-tx-icon--receita        { background: rgba(25,135,84,.18);  color: #198754; }
+.extrato-tx-icon--despesa        { background: rgba(220,53,69,.18);  color: #dc3545; }
+.extrato-tx-icon--transferencia  { background: rgba(13,110,253,.15); color: #0d6efd; }
+.extrato-tx-icon--despesa-cartao { background: rgba(253,126,20,.18); color: #fd7e14; }
 
+/* Info column — description + meta */
 .extrato-tx-info {
   flex: 1;
   min-width: 0;
@@ -491,24 +499,49 @@
 
 .extrato-tx-desc {
   font-weight: 600;
-  font-size: .93rem;
-  word-break: break-word;
-  white-space: normal;
-  line-height: 1.35;
+  font-size: .82rem;
+  color: var(--text, #1e293b);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
 }
 
 .extrato-tx-meta {
-  font-size: .76rem;
+  font-size: .7rem;
   color: #94a3b8;
-  margin-top: 3px;
+  margin-top: 2px;
   line-height: 1.3;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px;
+}
+
+/* Inline tag in meta line */
+.extrato-tx-tag-inline {
+  display: inline-flex;
+  align-items: center;
+  font-size: .62rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+  line-height: 1.4;
+}
+
+/* Right column — value + status */
+.extrato-tx-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
 }
 
 .extrato-tx-valor {
   font-weight: 700;
-  font-size: .97rem;
+  font-size: .82rem;
   text-align: right;
-  flex-shrink: 0;
   line-height: 1.2;
 }
 
@@ -517,18 +550,31 @@
 .extrato-tx-valor--transferencia  { color: #0d6efd; }
 .extrato-tx-valor--despesa-cartao { color: #dc3545; }
 
+/* Status circle — small, solid color */
+.extrato-tx-status {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .58rem;
+  flex-shrink: 0;
+}
+
+.extrato-tx-status--efetivado { background: #198754; color: #fff; }
+.extrato-tx-status--pendente  { background: #dc3545; color: #fff; }
+
 .extrato-badge {
   display: inline-block;
-  font-size: .65rem;
-  font-weight: 600;
+  font-size: .6rem;
+  font-weight: 700;
   border-radius: 4px;
   padding: 1px 5px;
-  margin-left: 4px;
   vertical-align: middle;
 }
 
-.extrato-badge--pendente { background: rgba(253,126,20,.12); color: #fd7e14; }
-.extrato-badge--futuro   { background: rgba(99,102,241,.12); color: #6366f1; }
+.extrato-badge--futuro { background: rgba(99,102,241,.12); color: #6366f1; }
 
 /* ========================
    EDIT SHEET (BOTTOM MODAL)
@@ -917,7 +963,7 @@
   background: rgba(255,255,255,.08);
 }
 
-[data-theme="escuro"] .extrato-card {
+[data-theme="escuro"] .extrato-tx-list {
   background: #1e293b;
   border-color: rgba(255,255,255,.08);
 }
@@ -928,6 +974,10 @@
 
 [data-theme="escuro"] .extrato-tx-item:hover {
   background: rgba(255,255,255,.04);
+}
+
+[data-theme="escuro"] .extrato-tx-desc {
+  color: #e2e8f0;
 }
 
 [data-theme="escuro"] .edit-sheet {
@@ -1029,15 +1079,19 @@
 /* ========================
    DATE GROUPS
 ======================== */
+.extrato-date-group {
+  margin-bottom: 14px;
+}
+
 .extrato-date-group + .extrato-date-group {
-  border-top: 1px solid rgba(15,23,42,.06);
+  border-top: none;
 }
 
 .extrato-date-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 16px 6px;
+  padding: 4px 4px 8px;
 }
 
 .extrato-date-label {
@@ -1180,27 +1234,8 @@
 [data-theme="escuro"] .edit-scope-option { color: #e2e8f0; }
 
 /* ========================
-   TAGS — TRANSACTION PILLS
+   TAGS — TRANSACTION PILLS (inline in meta)
 ======================== */
-.extrato-tx-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 4px;
-}
-
-.extrato-tx-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-size: .65rem;
-  font-weight: 700;
-  padding: 2px 7px;
-  border-radius: 20px;
-  background: rgba(99,102,241,.12);
-  color: #6366f1;
-  letter-spacing: .2px;
-}
 
 /* ========================
    TAGS — FILTER BAR

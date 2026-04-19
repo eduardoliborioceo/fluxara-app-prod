@@ -1232,5 +1232,6 @@ def api_set_lancamento_tags(lancamento_id):
         tag_ids = [int(i) for i in (data.get("tag_ids") or [])]
         tags_service.set_lancamento_tags(lancamento_id, current_user.id, tag_ids)
         return jsonify({"ok": True})
-    except (ValueError, TypeError) as e:
+    except Exception as e:
+        logger.error("set_lancamento_tags error lancamento=%s: %s", lancamento_id, e)
         return jsonify({"error": str(e)}), 400

@@ -232,26 +232,22 @@
   function renderTx(tx) {
     if (tx.is_fatura_aberta) {
       var dateStr = formatDate(tx.data_vencimento);
-      var badge = '<span class="extrato-badge extrato-badge--pendente">Fatura em aberto</span>';
       return '<div class="extrato-tx-item extrato-tx-item--fatura" data-id="' + esc(tx.id) + '" data-tipo="despesa" data-valor="' + parseFloat(tx.valor || 0) + '" data-prefix="−">'
         + '<div class="extrato-tx-icon extrato-tx-icon--despesa"><i class="bi bi-credit-card-2-front"></i></div>'
         + '<div class="extrato-tx-info">'
-        +   '<div class="extrato-tx-desc">' + esc(tx.descricao || 'Fatura em aberto') + badge + '</div>'
-        +   '<div class="extrato-tx-meta">Vencimento: ' + dateStr + '</div>'
+        +   '<div class="extrato-tx-desc">' + esc(tx.descricao || 'Fatura em aberto') + '</div>'
+        +   '<div class="extrato-tx-meta">Venc. ' + dateStr + ' · <span style="color:#fd7e14;font-weight:700">Fatura em aberto</span></div>'
         + '</div>'
-        + '<div class="extrato-tx-valor extrato-tx-valor--despesa">− ' + formatMoney(tx.valor) + '</div>'
+        + '<div class="extrato-tx-right">'
+        +   '<div class="extrato-tx-valor extrato-tx-valor--despesa">− ' + formatMoney(tx.valor) + '</div>'
+        +   '<div class="extrato-tx-status extrato-tx-status--pendente"><i class="bi bi-clock-fill"></i></div>'
+        + '</div>'
         + '</div>';
     }
 
     var m = tipoMap[tx.tipo] || tipoMap.despesa;
     var dateStr = formatDate(tx.data_vencimento);
     var isFuture = tx.data_vencimento && parseDate(tx.data_vencimento) > now;
-    var meta = dateStr;
-    if (tx.categoria_nome) meta += '  ·  ' + esc(tx.categoria_nome);
-    if (tx.conta_parceira_nome) meta = dateStr + '  →  ' + esc(tx.conta_parceira_nome);
-    var badges = '';
-    if (!tx.efetivado) badges += '<span class="extrato-badge extrato-badge--pendente">Pendente</span>';
-    if (isFuture)      badges += '<span class="extrato-badge extrato-badge--futuro">Futuro</span>';
 
     var catIcon = m.icon;
     if (tx.categoria_id && categoriasMapa[tx.categoria_id]) {
@@ -266,26 +262,38 @@
         + '<i class="bi ' + (isSelected ? 'bi-check-circle-fill' : 'bi-circle') + '"></i></div>'
       : '';
 
+    var statusCls = tx.efetivado ? 'extrato-tx-status--efetivado' : 'extrato-tx-status--pendente';
+    var statusIcon = tx.efetivado ? 'bi-check' : 'bi-clock-fill';
+
+    var metaParts = [dateStr];
+    if (tx.conta_parceira_nome) {
+      metaParts.push('→ ' + esc(tx.conta_parceira_nome));
+    } else {
+      if (tx.categoria_nome) metaParts.push(esc(tx.categoria_nome));
+    }
+    if (isFuture) metaParts.push('<span class="extrato-badge extrato-badge--futuro">Futuro</span>');
+
     var txTags = lancamentoTagsMapa[tx.id] || [];
-    var tagsHtml = '';
-    if (txTags.length) {
-      tagsHtml = '<div class="extrato-tx-tags">'
-        + txTags.map(function (t) {
-            return '<span class="extrato-tx-tag" style="background:' + hexToAlpha(t.cor, 0.13) + ';color:' + t.cor + '">'
-              + '<i class="bi bi-tag-fill" style="font-size:.55rem"></i>' + esc(t.nome) + '</span>';
-          }).join('')
-        + '</div>';
+    var tagsInlineParts = txTags.map(function (t) {
+      return '<span class="extrato-tx-tag-inline" style="background:' + hexToAlpha(t.cor, 0.14) + ';color:' + t.cor + '">' + esc(t.nome) + '</span>';
+    });
+
+    var metaHtml = metaParts.join(' · ');
+    if (tagsInlineParts.length) {
+      metaHtml += ' ' + tagsInlineParts.join(' ');
     }
 
     return '<div class="extrato-tx-item' + selectedCls + '" data-id="' + tx.id + '" data-tipo="' + esc(tx.tipo) + '" data-valor="' + parseFloat(tx.valor || 0) + '" data-prefix="' + m.prefix + '">'
       + checkHtml
       + '<div class="extrato-tx-icon ' + m.cls + '"><i class="bi bi-' + catIcon + '"></i></div>'
       + '<div class="extrato-tx-info">'
-      +   '<div class="extrato-tx-desc">' + esc(tx.descricao || 'Sem descrição') + badges + '</div>'
-      +   '<div class="extrato-tx-meta">' + meta + '</div>'
-      +   tagsHtml
+      +   '<div class="extrato-tx-desc">' + esc(tx.descricao || 'Sem descrição') + '</div>'
+      +   '<div class="extrato-tx-meta">' + metaHtml + '</div>'
       + '</div>'
-      + '<div class="extrato-tx-valor ' + m.valCls + '">' + m.prefix + ' ' + formatMoney(tx.valor) + '</div>'
+      + '<div class="extrato-tx-right">'
+      +   '<div class="extrato-tx-valor ' + m.valCls + '">' + m.prefix + ' ' + formatMoney(tx.valor) + '</div>'
+      +   '<div class="extrato-tx-status ' + statusCls + '"><i class="bi ' + statusIcon + '"></i></div>'
+      + '</div>'
       + '</div>';
   }
 
@@ -353,7 +361,9 @@
       html += '<div class="extrato-date-group' + groupCls + '">';
       html += '<div class="extrato-date-header"><span class="extrato-date-label">' + esc(label) + '</span>'
             + '<span class="extrato-group-total ' + totalCls + '">' + totalStr + '</span></div>';
+      html += '<div class="extrato-tx-list">';
       txs.forEach(function (tx) { html += renderTx(tx); });
+      html += '</div>';
       html += '</div>';
     });
 
