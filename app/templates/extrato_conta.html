@@ -120,15 +120,6 @@
         <input type="hidden" id="editEfetivado" value="true">
       </div>
 
-      <div class="edit-field" id="editFieldTags">
-        <label class="edit-label">Tags</label>
-        <div class="edit-tags-wrap" id="editTagsWrap"></div>
-        <div class="edit-tags-add" id="editTagsAdd">
-          <input type="text" id="editTagInput" class="edit-tags-input" placeholder="Nova tag..." maxlength="30">
-          <div class="edit-tags-colors" id="editTagColors"></div>
-        </div>
-      </div>
-
       <div class="edit-field" id="editFieldCategoria">
         <label class="edit-label">Categoria</label>
         <select id="editCategoria" class="edit-select">
@@ -141,6 +132,21 @@
         <select id="editSubcategoria" class="edit-select">
           <option value="">Sem subcategoria</option>
         </select>
+      </div>
+
+      <div class="edit-field" id="editFieldTags">
+        <label class="edit-label">Tags</label>
+        <div class="edit-tags-input-wrap">
+          <div class="edit-tags-colors" id="editTagColors"></div>
+          <div class="edit-tags-input-row">
+            <input type="text" id="editTagInput" class="edit-tags-input" placeholder="Nome da tag..." maxlength="30">
+            <button type="button" class="edit-tags-add-btn" id="editTagAddBtn" title="Adicionar tag">
+              <i class="bi bi-plus-lg"></i>
+            </button>
+          </div>
+        </div>
+        <div class="edit-tags-wrap" id="editTagsWrap"></div>
+        <div id="editTagsAdd"></div>
       </div>
 
       <div class="edit-field" id="editFieldTransfInfo" style="display:none">

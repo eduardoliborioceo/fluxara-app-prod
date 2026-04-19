@@ -626,6 +626,18 @@
     });
   }
 
+  function showTagToast(msg, isError) {
+    var old = document.getElementById('editTagToast');
+    if (old) old.remove();
+    var t = document.createElement('div');
+    t.id = 'editTagToast';
+    t.className = 'edit-tag-toast' + (isError ? ' edit-tag-toast--error' : ' edit-tag-toast--ok');
+    t.textContent = msg;
+    var body = document.getElementById('editSheetBody');
+    if (body) body.appendChild(t);
+    setTimeout(function () { if (t.parentNode) t.remove(); }, 2000);
+  }
+
   async function saveEditTags(lancamentoId) {
     try {
       var r = await fetch('/api/lancamentos/' + lancamentoId + '/tags', {
@@ -637,50 +649,75 @@
         lancamentoTagsMapa[lancamentoId] = editCurrentTags.slice();
         applyFilters();
         renderTagsBar();
+      } else {
+        showTagToast('Erro ao salvar tag', true);
       }
-    } catch (e) {}
+    } catch (e) {
+      showTagToast('Erro ao salvar tag', true);
+    }
+  }
+
+  async function processTagInput(lancamentoId) {
+    var input = document.getElementById('editTagInput');
+    if (!input) return;
+    var nome = input.value.trim();
+    if (!nome) return;
+    var existing = allUserTags.find(function (t) { return t.nome.toLowerCase() === nome.toLowerCase(); });
+    if (existing) {
+      if (!editCurrentTags.some(function (ct) { return ct.id === existing.id; })) {
+        editCurrentTags.push(existing);
+        renderEditTags(lancamentoId);
+        await saveEditTags(lancamentoId);
+      }
+      input.value = '';
+      return;
+    }
+    try {
+      var r = await fetch('/api/tags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome: nome, cor: editSelectedColor }),
+      });
+      if (!r.ok) {
+        showTagToast('Erro ao criar tag', true);
+        return;
+      }
+      var tag = await r.json();
+      allUserTags.push(tag);
+      editCurrentTags.push(tag);
+      input.value = '';
+      renderEditTags(lancamentoId);
+      await saveEditTags(lancamentoId);
+      renderTagsBar();
+    } catch (err) {
+      showTagToast('Erro ao criar tag', true);
+    }
   }
 
   async function initTagInput(lancamentoId) {
     var input = document.getElementById('editTagInput');
+    var addBtn = document.getElementById('editTagAddBtn');
     if (!input) return;
     buildColorPicker();
 
     var existingHandler = input._tagHandler;
     if (existingHandler) input.removeEventListener('keydown', existingHandler);
-
     input._tagHandler = async function (e) {
       if (e.key !== 'Enter') return;
       e.preventDefault();
-      var nome = input.value.trim();
-      if (!nome) return;
-      var existing = allUserTags.find(function (t) { return t.nome.toLowerCase() === nome.toLowerCase(); });
-      if (existing) {
-        if (!editCurrentTags.some(function (ct) { return ct.id === existing.id; })) {
-          editCurrentTags.push(existing);
-          renderEditTags(lancamentoId);
-          saveEditTags(lancamentoId);
-        }
-        input.value = '';
-        return;
-      }
-      try {
-        var r = await fetch('/api/tags', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nome: nome, cor: editSelectedColor }),
-        });
-        if (!r.ok) return;
-        var tag = await r.json();
-        allUserTags.push(tag);
-        editCurrentTags.push(tag);
-        input.value = '';
-        renderEditTags(lancamentoId);
-        saveEditTags(lancamentoId);
-        renderTagsBar();
-      } catch (err) {}
+      await processTagInput(lancamentoId);
     };
     input.addEventListener('keydown', input._tagHandler);
+
+    if (addBtn) {
+      var existingAddHandler = addBtn._addHandler;
+      if (existingAddHandler) addBtn.removeEventListener('click', existingAddHandler);
+      addBtn._addHandler = async function () {
+        await processTagInput(lancamentoId);
+        input.focus();
+      };
+      addBtn.addEventListener('click', addBtn._addHandler);
+    }
   }
 
   function setEditStatus(val) {
@@ -803,6 +840,7 @@
 
   document.getElementById('editBtnSave').addEventListener('click', async function () {
     var id = parseInt(document.getElementById('editId').value);
+    await processTagInput(id);
     var valor = parseFloat(document.getElementById('editValor').value);
     if (!valor || valor <= 0) return;
     var catId = document.getElementById('editCategoria').value || null;
