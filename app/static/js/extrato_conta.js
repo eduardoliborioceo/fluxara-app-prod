@@ -194,16 +194,41 @@
       var color = isActive ? '#fff' : t.cor;
       return '<button class="extrato-tag-filter-pill' + (isActive ? ' active' : '') + '" data-tag-id="' + t.id + '"'
         + ' style="background:' + bg + ';color:' + color + ';border-color:' + t.cor + '">'
-        + '<i class="bi bi-tag-fill" style="font-size:.7rem"></i>' + esc(t.nome)
+        + '<i class="bi bi-tag-fill" style="font-size:.65rem;margin-right:2px"></i>'
+        + '<span class="extrato-tag-pill-nome">' + esc(t.nome) + '</span>'
+        + '<span class="extrato-tag-pill-del" data-tag-id="' + t.id + '" title="Excluir tag">×</span>'
         + '</button>';
     }).join('');
 
     bar.querySelectorAll('.extrato-tag-filter-pill').forEach(function (btn) {
-      btn.addEventListener('click', function () {
+      btn.addEventListener('click', function (e) {
+        if (e.target.closest('.extrato-tag-pill-del')) return;
         var id = parseInt(this.dataset.tagId);
         activeTagFilter = (activeTagFilter === id) ? null : id;
         renderTagsBar();
         applyFilters();
+      });
+    });
+
+    bar.querySelectorAll('.extrato-tag-pill-del').forEach(function (del) {
+      del.addEventListener('click', async function (e) {
+        e.stopPropagation();
+        var tagId = parseInt(this.dataset.tagId);
+        var tag = allUserTags.find(function (t) { return t.id === tagId; });
+        if (!tag) return;
+        if (!confirm('Excluir a tag "' + tag.nome + '"?\nEla será removida de todas as transações.')) return;
+        try {
+          var r = await fetch('/api/tags/' + tagId, { method: 'DELETE' });
+          if (r.ok) {
+            allUserTags = allUserTags.filter(function (t) { return t.id !== tagId; });
+            Object.keys(lancamentoTagsMapa).forEach(function (lid) {
+              lancamentoTagsMapa[lid] = lancamentoTagsMapa[lid].filter(function (t) { return t.id !== tagId; });
+            });
+            if (activeTagFilter === tagId) activeTagFilter = null;
+            renderTagsBar();
+            applyFilters();
+          }
+        } catch (err) {}
       });
     });
   }
