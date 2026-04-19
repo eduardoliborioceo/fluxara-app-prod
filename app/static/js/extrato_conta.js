@@ -330,6 +330,34 @@
     return dias[d.getDay()] + ', ' + d.getDate() + ' ' + meses[d.getMonth()] + ' ' + d.getFullYear();
   }
 
+  function updateTagTotal(filtered) {
+    var el = document.getElementById('extratoTagTotal');
+    if (!el) return;
+    if (activeTagFilter === null) { el.style.display = 'none'; return; }
+    var total = 0;
+    var count = 0;
+    filtered.forEach(function (tx) {
+      if (tx.is_fatura_aberta) { total -= parseFloat(tx.valor || 0); count++; return; }
+      var m = tipoMap[tx.tipo] || tipoMap.despesa;
+      total += (m.prefix === '+' ? 1 : -1) * parseFloat(tx.valor || 0);
+      count++;
+    });
+    var tag = allUserTags.find(function (t) { return t.id === activeTagFilter; });
+    var tagNome = tag ? tag.nome : '';
+    var tagCor  = tag ? tag.cor  : '#6366f1';
+    var prefix  = total >= 0 ? '+' : '−';
+    var valCls  = total >= 0 ? 'extrato-tag-total-value--pos' : 'extrato-tag-total-value--neg';
+    el.style.display = 'flex';
+    el.innerHTML = '<span class="extrato-tag-total-chip" style="background:' + hexToAlpha(tagCor, 0.12) + ';color:' + tagCor + '">'
+      + '<i class="bi bi-tag-fill" style="font-size:.65rem"></i>'
+      + esc(tagNome) + '</span>'
+      + '<span class="extrato-tag-total-info">'
+      +   '<span class="extrato-tag-total-count">' + count + (count === 1 ? ' transação' : ' transações') + '</span>'
+      +   '<span class="extrato-tag-total-sep">·</span>'
+      +   '<span class="extrato-tag-total-value ' + valCls + '">' + prefix + ' ' + formatMoney(Math.abs(total)) + '</span>'
+      + '</span>';
+  }
+
   function applyFilters() {
     var body = document.getElementById('extratoBody');
     var filtered = allTransactions.filter(function (tx) {
@@ -349,6 +377,7 @@
       }
       return true;
     });
+    updateTagTotal(filtered);
     if (!filtered.length) {
       body.innerHTML = '<div class="text-center py-4 text-muted small">'
         + '<i class="bi bi-funnel d-block mb-1" style="font-size:1.8rem;opacity:.3"></i>'
