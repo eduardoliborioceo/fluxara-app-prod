@@ -1282,12 +1282,46 @@
 /* ========================
    TAGS — EDIT SHEET
 ======================== */
+.edit-tags-input-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.edit-tags-input-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.edit-tags-add-btn {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: var(--primary, #0d6efd);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: .9rem;
+  transition: background .15s, transform .12s;
+}
+
+.edit-tags-add-btn:hover {
+  background: #0b5ed7;
+  transform: scale(1.05);
+}
+
 .edit-tags-wrap {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  min-height: 28px;
-  margin-bottom: 8px;
+  min-height: 0;
+  margin-bottom: 6px;
 }
 
 .edit-tag-pill {
@@ -1315,14 +1349,8 @@
   margin-left: 2px;
 }
 
-.edit-tags-add {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
 .edit-tags-input {
-  width: 100%;
+  flex: 1;
   border: 1.5px solid #e2e8f0;
   border-radius: 10px;
   padding: 8px 12px;
@@ -1343,12 +1371,12 @@
 .edit-tags-colors {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
 }
 
 .edit-tag-color-dot {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   border: 2.5px solid transparent;
   cursor: pointer;
@@ -1357,12 +1385,12 @@
 }
 
 .edit-tag-color-dot:hover {
-  transform: scale(1.15);
+  transform: scale(1.18);
 }
 
 .edit-tag-color-dot.selected {
   border-color: #1e293b;
-  transform: scale(1.1);
+  transform: scale(1.12);
 }
 
 .edit-tag-existing-label {
@@ -1371,7 +1399,7 @@
   color: #94a3b8;
   text-transform: uppercase;
   letter-spacing: .4px;
-  margin-top: 6px;
+  margin-top: 8px;
   margin-bottom: 4px;
 }
 
@@ -1379,6 +1407,35 @@
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
+}
+
+.edit-tag-toast {
+  position: fixed;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-size: .8rem;
+  font-weight: 600;
+  z-index: 9999;
+  pointer-events: none;
+  animation: tagToastIn .2s ease;
+}
+
+.edit-tag-toast--ok {
+  background: #198754;
+  color: #fff;
+}
+
+.edit-tag-toast--error {
+  background: #dc3545;
+  color: #fff;
+}
+
+@keyframes tagToastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
 [data-theme="escuro"] .edit-tags-input {
