@@ -93,6 +93,7 @@
     loadVisaoGeral();
     loadContas();
     loadCartoes();
+    loadDespesasPorConta();
   });
 
   document.getElementById('btnMesPosterior').addEventListener('click', function () {
@@ -102,6 +103,7 @@
     loadVisaoGeral();
     loadContas();
     loadCartoes();
+    loadDespesasPorConta();
   });
 
   updateMesLabel();
@@ -498,6 +500,46 @@
     });
   }
 
+  async function loadDespesasPorConta() {
+    var body  = document.getElementById('despesasContaBody');
+    var total = document.getElementById('totalDespesasConta');
+    try {
+      var mes = month + 1;
+      var r = await fetch('/api/resumo/despesas-por-conta?mes=' + mes + '&ano=' + year);
+      var data = await r.json();
+      if (!Array.isArray(data) || !data.length) {
+        body.innerHTML = '<div class="text-center py-3 text-muted small">'
+          + '<i class="bi bi-pie-chart d-block mb-1" style="font-size:1.8rem;opacity:.3"></i>'
+          + 'Nenhuma despesa neste mês</div>';
+        total.textContent = 'R$ 0,00';
+        return;
+      }
+      var grand = data.reduce(function (s, c) { return s + parseFloat(c.total_despesas || 0); }, 0);
+      total.textContent = formatMoney(grand);
+      body.innerHTML = data.map(function (c) {
+        var val  = parseFloat(c.total_despesas || 0);
+        var pct  = grand > 0 ? Math.round((val / grand) * 100) : 0;
+        var inst = INSTITUICOES[c.instituicao] || INSTITUICOES.outro;
+        var logoHtml = buildLogoHtml(inst, 36);
+        return '<div class="desp-conta-row">'
+          + logoHtml
+          + '<div class="desp-conta-info">'
+          +   '<div class="desp-conta-nome">' + esc(c.nome) + '</div>'
+          +   '<div class="desp-conta-bar-wrap">'
+          +     '<div class="desp-conta-bar" style="width:' + pct + '%"></div>'
+          +   '</div>'
+          + '</div>'
+          + '<div class="desp-conta-right">'
+          +   '<div class="desp-conta-valor">' + formatMoney(val) + '</div>'
+          +   '<div class="desp-conta-pct">' + pct + '%</div>'
+          + '</div>'
+          + '</div>';
+      }).join('');
+    } catch (e) {
+      body.innerHTML = '<div class="text-center py-2 text-muted small">Erro ao carregar.</div>';
+    }
+  }
+
   if (window.innerWidth < 992) {
     applyCardOrder();
     initDragDrop();
@@ -506,4 +548,5 @@
   loadCartoes();
   loadVisaoGeral();
   loadProjecao();
+  loadDespesasPorConta();
 })();

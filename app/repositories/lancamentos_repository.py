@@ -287,6 +287,25 @@ def get_resumo_mes(user_id: int, mes: int, ano: int) -> dict:
             return cur.fetchone()
 
 
+def get_despesas_por_conta(user_id: int, mes: int, ano: int) -> list:
+    with get_db() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("""
+                SELECT c.id AS conta_id, c.nome, c.instituicao,
+                       COALESCE(SUM(l.valor), 0) AS total_despesas
+                FROM contas c
+                LEFT JOIN lancamentos l ON l.conta_id = c.id
+                  AND l.user_id = %s AND l.tipo = 'despesa' AND l.ativo = TRUE
+                  AND EXTRACT(MONTH FROM l.data_vencimento) = %s
+                  AND EXTRACT(YEAR  FROM l.data_vencimento) = %s
+                WHERE c.user_id = %s AND c.ativo = TRUE
+                GROUP BY c.id, c.nome, c.instituicao
+                HAVING COALESCE(SUM(l.valor), 0) > 0
+                ORDER BY total_despesas DESC
+            """, (user_id, mes, ano, user_id))
+            return cur.fetchall()
+
+
 def get_sugestoes_descricao(user_id: int, tipo: str, query: str, limit: int = 6) -> list:
     with get_db() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
