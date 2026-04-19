@@ -1,4 +1,13 @@
 /* ========================
+   BODY WRAP
+======================== */
+.extrato-body-wrap {
+  max-width: 680px;
+  margin: 0 auto;
+  padding-bottom: 100px;
+}
+
+/* ========================
    EXTRATO PAGE HEADER
 ======================== */
 .extrato-page-header {
