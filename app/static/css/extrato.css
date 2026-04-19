@@ -1256,6 +1256,55 @@
   padding: 0 0 10px;
 }
 
+.extrato-tag-total {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  background: var(--card, #fff);
+  border: 1px solid var(--border, rgba(15,23,42,.09));
+  border-radius: 10px;
+  font-size: .82rem;
+}
+
+.extrato-tag-total-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: .78rem;
+  flex-shrink: 0;
+}
+
+.extrato-tag-total-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.extrato-tag-total-count {
+  color: var(--text-muted, #64748b);
+  font-size: .78rem;
+}
+
+.extrato-tag-total-sep {
+  color: var(--text-muted, #64748b);
+  opacity: .5;
+}
+
+.extrato-tag-total-value {
+  font-weight: 700;
+  font-size: .88rem;
+  margin-left: auto;
+}
+
+.extrato-tag-total-value--pos { color: #198754; }
+.extrato-tag-total-value--neg { color: #dc3545; }
+
 .extrato-tag-filter-pill {
   display: inline-flex;
   align-items: center;
