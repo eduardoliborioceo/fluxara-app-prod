@@ -37,9 +37,4 @@ def get_lancamento_tags(lancamento_id: int) -> list:
 def set_lancamento_tags(lancamento_id: int, user_id: int, tag_ids: list) -> None:
     if not isinstance(tag_ids, list):
         raise ValueError("tag_ids deve ser uma lista")
-    if tag_ids:
-        all_user_tags = {t["id"] for t in tags_repository.get_tags_by_user(user_id)}
-        for tid in tag_ids:
-            if tid not in all_user_tags:
-                raise ValueError("Tag inválida")
     tags_repository.set_lancamento_tags(lancamento_id, tag_ids)
