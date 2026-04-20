@@ -234,6 +234,7 @@
       }
       var totalDisp = 0;
       var mes = month + 1;
+      var faturaLabel = isFuturoMes() ? 'Fatura prevista' : 'Fatura aberta';
       body.innerHTML = data.map(function (c) {
         var limDisp = parseFloat(c.limite_disponivel != null ? c.limite_disponivel : c.limite) || 0;
         var fatAtual = parseFloat(c.fatura_atual || 0);
@@ -247,7 +248,7 @@
           +   '<div class="cartao-card-nome">' + esc(c.nome) + '</div>'
           +   '<i class="bi bi-chevron-right cartao-card-chevron"></i>'
           + '</div>'
-          + '<div class="cartao-card-fatura-label">Fatura aberta</div>'
+          + '<div class="cartao-card-fatura-label">' + faturaLabel + '</div>'
           + '<div class="cartao-card-fatura-valor">' + formatMoney(fatAtual) + '</div>'
           + '<div class="cartao-card-fecha">' + esc(fechaInfo) + '</div>'
           + '<div class="cartao-card-divider"></div>'
