@@ -6,201 +6,212 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
 {% endblock %}
 
-{% block page_title %}Meu Perfil{% endblock %}
+{% block page_title %}
+<div class="page-header">
+  <div class="page-header-title">
+    <span class="page-header-section">Conta</span>
+    <h1 class="page-header-name">Meu Perfil</h1>
+  </div>
+  <div class="page-header-actions">
+    <button class="btn-header-icon" onclick="toggleFullscreen()" title="Tela cheia">
+      <i class="bi bi-arrows-fullscreen"></i>
+    </button>
+  </div>
+</div>
+{% endblock %}
 
 {% block content %}
-<div class="card shadow-sm p-4" style="max-width: 640px">
+<div class="perfil-page">
+  <div class="perfil-card">
 
-  <input type="file" id="avatarInput" accept="image/*" class="d-none">
+    <input type="file" id="avatarInput" accept="image/*" class="d-none">
 
-  <div class="d-flex align-items-center gap-4 mb-4">
-    <div class="avatar-wrapper">
-      {% if user.profile_image %}
-        <img id="avatarDisplay"
-             src="{{ user.profile_image }}"
-             alt="Foto de perfil">
-        <span id="avatarPlaceholder" class="avatar-placeholder d-none">
-          <i class="bi bi-person-fill"></i>
-        </span>
-      {% else %}
-        <img id="avatarDisplay" src="" alt="" class="d-none">
-        <span id="avatarPlaceholder" class="avatar-placeholder">
-          <i class="bi bi-person-fill"></i>
-        </span>
-      {% endif %}
-      <label for="avatarInput" class="avatar-edit-btn" title="Alterar foto">
-        <i class="bi bi-pencil-fill"></i>
-      </label>
-    </div>
-
-    <div class="avatar-info">
-      <strong>{{ user.full_name }}</strong>
-      <span class="text-muted small">@{{ user.username }}</span>
-      <div class="mt-1">
-        <button type="button"
-                class="btn btn-sm btn-outline-danger {% if not user.profile_image %}d-none{% endif %}"
-                id="removeAvatarBtn">
-          <i class="bi bi-trash"></i> Remover foto
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <div class="d-flex gap-2 mb-4">
-    <a href="{{ url_for('auth.assinaturas') }}" class="btn btn-outline-warning flex-fill">
-      <i class="bi bi-star"></i> Assinaturas
-    </a>
-  </div>
-
-
-  <form method="post">
-
-    <h5 class="mb-3">Dados do usuário</h5>
-
-    <div class="row g-3 mb-4">
-      <div class="col-md-6">
-        <label class="form-label">Nome completo</label>
-        <input class="form-control" value="{{ user.full_name }}" disabled>
+    <div class="d-flex align-items-center gap-4 mb-4">
+      <div class="avatar-wrapper">
+        {% if user.profile_image %}
+          <img id="avatarDisplay"
+               src="{{ user.profile_image }}"
+               alt="Foto de perfil">
+          <span id="avatarPlaceholder" class="avatar-placeholder d-none">
+            <i class="bi bi-person-fill"></i>
+          </span>
+        {% else %}
+          <img id="avatarDisplay" src="" alt="" class="d-none">
+          <span id="avatarPlaceholder" class="avatar-placeholder">
+            <i class="bi bi-person-fill"></i>
+          </span>
+        {% endif %}
+        <label for="avatarInput" class="avatar-edit-btn" title="Alterar foto">
+          <i class="bi bi-pencil-fill"></i>
+        </label>
       </div>
 
-      <div class="col-md-6">
-        <label class="form-label">Usuário</label>
-        <input class="form-control" value="{{ user.username }}" disabled>
-      </div>
-
-      <div class="col-12">
-        <label class="form-label">Email</label>
-        <input class="form-control" value="{{ user.email }}" disabled>
-      </div>
-    </div>
-
-    <h5 class="mb-3">Contato e Endereço</h5>
-
-    <div class="row g-3 mb-4">
-      <div class="col-12">
-        <label class="form-label">Telefone</label>
-        <input name="phone"
-               data-mask="phone"
-               class="form-control"
-               placeholder="(99) 99999-9999"
-               value="{{ profile.phone if profile }}">
-      </div>
-
-      <div class="col-md-8">
-        <label class="form-label">Rua / Avenida</label>
-        <input name="street" class="form-control" placeholder="Nome da rua"
-               value="{{ profile.street if profile }}">
-      </div>
-
-      <div class="col-md-4">
-        <label class="form-label">Número</label>
-        <input name="number" class="form-control" placeholder="Nº"
-               value="{{ profile.number if profile }}">
-      </div>
-
-      <div class="col-md-6">
-        <label class="form-label">Bairro</label>
-        <input name="neighborhood" class="form-control" placeholder="Bairro"
-               value="{{ profile.neighborhood if profile }}">
-      </div>
-
-      <div class="col-md-6">
-        <label class="form-label">CEP</label>
-        <input name="zip_code" data-mask="zip" class="form-control" placeholder="00000-000"
-               value="{{ profile.zip_code if profile }}">
-      </div>
-
-      <div class="col-md-6">
-        <label class="form-label">Cidade</label>
-        <input name="city" class="form-control" placeholder="Cidade"
-               value="{{ profile.city if profile }}">
-      </div>
-
-      <div class="col-md-6">
-        <label class="form-label">Estado</label>
-        <input name="state" class="form-control" placeholder="UF" maxlength="2"
-               value="{{ profile.state if profile }}">
-      </div>
-
-      <div class="col-12">
-        <label class="form-label">Complemento</label>
-        <input name="complement" class="form-control" placeholder="Apto, bloco, casa..."
-               value="{{ profile.complement if profile }}">
-      </div>
-    </div>
-
-    <h5 class="mb-3">Segurança da conta</h5>
-
-    {% if user.provider == 'local' %}
-    <div class="mb-3 p-3 rounded-3
-      {% if password_age_days is none %}
-        border border-warning bg-warning bg-opacity-10
-      {% elif password_age_days > 180 %}
-        border border-danger bg-danger bg-opacity-10
-      {% elif password_age_days > 150 %}
-        border border-warning bg-warning bg-opacity-10
-      {% else %}
-        border border-success bg-success bg-opacity-10
-      {% endif %}">
-      <div class="d-flex align-items-center gap-2">
-        <i class="bi
-          {% if password_age_days is none %}bi-exclamation-triangle-fill text-warning
-          {% elif password_age_days > 180 %}bi-shield-exclamation text-danger
-          {% elif password_age_days > 150 %}bi-clock-history text-warning
-          {% else %}bi-shield-check text-success{% endif %}
-          fs-5"></i>
-        <div>
-          {% if password_age_days is none %}
-            <strong class="d-block">Senha nunca foi alterada</strong>
-            <small>Defina uma senha segura para proteger sua conta.</small>
-          {% elif password_age_days > 180 %}
-            <strong class="d-block text-danger">Senha expirada</strong>
-            <small>Sua senha não é alterada há {{ password_age_days }} dias. Troque agora.</small>
-          {% elif password_age_days > 150 %}
-            <strong class="d-block">Senha expira em breve</strong>
-            <small>Faltam {{ 180 - password_age_days }} dias para a expiração obrigatória.</small>
-          {% else %}
-            <strong class="d-block">Senha em dia</strong>
-            <small>Última alteração há {{ password_age_days }} dias.</small>
-          {% endif %}
+      <div class="avatar-info">
+        <span class="perfil-nome">{{ user.full_name }}</span>
+        <span class="perfil-handle">@{{ user.username }}</span>
+        <div class="mt-1">
+          <button type="button"
+                  class="btn btn-sm btn-outline-danger {% if not user.profile_image %}d-none{% endif %}"
+                  id="removeAvatarBtn">
+            <i class="bi bi-trash"></i> Remover foto
+          </button>
         </div>
       </div>
     </div>
-    {% endif %}
 
-    <h5 class="mb-3">Alterar senha</h5>
+    <div class="d-flex gap-2 mb-4">
+      <a href="{{ url_for('auth.assinaturas') }}" class="btn btn-outline-warning flex-fill">
+        <i class="bi bi-star"></i> Assinaturas
+      </a>
+    </div>
 
-    <input type="password" name="current_password"
-           class="form-control mb-2" placeholder="Senha atual">
+    <form method="post">
 
-    <input type="password" id="perfilNewPassword" name="new_password"
-           class="form-control mb-2" placeholder="Nova senha">
+      <div class="perfil-section-title">Dados do usuário</div>
 
-    <div id="perfilPwdPolicy" class="pwd-policy-box mb-2"></div>
+      <div class="row g-3 mb-4">
+        <div class="col-md-6">
+          <label class="form-label">Nome completo</label>
+          <input class="form-control" value="{{ user.full_name }}" disabled>
+        </div>
 
-    <input type="password" name="confirm_password"
-           class="form-control mb-3" placeholder="Confirmar nova senha">
+        <div class="col-md-6">
+          <label class="form-label">Usuário</label>
+          <input class="form-control" value="{{ user.username }}" disabled>
+        </div>
 
-    <small class="text-muted d-block mb-3">
-      Deixe em branco para não alterar
-    </small>
+        <div class="col-12">
+          <label class="form-label">Email</label>
+          <input class="form-control" value="{{ user.email }}" disabled>
+        </div>
+      </div>
 
-    <button class="btn btn-outline-success">
-      Salvar alterações
-    </button>
+      <div class="perfil-section-title">Contato e Endereço</div>
 
-  </form>
+      <div class="row g-3 mb-4">
+        <div class="col-12">
+          <label class="form-label">Telefone</label>
+          <input name="phone"
+                 data-mask="phone"
+                 class="form-control"
+                 placeholder="(99) 99999-9999"
+                 value="{{ profile.phone if profile }}">
+        </div>
 
-  <hr class="mt-4">
+        <div class="col-md-8">
+          <label class="form-label">Rua / Avenida</label>
+          <input name="street" class="form-control" placeholder="Nome da rua"
+                 value="{{ profile.street if profile }}">
+        </div>
 
-  <div class="mt-3">
-    <h5 class="text-danger mb-1">Zona de perigo</h5>
-    <p class="text-muted small mb-3">A exclusão é permanente e não pode ser desfeita. Você pode se cadastrar novamente a qualquer momento.</p>
-    <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteAccountModal">
-      <i class="bi bi-trash3 me-1"></i> Excluir minha conta
-    </button>
+        <div class="col-md-4">
+          <label class="form-label">Número</label>
+          <input name="number" class="form-control" placeholder="Nº"
+                 value="{{ profile.number if profile }}">
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Bairro</label>
+          <input name="neighborhood" class="form-control" placeholder="Bairro"
+                 value="{{ profile.neighborhood if profile }}">
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">CEP</label>
+          <input name="zip_code" data-mask="zip" class="form-control" placeholder="00000-000"
+                 value="{{ profile.zip_code if profile }}">
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Cidade</label>
+          <input name="city" class="form-control" placeholder="Cidade"
+                 value="{{ profile.city if profile }}">
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Estado</label>
+          <input name="state" class="form-control" placeholder="UF" maxlength="2"
+                 value="{{ profile.state if profile }}">
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">Complemento</label>
+          <input name="complement" class="form-control" placeholder="Apto, bloco, casa..."
+                 value="{{ profile.complement if profile }}">
+        </div>
+      </div>
+
+      <div class="perfil-section-title">Segurança da conta</div>
+
+      {% if user.provider == 'local' %}
+      <div class="pwd-status mb-3 p-3 rounded-3
+        {% if password_age_days is none %}
+          border border-warning bg-warning bg-opacity-10
+        {% elif password_age_days > 180 %}
+          border border-danger bg-danger bg-opacity-10
+        {% elif password_age_days > 150 %}
+          border border-warning bg-warning bg-opacity-10
+        {% else %}
+          border border-success bg-success bg-opacity-10
+        {% endif %}">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi
+            {% if password_age_days is none %}bi-exclamation-triangle-fill text-warning
+            {% elif password_age_days > 180 %}bi-shield-exclamation text-danger
+            {% elif password_age_days > 150 %}bi-clock-history text-warning
+            {% else %}bi-shield-check text-success{% endif %}
+            fs-5"></i>
+          <div>
+            {% if password_age_days is none %}
+              <strong class="d-block">Senha nunca foi alterada</strong>
+              <small>Defina uma senha segura para proteger sua conta.</small>
+            {% elif password_age_days > 180 %}
+              <strong class="d-block text-danger">Senha expirada</strong>
+              <small>Sua senha não é alterada há {{ password_age_days }} dias. Troque agora.</small>
+            {% elif password_age_days > 150 %}
+              <strong class="d-block">Senha expira em breve</strong>
+              <small>Faltam {{ 180 - password_age_days }} dias para a expiração obrigatória.</small>
+            {% else %}
+              <strong class="d-block">Senha em dia</strong>
+              <small>Última alteração há {{ password_age_days }} dias.</small>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="perfil-section-title">Alterar senha</div>
+
+      <input type="password" name="current_password"
+             class="form-control mb-2" placeholder="Senha atual">
+
+      <input type="password" id="perfilNewPassword" name="new_password"
+             class="form-control mb-2" placeholder="Nova senha">
+
+      <div id="perfilPwdPolicy" class="pwd-policy-box mb-2"></div>
+
+      <input type="password" name="confirm_password"
+             class="form-control mb-3" placeholder="Confirmar nova senha">
+
+      <p class="text-muted mb-3" style="font-size:.75rem">Deixe em branco para não alterar</p>
+
+      <button class="btn btn-outline-success">
+        Salvar alterações
+      </button>
+
+    </form>
+
+    <hr class="mt-4">
+
+    <div class="mt-3">
+      <div class="perfil-danger-label">Zona de perigo</div>
+      <p class="perfil-danger-desc">A exclusão é permanente e não pode ser desfeita. Você pode se cadastrar novamente a qualquer momento.</p>
+      <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteAccountModal">
+        <i class="bi bi-trash3 me-1"></i> Excluir minha conta
+      </button>
+    </div>
+
   </div>
-
 </div>
 
 <div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-hidden="true">
@@ -211,8 +222,8 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <p>Tem certeza que deseja excluir sua conta? Todos os seus dados serão permanentemente removidos.</p>
-        <p class="text-muted small">Você pode se cadastrar novamente a qualquer momento.</p>
+        <p style="font-size:.85rem">Tem certeza que deseja excluir sua conta? Todos os seus dados serão permanentemente removidos.</p>
+        <p class="text-muted" style="font-size:.80rem">Você pode se cadastrar novamente a qualquer momento.</p>
       </div>
       <div class="modal-footer border-0">
         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>

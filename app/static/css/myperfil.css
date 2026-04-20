@@ -1,3 +1,140 @@
+/* ========================
+   PAGE WRAPPER
+======================== */
+.perfil-page {
+  max-width: 640px;
+  padding-bottom: 80px;
+}
+
+/* ========================
+   CARD
+======================== */
+.perfil-card {
+  background: #fff;
+  border: 1.5px solid var(--border, rgba(15,23,42,.09));
+  border-radius: 14px;
+  padding: 24px;
+}
+
+[data-theme="escuro"] .perfil-card {
+  background: #1e293b;
+  border-color: rgba(255,255,255,.08);
+}
+
+/* ========================
+   SECTION TITLES
+======================== */
+.perfil-section-title {
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--text-muted, #64748b);
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  margin-bottom: 12px;
+  margin-top: 4px;
+}
+
+/* ========================
+   USER NAME / HANDLE
+======================== */
+.perfil-nome {
+  font-size: .9rem;
+  font-weight: 700;
+  color: var(--text, #1e293b);
+  line-height: 1.3;
+}
+
+.perfil-handle {
+  font-size: .78rem;
+  color: var(--text-muted, #64748b);
+}
+
+[data-theme="escuro"] .perfil-nome {
+  color: #e2e8f0;
+}
+
+/* ========================
+   FORM TYPOGRAPHY
+======================== */
+.perfil-page .form-label {
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+  margin-bottom: 5px;
+}
+
+.perfil-page .form-control {
+  font-size: .88rem;
+  border-radius: 8px;
+  border-color: var(--border, rgba(15,23,42,.09));
+}
+
+.perfil-page .form-control:focus {
+  border-color: #86b7fe;
+  box-shadow: 0 0 0 3px rgba(13,110,253,.1);
+}
+
+[data-theme="escuro"] .perfil-page .form-control {
+  background: #0f172a;
+  border-color: rgba(255,255,255,.1);
+  color: #e2e8f0;
+}
+
+[data-theme="escuro"] .perfil-page .form-control:disabled {
+  background: #1e293b;
+  color: #64748b;
+}
+
+/* ========================
+   BUTTONS
+======================== */
+.perfil-page .btn {
+  font-size: .85rem;
+  border-radius: 8px;
+}
+
+.perfil-page .btn-sm {
+  font-size: .80rem;
+}
+
+/* ========================
+   PASSWORD STATUS BANNER
+======================== */
+.perfil-page .pwd-status {
+  font-size: .82rem;
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.perfil-page .pwd-status strong {
+  font-size: .82rem;
+}
+
+.perfil-page .pwd-status small {
+  font-size: .75rem;
+}
+
+/* ========================
+   DANGER ZONE
+======================== */
+.perfil-danger-label {
+  font-size: .78rem;
+  font-weight: 700;
+  color: #dc3545;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-bottom: 4px;
+}
+
+.perfil-danger-desc {
+  font-size: .78rem;
+  color: var(--text-muted, #64748b);
+  margin-bottom: 12px;
+}
+
+/* ========================
+   AVATAR
+======================== */
 .avatar-wrapper {
   position: relative;
   width: 110px;
