@@ -37,6 +37,7 @@ def _send(subscription: dict, payload: dict) -> str | None:
             data=json.dumps(payload),
             vapid_private_key=private_key,
             vapid_claims={"sub": claims_sub},
+            headers={"urgency": "high", "TTL": "86400"},
         )
         current_app.logger.info("PUSH OK endpoint=%s", subscription["endpoint"][:60])
         return None

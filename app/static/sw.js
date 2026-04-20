@@ -114,6 +114,10 @@ self.addEventListener("push", (event) => {
     badge: "/static/images/logos/fluxara_android_badge_96.png",
     data: { url: payload.url || "/" },
     vibrate: [200, 100, 200],
+    tag: payload.tag || ("fluxara-" + Date.now()),
+    renotify: true,
+    requireInteraction: false,
+    silent: false,
   };
 
   event.waitUntil(self.registration.showNotification(title, options));
