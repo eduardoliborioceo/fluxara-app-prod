@@ -83,7 +83,7 @@
 .settings-label {
   display: block;
   font-weight: 600;
-  font-size: .95rem;
+  font-size: .85rem;
 }
 
 .settings-value {
@@ -226,7 +226,7 @@
 .cat-nome {
   flex: 1;
   font-weight: 600;
-  font-size: .92rem;
+  font-size: .85rem;
 }
 
 .cat-toggle {
