@@ -293,7 +293,7 @@ def get_despesas_por_conta(user_id: int, mes: int, ano: int) -> list:
             cur.execute("""
                 SELECT c.id AS conta_id, c.nome, c.instituicao,
                        COALESCE(SUM(l.valor), 0) AS total_despesas
-                FROM contas c
+                FROM contas_bancarias c
                 LEFT JOIN lancamentos l ON l.conta_id = c.id
                   AND l.user_id = %s AND l.tipo = 'despesa' AND l.ativo = TRUE
                   AND EXTRACT(MONTH FROM l.data_vencimento) = %s
