@@ -38,7 +38,7 @@
 .plan-cat-icon--despesa { background: #fef2f2; color: #dc2626; }
 .plan-cat-icon--receita { background: #f0fdf4; color: #16a34a; }
 .plan-cat-body { flex: 1; min-width: 0; }
-.plan-cat-name { font-size: .9rem; font-weight: 600; color: var(--text, #1e293b); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.plan-cat-name { font-size: .85rem; font-weight: 600; color: var(--text, #1e293b); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .plan-cat-values { display: flex; align-items: center; gap: 6px; margin-top: 2px; font-size: .75rem; color: var(--text-muted, #64748b); }
 .plan-cat-gasto { font-weight: 600; }
 .plan-cat-gasto--despesa { color: #dc2626; }
@@ -66,7 +66,7 @@
 .plan-modal-title { font-size: 1rem; font-weight: 700; color: var(--text, #1e293b); margin-bottom: 16px; }
 .plan-modal-label { font-size: .8rem; font-weight: 600; color: var(--text-muted, #64748b); margin-bottom: 6px; display: block; }
 .plan-modal-input-wrap { display: flex; align-items: center; border: 1.5px solid #e2e8f0; border-radius: 10px; overflow: hidden; margin-bottom: 16px; }
-.plan-modal-currency { padding: 10px 12px; background: #f8fafc; color: var(--text-muted, #64748b); font-weight: 600; font-size: .9rem; border-right: 1.5px solid #e2e8f0; }
+.plan-modal-currency { padding: 10px 12px; background: #f8fafc; color: var(--text-muted, #64748b); font-weight: 600; font-size: .85rem; border-right: 1.5px solid #e2e8f0; }
 .plan-modal-input { flex: 1; border: none; outline: none; padding: 10px 12px; font-size: 1rem; background: transparent; color: var(--text, #1e293b); }
 .plan-modal-btns { display: flex; gap: 10px; }
 .plan-modal-btn-cancel { flex: 1; padding: 11px; border-radius: 10px; border: 1.5px solid #e2e8f0; background: transparent; color: var(--text-muted, #64748b); font-weight: 600; cursor: pointer; }

@@ -106,7 +106,7 @@
   border-radius: 8px;
   border: 1.5px solid var(--border, rgba(15,23,42,.09));
   background: transparent;
-  font-size: .95rem;
+  font-size: .85rem;
   font-weight: 700;
   color: var(--text-muted, #64748b);
   cursor: pointer;
@@ -160,7 +160,7 @@
   border: 1.5px solid var(--border, rgba(15,23,42,.09));
   border-radius: 8px;
   padding: 9px 12px;
-  font-size: .95rem;
+  font-size: .88rem;
   font-weight: 600;
   background: transparent;
   color: var(--text, #1e293b);
@@ -197,7 +197,7 @@
   gap: 10px;
   margin-bottom: 18px;
   font-weight: 700;
-  font-size: .92rem;
+  font-size: .85rem;
   color: var(--text, #1e293b);
 }
 
@@ -242,7 +242,7 @@
 }
 
 .surebet-stake-value {
-  font-size: .9rem;
+  font-size: .85rem;
   font-weight: 700;
   color: var(--text, #1e293b);
 }
@@ -269,7 +269,7 @@
 }
 
 .surebet-result-value {
-  font-size: .92rem;
+  font-size: .85rem;
   font-weight: 700;
   color: var(--text, #1e293b);
 }
@@ -329,7 +329,7 @@
   border: none;
   background: var(--primary, #0d6efd);
   color: #fff;
-  font-size: .9rem;
+  font-size: .88rem;
   font-weight: 600;
   cursor: pointer;
   display: flex;
@@ -372,7 +372,7 @@
 }
 
 .alv-summary-chip-val {
-  font-size: .92rem;
+  font-size: .88rem;
   font-weight: 700;
   color: var(--text, #1e293b);
 }
@@ -445,7 +445,7 @@
 }
 
 .alv-round-retorno {
-  font-size: .9rem;
+  font-size: .85rem;
   font-weight: 700;
   color: #16a34a;
 }
@@ -526,7 +526,7 @@
   border: 1.5px solid var(--border, rgba(15,23,42,.09));
   border-radius: 10px;
   padding: 10px 14px;
-  font-size: .95rem;
+  font-size: .88rem;
   background: transparent;
   color: var(--text, #1e293b);
   outline: none;
@@ -653,7 +653,7 @@
 }
 
 .alv-ativa-nome {
-  font-size: .95rem;
+  font-size: .88rem;
   font-weight: 800;
   color: var(--text, #1e293b);
 }
