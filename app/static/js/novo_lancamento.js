@@ -200,13 +200,25 @@
   };
 
   var BANDEIRAS = {
-    visa:       { nome: 'Visa',       cor: '#1A1F71' },
-    mastercard: { nome: 'Mastercard', cor: '#EB001B' },
+    visa:       { nome: 'Visa',       cor: '#1A1F71', svg: 'visa.svg' },
+    mastercard: { nome: 'Mastercard', cor: '#EB001B', svg: 'mastercard.svg' },
     elo:        { nome: 'Elo',        cor: '#FFD700', corLetra: '#000' },
-    amex:       { nome: 'Amex',       cor: '#2E77BC' },
-    hipercard:  { nome: 'Hipercard',  cor: '#B22222' },
+    amex:       { nome: 'Amex',       cor: '#2E77BC', svg: 'amex.svg' },
+    hipercard:  { nome: 'Hipercard',  cor: '#B22222', svg: 'hipercard.svg' },
     outro:      { nome: 'Outro',      cor: '#6c757d' },
   };
+
+  function buildBandeiraLogoHtml(b, size) {
+    size = size || 36;
+    if (b && b.svg) {
+      return '<div class="conta-picker-logo" style="background:#f8fafc;width:' + size + 'px;height:' + size + 'px">'
+        + '<img src="/static/images/bank-icons-logos-svg/' + esc(b.svg) + '" alt="" style="width:65%;height:65%;object-fit:contain"></div>';
+    }
+    var bg = (b && b.cor) || '#6c757d';
+    var fg = (b && b.corLetra) || '#fff';
+    var nome = (b && b.nome) || 'Cartão';
+    return '<div class="conta-picker-logo" style="background:' + bg + ';color:' + fg + ';width:' + size + 'px;height:' + size + 'px;font-size:.6rem;font-weight:700">' + esc(nome) + '</div>';
+  }
 
   function esc(s) {
     return String(s || '')
@@ -439,8 +451,7 @@
     var found = cartoesItems.find(function (x) { return String(x.id) === String(id); });
     if (!found) return;
     var b = BANDEIRAS[found.bandeira] || BANDEIRAS.outro;
-    var logo = '<div class="conta-picker-logo" style="background:' + b.cor + ';width:32px;height:32px">'
-      + '<span style="color:#fff;font-weight:700;font-size:.6rem">' + esc(b.nome) + '</span></div>';
+    var logo = buildBandeiraLogoHtml(b, 32);
     document.getElementById('lCartao').value = id;
     document.getElementById('cartaoPickerSelected').innerHTML =
       logo + '<span class="conta-picker-nome">' + esc(found.nome) + '</span>';
@@ -491,8 +502,7 @@
       function renderCartao(c, compact) {
         var b = BANDEIRAS[c.bandeira] || BANDEIRAS.outro;
         var size = compact ? 32 : 36;
-        var logo = '<div class="conta-picker-logo" style="background:' + b.cor + ';width:' + size + 'px;height:' + size + 'px">'
-          + '<span style="color:#fff;font-weight:700;font-size:.6rem">' + esc(b.nome) + '</span></div>';
+        var logo = buildBandeiraLogoHtml(b, size);
         if (compact) {
           return logo + '<span class="conta-picker-nome">' + esc(c.nome) + '</span>';
         }
