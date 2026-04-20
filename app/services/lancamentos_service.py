@@ -1,6 +1,7 @@
 import datetime
 import uuid
 from app.repositories import lancamentos_repository as repo
+from app.repositories import cartoes_repository as cartao_repo
 
 _TIPOS_VALIDOS = {'receita', 'despesa', 'despesa_cartao'}
 
@@ -11,6 +12,23 @@ _FIXA_HORIZONTE = {
     'semanal': 52,
     'diario': 90,
 }
+
+
+def _calcular_fatura_mes_ano(cartao_id: int, user_id: int) -> tuple[int, int]:
+    cartao = cartao_repo.get_cartao(cartao_id, user_id)
+    if not cartao:
+        today = datetime.date.today()
+        return today.month, today.year
+    dia_fechamento = int(cartao['dia_fechamento'] or 1)
+    today = datetime.date.today()
+    if today.day <= dia_fechamento:
+        return today.month, today.year
+    m = today.month + 1
+    y = today.year
+    if m > 12:
+        m = 1
+        y += 1
+    return m, y
 
 
 def add_lancamento(user_id: int, data: dict) -> dict:
@@ -49,6 +67,9 @@ def add_lancamento(user_id: int, data: dict) -> dict:
     fatura_mes = int(data['fatura_mes']) if data.get('fatura_mes') else None
     fatura_ano = int(data['fatura_ano']) if data.get('fatura_ano') else None
 
+    if tipo == 'despesa_cartao' and cartao_id and (not fatura_mes or not fatura_ano):
+        fatura_mes, fatura_ano = _calcular_fatura_mes_ano(cartao_id, user_id)
+
     row = repo.create_lancamento(
         user_id, tipo, descricao, valor, data_venc, efetivado,
         recorrente, recorrencia_tipo, categoria_id, subcategoria_id,
@@ -78,6 +99,9 @@ def _create_parcelas(user_id: int, tipo: str, descricao_base: str | None, valor_
     cartao_id = int(data['cartao_id']) if data.get('cartao_id') else None
     fatura_mes_base = int(data['fatura_mes']) if data.get('fatura_mes') else None
     fatura_ano_base = int(data['fatura_ano']) if data.get('fatura_ano') else None
+
+    if tipo == 'despesa_cartao' and cartao_id and (not fatura_mes_base or not fatura_ano_base):
+        fatura_mes_base, fatura_ano_base = _calcular_fatura_mes_ano(cartao_id, user_id)
 
     data_base = None
     data_venc_raw = data.get('data_vencimento')
@@ -131,6 +155,9 @@ def _expand_fixa(user_id: int, tipo: str, descricao: str | None, valor: float, d
     cartao_id = int(data['cartao_id']) if data.get('cartao_id') else None
     fatura_mes_base = int(data['fatura_mes']) if data.get('fatura_mes') else None
     fatura_ano_base = int(data['fatura_ano']) if data.get('fatura_ano') else None
+
+    if tipo == 'despesa_cartao' and cartao_id and (not fatura_mes_base or not fatura_ano_base):
+        fatura_mes_base, fatura_ano_base = _calcular_fatura_mes_ano(cartao_id, user_id)
 
     data_base = None
     data_venc_raw = data.get('data_vencimento')

@@ -520,6 +520,10 @@
         renderCartao,
         function (cartao) { atualizarFaturaDisplay(cartao); }
       );
+
+      if (cartoes.length === 1) {
+        preselectCartao(cartoes[0].id);
+      }
     } catch (e) {}
   }
 
