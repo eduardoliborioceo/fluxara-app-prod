@@ -20,7 +20,7 @@
 .plan-summary { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px; }
 .plan-summary-item { background: #fff; border: 1.5px solid var(--border, rgba(15,23,42,.09)); border-radius: 12px; padding: 12px 14px; text-align: center; }
 .plan-summary-label { font-size: .72rem; font-weight: 600; color: var(--text-muted, #64748b); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 4px; }
-.plan-summary-value { font-size: 1rem; font-weight: 700; color: var(--text, #1e293b); }
+.plan-summary-value { font-size: .9rem; font-weight: 700; color: var(--text, #1e293b); white-space: nowrap; }
 .plan-summary-value.pos { color: #16a34a; }
 .plan-summary-value.neg { color: #dc3545; }
 
@@ -40,11 +40,11 @@
 .plan-cat-body { flex: 1; min-width: 0; }
 .plan-cat-name { font-size: .85rem; font-weight: 600; color: var(--text, #1e293b); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .plan-cat-values { display: flex; align-items: center; gap: 6px; margin-top: 2px; font-size: .75rem; color: var(--text-muted, #64748b); }
-.plan-cat-gasto { font-weight: 600; }
+.plan-cat-gasto { font-weight: 600; white-space: nowrap; }
 .plan-cat-gasto--despesa { color: #dc2626; }
 .plan-cat-gasto--receita { color: #16a34a; }
 .plan-cat-sep { color: #cbd5e1; }
-.plan-cat-orc { color: var(--text-muted, #64748b); }
+.plan-cat-orc { color: var(--text-muted, #64748b); white-space: nowrap; }
 .plan-cat-orc-vazio { color: #cbd5e1; font-style: italic; }
 .plan-cat-bar-wrap { margin-top: 6px; height: 5px; background: #f1f5f9; border-radius: 3px; overflow: hidden; }
 .plan-cat-bar { height: 100%; border-radius: 3px; transition: width .4s ease; }
