@@ -141,7 +141,7 @@ def get_by_cartao(cartao_id: int, user_id: int, fatura_mes: int, fatura_ano: int
                 LEFT JOIN categorias c ON c.id = l.categoria_id
                 LEFT JOIN subcategorias s ON s.id = l.subcategoria_id
                 WHERE l.cartao_id = %s AND l.user_id = %s AND l.ativo = TRUE
-                  AND l.tipo = 'despesa_cartao'
+                  AND l.tipo IN ('despesa_cartao', 'pagamento_fatura')
                   AND l.fatura_mes = %s AND l.fatura_ano = %s
                 ORDER BY l.criado_em DESC
             """, (cartao_id, user_id, fatura_mes, fatura_ano))

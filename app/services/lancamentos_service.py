@@ -3,7 +3,7 @@ import uuid
 from app.repositories import lancamentos_repository as repo
 from app.repositories import cartoes_repository as cartao_repo
 
-_TIPOS_VALIDOS = {'receita', 'despesa', 'despesa_cartao'}
+_TIPOS_VALIDOS = {'receita', 'despesa', 'despesa_cartao', 'pagamento_fatura'}
 
 _FIXA_HORIZONTE = {
     'mensal': 36,

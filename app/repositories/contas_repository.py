@@ -18,6 +18,11 @@ def list_contas(user_id: int) -> list:
                         WHERE l.conta_id = cb.id AND l.tipo = 'despesa'
                           AND l.efetivado = true AND l.ativo = true
                     ), 0)
+                    - COALESCE((
+                        SELECT SUM(l.valor) FROM lancamentos l
+                        WHERE l.conta_id = cb.id AND l.tipo = 'pagamento_fatura'
+                          AND l.efetivado = true AND l.ativo = true
+                    ), 0)
                     + COALESCE((
                         SELECT SUM(t.valor) FROM transferencias t
                         WHERE t.conta_destino_id = cb.id
@@ -38,6 +43,11 @@ def list_contas(user_id: int) -> list:
                     - COALESCE((
                         SELECT SUM(l.valor) FROM lancamentos l
                         WHERE l.conta_id = cb.id AND l.tipo = 'despesa' AND l.ativo = true
+                          AND l.data_vencimento <= (DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month - 1 day')::date
+                    ), 0)
+                    - COALESCE((
+                        SELECT SUM(l.valor) FROM lancamentos l
+                        WHERE l.conta_id = cb.id AND l.tipo = 'pagamento_fatura' AND l.ativo = true
                           AND l.data_vencimento <= (DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month - 1 day')::date
                     ), 0)
                     + COALESCE((
@@ -109,6 +119,11 @@ def list_contas_projetadas(user_id: int, mes: int, ano: int) -> list:
                         WHERE l.conta_id = cb.id AND l.tipo = 'despesa' AND l.ativo = true
                           AND l.data_vencimento <= (DATE_TRUNC('month', MAKE_DATE(%s, %s, 1)) + INTERVAL '1 month - 1 day')::date
                     ), 0)
+                    - COALESCE((
+                        SELECT SUM(l.valor) FROM lancamentos l
+                        WHERE l.conta_id = cb.id AND l.tipo = 'pagamento_fatura' AND l.ativo = true
+                          AND l.data_vencimento <= (DATE_TRUNC('month', MAKE_DATE(%s, %s, 1)) + INTERVAL '1 month - 1 day')::date
+                    ), 0)
                     + COALESCE((
                         SELECT SUM(t.valor) FROM transferencias t
                         WHERE t.conta_destino_id = cb.id AND t.ativo = true
@@ -131,6 +146,11 @@ def list_contas_projetadas(user_id: int, mes: int, ano: int) -> list:
                         WHERE l.conta_id = cb.id AND l.tipo = 'despesa' AND l.ativo = true
                           AND l.data_vencimento <= (DATE_TRUNC('month', MAKE_DATE(%s, %s, 1)) + INTERVAL '1 month - 1 day')::date
                     ), 0)
+                    - COALESCE((
+                        SELECT SUM(l.valor) FROM lancamentos l
+                        WHERE l.conta_id = cb.id AND l.tipo = 'pagamento_fatura' AND l.ativo = true
+                          AND l.data_vencimento <= (DATE_TRUNC('month', MAKE_DATE(%s, %s, 1)) + INTERVAL '1 month - 1 day')::date
+                    ), 0)
                     + COALESCE((
                         SELECT SUM(t.valor) FROM transferencias t
                         WHERE t.conta_destino_id = cb.id AND t.ativo = true
@@ -146,7 +166,7 @@ def list_contas_projetadas(user_id: int, mes: int, ano: int) -> list:
                 LEFT JOIN categorias c ON c.id = cb.categoria_id
                 WHERE cb.user_id = %s AND cb.ativo = TRUE
                 ORDER BY cb.criado_em
-            """, (ano, mes, ano, mes, ano, mes, ano, mes, ano, mes, ano, mes, ano, mes, ano, mes, user_id))
+            """, (ano, mes, ano, mes, ano, mes, ano, mes, ano, mes, ano, mes, ano, mes, ano, mes, ano, mes, ano, mes, user_id))
             return cur.fetchall()
 
 
