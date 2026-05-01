@@ -126,7 +126,7 @@
   fabMenu.addEventListener('click', function (e) { e.stopPropagation(); });
 
   function formatMoney(v) {
-    return 'R$ ' + parseFloat(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return 'R$ ' + parseFloat(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
   function esc(s) {
