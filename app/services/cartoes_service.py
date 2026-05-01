@@ -67,19 +67,19 @@ def gerar_lancamento_fatura(cartao_id: int, user_id: int, mes: int, ano: int,
 
     row = lanc_repo.create_lancamento(
         user_id=user_id,
-        tipo='despesa',
+        tipo='pagamento_fatura',
         descricao=descricao,
         valor=valor,
         data_vencimento=data_pg,
-        efetivado=False,
+        efetivado=True,
         recorrente=False,
         recorrencia_tipo=None,
         categoria_id=None,
         subcategoria_id=None,
         conta_id=int(cartao['conta_id']),
-        cartao_id=None,
-        fatura_mes=None,
-        fatura_ano=None,
+        cartao_id=cartao_id,
+        fatura_mes=mes,
+        fatura_ano=ano,
     )
     return dict(row)
 

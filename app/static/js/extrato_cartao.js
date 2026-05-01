@@ -114,17 +114,23 @@
         return;
       }
       body.innerHTML = data.map(function (tx) {
-        var cat = tx.categoria_nome ? '  ·  ' + esc(tx.categoria_nome) : '';
-        return '<div class="extrato-tx-item" data-id="' + tx.id + '">'
-          + '<div class="extrato-tx-icon extrato-tx-icon--despesa-cartao"><i class="bi bi-credit-card"></i></div>'
+        var isPagamento = tx.tipo === 'pagamento_fatura';
+        var iconClass = isPagamento ? 'extrato-tx-icon--receita' : 'extrato-tx-icon--despesa-cartao';
+        var icon = isPagamento ? 'bi-arrow-down-circle' : 'bi-credit-card';
+        var valorClass = isPagamento ? 'extrato-tx-valor--receita' : 'extrato-tx-valor--despesa-cartao';
+        var valorLabel = isPagamento ? '+ ' : '− ';
+        var meta = isPagamento ? 'Pagamento de fatura' : esc(tx.categoria_nome || '—');
+        var clickable = isPagamento ? '' : ' data-id="' + tx.id + '"';
+        return '<div class="extrato-tx-item"' + clickable + '>'
+          + '<div class="extrato-tx-icon ' + iconClass + '"><i class="bi ' + icon + '"></i></div>'
           + '<div class="extrato-tx-info">'
           +   '<div class="extrato-tx-desc">' + esc(tx.descricao || 'Sem descrição') + '</div>'
-          +   '<div class="extrato-tx-meta">' + esc(tx.categoria_nome || '—') + '</div>'
+          +   '<div class="extrato-tx-meta">' + meta + '</div>'
           + '</div>'
-          + '<div class="extrato-tx-valor extrato-tx-valor--despesa-cartao">− ' + formatMoney(tx.valor) + '</div>'
+          + '<div class="extrato-tx-valor ' + valorClass + '">' + valorLabel + formatMoney(tx.valor) + '</div>'
           + '</div>';
       }).join('');
-      body.querySelectorAll('.extrato-tx-item').forEach(function (el) {
+      body.querySelectorAll('.extrato-tx-item[data-id]').forEach(function (el) {
         el.addEventListener('click', function () {
           openEditSheet(parseInt(this.dataset.id));
         });

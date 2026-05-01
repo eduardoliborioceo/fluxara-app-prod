@@ -8,14 +8,16 @@ def list_cartoes(user_id: int, mes: int = 0, ano: int = 0) -> list:
             cur.execute("""
                 SELECT cc.*, cb.nome AS conta_nome,
                     COALESCE((
-                        SELECT SUM(l.valor) FROM lancamentos l
-                        WHERE l.cartao_id = cc.id AND l.tipo = 'despesa_cartao' AND l.ativo = true
+                        SELECT SUM(CASE WHEN l.tipo = 'pagamento_fatura' THEN -l.valor ELSE l.valor END)
+                        FROM lancamentos l
+                        WHERE l.cartao_id = cc.id AND l.tipo IN ('despesa_cartao', 'pagamento_fatura') AND l.ativo = true
                           AND l.fatura_mes = CASE WHEN %s > 0 THEN %s ELSE EXTRACT(MONTH FROM CURRENT_DATE) END
                           AND l.fatura_ano = CASE WHEN %s > 0 THEN %s ELSE EXTRACT(YEAR FROM CURRENT_DATE) END
                     ), 0) AS fatura_atual,
                     cc.limite - COALESCE((
-                        SELECT SUM(l.valor) FROM lancamentos l
-                        WHERE l.cartao_id = cc.id AND l.tipo = 'despesa_cartao' AND l.ativo = true
+                        SELECT SUM(CASE WHEN l.tipo = 'pagamento_fatura' THEN -l.valor ELSE l.valor END)
+                        FROM lancamentos l
+                        WHERE l.cartao_id = cc.id AND l.tipo IN ('despesa_cartao', 'pagamento_fatura') AND l.ativo = true
                     ), 0) AS limite_disponivel
                 FROM cartoes_credito cc
                 LEFT JOIN contas_bancarias cb ON cb.id = cc.conta_id
@@ -57,8 +59,9 @@ def get_cartoes_usage_for_user(user_id: int) -> list:
                 SELECT cc.id, cc.user_id, cc.nome, cc.limite,
                        cc.dia_fechamento, cc.dia_vencimento,
                        COALESCE((
-                           SELECT SUM(l.valor) FROM lancamentos l
-                           WHERE l.cartao_id = cc.id AND l.tipo = 'despesa_cartao' AND l.ativo = true
+                           SELECT SUM(CASE WHEN l.tipo = 'pagamento_fatura' THEN -l.valor ELSE l.valor END)
+                           FROM lancamentos l
+                           WHERE l.cartao_id = cc.id AND l.tipo IN ('despesa_cartao', 'pagamento_fatura') AND l.ativo = true
                              AND l.fatura_mes = EXTRACT(MONTH FROM CURRENT_DATE)
                              AND l.fatura_ano  = EXTRACT(YEAR  FROM CURRENT_DATE)
                        ), 0) AS fatura_atual
@@ -100,8 +103,9 @@ def get_open_invoices_for_conta(conta_id: int, user_id: int, mes: int, ano: int)
                 FROM (
                     SELECT cc.id, cc.nome, cc.bandeira, cc.dia_vencimento,
                         COALESCE((
-                            SELECT SUM(l.valor) FROM lancamentos l
-                            WHERE l.cartao_id = cc.id AND l.tipo = 'despesa_cartao'
+                            SELECT SUM(CASE WHEN l.tipo = 'pagamento_fatura' THEN -l.valor ELSE l.valor END)
+                            FROM lancamentos l
+                            WHERE l.cartao_id = cc.id AND l.tipo IN ('despesa_cartao', 'pagamento_fatura')
                               AND l.ativo = true
                               AND l.fatura_mes = %s AND l.fatura_ano = %s
                         ), 0) AS fatura_total
