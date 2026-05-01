@@ -1,4 +1,11 @@
 (function () {
+  function showSaveToast() {
+    var toast = document.getElementById('lancSaveToast');
+    if (!toast) return;
+    toast.classList.add('show');
+    setTimeout(function () { toast.classList.remove('show'); }, 2000);
+  }
+
   var efetivado = true;
   var hoje = new Date();
   var pad = function (n) { return n < 10 ? '0' + n : String(n); };
@@ -325,7 +332,7 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-      if (r.ok) { resetForm(); }
+      if (r.ok) { showSaveToast(); resetForm(); }
     } catch (e) {}
     finally { btn.disabled = false; }
   });

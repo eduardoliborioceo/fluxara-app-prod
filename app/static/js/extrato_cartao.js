@@ -312,6 +312,8 @@
       var data = await r.json();
       if (!r.ok) { alert(data.error || 'Erro ao criar lançamento.'); return; }
       closePagamentoSheet();
+      loadExtrato();
+      loadCartaoInfo();
     } catch (e) {
       alert('Erro ao criar lançamento.');
     } finally {
