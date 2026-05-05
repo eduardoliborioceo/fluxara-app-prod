@@ -800,4 +800,22 @@
       });
   };
 
+  window.importarPadrao = function (btn) {
+    btn.disabled = true;
+    fetch('/api/saude/produtos/padrao', { method: 'POST' })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        btn.disabled = false;
+        if (data.inseridos === 0) {
+          alert('Todos os alimentos padrão já estão na sua base.');
+        } else {
+          carregarProdutos();
+        }
+      })
+      .catch(function () {
+        btn.disabled = false;
+        alert('Erro ao importar. Tente novamente.');
+      });
+  };
+
 })();

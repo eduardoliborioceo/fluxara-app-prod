@@ -980,6 +980,14 @@ def saude_delete_produto(produto_id):
     return jsonify({"ok": True})
 
 
+@bp.route("/saude/produtos/padrao", methods=["POST"])
+@login_required
+def saude_seed_produtos_padrao():
+    from app.services import saude_service
+    inseridos = saude_service.seed_produtos_padrao(current_user.id)
+    return jsonify({"inseridos": inseridos})
+
+
 # =============================================================
 # SUREBET — ALAVANCAGEM
 # =============================================================

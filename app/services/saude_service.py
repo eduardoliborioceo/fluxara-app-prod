@@ -381,3 +381,88 @@ def save_produto_manual(user_id: int, nome: str, marca: str, porcao_descricao: s
 
 def delete_produto(user_id: int, produto_id: int):
     repo.delete_produto(user_id, produto_id)
+
+
+_PRODUTOS_PADRAO = [
+    # Cereais, pães e massas
+    {"nome": "Arroz branco cozido",         "kcal": 128, "prot": 2.7,  "carb": 28.1, "gord": 0.2,  "fibras": 1.6, "sodio": 1.0},
+    {"nome": "Arroz integral cozido",       "kcal": 124, "prot": 2.6,  "carb": 25.8, "gord": 1.0,  "fibras": 2.7, "sodio": 1.0},
+    {"nome": "Macarrão cozido",             "kcal": 148, "prot": 5.6,  "carb": 28.2, "gord": 1.0,  "fibras": 1.6, "sodio": 1.0},
+    {"nome": "Pão francês",                 "kcal": 289, "prot": 9.4,  "carb": 58.6, "gord": 1.3,  "fibras": 2.3, "sodio": 440.0},
+    {"nome": "Pão de forma integral",       "kcal": 253, "prot": 9.5,  "carb": 43.9, "gord": 4.6,  "fibras": 5.2, "sodio": 390.0},
+    {"nome": "Aveia em flocos",             "kcal": 394, "prot": 13.9, "carb": 66.6, "gord": 8.5,  "fibras": 9.1, "sodio": 2.0},
+    {"nome": "Granola",                     "kcal": 424, "prot": 9.4,  "carb": 63.7, "gord": 16.5, "fibras": 6.0, "sodio": 30.0},
+    {"nome": "Tapioca (goma hidratada)",    "kcal": 348, "prot": 0.3,  "carb": 86.4, "gord": 0.0,  "fibras": 0.9, "sodio": None},
+    # Tubérculos
+    {"nome": "Batata cozida",               "kcal": 87,  "prot": 1.7,  "carb": 19.7, "gord": 0.1,  "fibras": 1.5, "sodio": 4.0},
+    {"nome": "Batata doce cozida",          "kcal": 77,  "prot": 1.4,  "carb": 17.7, "gord": 0.1,  "fibras": 2.2, "sodio": 27.0},
+    {"nome": "Mandioca cozida",             "kcal": 125, "prot": 0.8,  "carb": 30.1, "gord": 0.1,  "fibras": 1.9, "sodio": 13.0},
+    # Carnes e ovos
+    {"nome": "Frango grelhado (peito)",     "kcal": 159, "prot": 32.5, "carb": 0.0,  "gord": 3.2,  "fibras": 0.0, "sodio": 68.0},
+    {"nome": "Frango cozido (coxa)",        "kcal": 200, "prot": 24.5, "carb": 0.0,  "gord": 11.0, "fibras": 0.0, "sodio": 75.0},
+    {"nome": "Carne bovina (patinho)",      "kcal": 219, "prot": 31.1, "carb": 0.0,  "gord": 10.2, "fibras": 0.0, "sodio": 62.0},
+    {"nome": "Carne bovina (acém)",         "kcal": 261, "prot": 26.5, "carb": 0.0,  "gord": 17.3, "fibras": 0.0, "sodio": 65.0},
+    {"nome": "Ovo inteiro cozido",          "kcal": 146, "prot": 12.1, "carb": 0.6,  "gord": 10.0, "fibras": 0.0, "sodio": 139.0},
+    {"nome": "Atum em conserva",            "kcal": 128, "prot": 27.0, "carb": 0.0,  "gord": 2.1,  "fibras": 0.0, "sodio": 324.0},
+    {"nome": "Tilápia grelhada",            "kcal": 108, "prot": 22.5, "carb": 0.0,  "gord": 2.1,  "fibras": 0.0, "sodio": 52.0},
+    # Leguminosas
+    {"nome": "Feijão preto cozido",         "kcal": 77,  "prot": 4.5,  "carb": 14.0, "gord": 0.5,  "fibras": 8.4, "sodio": 2.0},
+    {"nome": "Feijão carioca cozido",       "kcal": 76,  "prot": 4.8,  "carb": 13.6, "gord": 0.5,  "fibras": 8.5, "sodio": 2.0},
+    {"nome": "Lentilha cozida",             "kcal": 93,  "prot": 6.9,  "carb": 16.3, "gord": 0.4,  "fibras": 3.7, "sodio": 2.0},
+    {"nome": "Grão-de-bico cozido",         "kcal": 164, "prot": 8.9,  "carb": 27.4, "gord": 2.6,  "fibras": 7.6, "sodio": 7.0},
+    # Laticínios
+    {"nome": "Leite integral",              "kcal": 61,  "prot": 3.2,  "carb": 4.7,  "gord": 3.3,  "fibras": 0.0, "sodio": 49.0},
+    {"nome": "Leite desnatado",             "kcal": 35,  "prot": 3.4,  "carb": 5.1,  "gord": 0.1,  "fibras": 0.0, "sodio": 52.0},
+    {"nome": "Iogurte natural integral",    "kcal": 61,  "prot": 3.5,  "carb": 4.7,  "gord": 3.3,  "fibras": 0.0, "sodio": 49.0},
+    {"nome": "Queijo mussarela",            "kcal": 300, "prot": 21.6, "carb": 3.3,  "gord": 22.4, "fibras": 0.0, "sodio": 397.0},
+    {"nome": "Queijo cottage",              "kcal": 98,  "prot": 11.1, "carb": 3.4,  "gord": 4.5,  "fibras": 0.0, "sodio": 371.0},
+    # Frutas
+    {"nome": "Banana",                      "kcal": 89,  "prot": 1.1,  "carb": 22.8, "gord": 0.3,  "fibras": 2.6, "sodio": 1.0},
+    {"nome": "Maçã",                        "kcal": 56,  "prot": 0.3,  "carb": 15.6, "gord": 0.1,  "fibras": 1.3, "sodio": None},
+    {"nome": "Laranja",                     "kcal": 47,  "prot": 0.9,  "carb": 12.5, "gord": 0.1,  "fibras": 0.8, "sodio": None},
+    {"nome": "Mamão",                       "kcal": 45,  "prot": 0.5,  "carb": 11.8, "gord": 0.1,  "fibras": 1.8, "sodio": None},
+    {"nome": "Morango",                     "kcal": 32,  "prot": 0.7,  "carb": 7.7,  "gord": 0.3,  "fibras": 2.0, "sodio": 1.0},
+    {"nome": "Abacate",                     "kcal": 160, "prot": 2.0,  "carb": 9.0,  "gord": 14.7, "fibras": 6.7, "sodio": 7.0},
+    {"nome": "Manga",                       "kcal": 65,  "prot": 0.5,  "carb": 17.0, "gord": 0.3,  "fibras": 1.6, "sodio": None},
+    # Verduras e legumes
+    {"nome": "Brócolis cozido",             "kcal": 28,  "prot": 2.4,  "carb": 5.1,  "gord": 0.3,  "fibras": 3.3, "sodio": 7.0},
+    {"nome": "Cenoura crua",                "kcal": 34,  "prot": 0.9,  "carb": 7.7,  "gord": 0.2,  "fibras": 3.2, "sodio": 83.0},
+    {"nome": "Abobrinha cozida",            "kcal": 16,  "prot": 1.1,  "carb": 3.1,  "gord": 0.2,  "fibras": 1.6, "sodio": 1.0},
+    {"nome": "Espinafre cozido",            "kcal": 22,  "prot": 2.5,  "carb": 3.7,  "gord": 0.3,  "fibras": 2.2, "sodio": 79.0},
+    {"nome": "Tomate",                      "kcal": 20,  "prot": 0.9,  "carb": 3.9,  "gord": 0.2,  "fibras": 1.2, "sodio": 5.0},
+    {"nome": "Chuchu cozido",               "kcal": 19,  "prot": 0.9,  "carb": 4.5,  "gord": 0.1,  "fibras": 1.8, "sodio": 1.0},
+    # Gorduras e temperos
+    {"nome": "Azeite de oliva",             "kcal": 884, "prot": 0.0,  "carb": 0.0,  "gord": 100.0,"fibras": 0.0, "sodio": None},
+    {"nome": "Manteiga",                    "kcal": 741, "prot": 0.9,  "carb": 0.1,  "gord": 83.5, "fibras": 0.0, "sodio": 535.0},
+    {"nome": "Mel",                         "kcal": 309, "prot": 0.3,  "carb": 84.0, "gord": 0.0,  "fibras": 0.2, "sodio": 4.0},
+    # Bebidas
+    {"nome": "Café preto",                  "kcal": 2,   "prot": 0.3,  "carb": 0.0,  "gord": 0.0,  "fibras": 0.0, "sodio": 2.0},
+    {"nome": "Suco de laranja natural",     "kcal": 45,  "prot": 0.7,  "carb": 10.7, "gord": 0.2,  "fibras": 0.2, "sodio": 1.0},
+    # Suplementos e oleaginosas
+    {"nome": "Whey protein (pó)",           "kcal": 370, "prot": 80.0, "carb": 5.0,  "gord": 5.0,  "fibras": 0.0, "sodio": 150.0},
+    {"nome": "Pasta de amendoim",           "kcal": 589, "prot": 24.0, "carb": 20.0, "gord": 48.0, "fibras": 6.0, "sodio": 17.0},
+    {"nome": "Amendoim torrado",            "kcal": 585, "prot": 26.0, "carb": 19.5, "gord": 46.1, "fibras": 8.5, "sodio": 4.0},
+    {"nome": "Castanha-do-pará",            "kcal": 656, "prot": 14.3, "carb": 12.3, "gord": 63.5, "fibras": 7.9, "sodio": 3.0},
+]
+
+
+def seed_produtos_padrao(user_id: int) -> int:
+    existing = {p['nome'].lower() for p in repo.get_produtos(user_id, limit=9999)}
+    inseridos = 0
+    for p in _PRODUTOS_PADRAO:
+        if p['nome'].lower() not in existing:
+            repo.save_produto(
+                user_id,
+                nome=p['nome'],
+                marca=None,
+                porcao_descricao='100g',
+                porcao_g=100.0,
+                calorias_por_porcao=p['kcal'],
+                proteinas_g=p['prot'],
+                carboidratos_g=p['carb'],
+                gorduras_totais_g=p['gord'],
+                fibras_g=p['fibras'],
+                sodio_mg=p['sodio'],
+            )
+            inseridos += 1
+    return inseridos
