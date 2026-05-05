@@ -182,7 +182,12 @@ def search_produtos(user_id: int, query: str, limit: int = 20):
                 SELECT id, nome, marca, porcao_descricao, porcao_g,
                        calorias_por_porcao, proteinas_g, carboidratos_g, gorduras_totais_g
                 FROM saude_produtos
-                WHERE user_id = %s AND (nome ILIKE %s OR marca ILIKE %s)
+                WHERE user_id = %s AND (
+                    translate(lower(nome),  'áàãâäéèêëíìîïóòôõöúùûüç', 'aaaaaeeeeiiiioooooouuuuc')
+                        ILIKE translate(lower(%s), 'áàãâäéèêëíìîïóòôõöúùûüç', 'aaaaaeeeeiiiioooooouuuuc')
+                    OR translate(lower(marca), 'áàãâäéèêëíìîïóòôõöúùûüç', 'aaaaaeeeeiiiioooooouuuuc')
+                        ILIKE translate(lower(%s), 'áàãâäéèêëíìîïóòôõöúùûüç', 'aaaaaeeeeiiiioooooouuuuc')
+                )
                 ORDER BY nome
                 LIMIT %s
             """, (user_id, f"%{query}%", f"%{query}%", limit))

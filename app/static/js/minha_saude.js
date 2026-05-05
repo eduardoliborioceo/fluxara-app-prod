@@ -717,12 +717,17 @@
     return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
+  function normalizarBusca(str) {
+    return String(str || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  }
+
   window.filtrarProdutosTab = function (q) {
-    var filtrado = q.trim().length < 1
+    var qNorm = normalizarBusca(q.trim());
+    var filtrado = qNorm.length < 1
       ? _todosProdutos
       : _todosProdutos.filter(function (p) {
-          var haystack = (p.nome + ' ' + (p.marca || '')).toLowerCase();
-          return haystack.indexOf(q.trim().toLowerCase()) !== -1;
+          var haystack = normalizarBusca(p.nome + ' ' + (p.marca || ''));
+          return haystack.indexOf(qNorm) !== -1;
         });
     renderizarProdutos(filtrado);
   };
