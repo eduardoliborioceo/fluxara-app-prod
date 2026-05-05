@@ -189,11 +189,16 @@
     });
     container.innerHTML = html;
 
+    var concluida = _alvRodadaAtual >= _alvRounds.length;
     var totalGuardado = _alvRounds.slice(0, _alvRodadaAtual).reduce(function (s, r) { return s + r.guardar; }, 0);
+    var lastRound = _alvRounds[_alvRounds.length - 1];
+    var totalFinal = _alvRounds.slice(0, _alvRounds.length - 1).reduce(function (s, r) { return s + r.guardar; }, 0)
+                   + (lastRound ? lastRound.retorno : 0);
     var rodadaObj = _alvRounds[_alvRodadaAtual] || null;
     document.getElementById('alvSummary').innerHTML = ''
-      + (_alvRodadaAtual >= _alvRounds.length
+      + (concluida
           ? '<div class="alv-summary-chip"><span class="alv-summary-chip-label">Status</span><span class="alv-summary-chip-val alv-summary-chip-val--green">Concluída</span></div>'
+          + '<div class="alv-summary-chip"><span class="alv-summary-chip-label">Total obtido</span><span class="alv-summary-chip-val alv-summary-chip-val--green">' + fmtAlv(totalFinal) + '</span></div>'
           : '<div class="alv-summary-chip">'
           +   '<span class="alv-summary-chip-label">Rodada</span>'
           +   '<span class="alv-summary-chip-val">' + (_alvRodadaAtual + 1) + ' / ' + _alvRounds.length + '</span>'
@@ -202,11 +207,15 @@
           +   '<span class="alv-summary-chip-label">Apostar agora</span>'
           +   '<span class="alv-summary-chip-val">' + fmtAlv(rodadaObj.aposta) + '</span>'
           + '</div>'
-        )
-      + '<div class="alv-summary-chip">'
-      +   '<span class="alv-summary-chip-label">Guardado</span>'
-      +   '<span class="alv-summary-chip-val alv-summary-chip-val--green">' + fmtAlv(totalGuardado) + '</span>'
-      + '</div>';
+          + '<div class="alv-summary-chip">'
+          +   '<span class="alv-summary-chip-label">Guardado</span>'
+          +   '<span class="alv-summary-chip-val alv-summary-chip-val--green">' + fmtAlv(totalGuardado) + '</span>'
+          + '</div>'
+          + '<div class="alv-summary-chip">'
+          +   '<span class="alv-summary-chip-label">Total final</span>'
+          +   '<span class="alv-summary-chip-val">' + fmtAlv(totalFinal) + '</span>'
+          + '</div>'
+        );
 
     var btnCerto = document.getElementById('alvBtnCerto');
     if (btnCerto) btnCerto.disabled = _alvRodadaAtual >= _alvRounds.length;
