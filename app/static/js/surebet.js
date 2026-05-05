@@ -158,9 +158,9 @@
     var aposta = parseFloat(inicial);
     for (var i = 0; i < n; i++) {
       var retorno = aposta * parseFloat(odd);
-      var guardar = parseFloat(inicial);
+      var guardar = aposta;
       rounds.push({ num: i + 1, aposta: aposta, retorno: retorno, guardar: guardar });
-      aposta = retorno - parseFloat(inicial);
+      aposta = retorno - aposta;
     }
     return rounds;
   }

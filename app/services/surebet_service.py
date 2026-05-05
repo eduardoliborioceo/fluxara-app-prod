@@ -1,8 +1,20 @@
 from app.repositories import surebet_repository as repo
 
 
+def _serialize(row: dict) -> dict:
+    return {
+        'id': row['id'],
+        'nome': row['nome'],
+        'aposta_inicial': float(row['aposta_inicial']),
+        'odd': float(row['odd']),
+        'num_rodadas': int(row['num_rodadas']),
+        'rodada_atual': int(row['rodada_atual']),
+        'criado_em': row['criado_em'].isoformat() if row.get('criado_em') else None,
+    }
+
+
 def list_alavancagens(user_id: int) -> list:
-    return [dict(r) for r in repo.list_alavancagens(user_id)]
+    return [_serialize(dict(r)) for r in repo.list_alavancagens(user_id)]
 
 
 def create_alavancagem(user_id: int, nome: str, aposta_inicial,
@@ -17,7 +29,7 @@ def create_alavancagem(user_id: int, nome: str, aposta_inicial,
     if not (2 <= num_rodadas <= 10):
         raise ValueError("Número de rodadas deve ser entre 2 e 10")
     nome = (nome or "").strip() or "Alavancagem"
-    return dict(repo.create_alavancagem(user_id, nome, aposta_inicial, odd, num_rodadas))
+    return _serialize(dict(repo.create_alavancagem(user_id, nome, aposta_inicial, odd, num_rodadas)))
 
 
 def update_rodada(alavancagem_id: int, user_id: int, rodada_atual: int) -> dict:
@@ -27,7 +39,7 @@ def update_rodada(alavancagem_id: int, user_id: int, rodada_atual: int) -> dict:
     row = repo.update_rodada(alavancagem_id, user_id, rodada_atual)
     if not row:
         raise ValueError("Alavancagem não encontrada")
-    return dict(row)
+    return _serialize(dict(row))
 
 
 def delete_alavancagem(alavancagem_id: int, user_id: int):
