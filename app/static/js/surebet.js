@@ -192,14 +192,17 @@
     var totalGuardado = _alvRounds.slice(0, _alvRodadaAtual).reduce(function (s, r) { return s + r.guardar; }, 0);
     var rodadaObj = _alvRounds[_alvRodadaAtual] || null;
     document.getElementById('alvSummary').innerHTML = ''
-      + '<div class="alv-summary-chip">'
-      +   '<span class="alv-summary-chip-label">Rodada</span>'
-      +   '<span class="alv-summary-chip-val">' + (_alvRodadaAtual + 1) + ' / ' + _alvRounds.length + '</span>'
-      + '</div>'
-      + (rodadaObj ? '<div class="alv-summary-chip">'
-      +   '<span class="alv-summary-chip-label">Apostar agora</span>'
-      +   '<span class="alv-summary-chip-val">' + fmtAlv(rodadaObj.aposta) + '</span>'
-      + '</div>' : '')
+      + (_alvRodadaAtual >= _alvRounds.length
+          ? '<div class="alv-summary-chip"><span class="alv-summary-chip-label">Status</span><span class="alv-summary-chip-val alv-summary-chip-val--green">Concluída</span></div>'
+          : '<div class="alv-summary-chip">'
+          +   '<span class="alv-summary-chip-label">Rodada</span>'
+          +   '<span class="alv-summary-chip-val">' + (_alvRodadaAtual + 1) + ' / ' + _alvRounds.length + '</span>'
+          + '</div>'
+          + '<div class="alv-summary-chip">'
+          +   '<span class="alv-summary-chip-label">Apostar agora</span>'
+          +   '<span class="alv-summary-chip-val">' + fmtAlv(rodadaObj.aposta) + '</span>'
+          + '</div>'
+        )
       + '<div class="alv-summary-chip">'
       +   '<span class="alv-summary-chip-label">Guardado</span>'
       +   '<span class="alv-summary-chip-val alv-summary-chip-val--green">' + fmtAlv(totalGuardado) + '</span>'
@@ -351,7 +354,7 @@
   window.alvDeuCerto = function () {
     if (!_alvAtualId) return;
     var novaRodada = _alvRodadaAtual + 1;
-    if (novaRodada >= _alvRounds.length) return;
+    if (novaRodada > _alvRounds.length) return;
 
     fetch('/api/surebet/alavancagem/' + _alvAtualId + '/rodada', {
       method: 'PATCH',
