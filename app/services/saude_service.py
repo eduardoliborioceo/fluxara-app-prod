@@ -389,6 +389,8 @@ _PRODUTOS_PADRAO = [
     {"nome": "Arroz integral cozido",       "kcal": 124, "prot": 2.6,  "carb": 25.8, "gord": 1.0,  "fibras": 2.7, "sodio": 1.0},
     {"nome": "Macarrão cozido",             "kcal": 148, "prot": 5.6,  "carb": 28.2, "gord": 1.0,  "fibras": 1.6, "sodio": 1.0},
     {"nome": "Pão francês",                 "kcal": 289, "prot": 9.4,  "carb": 58.6, "gord": 1.3,  "fibras": 2.3, "sodio": 440.0},
+    {"nome": "Farinha de mandioca",         "kcal": 354, "prot": 1.5,  "carb": 85.3, "gord": 0.5,  "fibras": 6.5, "sodio": 7.0},
+    {"nome": "Farinha de trigo",            "kcal": 360, "prot": 9.8,  "carb": 76.2, "gord": 1.4,  "fibras": 2.3, "sodio": 2.0},
     {"nome": "Pão de forma integral",       "kcal": 253, "prot": 9.5,  "carb": 43.9, "gord": 4.6,  "fibras": 5.2, "sodio": 390.0},
     {"nome": "Aveia em flocos",             "kcal": 394, "prot": 13.9, "carb": 66.6, "gord": 8.5,  "fibras": 9.1, "sodio": 2.0},
     {"nome": "Granola",                     "kcal": 424, "prot": 9.4,  "carb": 63.7, "gord": 16.5, "fibras": 6.0, "sodio": 30.0},
@@ -437,6 +439,7 @@ _PRODUTOS_PADRAO = [
     {"nome": "Mel",                         "kcal": 309, "prot": 0.3,  "carb": 84.0, "gord": 0.0,  "fibras": 0.2, "sodio": 4.0},
     # Bebidas
     {"nome": "Café preto",                  "kcal": 2,   "prot": 0.3,  "carb": 0.0,  "gord": 0.0,  "fibras": 0.0, "sodio": 2.0},
+    {"nome": "Café com açúcar",             "kcal": 42,  "prot": 0.3,  "carb": 10.5, "gord": 0.0,  "fibras": 0.0, "sodio": 2.0},
     {"nome": "Suco de laranja natural",     "kcal": 45,  "prot": 0.7,  "carb": 10.7, "gord": 0.2,  "fibras": 0.2, "sodio": 1.0},
     # Suplementos e oleaginosas
     {"nome": "Whey protein (pó)",           "kcal": 370, "prot": 80.0, "carb": 5.0,  "gord": 5.0,  "fibras": 0.0, "sodio": 150.0},
