@@ -231,13 +231,14 @@
   /* ---- Render lista ---- */
   function renderLista() {
     var container = document.getElementById('alvLista');
-    var vazio = document.getElementById('alvListaVazio');
+    if (!container) return;
     if (!_alvListaCache || !_alvListaCache.length) {
-      container.innerHTML = '';
-      vazio.style.display = 'flex';
+      container.innerHTML = '<div class="alv-lista-vazio" id="alvListaVazio">'
+        + '<i class="bi bi-lightning-charge" style="font-size:1.5rem;color:var(--text-muted)"></i>'
+        + '<div>Nenhuma alavancagem salva</div>'
+        + '</div>';
       return;
     }
-    vazio.style.display = 'none';
     container.innerHTML = _alvListaCache.map(function (alv) {
       var progresso = (alv.rodada_atual || 0) + 1;
       var total = alv.num_rodadas;
@@ -337,7 +338,6 @@
           alvAbrir(data);
         } catch (e) {
           console.error('[alvAbrir]', e);
-          renderLista();
         }
       })
       .catch(function (err) {
