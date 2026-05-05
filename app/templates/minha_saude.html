@@ -300,9 +300,14 @@
     <div class="saude-card">
       <div class="saude-card-header-row">
         <div class="saude-card-label" style="margin-bottom:0">Minha base de produtos</div>
-        <button class="saude-produto-novo-btn" onclick="abrirModalProduto()">
-          <i class="bi bi-plus-lg"></i> Novo
-        </button>
+        <div style="display:flex;gap:8px">
+          <button class="saude-produto-novo-btn" style="background:var(--bg);color:var(--text-muted);border:1px solid var(--border)" onclick="importarPadrao(this)" title="Importar alimentos comuns pré-cadastrados">
+            <i class="bi bi-cloud-download"></i> Importar padrão
+          </button>
+          <button class="saude-produto-novo-btn" onclick="abrirModalProduto()">
+            <i class="bi bi-plus-lg"></i> Novo
+          </button>
+        </div>
       </div>
 
       <div class="saude-produto-search-tab-wrap" style="margin:14px 0 10px">
