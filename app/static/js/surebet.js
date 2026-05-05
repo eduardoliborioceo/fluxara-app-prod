@@ -320,7 +320,12 @@
         num_rodadas: _alvNumRodadas,
       }),
     })
-      .then(function (r) { return r.json(); })
+      .then(function (r) {
+        if (!r.ok) {
+          return r.json().catch(function () { return { error: 'Erro do servidor (' + r.status + ')' }; });
+        }
+        return r.json();
+      })
       .then(function (data) {
         btn.disabled = false;
         if (data.error) { alert(data.error); return; }
@@ -328,10 +333,16 @@
         document.getElementById('alvNome').value = '';
         document.getElementById('alvFormCard').style.display = 'none';
         _alvFormAberto = false;
-        alvAbrir(data);
+        try {
+          alvAbrir(data);
+        } catch (e) {
+          console.error('[alvAbrir]', e);
+          renderLista();
+        }
       })
-      .catch(function () {
+      .catch(function (err) {
         btn.disabled = false;
+        console.error('[alvCriar]', err);
         alert('Erro ao criar. Tente novamente.');
       });
   };
