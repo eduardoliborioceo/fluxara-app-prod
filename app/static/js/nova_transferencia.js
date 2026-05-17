@@ -6,6 +6,7 @@
     setTimeout(function () { toast.classList.remove('show'); }, 2000);
   }
 
+  var contasList = [];
   var efetivado = true;
   var hoje = new Date();
   var pad = function (n) { return n < 10 ? '0' + n : String(n); };
@@ -258,11 +259,21 @@
     });
   }
 
+  function preselectConta(pickerId, selectedElId, hiddenId, contaId) {
+    var found = contasList.find(function (x) { return String(x.id) === String(contaId); });
+    if (!found) return;
+    document.getElementById(hiddenId).value = found.id;
+    var inst = INSTITUICOES[found.instituicao] || INSTITUICOES.outro;
+    document.getElementById(selectedElId).innerHTML = buildLogoHtml(inst, 32)
+      + '<span class="conta-picker-nome">' + esc(found.nome) + '</span>';
+  }
+
   async function loadContas() {
     try {
       var r = await fetch('/api/contas');
       var data = await r.json();
       if (!Array.isArray(data) || !data.length) return;
+      contasList = data;
       buildContaPicker(
         'contaOrigemPicker',
         document.getElementById('contaOrigemTrigger'),
@@ -338,4 +349,63 @@
   });
 
   loadContas();
+
+  var sugDropdown = document.getElementById('tSugDropdown');
+  var sugTimer = null;
+
+  function closeSug() {
+    sugDropdown.innerHTML = '';
+    sugDropdown.classList.remove('open');
+  }
+
+  function applySugestao(item) {
+    document.getElementById('tDescricao').value = item.descricao;
+    if (item.valor) document.getElementById('tValor').value = parseFloat(item.valor).toFixed(2);
+    if (item.conta_origem_id) preselectConta('contaOrigemPicker', 'contaOrigemSelected', 'tContaOrigem', item.conta_origem_id);
+    if (item.conta_destino_id) preselectConta('contaDestinoPicker', 'contaDestinoSelected', 'tContaDestino', item.conta_destino_id);
+    closeSug();
+    document.getElementById('tValor').focus();
+  }
+
+  function renderSug(items) {
+    if (!items.length) { closeSug(); return; }
+    sugDropdown.innerHTML = items.map(function (item) {
+      var contasLabel = (item.conta_origem_nome && item.conta_destino_nome)
+        ? '<span class="sug-cat">' + esc(item.conta_origem_nome) + ' → ' + esc(item.conta_destino_nome) + '</span>'
+        : '';
+      var valor = item.valor
+        ? '<span class="sug-valor">R$ ' + parseFloat(item.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</span>'
+        : '';
+      return '<div class="sug-item" tabindex="0">'
+        + '<div class="sug-desc">' + esc(item.descricao) + '</div>'
+        + '<div class="sug-meta">' + contasLabel + valor + '</div>'
+        + '</div>';
+    }).join('');
+    sugDropdown.querySelectorAll('.sug-item').forEach(function (el, idx) {
+      el.addEventListener('mousedown', function (e) {
+        e.preventDefault();
+        applySugestao(items[idx]);
+      });
+    });
+    sugDropdown.classList.add('open');
+  }
+
+  document.getElementById('tDescricao').addEventListener('input', function () {
+    clearTimeout(sugTimer);
+    var q = this.value.trim();
+    if (q.length < 2) { closeSug(); return; }
+    sugTimer = setTimeout(async function () {
+      try {
+        var r = await fetch('/api/transferencias/sugestoes?q=' + encodeURIComponent(q));
+        var data = await r.json();
+        if (document.getElementById('tDescricao') === document.activeElement) {
+          renderSug(Array.isArray(data) ? data : []);
+        }
+      } catch (e) {}
+    }, 250);
+  });
+
+  document.getElementById('tDescricao').addEventListener('blur', function () {
+    setTimeout(closeSug, 180);
+  });
 })();

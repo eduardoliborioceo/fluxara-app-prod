@@ -564,6 +564,14 @@ def api_add_transferencia():
         return jsonify({"error": str(e)}), 400
 
 
+@bp.route("/transferencias/sugestoes", methods=["GET"])
+@login_required
+def api_sugestoes_transferencias():
+    from app.services import transferencias_service
+    q = request.args.get("q", "").strip()
+    return jsonify(transferencias_service.get_sugestoes_descricao(current_user.id, q))
+
+
 @bp.route("/transferencias/<int:transferencia_id>", methods=["DELETE"])
 @login_required
 def api_delete_transferencia(transferencia_id):

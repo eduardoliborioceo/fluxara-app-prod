@@ -28,7 +28,8 @@
     <div class="lancamento-section">
       <div class="lancamento-field-label">Descrição</div>
       <input type="text" id="tDescricao" class="form-control lancamento-text"
-             placeholder="Descrição da transferência...">
+             placeholder="Descrição da transferência..." autocomplete="off">
+      <div class="sug-dropdown" id="tSugDropdown"></div>
     </div>
 
     <div class="lancamento-section">
@@ -174,12 +175,12 @@
   </div>
 </div>
 
-{% endblock %}
-
 <div class="lanc-save-toast" id="lancSaveToast">
   <i class="bi bi-check-circle-fill"></i>
   <span>Salvo com sucesso!</span>
 </div>
+
+{% endblock %}
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/nova_transferencia.js') }}?v={{ static_v }}"></script>
