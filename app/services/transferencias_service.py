@@ -74,6 +74,12 @@ def _expand_fixa(user_id: int, descricao: str | None, valor: float, data: dict,
     return dict(first_row) if first_row else {}
 
 
+def get_sugestoes_descricao(user_id: int, query: str) -> list:
+    if len(query) < 2:
+        return []
+    return [dict(r) for r in repo.get_sugestoes_descricao(user_id, query)]
+
+
 def remove_transferencia(transferencia_id: int, user_id: int) -> None:
     repo.delete_transferencia(transferencia_id, user_id)
 
