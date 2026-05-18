@@ -682,6 +682,9 @@
   color: var(--text-muted, #64748b);
   transition: background .15s, color .15s, border-color .15s;
   flex-shrink: 0;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
 }
 
 .cartoes-nav-btn:hover:not(:disabled) {
