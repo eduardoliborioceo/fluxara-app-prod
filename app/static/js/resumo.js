@@ -676,7 +676,7 @@
         + '<div class="desp-cat-list">' + top5Html + '</div>'
         + '</div>'
         + (rest.length
-            ? '<div class="desp-cat-extras" id="despCatExtras">' + restHtml + '</div>'
+            ? '<div class="desp-cat-extras" id="despCatExtras" style="display:none">' + restHtml + '</div>'
               + '<button type="button" class="desp-cat-expand-btn" id="despCatExpandBtn">'
               + 'Ver mais ' + moreLabel + ' <i class="bi bi-chevron-down"></i></button>'
             : '');
