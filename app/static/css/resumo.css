@@ -642,6 +642,114 @@
 }
 
 /* ========================
+   CARROSSEL DE CARTÕES
+======================== */
+.cartoes-carousel-wrapper {
+  overflow: hidden;
+}
+
+.cartoes-slides {
+  display: flex;
+  transition: transform .3s cubic-bezier(.4,0,.2,1);
+}
+
+.cartoes-slides .cartao-card {
+  flex: 0 0 100%;
+  width: 100%;
+  border-bottom: none;
+}
+
+.cartoes-carousel-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px 14px;
+  gap: 10px;
+  border-top: 1px solid rgba(0,0,0,.05);
+}
+
+.cartoes-nav-btn {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border, rgba(15,23,42,.09));
+  background: var(--card, #fff);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: .75rem;
+  color: var(--text-muted, #64748b);
+  transition: background .15s, color .15s, border-color .15s;
+  flex-shrink: 0;
+}
+
+.cartoes-nav-btn:hover:not(:disabled) {
+  background: var(--primary, #0d6efd);
+  color: #fff;
+  border-color: var(--primary, #0d6efd);
+}
+
+.cartoes-nav-btn:disabled {
+  opacity: .3;
+  cursor: not-allowed;
+}
+
+.cartoes-dots {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  flex: 1;
+  justify-content: center;
+}
+
+.cartoes-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(0,0,0,.15);
+  transition: background .2s, transform .2s, width .2s;
+  cursor: pointer;
+}
+
+.cartoes-dot.active {
+  background: var(--primary, #0d6efd);
+  transform: scale(1.35);
+}
+
+.cartoes-counter {
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+  flex: 1;
+  text-align: center;
+}
+
+[data-theme="escuro"] .cartoes-carousel-nav {
+  border-top-color: rgba(255,255,255,.06);
+}
+
+[data-theme="escuro"] .cartoes-nav-btn {
+  background: #1e293b;
+  border-color: rgba(255,255,255,.1);
+  color: #94a3b8;
+}
+
+[data-theme="escuro"] .cartoes-nav-btn:hover:not(:disabled) {
+  background: var(--primary, #0d6efd);
+  color: #fff;
+  border-color: var(--primary, #0d6efd);
+}
+
+[data-theme="escuro"] .cartoes-dot {
+  background: rgba(255,255,255,.2);
+}
+
+[data-theme="escuro"] .cartoes-dot.active {
+  background: var(--primary, #0d6efd);
+}
+
+/* ========================
    FAB
 ======================== */
 .fab-wrapper {
