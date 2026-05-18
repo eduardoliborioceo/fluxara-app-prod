@@ -278,9 +278,9 @@
         + '<div class="cartoes-slides" id="cartoesSlidesInner">' + cardsHtml + '</div>'
         + '</div>'
         + '<div class="cartoes-carousel-nav">'
-        + '<button class="cartoes-nav-btn" id="cartoesPrev" disabled><i class="bi bi-chevron-left"></i></button>'
+        + '<button type="button" class="cartoes-nav-btn" id="cartoesPrev" disabled><i class="bi bi-chevron-left"></i></button>'
         + indicatorHtml
-        + '<button class="cartoes-nav-btn" id="cartoesNext"><i class="bi bi-chevron-right"></i></button>'
+        + '<button type="button" class="cartoes-nav-btn" id="cartoesNext"><i class="bi bi-chevron-right"></i></button>'
         + '</div>';
 
       var slides = document.getElementById('cartoesSlidesInner');
@@ -304,8 +304,13 @@
         }
       }
 
-      prevBtn.addEventListener('click', function () { if (current > 0) goTo(current - 1); });
-      nextBtn.addEventListener('click', function () { if (current < total - 1) goTo(current + 1); });
+      function navPrev() { if (current > 0) goTo(current - 1); }
+      function navNext() { if (current < total - 1) goTo(current + 1); }
+
+      prevBtn.addEventListener('touchend', function (e) { e.preventDefault(); navPrev(); }, { passive: false });
+      prevBtn.addEventListener('click', navPrev);
+      nextBtn.addEventListener('touchend', function (e) { e.preventDefault(); navNext(); }, { passive: false });
+      nextBtn.addEventListener('click', navNext);
 
       if (useDots) {
         document.querySelectorAll('#cartoesDots .cartoes-dot').forEach(function (d, i) {
