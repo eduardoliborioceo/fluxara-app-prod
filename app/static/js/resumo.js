@@ -233,9 +233,8 @@
         return;
       }
       var totalDisp = 0;
-      var mes = month + 1;
       var faturaLabel = isFuturoMes() ? 'Fatura prevista' : 'Fatura aberta';
-      body.innerHTML = data.map(function (c) {
+      var cardsHtml = data.map(function (c) {
         var limDisp = parseFloat(c.limite_disponivel != null ? c.limite_disponivel : c.limite) || 0;
         var fatAtual = parseFloat(c.fatura_atual || 0);
         if (limDisp > 0) totalDisp += limDisp;
@@ -259,14 +258,85 @@
           + '</div>';
       }).join('');
       totalEl.textContent = formatMoney(totalDisp);
+
+      if (data.length === 1) {
+        body.innerHTML = cardsHtml;
+        body.querySelector('.cartao-card').addEventListener('click', function () {
+          window.location.href = '/cartao/' + this.dataset.id + '/extrato?mes=' + this.dataset.mes + '&ano=' + this.dataset.ano;
+        });
+        return;
+      }
+
+      var useDots = data.length <= 7;
+      var indicatorHtml = useDots
+        ? '<div class="cartoes-dots" id="cartoesDots">'
+            + data.map(function (_, i) { return '<span class="cartoes-dot' + (i === 0 ? ' active' : '') + '"></span>'; }).join('')
+            + '</div>'
+        : '<span class="cartoes-counter" id="cartoesCounter">1 / ' + data.length + '</span>';
+
+      body.innerHTML = '<div class="cartoes-carousel-wrapper">'
+        + '<div class="cartoes-slides" id="cartoesSlidesInner">' + cardsHtml + '</div>'
+        + '</div>'
+        + '<div class="cartoes-carousel-nav">'
+        + '<button class="cartoes-nav-btn" id="cartoesPrev" disabled><i class="bi bi-chevron-left"></i></button>'
+        + indicatorHtml
+        + '<button class="cartoes-nav-btn" id="cartoesNext"><i class="bi bi-chevron-right"></i></button>'
+        + '</div>';
+
+      var slides = document.getElementById('cartoesSlidesInner');
+      var prevBtn = document.getElementById('cartoesPrev');
+      var nextBtn = document.getElementById('cartoesNext');
+      var total = data.length;
+      var current = 0;
+      var isSwiping = false;
+
+      function goTo(idx) {
+        current = idx;
+        slides.style.transform = 'translateX(-' + (100 * current) + '%)';
+        prevBtn.disabled = current === 0;
+        nextBtn.disabled = current === total - 1;
+        if (useDots) {
+          document.querySelectorAll('#cartoesDots .cartoes-dot').forEach(function (d, i) {
+            d.classList.toggle('active', i === current);
+          });
+        } else {
+          document.getElementById('cartoesCounter').textContent = (current + 1) + ' / ' + total;
+        }
+      }
+
+      prevBtn.addEventListener('click', function () { if (current > 0) goTo(current - 1); });
+      nextBtn.addEventListener('click', function () { if (current < total - 1) goTo(current + 1); });
+
+      if (useDots) {
+        document.querySelectorAll('#cartoesDots .cartoes-dot').forEach(function (d, i) {
+          d.addEventListener('click', function () { goTo(i); });
+        });
+      }
+
+      var touchStartX = 0;
+      slides.addEventListener('touchstart', function (e) {
+        touchStartX = e.touches[0].clientX;
+        isSwiping = false;
+      }, { passive: true });
+      slides.addEventListener('touchmove', function (e) {
+        if (Math.abs(e.touches[0].clientX - touchStartX) > 8) isSwiping = true;
+      }, { passive: true });
+      slides.addEventListener('touchend', function (e) {
+        var diff = touchStartX - e.changedTouches[0].clientX;
+        if (isSwiping && Math.abs(diff) > 40) {
+          if (diff > 0 && current < total - 1) goTo(current + 1);
+          else if (diff < 0 && current > 0) goTo(current - 1);
+        }
+      });
+
       body.querySelectorAll('.cartao-card').forEach(function (el) {
         el.addEventListener('click', function () {
-          var id = this.dataset.id;
-          var m  = this.dataset.mes;
-          var a  = this.dataset.ano;
-          window.location.href = '/cartao/' + id + '/extrato?mes=' + m + '&ano=' + a;
+          if (isSwiping) return;
+          window.location.href = '/cartao/' + this.dataset.id + '/extrato?mes=' + this.dataset.mes + '&ano=' + this.dataset.ano;
         });
       });
+
+      goTo(0);
     } catch (e) {
       document.getElementById('cartoesBody').innerHTML =
         '<div class="text-center py-2 text-muted small">Erro ao carregar cartões.</div>';
