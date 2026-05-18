@@ -94,6 +94,7 @@
     loadContas();
     loadCartoes();
     loadDespesasPorConta();
+    loadDespesasPorCategoria();
   });
 
   document.getElementById('btnMesPosterior').addEventListener('click', function () {
@@ -104,6 +105,7 @@
     loadContas();
     loadCartoes();
     loadDespesasPorConta();
+    loadDespesasPorCategoria();
   });
 
   updateMesLabel();
@@ -616,6 +618,86 @@
     }
   }
 
+  async function loadDespesasPorCategoria() {
+    var body    = document.getElementById('despesasCatBody');
+    var totalEl = document.getElementById('totalDespesasCat');
+    try {
+      var mes = month + 1;
+      var r   = await fetch('/api/resumo/despesas-por-categoria?mes=' + mes + '&ano=' + year);
+      var data = await r.json();
+      if (!Array.isArray(data) || !data.length) {
+        body.innerHTML = '<div class="text-center py-3 text-muted small">'
+          + '<i class="bi bi-tags d-block mb-1" style="font-size:1.8rem;opacity:.3"></i>'
+          + 'Nenhuma despesa neste mês</div>';
+        totalEl.textContent = 'R$ 0,00';
+        return;
+      }
+
+      var grand = data.reduce(function (s, c) { return s + parseFloat(c.total || 0); }, 0);
+      totalEl.textContent = formatMoney(grand);
+
+      var COLORS = ['#0d6efd','#dc3545','#fd7e14','#198754','#6f42c1','#20c997','#e83e8c','#ffc107'];
+      var top5 = data.slice(0, 5);
+      var rest = data.slice(5);
+
+      var conicStops = [];
+      var acc = 0;
+      data.forEach(function (c, i) {
+        var pct   = grand > 0 ? parseFloat(c.total || 0) / grand * 100 : 0;
+        var color = COLORS[i % COLORS.length];
+        conicStops.push(color + ' ' + acc.toFixed(2) + '% ' + (acc + pct).toFixed(2) + '%');
+        acc += pct;
+      });
+      var gradient = 'conic-gradient(' + conicStops.join(', ') + ')';
+
+      function buildRow(c, i) {
+        var val   = parseFloat(c.total || 0);
+        var pct   = grand > 0 ? Math.round(val / grand * 100) : 0;
+        var color = COLORS[i % COLORS.length];
+        return '<div class="desp-cat-row">'
+          + '<span class="desp-cat-dot" style="background:' + color + '"></span>'
+          + '<div class="desp-cat-info">'
+          +   '<div class="desp-cat-nome">' + esc(c.categoria_nome) + '</div>'
+          +   '<div class="desp-cat-bar-wrap"><div class="desp-cat-bar" style="width:' + pct + '%;background:' + color + '"></div></div>'
+          + '</div>'
+          + '<div class="desp-cat-right">'
+          +   '<div class="desp-cat-valor">' + formatMoney(val) + '</div>'
+          +   '<div class="desp-cat-pct">' + pct + '%</div>'
+          + '</div>'
+          + '</div>';
+      }
+
+      var top5Html = top5.map(buildRow).join('');
+      var restHtml = rest.map(function (c, i) { return buildRow(c, i + 5); }).join('');
+      var moreLabel = rest.length + ' ' + (rest.length === 1 ? 'categoria' : 'categorias');
+
+      body.innerHTML = '<div class="desp-cat-layout">'
+        + '<div class="desp-cat-chart-wrap"><div class="desp-cat-pie" style="background:' + gradient + '"></div></div>'
+        + '<div class="desp-cat-list">' + top5Html + '</div>'
+        + '</div>'
+        + (rest.length
+            ? '<div class="desp-cat-extras" id="despCatExtras">' + restHtml + '</div>'
+              + '<button type="button" class="desp-cat-expand-btn" id="despCatExpandBtn">'
+              + 'Ver mais ' + moreLabel + ' <i class="bi bi-chevron-down"></i></button>'
+            : '');
+
+      if (rest.length) {
+        var btn     = document.getElementById('despCatExpandBtn');
+        var extras  = document.getElementById('despCatExtras');
+        var expanded = false;
+        btn.addEventListener('click', function () {
+          expanded = !expanded;
+          extras.style.display = expanded ? '' : 'none';
+          btn.innerHTML = expanded
+            ? 'Recolher <i class="bi bi-chevron-up"></i>'
+            : 'Ver mais ' + moreLabel + ' <i class="bi bi-chevron-down"></i>';
+        });
+      }
+    } catch (e) {
+      body.innerHTML = '<div class="text-center py-2 text-muted small">Erro ao carregar.</div>';
+    }
+  }
+
   if (window.innerWidth < 992) {
     applyCardOrder();
     initDragDrop();
@@ -625,4 +707,5 @@
   loadVisaoGeral();
   loadProjecao();
   loadDespesasPorConta();
+  loadDespesasPorCategoria();
 })();
