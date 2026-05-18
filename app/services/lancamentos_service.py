@@ -326,6 +326,11 @@ def get_despesas_por_conta(user_id: int, mes: int, ano: int) -> list:
     return [dict(r) for r in rows]
 
 
+def get_despesas_por_categoria(user_id: int, mes: int, ano: int) -> list:
+    rows = repo.get_despesas_por_categoria(user_id, mes, ano)
+    return [dict(r) for r in rows]
+
+
 def get_sugestoes_descricao(user_id: int, tipo: str, query: str, limit: int = 6) -> list:
     if not query or len(query.strip()) < 2:
         return []

@@ -501,6 +501,21 @@ def resumo_despesas_por_conta():
     return jsonify(data)
 
 
+@bp.route("/resumo/despesas-por-categoria", methods=["GET"])
+@login_required
+def resumo_despesas_por_categoria():
+    from app.services import lancamentos_service
+    try:
+        mes = int(request.args.get("mes", 0))
+        ano = int(request.args.get("ano", 0))
+        if mes < 1 or mes > 12 or ano < 2000:
+            raise ValueError()
+    except (ValueError, TypeError):
+        return jsonify({"error": "Parâmetros inválidos"}), 400
+    data = lancamentos_service.get_despesas_por_categoria(current_user.id, mes, ano)
+    return jsonify(data)
+
+
 @bp.route("/lancamentos", methods=["POST"])
 @login_required
 def api_add_lancamento():

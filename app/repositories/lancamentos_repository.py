@@ -306,6 +306,28 @@ def get_despesas_por_conta(user_id: int, mes: int, ano: int) -> list:
             return cur.fetchall()
 
 
+def get_despesas_por_categoria(user_id: int, mes: int, ano: int) -> list:
+    with get_db() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("""
+                SELECT
+                    COALESCE(cat.id, 0)          AS categoria_id,
+                    COALESCE(cat.nome, 'Sem categoria') AS categoria_nome,
+                    COALESCE(cat.icone, 'bi-tag') AS categoria_icone,
+                    SUM(l.valor)                  AS total
+                FROM lancamentos l
+                LEFT JOIN categorias cat ON l.categoria_id = cat.id
+                WHERE l.user_id = %s
+                  AND l.tipo IN ('despesa', 'despesa_cartao')
+                  AND l.ativo = TRUE
+                  AND EXTRACT(MONTH FROM l.data_vencimento) = %s
+                  AND EXTRACT(YEAR  FROM l.data_vencimento) = %s
+                GROUP BY cat.id, cat.nome, cat.icone
+                ORDER BY total DESC
+            """, (user_id, mes, ano))
+            return cur.fetchall()
+
+
 def get_sugestoes_descricao(user_id: int, tipo: str, query: str, limit: int = 6) -> list:
     with get_db() as conn:
         with conn.cursor(row_factory=dict_row) as cur:

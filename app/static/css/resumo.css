@@ -306,6 +306,162 @@
 }
 
 /* ========================
+   CARD DESPESAS POR CATEGORIA
+======================== */
+.desp-cat-layout {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.desp-cat-chart-wrap {
+  flex-shrink: 0;
+  width: 90px;
+  height: 90px;
+  position: relative;
+}
+
+.desp-cat-pie {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  position: relative;
+}
+
+.desp-cat-pie::after {
+  content: '';
+  position: absolute;
+  inset: 22px;
+  border-radius: 50%;
+  background: var(--card, #fff);
+}
+
+.desp-cat-list {
+  flex: 1;
+  min-width: 0;
+}
+
+.desp-cat-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border, rgba(15,23,42,.07));
+}
+
+.desp-cat-row:last-child { border-bottom: none; padding-bottom: 0; }
+.desp-cat-row:first-child { padding-top: 0; }
+
+.desp-cat-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.desp-cat-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.desp-cat-nome {
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--text, #1e293b);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+
+.desp-cat-bar-wrap {
+  height: 4px;
+  background: rgba(0,0,0,.07);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.desp-cat-bar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width .4s ease;
+  min-width: 3px;
+}
+
+.desp-cat-right {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.desp-cat-valor {
+  font-size: .8rem;
+  font-weight: 700;
+  color: var(--text, #1e293b);
+  white-space: nowrap;
+}
+
+.desp-cat-pct {
+  font-size: .68rem;
+  color: var(--text-muted, #64748b);
+}
+
+.desp-cat-extras {
+  display: none;
+  border-top: 1px solid var(--border, rgba(15,23,42,.07));
+  margin-top: 4px;
+  padding-top: 4px;
+}
+
+.desp-cat-extras .desp-cat-row:first-child {
+  padding-top: 6px;
+}
+
+.desp-cat-expand-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  justify-content: center;
+  width: 100%;
+  padding: 7px;
+  margin-top: 10px;
+  background: none;
+  border: 1px solid var(--border, rgba(15,23,42,.09));
+  border-radius: 8px;
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+  cursor: pointer;
+  transition: background .15s, color .15s;
+  touch-action: manipulation;
+}
+
+.desp-cat-expand-btn:hover {
+  background: rgba(0,0,0,.04);
+  color: var(--text, #1e293b);
+}
+
+[data-theme="escuro"] .desp-cat-bar-wrap {
+  background: rgba(255,255,255,.1);
+}
+
+[data-theme="escuro"] .desp-cat-pie::after {
+  background: #1e293b;
+}
+
+[data-theme="escuro"] .desp-cat-extras {
+  border-top-color: rgba(255,255,255,.06);
+}
+
+[data-theme="escuro"] .desp-cat-expand-btn {
+  border-color: rgba(255,255,255,.1);
+}
+
+[data-theme="escuro"] .desp-cat-expand-btn:hover {
+  background: rgba(255,255,255,.05);
+  color: #f1f5f9;
+}
+
+/* ========================
    CARD VISÃO GERAL
 ======================== */
 .visao-row {
