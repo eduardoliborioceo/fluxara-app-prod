@@ -46,6 +46,12 @@ def surebet():
     return render_template("surebet.html", active_menu="surebet")
 
 
+@bp.route("/apostas")
+@login_required
+def apostas():
+    return render_template("apostas.html", active_menu="apostas")
+
+
 @bp.route("/minha-saude")
 @login_required
 def minha_saude():

@@ -1142,3 +1142,31 @@ def api_set_lancamento_tags(lancamento_id):
     except Exception as e:
         logger.error("set_lancamento_tags error lancamento=%s: %s", lancamento_id, e)
         return jsonify({"error": str(e)}), 400
+
+
+# =============================================================
+# APOSTAS — SOFASCORE
+# =============================================================
+
+@bp.route("/apostas/partidas", methods=["GET"])
+@login_required
+def apostas_partidas():
+    from app.services import apostas_service
+    from datetime import date
+
+    date_str = request.args.get("date", "").strip()
+    if not date_str:
+        date_str = date.today().isoformat()
+
+    try:
+        min_diff = int(request.args.get("min_diff", 5))
+        min_diff = max(1, min(30, min_diff))
+    except (ValueError, TypeError):
+        min_diff = 5
+
+    try:
+        matches = apostas_service.get_mismatch_matches(date_str, min_diff)
+        return jsonify({"matches": matches, "total": len(matches), "date": date_str, "min_diff": min_diff})
+    except Exception as exc:
+        logger.exception("apostas_partidas error: %s", exc)
+        return jsonify({"error": "Erro ao buscar partidas"}), 500
