@@ -909,6 +909,295 @@
 }
 
 /* ========================
+   OCULTAR / MOSTRAR VALORES
+======================== */
+.mes-filtro {
+  position: relative;
+}
+
+.btn-toggle-valores {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 6px;
+  font-size: 1rem;
+  color: var(--text-muted, #64748b);
+  transition: color .15s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  line-height: 1;
+}
+
+.btn-toggle-valores:hover {
+  color: var(--text, #1e293b);
+}
+
+.valores-ocultos #totalContas,
+.valores-ocultos #totalReceitas,
+.valores-ocultos #totalDespesas,
+.valores-ocultos #totalResultado,
+.valores-ocultos .conta-saldo,
+.valores-ocultos .conta-saldo-previsto {
+  filter: blur(6px);
+  user-select: none;
+}
+
+/* ========================
+   GERENCIAR TELA INICIAL
+======================== */
+.gerenciar-btn-wrap {
+  text-align: center;
+  padding: 4px 16px 8px;
+}
+
+.gerenciar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: none;
+  border: 1.5px solid var(--border, rgba(15,23,42,.09));
+  border-radius: 10px;
+  font-size: .84rem;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background .15s, color .15s;
+}
+
+.gerenciar-btn:hover {
+  background: rgba(0,0,0,.04);
+  color: var(--text, #1e293b);
+}
+
+.gerenciar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s;
+  backdrop-filter: blur(2px);
+}
+
+.gerenciar-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.gerenciar-sheet {
+  background: var(--card, #fff);
+  width: 100%;
+  border-radius: 20px 20px 0 0;
+  overflow: hidden;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(100%);
+  transition: transform .3s cubic-bezier(.4,0,.2,1);
+}
+
+.gerenciar-overlay.open .gerenciar-sheet {
+  transform: translateY(0);
+}
+
+.gerenciar-handle-bar {
+  width: 40px;
+  height: 4px;
+  background: rgba(0,0,0,.12);
+  border-radius: 2px;
+  margin: 12px auto 0;
+  flex-shrink: 0;
+}
+
+.gerenciar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 8px;
+  flex-shrink: 0;
+}
+
+.gerenciar-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text, #1e293b);
+  margin: 0;
+}
+
+.gerenciar-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: rgba(0,0,0,.06);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: .85rem;
+  color: var(--text-muted, #64748b);
+  touch-action: manipulation;
+}
+
+.gerenciar-desc {
+  font-size: .8rem;
+  color: var(--text-muted, #64748b);
+  padding: 0 20px 12px;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.gerenciar-list {
+  padding: 0 16px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.gerenciar-item {
+  display: flex;
+  align-items: center;
+  padding: 14px 12px;
+  background: var(--card, #fff);
+  border: 1px solid var(--border, rgba(15,23,42,.09));
+  border-radius: 12px;
+  margin-bottom: 8px;
+  cursor: default;
+  transition: box-shadow .15s;
+}
+
+.gerenciar-item.ger-over-top {
+  border-top: 2px solid var(--primary, #0d6efd);
+}
+
+.gerenciar-item.ger-over-bottom {
+  border-bottom: 2px solid var(--primary, #0d6efd);
+}
+
+.gerenciar-item-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.gerenciar-item-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(0,0,0,.04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.gerenciar-item-nome {
+  font-size: .9rem;
+  font-weight: 600;
+  color: var(--text, #1e293b);
+}
+
+.gerenciar-item-handle {
+  font-size: 1.1rem;
+  color: #94a3b8;
+  cursor: grab;
+  padding: 4px;
+  touch-action: none;
+  flex-shrink: 0;
+}
+
+.gerenciar-item-handle:active {
+  cursor: grabbing;
+}
+
+.gerenciar-footer {
+  padding: 16px 16px 24px;
+  flex-shrink: 0;
+}
+
+.gerenciar-save {
+  width: 100%;
+  padding: 14px;
+  background: var(--primary, #0d6efd);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: .95rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: opacity .15s;
+  touch-action: manipulation;
+}
+
+.gerenciar-save:disabled {
+  opacity: .7;
+}
+
+@media (min-width: 576px) {
+  .gerenciar-overlay {
+    align-items: center;
+    justify-content: center;
+  }
+  .gerenciar-sheet {
+    border-radius: 16px;
+    max-width: 440px;
+    max-height: 80vh;
+    transform: scale(.95);
+  }
+  .gerenciar-overlay.open .gerenciar-sheet {
+    transform: scale(1);
+  }
+}
+
+[data-theme="escuro"] .gerenciar-sheet {
+  background: #1e293b;
+}
+
+[data-theme="escuro"] .gerenciar-item {
+  background: #1e293b;
+  border-color: rgba(255,255,255,.1);
+}
+
+[data-theme="escuro"] .gerenciar-item-icon {
+  background: rgba(255,255,255,.07);
+}
+
+[data-theme="escuro"] .gerenciar-item-nome,
+[data-theme="escuro"] .gerenciar-title {
+  color: #f1f5f9;
+}
+
+[data-theme="escuro"] .gerenciar-handle-bar {
+  background: rgba(255,255,255,.2);
+}
+
+[data-theme="escuro"] .gerenciar-close {
+  background: rgba(255,255,255,.1);
+  color: #94a3b8;
+}
+
+[data-theme="escuro"] .gerenciar-btn {
+  border-color: rgba(255,255,255,.12);
+  color: #94a3b8;
+}
+
+[data-theme="escuro"] .gerenciar-btn:hover {
+  background: rgba(255,255,255,.06);
+  color: #f1f5f9;
+}
+
+/* ========================
    FAB
 ======================== */
 .fab-wrapper {

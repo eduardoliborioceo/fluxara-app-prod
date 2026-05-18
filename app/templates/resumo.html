@@ -17,14 +17,16 @@
     <button id="btnMesPosterior" title="Próximo mês">
       <i class="bi bi-chevron-right"></i>
     </button>
+    <button type="button" id="btnToggleValores" class="btn-toggle-valores" title="Ocultar valores">
+      <i class="bi bi-eye" id="iconToggleValores"></i>
+    </button>
   </div>
 
   <div id="cardsContainer">
 
   <!-- ====== CARD CONTAS ====== -->
-  <div class="resumo-card card" data-card-id="contas" draggable="true">
+  <div class="resumo-card card" data-card-id="contas">
     <div class="card-header-custom">
-      <i class="bi bi-grip-vertical card-drag-handle"></i>
       <i class="bi bi-wallet2 text-primary"></i> Contas
       <span class="ms-auto text-muted fw-normal" style="font-size:.8rem">Saldo total</span>
       <span class="ms-2 fw-bold" id="totalContas" style="white-space:nowrap">R$ 0,00</span>
@@ -40,9 +42,8 @@
   <div class="resumo-right-col" id="resumoRightCol">
 
   <!-- ====== CARD VISÃO GERAL ====== -->
-  <div class="resumo-card card" data-card-id="visao" draggable="true">
+  <div class="resumo-card card" data-card-id="visao">
     <div class="card-header-custom">
-      <i class="bi bi-grip-vertical card-drag-handle"></i>
       <i class="bi bi-bar-chart-line text-primary"></i> Visão Geral
     </div>
     <div class="card-body">
@@ -64,9 +65,8 @@
   </div>
 
   <!-- ====== CARD CARTÃO DE CRÉDITO ====== -->
-  <div class="resumo-card card" data-card-id="cartoes" draggable="true">
+  <div class="resumo-card card" data-card-id="cartoes">
     <div class="card-header-custom">
-      <i class="bi bi-grip-vertical card-drag-handle"></i>
       <i class="bi bi-credit-card text-primary"></i> Cartão de Crédito
       <span class="ms-auto text-muted fw-normal" style="font-size:.8rem">Limite disponível</span>
       <span class="ms-2 fw-bold" id="totalCartoes" style="white-space:nowrap">R$ 0,00</span>
@@ -82,9 +82,8 @@
   </div><!-- /.resumo-right-col -->
 
   <!-- ====== CARD PROJEÇÃO DE SALDO ====== -->
-  <div class="resumo-card card" data-card-id="projecao" draggable="true">
+  <div class="resumo-card card" data-card-id="projecao">
     <div class="card-header-custom">
-      <i class="bi bi-grip-vertical card-drag-handle"></i>
       <i class="bi bi-graph-up-arrow text-primary"></i> Projeção de Saldo
       <span class="ms-auto text-muted fw-normal" style="font-size:.8rem">próximos 60 dias</span>
     </div>
@@ -103,9 +102,8 @@
   </div>
 
   <!-- ====== CARD DESPESAS POR CONTA ====== -->
-  <div class="resumo-card card" data-card-id="despesas-conta" draggable="true">
+  <div class="resumo-card card" data-card-id="despesas-conta">
     <div class="card-header-custom">
-      <i class="bi bi-grip-vertical card-drag-handle"></i>
       <i class="bi bi-pie-chart text-danger"></i> Despesas por Conta
       <span class="ms-auto text-muted fw-normal" style="font-size:.8rem">Total</span>
       <span class="ms-2 fw-bold text-danger" id="totalDespesasConta" style="white-space:nowrap">R$ 0,00</span>
@@ -119,9 +117,8 @@
   </div>
 
   <!-- ====== CARD DESPESAS POR CATEGORIA ====== -->
-  <div class="resumo-card card" data-card-id="despesas-cat" draggable="true">
+  <div class="resumo-card card" data-card-id="despesas-cat">
     <div class="card-header-custom">
-      <i class="bi bi-grip-vertical card-drag-handle"></i>
       <i class="bi bi-tags text-warning"></i> Despesas por Categoria
       <span class="ms-auto text-muted fw-normal" style="font-size:.8rem">Total</span>
       <span class="ms-2 fw-bold text-danger" id="totalDespesasCat" style="white-space:nowrap">R$ 0,00</span>
@@ -136,6 +133,34 @@
 
   </div>
 
+  <!-- ====== BOTÃO GERENCIAR ====== -->
+  <div class="gerenciar-btn-wrap">
+    <button type="button" class="gerenciar-btn" id="abrirGerenciar">
+      <i class="bi bi-grid-3x2-gap"></i>
+      Gerenciar tela inicial
+    </button>
+  </div>
+
+</div>
+
+<!-- ====== MODAL GERENCIAR TELA INICIAL ====== -->
+<div class="gerenciar-overlay" id="gerenciarOverlay">
+  <div class="gerenciar-sheet" id="gerenciarSheet">
+    <div class="gerenciar-handle-bar"></div>
+    <div class="gerenciar-header">
+      <h2 class="gerenciar-title">Tela Inicial</h2>
+      <button type="button" class="gerenciar-close" id="gerenciarClose" aria-label="Fechar">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <p class="gerenciar-desc">Segure <i class="bi bi-grip-vertical"></i> e arraste para reordenar</p>
+    <div class="gerenciar-list" id="gerenciarList"></div>
+    <div class="gerenciar-footer">
+      <button type="button" class="gerenciar-save" id="gerenciarSave">
+        <i class="bi bi-check-lg"></i> Salvar ordem
+      </button>
+    </div>
+  </div>
 </div>
 
 <!-- ====== FAB ====== -->
