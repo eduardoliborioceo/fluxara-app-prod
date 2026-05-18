@@ -698,10 +698,186 @@
     }
   }
 
-  if (window.innerWidth < 992) {
-    applyCardOrder();
-    initDragDrop();
+  // ── Ocultar / mostrar valores ───────────────────────────────────────────────
+  var VALORES_HIDDEN_KEY = 'fluxara_valores_ocultos';
+  var cardsContainer = document.getElementById('cardsContainer');
+  var btnToggle      = document.getElementById('btnToggleValores');
+  var iconToggle     = document.getElementById('iconToggleValores');
+
+  function setValoresOcultos(hidden) {
+    cardsContainer.classList.toggle('valores-ocultos', hidden);
+    iconToggle.className = hidden ? 'bi bi-eye-slash' : 'bi bi-eye';
+    btnToggle.title      = hidden ? 'Mostrar valores' : 'Ocultar valores';
+    localStorage.setItem(VALORES_HIDDEN_KEY, hidden ? '1' : '0');
   }
+
+  if (localStorage.getItem(VALORES_HIDDEN_KEY) === '1') setValoresOcultos(true);
+
+  btnToggle.addEventListener('click', function () {
+    setValoresOcultos(!cardsContainer.classList.contains('valores-ocultos'));
+  });
+
+  // ── Gerenciar tela inicial ───────────────────────────────────────────────────
+  var CARD_META = {
+    'contas':         { nome: 'Contas',                icone: 'bi-wallet2',        cor: '#0d6efd' },
+    'visao':          { nome: 'Visão Geral',            icone: 'bi-bar-chart-line', cor: '#0d6efd' },
+    'cartoes':        { nome: 'Cartão de Crédito',      icone: 'bi-credit-card',    cor: '#0d6efd' },
+    'projecao':       { nome: 'Projeção de Saldo',      icone: 'bi-graph-up-arrow', cor: '#0d6efd' },
+    'despesas-conta': { nome: 'Despesas por Conta',     icone: 'bi-pie-chart',      cor: '#dc3545' },
+    'despesas-cat':   { nome: 'Despesas por Categoria', icone: 'bi-tags',           cor: '#f59e0b' },
+  };
+
+  function initGerenciar() {
+    var overlay  = document.getElementById('gerenciarOverlay');
+    var sheet    = document.getElementById('gerenciarSheet');
+    var list     = document.getElementById('gerenciarList');
+    var saveBtn  = document.getElementById('gerenciarSave');
+    var openBtn  = document.getElementById('abrirGerenciar');
+    var closeBtn = document.getElementById('gerenciarClose');
+    if (!overlay || !list || !saveBtn || !openBtn) return;
+
+    var gerDragSrc   = null;
+    var gerTouchItem = null;
+    var gerTouchClone = null;
+    var gerTouchOffY  = 0;
+
+    function clearGerOver() {
+      list.querySelectorAll('.gerenciar-item').forEach(function (i) {
+        i.classList.remove('ger-over-top', 'ger-over-bottom');
+      });
+    }
+
+    function buildList(order) {
+      list.innerHTML = '';
+      order.forEach(function (id) {
+        var meta = CARD_META[id];
+        if (!meta) return;
+        var item = document.createElement('div');
+        item.className   = 'gerenciar-item';
+        item.dataset.cardId = id;
+        item.draggable   = true;
+        item.innerHTML   = '<div class="gerenciar-item-left">'
+          + '<div class="gerenciar-item-icon" style="color:' + meta.cor + '"><i class="bi ' + meta.icone + '"></i></div>'
+          + '<span class="gerenciar-item-nome">' + meta.nome + '</span>'
+          + '</div>'
+          + '<i class="bi bi-grip-vertical gerenciar-item-handle"></i>';
+        list.appendChild(item);
+      });
+    }
+
+    function getCurrentOrder() {
+      return Array.from(cardsContainer.querySelectorAll('[data-card-id]')).map(function (el) {
+        return el.dataset.cardId;
+      });
+    }
+
+    // Desktop drag (delegated to list element)
+    list.addEventListener('dragstart', function (e) {
+      var item = e.target.closest('.gerenciar-item');
+      if (!item) return;
+      gerDragSrc = item;
+      setTimeout(function () { gerDragSrc && (gerDragSrc.style.opacity = '0.4'); }, 0);
+    });
+    list.addEventListener('dragend', function () {
+      if (gerDragSrc) gerDragSrc.style.opacity = '';
+      clearGerOver();
+      gerDragSrc = null;
+    });
+    list.addEventListener('dragover', function (e) {
+      e.preventDefault();
+      var item = e.target.closest('.gerenciar-item');
+      if (!item || !gerDragSrc || item === gerDragSrc) return;
+      clearGerOver();
+      var rect = item.getBoundingClientRect();
+      item.classList.add(e.clientY < rect.top + rect.height / 2 ? 'ger-over-top' : 'ger-over-bottom');
+    });
+    list.addEventListener('drop', function (e) {
+      e.preventDefault();
+      var item = e.target.closest('.gerenciar-item');
+      if (!item || !gerDragSrc || item === gerDragSrc) return;
+      var rect = item.getBoundingClientRect();
+      if (e.clientY < rect.top + rect.height / 2) list.insertBefore(gerDragSrc, item);
+      else list.insertBefore(gerDragSrc, item.nextSibling);
+      clearGerOver();
+    });
+
+    // Touch drag (non-passive to allow preventDefault on scroll)
+    list.addEventListener('touchstart', function (e) {
+      var handle = e.target.closest('.gerenciar-item-handle');
+      if (!handle) return;
+      gerTouchItem = handle.closest('.gerenciar-item');
+      var touch = e.touches[0];
+      var rect  = gerTouchItem.getBoundingClientRect();
+      gerTouchOffY  = touch.clientY - rect.top;
+      gerTouchClone = gerTouchItem.cloneNode(true);
+      gerTouchClone.style.cssText = 'position:fixed;z-index:9999;left:' + rect.left + 'px;width:'
+        + rect.width + 'px;top:' + (touch.clientY - gerTouchOffY)
+        + 'px;opacity:.85;pointer-events:none;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);background:var(--card,#fff);';
+      document.body.appendChild(gerTouchClone);
+      gerTouchItem.style.opacity = '0.3';
+    }, { passive: true });
+
+    list.addEventListener('touchmove', function (e) {
+      if (!gerTouchItem) return;
+      e.preventDefault();
+      var touch  = e.touches[0];
+      gerTouchClone.style.top = (touch.clientY - gerTouchOffY) + 'px';
+      gerTouchClone.style.display = 'none';
+      var el = document.elementFromPoint(touch.clientX, touch.clientY);
+      gerTouchClone.style.display = '';
+      var target = el && el.closest('.gerenciar-item');
+      clearGerOver();
+      if (target && target !== gerTouchItem) {
+        var rect = target.getBoundingClientRect();
+        target.classList.add(touch.clientY < rect.top + rect.height / 2 ? 'ger-over-top' : 'ger-over-bottom');
+      }
+    }, { passive: false });
+
+    list.addEventListener('touchend', function () {
+      if (!gerTouchItem) return;
+      if (gerTouchClone) { gerTouchClone.parentNode.removeChild(gerTouchClone); gerTouchClone = null; }
+      gerTouchItem.style.opacity = '';
+      var overTop = list.querySelector('.ger-over-top');
+      var overBot = list.querySelector('.ger-over-bottom');
+      if (overTop)      list.insertBefore(gerTouchItem, overTop);
+      else if (overBot) list.insertBefore(gerTouchItem, overBot.nextSibling);
+      clearGerOver();
+      gerTouchItem = null;
+    });
+
+    function openModal() {
+      buildList(getCurrentOrder());
+      overlay.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      overlay.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    openBtn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) closeModal(); });
+
+    saveBtn.addEventListener('click', function () {
+      var newOrder = Array.from(list.querySelectorAll('[data-card-id]')).map(function (el) {
+        return el.dataset.cardId;
+      });
+      localStorage.setItem(CARDS_ORDER_KEY, JSON.stringify(newOrder));
+      newOrder.forEach(function (id) {
+        var el = cardsContainer.querySelector('[data-card-id="' + id + '"]');
+        if (el) cardsContainer.appendChild(el);
+      });
+      var orig = saveBtn.innerHTML;
+      saveBtn.innerHTML = '<i class="bi bi-check-lg"></i> Salvo!';
+      saveBtn.disabled  = true;
+      setTimeout(function () { saveBtn.innerHTML = orig; saveBtn.disabled = false; closeModal(); }, 800);
+    });
+  }
+
+  applyCardOrder();
+  initGerenciar();
   loadContas();
   loadCartoes();
   loadVisaoGeral();
