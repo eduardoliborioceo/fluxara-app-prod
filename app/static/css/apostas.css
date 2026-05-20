@@ -1,0 +1,414 @@
+.apostas-wrapper {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 4px 16px 100px;
+}
+
+/* ========================
+   FILTERS CARD
+======================== */
+.apostas-filters-card {
+  background: var(--card, #fff);
+  border: 1px solid var(--border, rgba(15,23,42,.09));
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin-bottom: 14px;
+}
+
+.apostas-filter-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.apostas-filter-item {
+  flex: 1;
+  min-width: 0;
+}
+
+.apostas-filter-label {
+  display: block;
+  font-size: .75rem;
+  font-weight: 700;
+  color: var(--text-muted, #64748b);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-bottom: 6px;
+}
+
+.apostas-filter-input,
+.apostas-filter-select {
+  width: 100%;
+  padding: 9px 12px;
+  font-size: .875rem;
+  font-weight: 500;
+  color: var(--text, #1e293b);
+  background: var(--card, #fff);
+  border: 1.5px solid var(--border, rgba(15,23,42,.09));
+  border-radius: 8px;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.apostas-filter-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='%2364748b' d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+
+.apostas-filter-input:focus,
+.apostas-filter-select:focus {
+  border-color: var(--primary, #0d6efd);
+  box-shadow: 0 0 0 3px rgba(13,110,253,.12);
+}
+
+.apostas-btn-buscar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 20px;
+  font-size: .875rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--primary, #0d6efd);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background .15s, opacity .15s;
+}
+
+.apostas-btn-buscar:hover {
+  background: #0b5ed7;
+}
+
+.apostas-btn-buscar:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+/* ========================
+   INFO BANNER
+======================== */
+.apostas-info-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  background: rgba(13,110,253,.06);
+  border: 1px solid rgba(13,110,253,.15);
+  border-radius: 10px;
+  font-size: .8rem;
+  font-weight: 500;
+  color: #1e40af;
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+
+.apostas-info-banner i {
+  flex-shrink: 0;
+  font-size: 1rem;
+  margin-top: 1px;
+}
+
+/* ========================
+   LOADING
+======================== */
+.apostas-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 48px 20px;
+  font-size: .875rem;
+  font-weight: 500;
+  color: var(--text-muted, #64748b);
+  text-align: center;
+  line-height: 1.6;
+}
+
+.apostas-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--border, rgba(15,23,42,.09));
+  border-top-color: var(--primary, #0d6efd);
+  border-radius: 50%;
+  animation: apostas-spin .7s linear infinite;
+}
+
+@keyframes apostas-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ========================
+   VAZIO / ERRO
+======================== */
+.apostas-vazio,
+.apostas-erro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 48px 20px;
+  text-align: center;
+}
+
+.apostas-vazio i {
+  font-size: 2rem;
+  color: var(--text-muted, #64748b);
+}
+
+.apostas-vazio p {
+  font-size: .875rem;
+  font-weight: 500;
+  color: var(--text-muted, #64748b);
+  margin: 0;
+}
+
+.apostas-erro i {
+  font-size: 2rem;
+  color: #dc2626;
+}
+
+.apostas-erro p {
+  font-size: .875rem;
+  font-weight: 500;
+  color: #dc2626;
+  margin: 0;
+}
+
+/* ========================
+   RESULTADO HEADER
+======================== */
+.apostas-resultado-header {
+  font-size: .75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: var(--text-muted, #64748b);
+  margin-bottom: 10px;
+  padding: 0 2px;
+}
+
+/* ========================
+   MATCH CARD
+======================== */
+.apostas-match-card {
+  background: var(--card, #fff);
+  border: 1px solid var(--border, rgba(15,23,42,.09));
+  border-radius: 12px;
+  margin-bottom: 10px;
+  overflow: hidden;
+  transition: box-shadow .15s;
+}
+
+.apostas-match-card:hover {
+  box-shadow: 0 4px 16px rgba(15,23,42,.07);
+}
+
+.apostas-match-competition {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 14px 8px;
+  border-bottom: 1px solid var(--border, rgba(15,23,42,.09));
+  background: #f8fafc;
+}
+
+.apostas-competition-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--text-muted, #64748b);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.apostas-competition-name span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.apostas-round-badge {
+  font-size: .68rem;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ========================
+   MATCH BODY
+======================== */
+.apostas-match-body {
+  padding: 14px;
+}
+
+.apostas-match-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.apostas-team {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.apostas-team--away {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+
+.apostas-team-name {
+  font-size: .9rem;
+  font-weight: 700;
+  color: var(--text, #1e293b);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.apostas-pos-badge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 6px;
+  border-radius: 7px;
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .3px;
+}
+
+/* position colors */
+.apostas-pos-badge--1    { background: rgba(180,83,9,.12);  color: #b45309; }
+.apostas-pos-badge--top  { background: rgba(29,78,216,.10); color: #1d4ed8; }
+.apostas-pos-badge--mid  { background: rgba(21,128,61,.10); color: #15803d; }
+.apostas-pos-badge--low  { background: rgba(71,85,105,.10); color: #475569; }
+.apostas-pos-badge--rel  { background: rgba(220,38,38,.10); color: #dc2626; }
+
+/* ========================
+   DIFF BADGE
+======================== */
+.apostas-diff-center {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.apostas-diff-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: .8rem;
+  font-weight: 800;
+  letter-spacing: .3px;
+}
+
+.apostas-diff-badge--high   { background: rgba(220,38,38,.12); color: #dc2626; }
+.apostas-diff-badge--medium { background: rgba(234,88,12,.12); color: #c2410c; }
+.apostas-diff-badge--low    { background: rgba(37,99,235,.12); color: #1d4ed8; }
+.apostas-diff-badge--min    { background: rgba(100,116,139,.10); color: #475569; }
+
+.apostas-diff-label {
+  font-size: .62rem;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  white-space: nowrap;
+}
+
+/* ========================
+   MATCH FOOTER
+======================== */
+.apostas-match-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 8px 14px 10px;
+  gap: 10px;
+}
+
+.apostas-time {
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+}
+
+.apostas-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: .72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 20px;
+}
+
+.apostas-status-badge--live {
+  background: rgba(22,163,74,.12);
+  color: #16a34a;
+}
+
+.apostas-status-badge--live::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  background: #16a34a;
+  border-radius: 50%;
+  display: inline-block;
+  animation: apostas-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes apostas-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .3; }
+}
+
+.apostas-status-badge--ended {
+  background: rgba(100,116,139,.1);
+  color: #475569;
+}
+
+/* ========================
+   RESPONSIVE
+======================== */
+@media (max-width: 480px) {
+  .apostas-filter-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .apostas-team-name {
+    font-size: .82rem;
+  }
+
+  .apostas-pos-badge {
+    min-width: 24px;
+    height: 24px;
+    font-size: .68rem;
+  }
+}

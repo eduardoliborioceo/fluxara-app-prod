@@ -1,0 +1,89 @@
+{% extends "layouts/app.html" %}
+{% block title %}Fluxara · Apostas{% endblock %}
+
+{% block page_title %}
+<div class="page-header">
+  <div class="page-header-title">
+    <span class="page-header-section">Ferramentas</span>
+    <h1 class="page-header-name">Apostas</h1>
+  </div>
+  <div class="page-header-actions">
+    <a href="javascript:history.back()" class="btn-header-icon" title="Voltar">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+    <button class="btn-header-icon" onclick="toggleFullscreen()" title="Tela cheia">
+      <i class="bi bi-arrows-fullscreen"></i>
+    </button>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/apostas.css') }}?v={{ static_v }}">
+
+<div class="apostas-wrapper">
+
+  <!-- FILTROS -->
+  <div class="apostas-filters-card">
+    <div class="apostas-filter-row">
+      <div class="apostas-filter-item">
+        <label class="apostas-filter-label" for="apostasDate">Data</label>
+        <input type="date" id="apostasDate" class="apostas-filter-input">
+      </div>
+      <div class="apostas-filter-item">
+        <label class="apostas-filter-label" for="apostasMinDiff">Diferença mínima na tabela</label>
+        <select id="apostasMinDiff" class="apostas-filter-select">
+          <option value="1">Todos os duelos</option>
+          <option value="3">≥ 3 posições</option>
+          <option value="5" selected>≥ 5 posições</option>
+          <option value="8">≥ 8 posições</option>
+          <option value="10">≥ 10 posições</option>
+          <option value="15">≥ 15 posições</option>
+        </select>
+      </div>
+    </div>
+    <button class="apostas-btn-buscar" id="apostasBtnBuscar" onclick="apostasBuscar()">
+      <i class="bi bi-search" id="apostasBuscarIcon"></i>
+      <span id="apostasBuscarLabel">Buscar partidas</span>
+    </button>
+  </div>
+
+  <!-- INFO BANNER -->
+  <div class="apostas-info-banner">
+    <i class="bi bi-info-circle"></i>
+    Mostra jogos onde há diferença na classificação do campeonato — ex.: o 2º colocado enfrenta o 15º.
+    Apenas competições com tabela disponível no Sofascore.
+  </div>
+
+  <!-- LOADING -->
+  <div id="apostasLoading" class="apostas-loading" style="display:none">
+    <div class="apostas-spinner"></div>
+    <span>Buscando partidas e classificações...<br><small>Pode levar alguns segundos na primeira consulta do dia.</small></span>
+  </div>
+
+  <!-- VAZIO -->
+  <div id="apostasVazio" class="apostas-vazio" style="display:none">
+    <i class="bi bi-calendar-x"></i>
+    <p id="apostasVazioMsg">Nenhuma partida com essa diferença de classificação encontrada para este dia.</p>
+  </div>
+
+  <!-- ERRO -->
+  <div id="apostasErro" class="apostas-erro" style="display:none">
+    <i class="bi bi-exclamation-triangle"></i>
+    <p id="apostasErroMsg">Erro ao buscar partidas. Tente novamente.</p>
+  </div>
+
+  <!-- RESULTADO -->
+  <div id="apostasResultado" style="display:none">
+    <div class="apostas-resultado-header">
+      <span id="apostasTotal"></span>
+    </div>
+    <div id="apostasLista"></div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/apostas.js') }}?v={{ static_v }}"></script>
+{% endblock %}
