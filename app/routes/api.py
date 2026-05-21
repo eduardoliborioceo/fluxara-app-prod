@@ -1197,3 +1197,76 @@ def apostas_partidas():
     except Exception as exc:
         logger.exception("apostas_partidas error: %s", exc)
         return jsonify({"error": "Erro ao buscar partidas"}), 500
+
+
+# =============================================================
+# APOSTAS — TIPS (recomendações)
+# =============================================================
+
+@bp.route("/apostas/tips", methods=["GET"])
+@login_required
+def apostas_tips_list():
+    from app.services import apostas_tips_service
+    try:
+        tips = apostas_tips_service.list_tips()
+        stats = apostas_tips_service.get_stats()
+        return jsonify({"tips": tips, "stats": stats})
+    except Exception as exc:
+        logger.exception("apostas_tips_list error: %s", exc)
+        return jsonify({"error": "Erro ao carregar recomendações"}), 500
+
+
+@bp.route("/apostas/tips", methods=["POST"])
+@login_required
+def apostas_tips_create():
+    if not current_user.is_admin:
+        return jsonify({"error": "Sem permissão"}), 403
+    from app.services import apostas_tips_service
+    data = request.get_json() or {}
+    try:
+        tip = apostas_tips_service.create_tip(
+            titulo=data.get("titulo", ""),
+            partida=data.get("partida", ""),
+            campeonato=data.get("campeonato", ""),
+            odd=data.get("odd"),
+            stake=data.get("stake", ""),
+            data_partida=data.get("data_partida") or None,
+            user_id=current_user.id,
+        )
+        return jsonify(tip), 201
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as exc:
+        logger.exception("apostas_tips_create error: %s", exc)
+        return jsonify({"error": "Erro ao criar recomendação"}), 500
+
+
+@bp.route("/apostas/tips/<int:tip_id>/status", methods=["PATCH"])
+@login_required
+def apostas_tips_update_status(tip_id):
+    if not current_user.is_admin:
+        return jsonify({"error": "Sem permissão"}), 403
+    from app.services import apostas_tips_service
+    data = request.get_json() or {}
+    try:
+        tip = apostas_tips_service.update_status(tip_id, data.get("status", ""))
+        return jsonify(tip)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as exc:
+        logger.exception("apostas_tips_update_status error tip=%s: %s", tip_id, exc)
+        return jsonify({"error": "Erro ao atualizar status"}), 500
+
+
+@bp.route("/apostas/tips/<int:tip_id>", methods=["DELETE"])
+@login_required
+def apostas_tips_delete(tip_id):
+    if not current_user.is_admin:
+        return jsonify({"error": "Sem permissão"}), 403
+    from app.services import apostas_tips_service
+    try:
+        apostas_tips_service.delete_tip(tip_id)
+        return jsonify({"ok": True})
+    except Exception as exc:
+        logger.exception("apostas_tips_delete error tip=%s: %s", tip_id, exc)
+        return jsonify({"error": "Erro ao excluir recomendação"}), 500
