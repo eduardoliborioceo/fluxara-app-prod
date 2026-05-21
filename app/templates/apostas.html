@@ -23,67 +23,207 @@
 
 <div class="apostas-wrapper">
 
-  <!-- FILTROS -->
-  <div class="apostas-filters-card">
-    <div class="apostas-filter-row">
-      <div class="apostas-filter-item">
-        <label class="apostas-filter-label" for="apostasDate">Data</label>
-        <input type="date" id="apostasDate" class="apostas-filter-input">
-      </div>
-      <div class="apostas-filter-item">
-        <label class="apostas-filter-label" for="apostasMinDiff">Diferença mínima na tabela</label>
-        <select id="apostasMinDiff" class="apostas-filter-select">
-          <option value="1">Todos os duelos</option>
-          <option value="3">≥ 3 posições</option>
-          <option value="5" selected>≥ 5 posições</option>
-          <option value="8">≥ 8 posições</option>
-          <option value="10">≥ 10 posições</option>
-          <option value="15">≥ 15 posições</option>
-        </select>
-      </div>
-    </div>
-    <button class="apostas-btn-buscar" id="apostasBtnBuscar" onclick="apostasBuscar()">
-      <i class="bi bi-search" id="apostasBuscarIcon"></i>
-      <span id="apostasBuscarLabel">Buscar partidas</span>
+  <!-- TABS -->
+  <div class="apostas-tabs">
+    <button class="apostas-tab apostas-tab--active" id="tabBtnRec" onclick="apostasTab('recomendacoes')">
+      <i class="bi bi-bookmark-star-fill"></i>
+      Recomendações
+    </button>
+    <button class="apostas-tab" id="tabBtnAna" onclick="apostasTab('analisador')">
+      <i class="bi bi-search"></i>
+      Analisador
     </button>
   </div>
 
-  <!-- INFO BANNER -->
-  <div class="apostas-info-banner">
-    <i class="bi bi-info-circle"></i>
-    Mostra jogos onde há diferença na classificação do campeonato — ex.: o 2º colocado enfrenta o 15º.
-    Apenas competições com tabela disponível no Sofascore.
-  </div>
+  <!-- ======================================================
+       PAINEL RECOMENDAÇÕES
+  ====================================================== -->
+  <div id="panelRecomendacoes">
 
-  <!-- LOADING -->
-  <div id="apostasLoading" class="apostas-loading" style="display:none">
-    <div class="apostas-spinner"></div>
-    <span>Buscando partidas e classificações...<br><small>Pode levar alguns segundos na primeira consulta do dia.</small></span>
-  </div>
-
-  <!-- VAZIO -->
-  <div id="apostasVazio" class="apostas-vazio" style="display:none">
-    <i class="bi bi-calendar-x"></i>
-    <p id="apostasVazioMsg">Nenhuma partida com essa diferença de classificação encontrada para este dia.</p>
-  </div>
-
-  <!-- ERRO -->
-  <div id="apostasErro" class="apostas-erro" style="display:none">
-    <i class="bi bi-exclamation-triangle"></i>
-    <p id="apostasErroMsg">Erro ao buscar partidas. Tente novamente.</p>
-  </div>
-
-  <!-- RESULTADO -->
-  <div id="apostasResultado" style="display:none">
-    <div class="apostas-resultado-header">
-      <span id="apostasTotal"></span>
+    <!-- STATS -->
+    <div class="tips-stats-row" id="tipsStatsRow">
+      <div class="tips-stat tips-stat--green">
+        <span class="tips-stat-value" id="statGreen">–</span>
+        <span class="tips-stat-label">Green</span>
+      </div>
+      <div class="tips-stat tips-stat--red">
+        <span class="tips-stat-value" id="statRed">–</span>
+        <span class="tips-stat-label">Red</span>
+      </div>
+      <div class="tips-stat tips-stat--taxa">
+        <span class="tips-stat-value" id="statTaxa">–</span>
+        <span class="tips-stat-label">Taxa</span>
+      </div>
+      <div class="tips-stat tips-stat--pending">
+        <span class="tips-stat-value" id="statPending">–</span>
+        <span class="tips-stat-label">Pendente</span>
+      </div>
     </div>
-    <div id="apostasLista"></div>
+
+    <!-- ADMIN TOOLBAR -->
+    {% if current_user.is_admin %}
+    <div class="tips-admin-toolbar">
+      <button class="tips-btn-nova" onclick="openTipModal()">
+        <i class="bi bi-plus-lg"></i>
+        Nova recomendação
+      </button>
+    </div>
+    {% endif %}
+
+    <!-- LOADING TIPS -->
+    <div id="tipsLoading" class="apostas-loading">
+      <div class="apostas-spinner"></div>
+      <span>Carregando recomendações...</span>
+    </div>
+
+    <!-- LISTA TIPS -->
+    <div id="tipsList" style="display:none"></div>
+
+    <!-- VAZIO TIPS -->
+    <div id="tipsVazio" class="apostas-vazio" style="display:none">
+      <i class="bi bi-bookmark-x"></i>
+      <p>Nenhuma recomendação publicada ainda.</p>
+    </div>
+
+    <!-- ERRO TIPS -->
+    <div id="tipsErro" class="apostas-erro" style="display:none">
+      <i class="bi bi-exclamation-triangle"></i>
+      <p id="tipsErroMsg">Erro ao carregar recomendações.</p>
+    </div>
+
+  </div>
+
+  <!-- ======================================================
+       PAINEL ANALISADOR
+  ====================================================== -->
+  <div id="panelAnalisador" style="display:none">
+
+    <!-- FILTROS -->
+    <div class="apostas-filters-card">
+      <div class="apostas-filter-row">
+        <div class="apostas-filter-item">
+          <label class="apostas-filter-label" for="apostasDate">Data</label>
+          <input type="date" id="apostasDate" class="apostas-filter-input">
+        </div>
+        <div class="apostas-filter-item">
+          <label class="apostas-filter-label" for="apostasMinDiff">Diferença mínima na tabela</label>
+          <select id="apostasMinDiff" class="apostas-filter-select">
+            <option value="1">Todos os duelos</option>
+            <option value="3">≥ 3 posições</option>
+            <option value="5" selected>≥ 5 posições</option>
+            <option value="8">≥ 8 posições</option>
+            <option value="10">≥ 10 posições</option>
+            <option value="15">≥ 15 posições</option>
+          </select>
+        </div>
+      </div>
+      <button class="apostas-btn-buscar" id="apostasBtnBuscar" onclick="apostasBuscar()">
+        <i class="bi bi-search" id="apostasBuscarIcon"></i>
+        <span id="apostasBuscarLabel">Buscar partidas</span>
+      </button>
+    </div>
+
+    <!-- INFO BANNER -->
+    <div class="apostas-info-banner">
+      <i class="bi bi-info-circle"></i>
+      Mostra jogos onde há diferença na classificação do campeonato — ex.: o 2º colocado enfrenta o 15º.
+      Apenas competições com tabela disponível no Sofascore.
+    </div>
+
+    <!-- LOADING -->
+    <div id="apostasLoading" class="apostas-loading" style="display:none">
+      <div class="apostas-spinner"></div>
+      <span>Buscando partidas e classificações...<br><small>Pode levar alguns segundos na primeira consulta do dia.</small></span>
+    </div>
+
+    <!-- VAZIO -->
+    <div id="apostasVazio" class="apostas-vazio" style="display:none">
+      <i class="bi bi-calendar-x"></i>
+      <p id="apostasVazioMsg">Nenhuma partida com essa diferença de classificação encontrada para este dia.</p>
+    </div>
+
+    <!-- ERRO -->
+    <div id="apostasErro" class="apostas-erro" style="display:none">
+      <i class="bi bi-exclamation-triangle"></i>
+      <p id="apostasErroMsg">Erro ao buscar partidas. Tente novamente.</p>
+    </div>
+
+    <!-- RESULTADO -->
+    <div id="apostasResultado" style="display:none">
+      <div class="apostas-resultado-header">
+        <span id="apostasTotal"></span>
+      </div>
+      <div id="apostasLista"></div>
+    </div>
+
   </div>
 
 </div>
+
+<!-- ======================================================
+     MODAL NOVA RECOMENDAÇÃO (admin only)
+====================================================== -->
+{% if current_user.is_admin %}
+<div id="tipModalOverlay" class="tips-modal-overlay" style="display:none" onclick="closeTipModalOverlay(event)">
+  <div class="tips-modal">
+    <div class="tips-modal-header">
+      <span>Nova recomendação</span>
+      <button class="tips-modal-close" onclick="closeTipModal()" title="Fechar">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <div class="tips-modal-body">
+      <div id="tipFormError" class="tips-form-error" style="display:none"></div>
+
+      <div class="tips-form-group">
+        <label class="tips-form-label">Título <span class="tips-required">*</span></label>
+        <input type="text" id="tipTitulo" class="tips-form-input" placeholder="Ex: Flamengo vence o Palmeiras" maxlength="200">
+      </div>
+
+      <div class="tips-form-row">
+        <div class="tips-form-group">
+          <label class="tips-form-label">Partida</label>
+          <input type="text" id="tipPartida" class="tips-form-input" placeholder="Ex: Flamengo x Palmeiras" maxlength="200">
+        </div>
+        <div class="tips-form-group">
+          <label class="tips-form-label">Campeonato</label>
+          <input type="text" id="tipCampeonato" class="tips-form-input" placeholder="Ex: Brasileirão" maxlength="100">
+        </div>
+      </div>
+
+      <div class="tips-form-row">
+        <div class="tips-form-group">
+          <label class="tips-form-label">Odd</label>
+          <input type="number" id="tipOdd" class="tips-form-input" placeholder="Ex: 1.85" step="0.01" min="1.01">
+        </div>
+        <div class="tips-form-group">
+          <label class="tips-form-label">Stake</label>
+          <input type="text" id="tipStake" class="tips-form-input" placeholder="Ex: 2 unidades" maxlength="50">
+        </div>
+      </div>
+
+      <div class="tips-form-group">
+        <label class="tips-form-label">Data da partida</label>
+        <input type="date" id="tipDataPartida" class="tips-form-input">
+      </div>
+
+      <div class="tips-modal-actions">
+        <button class="tips-btn-cancel" onclick="closeTipModal()">Cancelar</button>
+        <button class="tips-btn-submit" id="tipSubmitBtn" onclick="submitTipForm()">
+          <i class="bi bi-plus-lg"></i>
+          Adicionar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
 {% endblock %}
 
 {% block scripts %}
+<script>
+  window.APOSTAS_IS_ADMIN = {{ 'true' if current_user.is_admin else 'false' }};
+</script>
 <script src="{{ url_for('static', filename='js/apostas.js') }}?v={{ static_v }}"></script>
 {% endblock %}

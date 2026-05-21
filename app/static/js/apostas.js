@@ -1,22 +1,247 @@
+// ============================================================
+//  TABS
+// ============================================================
+
+function apostasTab(tab) {
+  const isRec = tab === "recomendacoes";
+  document.getElementById("panelRecomendacoes").style.display = isRec ? "block" : "none";
+  document.getElementById("panelAnalisador").style.display = isRec ? "none" : "block";
+  document.getElementById("tabBtnRec").classList.toggle("apostas-tab--active", isRec);
+  document.getElementById("tabBtnAna").classList.toggle("apostas-tab--active", !isRec);
+  localStorage.setItem("apostas_tab", tab);
+}
+
+// ============================================================
+//  INIT
+// ============================================================
+
 document.addEventListener("DOMContentLoaded", () => {
+  const saved = localStorage.getItem("apostas_tab") || "recomendacoes";
+  apostasTab(saved);
+
   const dateInput = document.getElementById("apostasDate");
-  if (dateInput) {
-    dateInput.value = todayISO();
-  }
-  apostasBuscar();
+  if (dateInput) dateInput.value = todayISO();
+
+  loadTips();
 });
 
 function todayISO() {
   const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
+
+function pad(n) { return String(n).padStart(2, "0"); }
+
+// ============================================================
+//  TIPS — load & render
+// ============================================================
+
+async function loadTips() {
+  showTipsState("loading");
+  try {
+    const resp = await fetch("/api/apostas/tips");
+    const json = await resp.json();
+    if (!resp.ok) { showTipsState("erro", json.error); return; }
+    renderTipsStats(json.stats);
+    if (!json.tips || json.tips.length === 0) { showTipsState("vazio"); return; }
+    renderTipsList(json.tips);
+    showTipsState("list");
+  } catch {
+    showTipsState("erro", "Não foi possível conectar ao servidor.");
+  }
+}
+
+function showTipsState(state, msg) {
+  document.getElementById("tipsLoading").style.display  = state === "loading" ? "flex" : "none";
+  document.getElementById("tipsList").style.display     = state === "list"    ? "block" : "none";
+  document.getElementById("tipsVazio").style.display    = state === "vazio"   ? "flex"  : "none";
+  document.getElementById("tipsErro").style.display     = state === "erro"    ? "flex"  : "none";
+  if (state === "erro" && msg) {
+    document.getElementById("tipsErroMsg").textContent = msg;
+  }
+}
+
+function renderTipsStats(stats) {
+  const taxa = stats.total > 0 ? `${stats.taxa_acerto}%` : "—";
+  document.getElementById("statGreen").textContent   = stats.green;
+  document.getElementById("statRed").textContent     = stats.red;
+  document.getElementById("statTaxa").textContent    = taxa;
+  document.getElementById("statPending").textContent = stats.pendente;
+}
+
+function renderTipsList(tips) {
+  const isAdmin = window.APOSTAS_IS_ADMIN === true;
+  document.getElementById("tipsList").innerHTML = tips.map(t => buildTipCard(t, isAdmin)).join("");
+}
+
+function buildTipCard(tip, isAdmin) {
+  const statusBadge = buildStatusBadge(tip.status);
+  const meta = buildTipMeta(tip);
+  const adminActions = isAdmin ? buildTipAdminActions(tip) : "";
+
+  return `
+    <div class="tips-card" id="tip-${tip.id}" data-status="${escHtml(tip.status)}">
+      <div class="tips-card-header">
+        ${statusBadge}
+        <span class="tips-card-title">${escHtml(tip.titulo)}</span>
+      </div>
+      ${meta ? `<div class="tips-card-meta">${meta}</div>` : ""}
+      ${adminActions}
+    </div>
+  `;
+}
+
+function buildStatusBadge(status) {
+  const map = {
+    green:    { cls: "tips-badge--green",   icon: "bi-check-circle-fill", label: "Green" },
+    red:      { cls: "tips-badge--red",     icon: "bi-x-circle-fill",     label: "Red" },
+    pendente: { cls: "tips-badge--pending", icon: "bi-clock-fill",        label: "Pendente" },
+    void:     { cls: "tips-badge--void",    icon: "bi-dash-circle",       label: "Void" },
+  };
+  const s = map[status] || map.pendente;
+  return `<span class="tips-badge ${s.cls}"><i class="bi ${s.icon}"></i>${s.label}</span>`;
+}
+
+function buildTipMeta(tip) {
+  const parts = [];
+  if (tip.partida)      parts.push(`<span><i class="bi bi-shield-fill"></i>${escHtml(tip.partida)}</span>`);
+  if (tip.campeonato)   parts.push(`<span><i class="bi bi-trophy-fill"></i>${escHtml(tip.campeonato)}</span>`);
+  if (tip.odd != null)  parts.push(`<span><i class="bi bi-tag-fill"></i>Odd ${tip.odd.toFixed(2)}</span>`);
+  if (tip.stake)        parts.push(`<span><i class="bi bi-coin"></i>${escHtml(tip.stake)}</span>`);
+  if (tip.data_partida) parts.push(`<span><i class="bi bi-calendar3"></i>${formatDate(tip.data_partida)}</span>`);
+  return parts.join("");
+}
+
+function formatDate(iso) {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+}
+
+function buildTipAdminActions(tip) {
+  const id = tip.id;
+  return `
+    <div class="tips-admin-actions">
+      ${tip.status !== "green"   ? `<button class="tips-action-btn tips-action-btn--green"   onclick="setTipStatus(${id},'green')"   title="Marcar green"><i class="bi bi-check-lg"></i></button>` : ""}
+      ${tip.status !== "red"     ? `<button class="tips-action-btn tips-action-btn--red"     onclick="setTipStatus(${id},'red')"     title="Marcar red"><i class="bi bi-x-lg"></i></button>` : ""}
+      ${tip.status !== "pendente"? `<button class="tips-action-btn tips-action-btn--pending" onclick="setTipStatus(${id},'pendente')" title="Marcar pendente"><i class="bi bi-clock"></i></button>` : ""}
+      ${tip.status !== "void"    ? `<button class="tips-action-btn tips-action-btn--void"    onclick="setTipStatus(${id},'void')"    title="Anular"><i class="bi bi-dash-lg"></i></button>` : ""}
+      <button class="tips-action-btn tips-action-btn--delete" onclick="deleteTip(${id})" title="Excluir"><i class="bi bi-trash3"></i></button>
+    </div>
+  `;
+}
+
+// ============================================================
+//  TIPS — admin actions
+// ============================================================
+
+async function setTipStatus(tipId, status) {
+  try {
+    const resp = await fetch(`/api/apostas/tips/${tipId}/status`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+    const json = await resp.json();
+    if (!resp.ok) { alert(json.error || "Erro ao atualizar status"); return; }
+    await loadTips();
+  } catch {
+    alert("Erro de conexão");
+  }
+}
+
+async function deleteTip(tipId) {
+  if (!confirm("Excluir esta recomendação?")) return;
+  try {
+    const resp = await fetch(`/api/apostas/tips/${tipId}`, { method: "DELETE" });
+    const json = await resp.json();
+    if (!resp.ok) { alert(json.error || "Erro ao excluir"); return; }
+    await loadTips();
+  } catch {
+    alert("Erro de conexão");
+  }
+}
+
+// ============================================================
+//  TIPS — modal
+// ============================================================
+
+function openTipModal() {
+  document.getElementById("tipTitulo").value       = "";
+  document.getElementById("tipPartida").value      = "";
+  document.getElementById("tipCampeonato").value   = "";
+  document.getElementById("tipOdd").value          = "";
+  document.getElementById("tipStake").value        = "";
+  document.getElementById("tipDataPartida").value  = "";
+  hideTipFormError();
+  document.getElementById("tipModalOverlay").style.display = "flex";
+}
+
+function closeTipModal() {
+  document.getElementById("tipModalOverlay").style.display = "none";
+}
+
+function closeTipModalOverlay(e) {
+  if (e.target === document.getElementById("tipModalOverlay")) closeTipModal();
+}
+
+function showTipFormError(msg) {
+  const el = document.getElementById("tipFormError");
+  el.textContent = msg;
+  el.style.display = "block";
+}
+
+function hideTipFormError() {
+  document.getElementById("tipFormError").style.display = "none";
+}
+
+async function submitTipForm() {
+  hideTipFormError();
+  const titulo      = document.getElementById("tipTitulo").value.trim();
+  const partida     = document.getElementById("tipPartida").value.trim();
+  const campeonato  = document.getElementById("tipCampeonato").value.trim();
+  const oddRaw      = document.getElementById("tipOdd").value.trim();
+  const stake       = document.getElementById("tipStake").value.trim();
+  const dataPartida = document.getElementById("tipDataPartida").value || null;
+
+  if (!titulo) { showTipFormError("Título é obrigatório"); return; }
+
+  const odd = oddRaw !== "" ? parseFloat(oddRaw) : null;
+  if (oddRaw !== "" && (isNaN(odd) || odd <= 1)) {
+    showTipFormError("Odd deve ser maior que 1.00");
+    return;
+  }
+
+  const btn = document.getElementById("tipSubmitBtn");
+  btn.disabled = true;
+
+  try {
+    const resp = await fetch("/api/apostas/tips", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ titulo, partida, campeonato, odd, stake, data_partida: dataPartida }),
+    });
+    const json = await resp.json();
+    if (!resp.ok) { showTipFormError(json.error || "Erro ao criar recomendação"); return; }
+    closeTipModal();
+    await loadTips();
+  } catch {
+    showTipFormError("Erro de conexão");
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ============================================================
+//  ANALISADOR — existing logic
+// ============================================================
 
 async function apostasBuscar() {
   const date = document.getElementById("apostasDate")?.value || todayISO();
   const minDiff = document.getElementById("apostasMinDiff")?.value || "5";
 
   setLoadingState(true);
-  hideAll();
+  hideAllAnalisador();
   document.getElementById("apostasLoading").style.display = "flex";
 
   try {
@@ -26,59 +251,44 @@ async function apostasBuscar() {
     setLoadingState(false);
     document.getElementById("apostasLoading").style.display = "none";
 
-    if (!resp.ok) {
-      showError(json.error || "Erro ao buscar partidas.");
-      return;
-    }
-
-    if (!json.matches || json.matches.length === 0) {
-      showVazio(minDiff);
-      return;
-    }
-
+    if (!resp.ok) { showAnalisadorError(json.error || "Erro ao buscar partidas."); return; }
+    if (!json.matches || json.matches.length === 0) { showAnalisadorVazio(minDiff); return; }
     renderMatches(json.matches, json.total);
   } catch {
     setLoadingState(false);
     document.getElementById("apostasLoading").style.display = "none";
-    showError("Não foi possível conectar ao servidor.");
+    showAnalisadorError("Não foi possível conectar ao servidor.");
   }
 }
 
 function setLoadingState(loading) {
-  const btn = document.getElementById("apostasBtnBuscar");
-  const icon = document.getElementById("apostasBuscarIcon");
+  const btn   = document.getElementById("apostasBtnBuscar");
+  const icon  = document.getElementById("apostasBuscarIcon");
   const label = document.getElementById("apostasBuscarLabel");
   if (!btn) return;
   btn.disabled = loading;
-  if (loading) {
-    icon.className = "bi bi-hourglass-split";
-    label.textContent = "Buscando...";
-  } else {
-    icon.className = "bi bi-search";
-    label.textContent = "Buscar partidas";
-  }
+  icon.className  = loading ? "bi bi-hourglass-split" : "bi bi-search";
+  label.textContent = loading ? "Buscando..." : "Buscar partidas";
 }
 
-function hideAll() {
+function hideAllAnalisador() {
   ["apostasLoading", "apostasVazio", "apostasErro", "apostasResultado"].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = "none";
   });
 }
 
-function showVazio(minDiff) {
-  const el = document.getElementById("apostasVazio");
+function showAnalisadorVazio(minDiff) {
+  const el  = document.getElementById("apostasVazio");
   const msg = document.getElementById("apostasVazioMsg");
-  if (minDiff === "1") {
-    msg.textContent = "Nenhuma partida com tabela de classificação disponível para este dia.";
-  } else {
-    msg.textContent = `Nenhuma partida com diferença de ≥ ${minDiff} posições encontrada para este dia.`;
-  }
+  msg.textContent = minDiff === "1"
+    ? "Nenhuma partida com tabela de classificação disponível para este dia."
+    : `Nenhuma partida com diferença de ≥ ${minDiff} posições encontrada para este dia.`;
   el.style.display = "flex";
 }
 
-function showError(msg) {
-  const el = document.getElementById("apostasErro");
+function showAnalisadorError(msg) {
+  const el    = document.getElementById("apostasErro");
   const msgEl = document.getElementById("apostasErroMsg");
   if (msgEl) msgEl.textContent = msg;
   if (el) el.style.display = "flex";
@@ -86,20 +296,15 @@ function showError(msg) {
 
 function renderMatches(matches, total) {
   const resultado = document.getElementById("apostasResultado");
-  const totalEl = document.getElementById("apostasTotal");
-  const lista = document.getElementById("apostasLista");
-
+  const totalEl   = document.getElementById("apostasTotal");
+  const lista     = document.getElementById("apostasLista");
   totalEl.textContent = `${total} partida${total !== 1 ? "s" : ""} encontrada${total !== 1 ? "s" : ""}`;
   lista.innerHTML = matches.map(buildMatchCard).join("");
   resultado.style.display = "block";
 }
 
 function buildMatchCard(m) {
-  const homePosBadge = buildPosBadge(m.home_pos);
-  const awayPosBadge = buildPosBadge(m.away_pos);
-  const diffBadge = buildDiffBadge(m.pos_diff);
   const footer = buildFooter(m);
-
   return `
     <div class="apostas-match-card">
       <div class="apostas-match-competition">
@@ -112,15 +317,15 @@ function buildMatchCard(m) {
       <div class="apostas-match-body">
         <div class="apostas-match-row">
           <div class="apostas-team">
-            ${homePosBadge}
+            ${buildPosBadge(m.home_pos)}
             <span class="apostas-team-name">${escHtml(m.home_team)}</span>
           </div>
           <div class="apostas-diff-center">
-            ${diffBadge}
+            ${buildDiffBadge(m.pos_diff)}
             <span class="apostas-diff-label">posições</span>
           </div>
           <div class="apostas-team apostas-team--away">
-            ${awayPosBadge}
+            ${buildPosBadge(m.away_pos)}
             <span class="apostas-team-name">${escHtml(m.away_team)}</span>
           </div>
         </div>
@@ -131,44 +336,38 @@ function buildMatchCard(m) {
 }
 
 function buildPosBadge(pos) {
-  const cls = posBadgeClass(pos);
-  return `<span class="apostas-pos-badge ${cls}" title="Posição na tabela">#${pos}</span>`;
+  return `<span class="apostas-pos-badge ${posBadgeClass(pos)}" title="Posição na tabela">#${pos}</span>`;
 }
 
 function posBadgeClass(pos) {
-  if (pos === 1) return "apostas-pos-badge--1";
-  if (pos <= 4) return "apostas-pos-badge--top";
-  if (pos <= 8) return "apostas-pos-badge--mid";
-  if (pos <= 14) return "apostas-pos-badge--low";
+  if (pos === 1)  return "apostas-pos-badge--1";
+  if (pos <= 4)   return "apostas-pos-badge--top";
+  if (pos <= 8)   return "apostas-pos-badge--mid";
+  if (pos <= 14)  return "apostas-pos-badge--low";
   return "apostas-pos-badge--rel";
 }
 
 function buildDiffBadge(diff) {
   let cls;
-  if (diff >= 15) cls = "apostas-diff-badge--high";
+  if (diff >= 15)      cls = "apostas-diff-badge--high";
   else if (diff >= 10) cls = "apostas-diff-badge--medium";
-  else if (diff >= 5) cls = "apostas-diff-badge--low";
-  else cls = "apostas-diff-badge--min";
+  else if (diff >= 5)  cls = "apostas-diff-badge--low";
+  else                 cls = "apostas-diff-badge--min";
   return `<span class="apostas-diff-badge ${cls}">Δ ${diff}</span>`;
 }
 
 function buildFooter(m) {
   const parts = [];
-
   if (m.start_timestamp) {
     const dt = new Date(m.start_timestamp * 1000);
-    const hhmm = dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-    parts.push(`<span class="apostas-time">${hhmm}</span>`);
+    parts.push(`<span class="apostas-time">${dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>`);
   }
-
   if (m.status_type === "inprogress") {
     parts.push(`<span class="apostas-status-badge apostas-status-badge--live">Ao vivo</span>`);
   } else if (m.status_type === "finished") {
     parts.push(`<span class="apostas-status-badge apostas-status-badge--ended">Encerrado</span>`);
   }
-
-  if (parts.length === 0) return "";
-  return `<div class="apostas-match-footer">${parts.join("")}</div>`;
+  return parts.length ? `<div class="apostas-match-footer">${parts.join("")}</div>` : "";
 }
 
 function escHtml(str) {
