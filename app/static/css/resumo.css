@@ -950,13 +950,6 @@
   padding: 4px 16px 8px;
 }
 
-@media (max-width: 767px) {
-  .gerenciar-btn-wrap {
-    text-align: left;
-    padding-right: 88px;
-  }
-}
-
 .gerenciar-btn {
   display: inline-flex;
   align-items: center;
@@ -1216,6 +1209,12 @@
   flex-direction: column;
   align-items: flex-end;
   gap: 10px;
+  pointer-events: none;
+}
+
+.fab-wrapper .fab-btn,
+.fab-wrapper .fab-option {
+  pointer-events: auto;
 }
 
 @media (min-width: 768px) {
