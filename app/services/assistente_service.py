@@ -191,13 +191,7 @@ def get_analise(user_id: int, periodo: str) -> str:
     message = client.messages.create(
         model="claude-haiku-4-5-20251001",
         max_tokens=400,
-        system=[
-            {
-                "type": "text",
-                "text": _SYSTEM_PROMPT,
-                "cache_control": {"type": "ephemeral"},
-            }
-        ],
+        system=_SYSTEM_PROMPT,
         messages=[
             {
                 "role": "user",
