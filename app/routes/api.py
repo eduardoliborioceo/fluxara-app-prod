@@ -528,7 +528,7 @@ def assistente_analise():
         return jsonify({"analise": analise, "periodo": periodo})
     except Exception as e:
         logger.error("Assistente Flux error: %s", e, exc_info=True)
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Não foi possível gerar a análise."}), 500
 
 
 @bp.route("/lancamentos", methods=["POST"])

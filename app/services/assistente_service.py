@@ -1,19 +1,6 @@
 import datetime
-import os
-
-import anthropic
 
 from app.services import contas_service, cartoes_service, lancamentos_service
-
-_SYSTEM_PROMPT = (
-    "Você é o Flux, assistente financeiro pessoal do sistema Fluxara. "
-    "Sua personalidade é direta, amigável e prática — como um parceiro financeiro de confiança. "
-    "Analise os dados e ofereça insights concretos em português brasileiro informal mas profissional. "
-    "Regras: seja conciso (3 a 5 frases curtas), cite valores e datas reais dos dados fornecidos, "
-    "termine sempre com uma recomendação acionável, "
-    "use perspectiva de parceiro ('você tem', 'suas contas', 'sua fatura'), "
-    "escreva em parágrafo fluido sem bullet points, sem cabeçalhos e sem negrito."
-)
 
 
 def _fmt_brl(valor) -> str:
@@ -25,43 +12,106 @@ def _fmt_brl(valor) -> str:
         return "R$ 0,00"
 
 
-def _date_str(val) -> str:
-    if hasattr(val, 'strftime'):
-        return val.strftime('%d/%m/%Y')
-    return str(val)
+def _dias_ate(data_alvo) -> int:
+    if hasattr(data_alvo, 'date'):
+        data_alvo = data_alvo.date()
+    return (data_alvo - datetime.date.today()).days
 
 
-def _build_context_semana(user_id: int) -> str:
+def _nome_mes(mes: int) -> str:
+    nomes = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+             'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro']
+    return nomes[mes - 1]
+
+
+# ── Semana ───────────────────────────────────────────────────────────────────
+
+def _analise_semana(user_id: int) -> str:
     today = datetime.date.today()
     contas = contas_service.list_contas(user_id)
     saldo_total = sum(float(c.get('saldo_atual') or 0) for c in contas)
     eventos = lancamentos_service.get_future_events(user_id, dias=7)
+    cartoes = cartoes_service.list_cartoes(user_id, today.month, today.year)
 
-    lines = [
-        f"Data de hoje: {today.strftime('%d/%m/%Y')}",
-        f"Saldo total em todas as contas: {_fmt_brl(saldo_total)}",
-    ]
+    receitas_semana = sum(float(e['valor']) for e in eventos if e['tipo'] == 'receita')
+    despesas_semana = sum(float(e['valor']) for e in eventos if e['tipo'] == 'despesa')
+    saldo_projetado = saldo_total + receitas_semana - despesas_semana
 
-    if contas:
-        lines.append("Contas:")
-        for c in contas:
-            lines.append(f"  - {c['nome']}: {_fmt_brl(c.get('saldo_atual', 0))}")
+    urgentes = [e for e in eventos if e['tipo'] == 'despesa'
+                and hasattr(e['data'], 'date') and _dias_ate(e['data']) <= 2
+                or e['tipo'] == 'despesa' and isinstance(e['data'], datetime.date)
+                and (e['data'] - today).days <= 2]
 
-    if eventos:
-        lines.append("\nLançamentos pendentes nos próximos 7 dias:")
-        for ev in eventos:
-            sinal = "+" if ev['tipo'] == 'receita' else "-"
-            lines.append(
-                f"  - {_date_str(ev['data'])} | {ev.get('descricao', '?')} | "
-                f"{sinal}{_fmt_brl(ev.get('valor', 0))} ({ev.get('conta_nome', '?')})"
-            )
+    partes = []
+
+    if not eventos:
+        partes.append(
+            f"Sua semana começa tranquila: você tem {_fmt_brl(saldo_total)} em conta "
+            f"e nenhum lançamento pendente nos próximos 7 dias."
+        )
     else:
-        lines.append("\nNenhum lançamento pendente nos próximos 7 dias.")
+        partes.append(
+            f"Você começa a semana com {_fmt_brl(saldo_total)} em conta."
+        )
+        if receitas_semana > 0 and despesas_semana > 0:
+            partes.append(
+                f"Nos próximos 7 dias entram {_fmt_brl(receitas_semana)} e saem "
+                f"{_fmt_brl(despesas_semana)}, deixando um saldo projetado de {_fmt_brl(saldo_projetado)}."
+            )
+        elif despesas_semana > 0:
+            partes.append(
+                f"Você tem {_fmt_brl(despesas_semana)} em despesas pendentes esta semana, "
+                f"o que projeta seu saldo em {_fmt_brl(saldo_projetado)}."
+            )
+        elif receitas_semana > 0:
+            partes.append(
+                f"Você tem {_fmt_brl(receitas_semana)} a receber esta semana — bom sinal."
+            )
 
-    return "\n".join(lines)
+    if saldo_projetado < 0:
+        partes.append(
+            f"Atenção: seu saldo pode ficar negativo essa semana. "
+            f"Avalie quais despesas podem ser adiadas."
+        )
+    elif urgentes:
+        ev = urgentes[0]
+        data_ev = ev['data'] if isinstance(ev['data'], datetime.date) else ev['data'].date()
+        partes.append(
+            f"Lembre de pagar '{ev.get('descricao', 'lançamento')}' "
+            f"({_fmt_brl(ev.get('valor', 0))}) que vence em {data_ev.strftime('%d/%m')}."
+        )
+
+    cartoes_venc = []
+    for ct in cartoes:
+        dia_venc = ct.get('dia_vencimento')
+        if dia_venc:
+            try:
+                venc = datetime.date(today.year, today.month, int(dia_venc))
+                if venc < today:
+                    m = today.month + 1 if today.month < 12 else 1
+                    y = today.year if today.month < 12 else today.year + 1
+                    venc = datetime.date(y, m, int(dia_venc))
+                if 0 <= (venc - today).days <= 7:
+                    cartoes_venc.append((ct, venc))
+            except ValueError:
+                pass
+
+    if cartoes_venc:
+        ct, venc = cartoes_venc[0]
+        partes.append(
+            f"Sua fatura do {ct['nome']} ({_fmt_brl(ct.get('fatura_atual', 0))}) "
+            f"vence em {venc.strftime('%d/%m')} — não deixe passar."
+        )
+
+    if saldo_projetado >= 0 and not cartoes_venc and not urgentes:
+        partes.append("Semana tranquila pela frente. Aproveite para adiantar alguma reserva.")
+
+    return " ".join(partes)
 
 
-def _build_context_mes(user_id: int) -> str:
+# ── Mês ──────────────────────────────────────────────────────────────────────
+
+def _analise_mes(user_id: int) -> str:
     today = datetime.date.today()
     mes, ano = today.month, today.year
 
@@ -76,50 +126,91 @@ def _build_context_mes(user_id: int) -> str:
     receitas = float(resumo.get('receitas', 0))
     desp_conta = float(resumo.get('despesas_conta', 0))
     desp_cartao = float(resumo.get('despesas_cartao', 0))
-    resultado = receitas - desp_conta - desp_cartao
+    total_desp = desp_conta + desp_cartao
+    resultado = receitas - total_desp
 
-    lines = [
-        f"Mês de análise: {today.strftime('%B de %Y')}",
-        f"Saldo total atual: {_fmt_brl(saldo_total)}",
-        f"Receitas no mês: {_fmt_brl(receitas)}",
-        f"Despesas em conta no mês: {_fmt_brl(desp_conta)}",
-        f"Despesas no cartão no mês: {_fmt_brl(desp_cartao)}",
-        f"Resultado do mês: {_fmt_brl(resultado)} ({'positivo' if resultado >= 0 else 'negativo'})",
-    ]
+    eventos_pendentes = projecao.get('eventos', [])
+    saldo_proj_30d = (
+        float(eventos_pendentes[-1].get('saldo_acumulado', saldo_total))
+        if eventos_pendentes else saldo_total
+    )
 
-    if contas:
-        lines.append("\nContas:")
-        for c in contas:
-            lines.append(
-                f"  - {c['nome']} ({c.get('instituicao', '')}): "
-                f"saldo atual {_fmt_brl(c.get('saldo_atual', 0))} | "
-                f"previsto {_fmt_brl(c.get('saldo_previsto', 0))}"
+    partes = []
+
+    mes_label = f"{_nome_mes(mes).capitalize()} de {ano}"
+
+    if receitas == 0 and total_desp == 0:
+        partes.append(
+            f"Ainda não há movimentação registrada em {mes_label}. "
+            f"Seu saldo atual é de {_fmt_brl(saldo_total)}."
+        )
+        partes.append("Assim que os lançamentos forem registrados, a análise ficará mais completa.")
+    else:
+        if resultado >= 0:
+            partes.append(
+                f"Em {mes_label} você está no positivo: "
+                f"{_fmt_brl(receitas)} de receitas contra {_fmt_brl(total_desp)} em despesas, "
+                f"sobrando {_fmt_brl(resultado)}."
             )
-
-    if cartoes:
-        lines.append("\nCartões de crédito:")
-        for ct in cartoes:
-            lines.append(
-                f"  - {ct['nome']}: fatura {_fmt_brl(ct.get('fatura_atual', 0))} / "
-                f"limite {_fmt_brl(ct.get('limite', 0))} "
-                f"(disponível: {_fmt_brl(ct.get('limite_disponivel', 0))})"
+        else:
+            partes.append(
+                f"Atenção: em {mes_label} suas despesas ({_fmt_brl(total_desp)}) "
+                f"estão superando as receitas ({_fmt_brl(receitas)}) em {_fmt_brl(abs(resultado))}."
             )
 
     if categorias:
-        lines.append("\nTop despesas por categoria:")
-        for cat in categorias[:5]:
-            lines.append(f"  - {cat.get('categoria_nome', '?')}: {_fmt_brl(cat.get('total', 0))}")
+        top = categorias[0]
+        partes.append(
+            f"Sua maior categoria de gasto é {top.get('categoria_nome', '?')} "
+            f"com {_fmt_brl(top.get('total', 0))}."
+        )
 
-    eventos_pendentes = projecao.get('eventos', [])
+    cartoes_alerta = [
+        ct for ct in cartoes
+        if ct.get('limite') and ct.get('fatura_atual') and
+        float(ct.get('fatura_atual', 0)) / float(ct.get('limite', 1)) > 0.7
+    ]
+    if cartoes_alerta:
+        ct = cartoes_alerta[0]
+        pct = float(ct['fatura_atual']) / float(ct['limite']) * 100
+        partes.append(
+            f"O cartão {ct['nome']} está com {pct:.0f}% do limite utilizado "
+            f"({_fmt_brl(ct['fatura_atual'])} de {_fmt_brl(ct['limite'])}) — use com cuidado."
+        )
+    elif cartoes and any(float(ct.get('fatura_atual', 0)) > 0 for ct in cartoes):
+        total_fatura = sum(float(ct.get('fatura_atual', 0)) for ct in cartoes)
+        partes.append(
+            f"Suas faturas somam {_fmt_brl(total_fatura)} no total — dentro do esperado."
+        )
+
     if eventos_pendentes:
-        saldo_proj = float(eventos_pendentes[-1].get('saldo_acumulado', saldo_total))
-        lines.append(f"\n{len(eventos_pendentes)} evento(s) pendente(s) nos próximos 30 dias.")
-        lines.append(f"Saldo projetado ao final dos 30 dias: {_fmt_brl(saldo_proj)}")
+        if saldo_proj_30d < 0:
+            partes.append(
+                f"Com os lançamentos futuros, seu saldo pode chegar a {_fmt_brl(saldo_proj_30d)} "
+                f"em 30 dias. Reveja despesas não essenciais."
+            )
+        elif saldo_proj_30d < saldo_total * 0.5 and saldo_total > 0:
+            partes.append(
+                f"Seu saldo projetado nos próximos 30 dias é de {_fmt_brl(saldo_proj_30d)}. "
+                f"Fique de olho nos gastos desta quinzena."
+            )
+        else:
+            partes.append(
+                f"Seu saldo projetado em 30 dias é de {_fmt_brl(saldo_proj_30d)} — "
+                f"você está caminhando bem."
+            )
+    else:
+        if resultado > 0:
+            partes.append("Nenhum lançamento futuro registrado. Bom momento para guardar o que sobrou.")
+        else:
+            partes.append("Registre os próximos lançamentos para acompanhar sua projeção.")
 
-    return "\n".join(lines)
+    return " ".join(partes)
 
 
-def _build_context_ano(user_id: int) -> str:
+# ── Ano ──────────────────────────────────────────────────────────────────────
+
+def _analise_ano(user_id: int) -> str:
     today = datetime.date.today()
     mes, ano = today.month, today.year
 
@@ -134,69 +225,92 @@ def _build_context_ano(user_id: int) -> str:
     receitas = float(resumo.get('receitas', 0))
     desp_conta = float(resumo.get('despesas_conta', 0))
     desp_cartao = float(resumo.get('despesas_cartao', 0))
-    resultado_mensal = receitas - desp_conta - desp_cartao
+    total_desp = desp_conta + desp_cartao
+    resultado_mensal = receitas - total_desp
 
-    lines = [
-        f"Análise anual — referência: {today.strftime('%B de %Y')} ({ano})",
-        f"Saldo total atual (todas as contas): {_fmt_brl(saldo_total)}",
-        f"Receitas no mês atual: {_fmt_brl(receitas)}",
-        f"Despesas totais no mês atual: {_fmt_brl(desp_conta + desp_cartao)}",
-        f"Resultado mensal atual: {_fmt_brl(resultado_mensal)} ({'positivo' if resultado_mensal >= 0 else 'negativo'})",
-    ]
+    eventos_pendentes = projecao.get('eventos', [])
+    saldo_60d = (
+        float(eventos_pendentes[-1].get('saldo_acumulado', saldo_total))
+        if eventos_pendentes else saldo_total
+    )
 
-    if resultado_mensal > 0:
-        lines.append(f"Projeção de economia anual (mantendo ritmo atual): {_fmt_brl(resultado_mensal * 12)}")
+    partes = []
+
+    meses_restantes = 12 - mes + 1
+
+    if receitas == 0 and total_desp == 0:
+        partes.append(
+            f"Ainda sem movimentação registrada em {ano} para calcular projeções. "
+            f"Seu patrimônio atual soma {_fmt_brl(saldo_total)}."
+        )
+    else:
+        if resultado_mensal > 0:
+            projecao_anual = resultado_mensal * meses_restantes
+            partes.append(
+                f"No ritmo atual de {_nome_mes(mes)}, você está economizando "
+                f"{_fmt_brl(resultado_mensal)} por mês. "
+                f"Se manter esse ritmo, pode acumular mais {_fmt_brl(projecao_anual)} "
+                f"até o fim de {ano}."
+            )
+        else:
+            deficit_anual = abs(resultado_mensal) * meses_restantes
+            partes.append(
+                f"No ritmo atual, você está gastando {_fmt_brl(abs(resultado_mensal))} "
+                f"a mais do que recebe por mês. "
+                f"Projetando até dezembro, isso representa {_fmt_brl(deficit_anual)} de deficit — "
+                f"é hora de rever o orçamento."
+            )
+
+    if saldo_total > 0:
+        meses_reserva = saldo_total / total_desp if total_desp > 0 else 0
+        if meses_reserva >= 3:
+            partes.append(
+                f"Seu saldo atual de {_fmt_brl(saldo_total)} cobre cerca de "
+                f"{meses_reserva:.0f} meses de despesas — uma reserva saudável."
+            )
+        elif meses_reserva > 0:
+            partes.append(
+                f"Seu saldo atual de {_fmt_brl(saldo_total)} cobre cerca de "
+                f"{meses_reserva:.1f} meses de despesas. "
+                f"O ideal é ter pelo menos 3 meses de reserva."
+            )
 
     if cartoes:
         total_faturas = sum(float(ct.get('fatura_atual', 0)) for ct in cartoes)
         total_limite = sum(float(ct.get('limite', 0)) for ct in cartoes)
-        utilizacao = (total_faturas / total_limite * 100) if total_limite > 0 else 0
-        lines.append(
-            f"\nCartões: {len(cartoes)} cartão(ões) | "
-            f"Faturas totais: {_fmt_brl(total_faturas)} | "
-            f"Limite total: {_fmt_brl(total_limite)} | "
-            f"Utilização: {utilizacao:.0f}%"
-        )
+        if total_limite > 0:
+            utilizacao = total_faturas / total_limite * 100
+            if utilizacao > 70:
+                partes.append(
+                    f"Seus cartões estão com {utilizacao:.0f}% do limite comprometido "
+                    f"({_fmt_brl(total_faturas)} de {_fmt_brl(total_limite)}). "
+                    f"Tente manter abaixo de 70%."
+                )
+            else:
+                partes.append(
+                    f"Uso de cartões saudável: {utilizacao:.0f}% do limite utilizado."
+                )
 
     if categorias:
-        lines.append("\nTop categorias de despesa (mês atual):")
-        for cat in categorias[:5]:
-            lines.append(f"  - {cat.get('categoria_nome', '?')}: {_fmt_brl(cat.get('total', 0))}")
+        top = categorias[0]
+        partes.append(
+            f"Sua principal categoria de gasto este mês é {top.get('categoria_nome', '?')} "
+            f"com {_fmt_brl(top.get('total', 0))} — avalie se há espaço para reduzir."
+        )
 
-    eventos_pendentes = projecao.get('eventos', [])
-    if eventos_pendentes:
-        saldo_60d = float(eventos_pendentes[-1].get('saldo_acumulado', saldo_total))
-        lines.append(f"\nSaldo projetado em 60 dias: {_fmt_brl(saldo_60d)}")
-        lines.append(f"Eventos financeiros pendentes nos próximos 60 dias: {len(eventos_pendentes)}")
+    if eventos_pendentes and saldo_60d != saldo_total:
+        partes.append(
+            f"Com os lançamentos futuros, seu saldo projetado em 60 dias é {_fmt_brl(saldo_60d)}."
+        )
 
-    return "\n".join(lines)
+    return " ".join(partes)
 
+
+# ── Ponto de entrada ─────────────────────────────────────────────────────────
 
 def get_analise(user_id: int, periodo: str) -> str:
     if periodo == 'semana':
-        context = _build_context_semana(user_id)
-        periodo_label = "a semana (próximos 7 dias)"
-    elif periodo == 'ano':
-        context = _build_context_ano(user_id)
-        periodo_label = "o ano (visão anual com base nos dados atuais)"
-    else:
-        context = _build_context_mes(user_id)
-        periodo_label = "o mês atual"
-
-    api_key = os.getenv("ANTHROPIC_API_KEY")
-    if not api_key:
-        return "Assistente Flux não configurado. Defina a variável de ambiente ANTHROPIC_API_KEY."
-
-    client = anthropic.Anthropic(api_key=api_key)
-    message = client.messages.create(
-        model="claude-haiku-4-5-20251001",
-        max_tokens=400,
-        system=_SYSTEM_PROMPT,
-        messages=[
-            {
-                "role": "user",
-                "content": f"Analise minha situação financeira para {periodo_label}.\n\n{context}",
-            }
-        ],
-    )
-    return message.content[0].text
+        return _analise_semana(user_id)
+    if periodo == 'ano':
+        return _analise_ano(user_id)
+    return _analise_mes(user_id)
