@@ -98,6 +98,51 @@
   color: #93c5fd;
 }
 
+[data-theme="escuro"] .modal-content {
+  background: #1e293b;
+  border-color: rgba(255,255,255,0.1);
+  color: #e2e8f0;
+}
+
+[data-theme="escuro"] .modal-header {
+  border-bottom-color: rgba(255,255,255,0.1);
+}
+
+[data-theme="escuro"] .modal-footer {
+  border-top-color: rgba(255,255,255,0.1);
+}
+
+[data-theme="escuro"] .btn-close {
+  filter: invert(1) grayscale(1) brightness(2);
+}
+
+[data-theme="escuro"] .input-group-text {
+  background: #0f172a;
+  border-color: rgba(255,255,255,0.15);
+  color: #94a3b8;
+}
+
+[data-theme="escuro"] .list-group-item {
+  background: #1e293b;
+  border-color: rgba(255,255,255,0.08);
+  color: #e2e8f0;
+}
+
+[data-theme="escuro"] .dropdown-menu {
+  background: #1e293b;
+  border-color: rgba(255,255,255,0.1);
+}
+
+[data-theme="escuro"] .dropdown-item {
+  color: #e2e8f0;
+}
+
+[data-theme="escuro"] .dropdown-item:hover,
+[data-theme="escuro"] .dropdown-item:focus {
+  background: rgba(255,255,255,0.07);
+  color: #e2e8f0;
+}
+
 /* =========================
    RESET BÁSICO
 ========================= */
