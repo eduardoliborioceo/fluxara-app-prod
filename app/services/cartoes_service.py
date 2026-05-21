@@ -84,6 +84,42 @@ def gerar_lancamento_fatura(cartao_id: int, user_id: int, mes: int, ano: int,
     return dict(row)
 
 
+def get_faturas_futuras(user_id: int, dias: int) -> list:
+    import calendar
+    hoje = datetime.date.today()
+    limite = hoje + datetime.timedelta(days=dias)
+
+    faturas = repo.get_faturas_pendentes(user_id)
+    eventos = []
+
+    for f in faturas:
+        fatura_mes = int(f['fatura_mes'])
+        fatura_ano = int(f['fatura_ano'])
+        dia_venc = int(f['dia_vencimento'] or 1)
+
+        venc_mes = fatura_mes + 1 if fatura_mes < 12 else 1
+        venc_ano = fatura_ano if fatura_mes < 12 else fatura_ano + 1
+
+        ultimo_dia = calendar.monthrange(venc_ano, venc_mes)[1]
+        try:
+            data_venc = datetime.date(venc_ano, venc_mes, min(dia_venc, ultimo_dia))
+        except ValueError:
+            continue
+
+        if data_venc < hoje or data_venc > limite:
+            continue
+
+        eventos.append({
+            'data': data_venc,
+            'descricao': f"Fatura {f['cartao_nome']}",
+            'valor': float(f['saldo_fatura']),
+            'tipo': 'despesa',
+            'conta_nome': f['cartao_nome'],
+        })
+
+    return sorted(eventos, key=lambda x: x['data'])
+
+
 def get_fatura_aberta_para_conta(conta_id: int, user_id: int, mes: int, ano: int) -> list:
     rows = repo.get_open_invoices_for_conta(conta_id, user_id, mes, ano)
     result = []

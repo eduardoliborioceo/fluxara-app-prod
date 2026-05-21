@@ -344,7 +344,11 @@ def get_planejamento_quinzenal(user_id: int) -> dict:
     contas = contas_service.list_contas(user_id)
     saldo_atual = sum(float(c.get('saldo_atual') or 0) for c in contas)
 
-    eventos = lancamentos_service.get_future_events(user_id, dias=60)
+    eventos = list(lancamentos_service.get_future_events(user_id, dias=60))
+    faturas = cartoes_service.get_faturas_futuras(user_id, dias=60)
+    eventos += [dict(f) for f in faturas]
+    eventos.sort(key=lambda x: _as_date(x['data']))
+
     receitas = sorted(
         [e for e in eventos if e['tipo'] == 'receita'],
         key=lambda x: _as_date(x['data'])
