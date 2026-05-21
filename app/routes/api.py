@@ -516,6 +516,21 @@ def resumo_despesas_por_categoria():
     return jsonify(data)
 
 
+@bp.route("/assistente/analise", methods=["GET"])
+@login_required
+def assistente_analise():
+    from app.services import assistente_service
+    periodo = request.args.get("periodo", "mes")
+    if periodo not in ("semana", "mes", "ano"):
+        periodo = "mes"
+    try:
+        analise = assistente_service.get_analise(current_user.id, periodo)
+        return jsonify({"analise": analise, "periodo": periodo})
+    except Exception as e:
+        logger.error("Assistente Flux error: %s", e)
+        return jsonify({"error": "Não foi possível gerar a análise."}), 500
+
+
 @bp.route("/lancamentos", methods=["POST"])
 @login_required
 def api_add_lancamento():

@@ -725,6 +725,7 @@
     'projecao':       { nome: 'Projeção de Saldo',      icone: 'bi-graph-up-arrow', cor: '#0d6efd' },
     'despesas-conta': { nome: 'Despesas por Conta',     icone: 'bi-pie-chart',      cor: '#dc3545' },
     'despesas-cat':   { nome: 'Despesas por Categoria', icone: 'bi-tags',           cor: '#f59e0b' },
+    'assistente':     { nome: 'Assistente Flux',        icone: 'bi-stars',          cor: '#6366f1' },
   };
 
   function initGerenciar() {
@@ -876,6 +877,40 @@
     });
   }
 
+  // ── Assistente Flux ─────────────────────────────────────────────────────────
+  function loadAssistente(periodo) {
+    var body = document.getElementById('fluxBody');
+    if (!body) return;
+
+    document.querySelectorAll('.flux-period-btn').forEach(function (btn) {
+      btn.classList.toggle('active', btn.dataset.periodo === periodo);
+    });
+
+    body.innerHTML = '<div class="flux-loading">'
+      + '<div class="flux-dots"><span></span><span></span><span></span></div>'
+      + '<span>Analisando suas finanças...</span>'
+      + '</div>';
+
+    fetch('/api/assistente/analise?periodo=' + encodeURIComponent(periodo))
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.error) {
+          body.innerHTML = '<div class="flux-error">' + esc(data.error) + '</div>';
+          return;
+        }
+        body.innerHTML = '<div class="flux-text">' + esc(data.analise) + '</div>';
+      })
+      .catch(function () {
+        body.innerHTML = '<div class="flux-error">Não foi possível carregar a análise.</div>';
+      });
+  }
+
+  document.querySelectorAll('.flux-period-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      loadAssistente(btn.dataset.periodo);
+    });
+  });
+
   applyCardOrder();
   initGerenciar();
   loadContas();
@@ -884,4 +919,5 @@
   loadProjecao();
   loadDespesasPorConta();
   loadDespesasPorCategoria();
+  loadAssistente('mes');
 })();

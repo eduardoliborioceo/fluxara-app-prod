@@ -1933,3 +1933,140 @@
   background: rgba(220,53,69,.08);
   border-color: rgba(220,53,69,.25);
 }
+
+/* ========================
+   ASSISTENTE FLUX
+======================== */
+.flux-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.flux-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.flux-header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.flux-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text, #1e293b);
+  line-height: 1.2;
+}
+
+.flux-subtitle {
+  font-size: 0.72rem;
+  color: var(--text-muted, #64748b);
+  font-weight: 500;
+}
+
+.flux-period-btns {
+  display: flex;
+  gap: 6px;
+  padding: 10px 14px 2px;
+}
+
+.flux-period-btn {
+  flex: 1;
+  padding: 6px 0;
+  border-radius: 8px;
+  border: 1px solid var(--border, rgba(15,23,42,0.09));
+  background: transparent;
+  color: var(--text-muted, #64748b);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.flux-period-btn:hover {
+  background: rgba(99,102,241,0.06);
+  border-color: rgba(99,102,241,0.3);
+  color: #6366f1;
+}
+
+.flux-period-btn.active {
+  background: rgba(99,102,241,0.10);
+  border-color: rgba(99,102,241,0.35);
+  color: #6366f1;
+}
+
+.flux-body {
+  padding: 14px 16px 18px;
+  min-height: 72px;
+}
+
+.flux-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-muted, #64748b);
+  font-size: 0.82rem;
+}
+
+.flux-dots {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.flux-dots span {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #6366f1;
+  animation: fluxDot 1.4s infinite ease-in-out;
+}
+
+.flux-dots span:nth-child(2) { animation-delay: 0.2s; }
+.flux-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes fluxDot {
+  0%, 80%, 100% { opacity: 0.25; transform: scale(0.8); }
+  40%            { opacity: 1;    transform: scale(1.1); }
+}
+
+.flux-text {
+  font-size: 0.875rem;
+  color: var(--text, #1e293b);
+  line-height: 1.65;
+  font-weight: 500;
+}
+
+.flux-error {
+  font-size: 0.8rem;
+  color: var(--text-muted, #64748b);
+  font-style: italic;
+}
+
+[data-theme="escuro"] .flux-period-btn {
+  border-color: rgba(255,255,255,.1);
+  color: rgba(255,255,255,.5);
+}
+
+[data-theme="escuro"] .flux-period-btn:hover,
+[data-theme="escuro"] .flux-period-btn.active {
+  background: rgba(99,102,241,0.18);
+  border-color: rgba(99,102,241,0.45);
+  color: #a5b4fc;
+}
+
+[data-theme="escuro"] .flux-text {
+  color: rgba(255,255,255,.85);
+}
