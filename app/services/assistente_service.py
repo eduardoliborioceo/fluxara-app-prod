@@ -2,6 +2,27 @@ import datetime
 
 from app.services import contas_service, cartoes_service, lancamentos_service
 
+_MESES_PT = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez']
+
+
+def _as_date(d) -> datetime.date:
+    if isinstance(d, datetime.datetime):
+        return d.date()
+    if isinstance(d, str):
+        return datetime.date.fromisoformat(d[:10])
+    return d
+
+
+def _fmt_desp_list(despesas: list) -> list:
+    return [
+        {
+            'descricao': d['descricao'],
+            'valor': round(float(d['valor']), 2),
+            'data': _as_date(d['data']).strftime('%d/%m'),
+        }
+        for d in despesas
+    ]
+
 
 def _fmt_brl(valor) -> str:
     try:
@@ -314,3 +335,90 @@ def get_analise(user_id: int, periodo: str) -> str:
     if periodo == 'ano':
         return _analise_ano(user_id)
     return _analise_mes(user_id)
+
+
+# ── Planejamento por recebimento ─────────────────────────────────────────────
+
+def get_planejamento_quinzenal(user_id: int) -> dict:
+    today = datetime.date.today()
+    contas = contas_service.list_contas(user_id)
+    saldo_atual = sum(float(c.get('saldo_atual') or 0) for c in contas)
+
+    eventos = lancamentos_service.get_future_events(user_id, dias=60)
+    receitas = sorted(
+        [e for e in eventos if e['tipo'] == 'receita'],
+        key=lambda x: _as_date(x['data'])
+    )
+    despesas = sorted(
+        [e for e in eventos if e['tipo'] == 'despesa'],
+        key=lambda x: _as_date(x['data'])
+    )
+
+    periodos = []
+
+    if not receitas:
+        total_desp = sum(float(d['valor']) for d in despesas)
+        if despesas:
+            periodos.append({
+                'tipo': 'saldo',
+                'label': 'Saldo disponível',
+                'data': today.isoformat(),
+                'disponivel': round(saldo_atual, 2),
+                'despesas': _fmt_desp_list(despesas),
+                'total_despesas': round(total_desp, 2),
+                'sobra': round(saldo_atual - total_desp, 2),
+            })
+        return {
+            'saldo_atual': round(saldo_atual, 2),
+            'has_receitas': False,
+            'periodos': periodos,
+        }
+
+    primeira_data = _as_date(receitas[0]['data'])
+
+    desp_periodo0 = [d for d in despesas if _as_date(d['data']) < primeira_data]
+    total_desp0 = sum(float(d['valor']) for d in desp_periodo0)
+    periodos.append({
+        'tipo': 'saldo',
+        'label': 'Saldo disponível',
+        'data': today.isoformat(),
+        'disponivel': round(saldo_atual, 2),
+        'despesas': _fmt_desp_list(desp_periodo0),
+        'total_despesas': round(total_desp0, 2),
+        'sobra': round(saldo_atual - total_desp0, 2),
+    })
+
+    for i, receita in enumerate(receitas):
+        data_rec = _as_date(receita['data'])
+        valor_rec = float(receita['valor'])
+        proxima_data = _as_date(receitas[i + 1]['data']) if i + 1 < len(receitas) else None
+
+        if proxima_data:
+            desp_periodo = [d for d in despesas
+                            if data_rec <= _as_date(d['data']) < proxima_data]
+        else:
+            desp_periodo = [d for d in despesas if _as_date(d['data']) >= data_rec]
+
+        total_desp = sum(float(d['valor']) for d in desp_periodo)
+        mes_label = _MESES_PT[data_rec.month - 1]
+
+        periodos.append({
+            'tipo': 'receita',
+            'label': f"Dia {data_rec.day}/{mes_label}",
+            'data': data_rec.isoformat(),
+            'receita': {
+                'descricao': receita['descricao'],
+                'valor': round(valor_rec, 2),
+                'conta': receita.get('conta_nome', ''),
+            },
+            'disponivel': round(valor_rec, 2),
+            'despesas': _fmt_desp_list(desp_periodo),
+            'total_despesas': round(total_desp, 2),
+            'sobra': round(valor_rec - total_desp, 2),
+        })
+
+    return {
+        'saldo_atual': round(saldo_atual, 2),
+        'has_receitas': True,
+        'periodos': periodos,
+    }

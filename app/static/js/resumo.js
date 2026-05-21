@@ -878,6 +878,57 @@
   }
 
   // ── Assistente Flux ─────────────────────────────────────────────────────────
+  function fluxLoading(body, msg) {
+    body.innerHTML = '<div class="flux-loading">'
+      + '<div class="flux-dots"><span></span><span></span><span></span></div>'
+      + '<span>' + esc(msg || 'Analisando suas finanças...') + '</span>'
+      + '</div>';
+  }
+
+  function renderPlanejamento(data) {
+    var periodos = data.periodos || [];
+    if (!periodos.length) {
+      return '<div class="quin-empty-state">'
+        + '<i class="bi bi-layout-split"></i>'
+        + '<p>Nenhum recebimento agendado nos próximos 60 dias.</p>'
+        + '<span>Cadastre suas receitas futuras para ver o planejamento por recebimento.</span>'
+        + '</div>';
+    }
+    var html = '<div class="quin-wrapper">';
+    periodos.forEach(function (p) {
+      var isSaldo = p.tipo === 'saldo';
+      var sobraPos = p.sobra >= 0;
+      html += '<div class="quin-period ' + (isSaldo ? 'quin-saldo' : 'quin-receita') + '">';
+      html += '<div class="quin-header">'
+        + '<div class="quin-icon"><i class="bi ' + (isSaldo ? 'bi-wallet2' : 'bi-arrow-down-circle-fill') + '"></i></div>'
+        + '<div class="quin-header-info">'
+        + '<div class="quin-label">' + esc(p.label) + '</div>'
+        + '<div class="quin-disponivel">' + formatMoney(p.disponivel) + '</div>'
+        + ((!isSaldo && p.receita && p.receita.descricao) ? '<div class="quin-origem">' + esc(p.receita.descricao) + '</div>' : '')
+        + '</div></div>';
+      if (p.despesas && p.despesas.length) {
+        html += '<div class="quin-despesas">';
+        p.despesas.forEach(function (d) {
+          html += '<div class="quin-desp-row">'
+            + '<span class="quin-desp-data">' + esc(d.data) + '</span>'
+            + '<span class="quin-desp-desc">' + esc(d.descricao) + '</span>'
+            + '<span class="quin-desp-val">-' + formatMoney(d.valor) + '</span>'
+            + '</div>';
+        });
+        html += '</div>';
+      } else {
+        html += '<div class="quin-empty">Nenhuma despesa neste período</div>';
+      }
+      html += '<div class="quin-footer">'
+        + '<span>Sobra estimada</span>'
+        + '<span class="quin-sobra ' + (sobraPos ? 'quin-pos' : 'quin-neg') + '">' + formatMoney(p.sobra) + '</span>'
+        + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+    return html;
+  }
+
   function loadAssistente(periodo) {
     var body = document.getElementById('fluxBody');
     if (!body) return;
@@ -886,11 +937,24 @@
       btn.classList.toggle('active', btn.dataset.periodo === periodo);
     });
 
-    body.innerHTML = '<div class="flux-loading">'
-      + '<div class="flux-dots"><span></span><span></span><span></span></div>'
-      + '<span>Analisando suas finanças...</span>'
-      + '</div>';
+    if (periodo === 'divisao') {
+      fluxLoading(body, 'Calculando planejamento...');
+      fetch('/api/assistente/planejamento')
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (data.error) {
+            body.innerHTML = '<div class="flux-error">' + esc(data.error) + '</div>';
+            return;
+          }
+          body.innerHTML = renderPlanejamento(data);
+        })
+        .catch(function () {
+          body.innerHTML = '<div class="flux-error">Não foi possível carregar o planejamento.</div>';
+        });
+      return;
+    }
 
+    fluxLoading(body);
     fetch('/api/assistente/analise?periodo=' + encodeURIComponent(periodo))
       .then(function (r) { return r.json(); })
       .then(function (data) {
