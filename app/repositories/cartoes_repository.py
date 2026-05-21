@@ -117,6 +117,37 @@ def get_open_invoices_for_conta(conta_id: int, user_id: int, mes: int, ano: int)
             return cur.fetchall()
 
 
+def get_faturas_pendentes(user_id: int) -> list:
+    with get_db() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("""
+                SELECT
+                    cc.id             AS cartao_id,
+                    cc.nome           AS cartao_nome,
+                    cc.dia_vencimento,
+                    l.fatura_mes,
+                    l.fatura_ano,
+                    SUM(CASE
+                        WHEN l.tipo = 'despesa_cartao'   THEN l.valor
+                        WHEN l.tipo = 'pagamento_fatura' THEN -l.valor
+                        ELSE 0
+                    END) AS saldo_fatura
+                FROM cartoes_credito cc
+                JOIN lancamentos l ON l.cartao_id = cc.id
+                    AND l.tipo IN ('despesa_cartao', 'pagamento_fatura')
+                    AND l.ativo = TRUE
+                WHERE cc.user_id = %s AND cc.ativo = TRUE
+                GROUP BY cc.id, cc.nome, cc.dia_vencimento, l.fatura_mes, l.fatura_ano
+                HAVING SUM(CASE
+                    WHEN l.tipo = 'despesa_cartao'   THEN l.valor
+                    WHEN l.tipo = 'pagamento_fatura' THEN -l.valor
+                    ELSE 0
+                END) > 0
+                ORDER BY l.fatura_ano ASC, l.fatura_mes ASC
+            """, (user_id,))
+            return cur.fetchall()
+
+
 def delete_cartao(cartao_id: int, user_id: int):
     with get_db() as conn:
         with conn.cursor() as cur:
