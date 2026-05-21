@@ -531,6 +531,18 @@ def assistente_analise():
         return jsonify({"error": "Não foi possível gerar a análise."}), 500
 
 
+@bp.route("/assistente/planejamento", methods=["GET"])
+@login_required
+def assistente_planejamento():
+    try:
+        from app.services import assistente_service
+        data = assistente_service.get_planejamento_quinzenal(current_user.id)
+        return jsonify(data)
+    except Exception as e:
+        logger.error("Assistente planejamento error: %s", e, exc_info=True)
+        return jsonify({"error": "Não foi possível gerar o planejamento."}), 500
+
+
 @bp.route("/lancamentos", methods=["POST"])
 @login_required
 def api_add_lancamento():

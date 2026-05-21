@@ -2061,6 +2061,166 @@
   font-style: italic;
 }
 
+.flux-period-btn--plan {
+  flex: 0 0 36px;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ========================
+   PLANEJAMENTO POR RECEBIMENTO
+======================== */
+.quin-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.quin-period {
+  border-radius: 10px;
+  border: 1px solid var(--border, rgba(15,23,42,0.09));
+  overflow: hidden;
+}
+
+.quin-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+}
+
+.quin-saldo .quin-header { background: rgba(99,102,241,0.06); }
+.quin-receita .quin-header { background: rgba(25,135,84,0.06); }
+
+.quin-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.quin-saldo .quin-icon { background: rgba(99,102,241,0.12); color: #6366f1; }
+.quin-receita .quin-icon { background: rgba(25,135,84,0.12); color: #198754; }
+
+.quin-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted, #64748b);
+  line-height: 1.2;
+}
+
+.quin-disponivel {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text, #1e293b);
+  line-height: 1.3;
+}
+
+.quin-origem {
+  font-size: 0.72rem;
+  color: var(--text-muted, #64748b);
+  font-weight: 500;
+  margin-top: 1px;
+}
+
+.quin-despesas {
+  border-top: 1px solid var(--border, rgba(15,23,42,0.06));
+}
+
+.quin-desp-row {
+  display: flex;
+  align-items: center;
+  padding: 6px 14px;
+  gap: 8px;
+  border-bottom: 1px solid var(--border, rgba(15,23,42,0.04));
+  font-size: 0.8rem;
+}
+
+.quin-desp-row:last-child { border-bottom: none; }
+
+.quin-desp-data {
+  color: var(--text-muted, #64748b);
+  font-weight: 600;
+  min-width: 36px;
+  flex-shrink: 0;
+}
+
+.quin-desp-desc {
+  color: var(--text, #1e293b);
+  flex: 1;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.quin-desp-val {
+  color: #dc3545;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.quin-empty {
+  padding: 8px 14px;
+  font-size: 0.78rem;
+  color: var(--text-muted, #64748b);
+  font-style: italic;
+}
+
+.quin-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  border-top: 1px solid var(--border, rgba(15,23,42,0.06));
+  background: rgba(0,0,0,.015);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+}
+
+.quin-sobra { font-weight: 700; }
+.quin-pos { color: #198754; }
+.quin-neg { color: #dc3545; }
+
+.quin-empty-state {
+  text-align: center;
+  padding: 20px 12px 12px;
+  color: var(--text-muted, #64748b);
+}
+
+.quin-empty-state i {
+  font-size: 1.6rem;
+  opacity: 0.4;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.quin-empty-state p {
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: var(--text, #1e293b);
+}
+
+.quin-empty-state span { font-size: 0.75rem; }
+
+[data-theme="escuro"] .quin-saldo .quin-header { background: rgba(99,102,241,0.1); }
+[data-theme="escuro"] .quin-receita .quin-header { background: rgba(25,135,84,0.1); }
+[data-theme="escuro"] .quin-disponivel { color: #e2e8f0; }
+[data-theme="escuro"] .quin-desp-desc { color: #e2e8f0; }
+[data-theme="escuro"] .quin-footer { background: rgba(255,255,255,.03); }
+[data-theme="escuro"] .quin-empty-state p { color: #e2e8f0; }
+
 [data-theme="escuro"] .flux-period-btn {
   border-color: rgba(255,255,255,.1);
   color: rgba(255,255,255,.5);
