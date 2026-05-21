@@ -950,6 +950,13 @@
   padding: 4px 16px 8px;
 }
 
+@media (max-width: 767px) {
+  .gerenciar-btn-wrap {
+    text-align: left;
+    padding-right: 88px;
+  }
+}
+
 .gerenciar-btn {
   display: inline-flex;
   align-items: center;

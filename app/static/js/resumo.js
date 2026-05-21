@@ -919,5 +919,5 @@
   loadProjecao();
   loadDespesasPorConta();
   loadDespesasPorCategoria();
-  loadAssistente('mes');
+  loadAssistente('semana');
 })();
