@@ -999,21 +999,159 @@
 }
 
 /* ========================
+   PRÓXIMOS JOGOS — filter row
+======================== */
+.jogos-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.jogos-filter-row .apostas-filter-label {
+  white-space: nowrap;
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+}
+
+.jogos-filter-row .apostas-filter-select {
+  flex: 1;
+  max-width: 160px;
+}
+
+/* ========================
+   PRÓXIMOS JOGOS — fixtures
+======================== */
+.jogos-day-group {
+  margin-bottom: 12px;
+}
+
+.jogos-day-header {
+  font-size: .72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: var(--text-muted, #64748b);
+  padding: 6px 0 4px;
+  border-bottom: 1px solid var(--border, rgba(15,23,42,.09));
+  margin-bottom: 4px;
+}
+
+.jogos-match-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  grid-template-rows: auto auto;
+  gap: 2px 8px;
+  align-items: center;
+  padding: 9px 12px;
+  background: var(--card, #fff);
+  border: 1px solid var(--border, rgba(15,23,42,.09));
+  border-radius: 10px;
+  margin-bottom: 6px;
+}
+
+.jogos-meta {
+  grid-column: 1 / -1;
+  font-size: .72rem;
+  color: var(--text-muted, #64748b);
+  padding-top: 2px;
+}
+
+.jogos-team {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.jogos-team--home {
+  justify-content: flex-end;
+  text-align: right;
+  flex-direction: row-reverse;
+}
+
+.jogos-team--away {
+  justify-content: flex-start;
+}
+
+.jogos-team-name {
+  font-size: .84rem;
+  font-weight: 600;
+  color: var(--text, #1e293b);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.jogos-pos {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 5px;
+  font-size: .68rem;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.jogos-pos--top { background: rgba(13,110,253,.12); color: #0d6efd; }
+.jogos-pos--mid { background: rgba(100,116,139,.1);  color: #475569; }
+.jogos-pos--low { background: rgba(234,88,12,.1);    color: #c2410c; }
+.jogos-pos--rel { background: rgba(239,68,68,.12);   color: #dc2626; }
+
+.jogos-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 52px;
+}
+
+.jogos-time {
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+}
+
+.jogos-score {
+  font-size: .88rem;
+  font-weight: 700;
+}
+
+.jogos-score--live  { color: #16a34a; }
+.jogos-score--final { color: var(--text, #1e293b); }
+
+.jogos-diff {
+  font-size: .65rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+  letter-spacing: .3px;
+}
+
+.jogos-diff--high { background: rgba(239,68,68,.12);  color: #dc2626; }
+.jogos-diff--mid  { background: rgba(234,88,12,.1);   color: #c2410c; }
+.jogos-diff--low  { background: rgba(100,116,139,.1); color: #475569; }
+
+.jogos-venue {
+  font-size: .72rem;
+}
+
+/* ========================
    RESPONSIVE
 ======================== */
 @media (max-width: 480px) {
-  .apostas-filter-row { flex-direction: column; gap: 10px; }
-  .apostas-team-name  { font-size: .82rem; }
-  .apostas-pos-badge  { min-width: 24px; height: 24px; font-size: .68rem; }
-
   .tips-form-row { flex-direction: column; gap: 0; }
-
   .tips-stats-row { gap: 6px; }
   .tips-stat-value { font-size: 1rem; }
 
-  .apostas-odds-row { gap: 6px; }
-  .apostas-odd-chip { min-width: 52px; padding: 5px 8px; }
-
   .tabelas-chips { gap: 5px; }
   .tabelas-chip  { font-size: .74rem; padding: 4px 10px; }
+
+  .jogos-team-name { font-size: .78rem; }
+  .jogos-match-row { padding: 8px 10px; }
 }
