@@ -305,6 +305,7 @@ function renderMatches(matches, total) {
 
 function buildMatchCard(m) {
   const footer = buildFooter(m);
+  const oddsId = `odds-${m.event_id}`;
   return `
     <div class="apostas-match-card">
       <div class="apostas-match-competition">
@@ -331,8 +332,80 @@ function buildMatchCard(m) {
         </div>
       </div>
       ${footer}
+      <div class="apostas-odds-toggle">
+        <button class="apostas-odds-btn" onclick="toggleOdds(${m.event_id}, '${oddsId}', this)">
+          <i class="bi bi-graph-up"></i> Ver odds
+        </button>
+      </div>
+      <div class="apostas-odds-panel" id="${oddsId}" style="display:none;"></div>
     </div>
   `;
+}
+
+async function toggleOdds(eventId, panelId, btn) {
+  const panel = document.getElementById(panelId);
+  if (!panel) return;
+
+  if (panel.style.display !== "none") {
+    panel.style.display = "none";
+    btn.innerHTML = '<i class="bi bi-graph-up"></i> Ver odds';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Carregando...';
+
+  try {
+    const resp = await fetch(`/api/apostas/odds/${eventId}`);
+    const json = await resp.json();
+
+    if (!resp.ok || (!json.fulltime && !json.asian)) {
+      panel.innerHTML = '<p class="apostas-odds-unavailable">Odds não disponíveis para este evento.</p>';
+    } else {
+      panel.innerHTML = buildOddsPanel(json);
+    }
+
+    panel.style.display = "block";
+    btn.innerHTML = '<i class="bi bi-chevron-up"></i> Fechar odds';
+  } catch {
+    panel.innerHTML = '<p class="apostas-odds-unavailable">Erro ao carregar odds.</p>';
+    panel.style.display = "block";
+    btn.innerHTML = '<i class="bi bi-graph-up"></i> Ver odds';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function buildOddsPanel(odds) {
+  const parts = [];
+
+  if (odds.fulltime) {
+    const ft = odds.fulltime;
+    parts.push(`
+      <div class="apostas-odds-group">
+        <span class="apostas-odds-label">1X2</span>
+        <div class="apostas-odds-row">
+          ${ft["1"] != null ? `<div class="apostas-odd-chip apostas-odd-chip--home"><span class="apostas-odd-name">Casa</span><span class="apostas-odd-val">${ft["1"].toFixed(2)}</span></div>` : ""}
+          ${ft["X"] != null ? `<div class="apostas-odd-chip apostas-odd-chip--draw"><span class="apostas-odd-name">Empate</span><span class="apostas-odd-val">${ft["X"].toFixed(2)}</span></div>` : ""}
+          ${ft["2"] != null ? `<div class="apostas-odd-chip apostas-odd-chip--away"><span class="apostas-odd-name">Fora</span><span class="apostas-odd-val">${ft["2"].toFixed(2)}</span></div>` : ""}
+        </div>
+      </div>
+    `);
+  }
+
+  if (odds.asian && odds.asian.length > 0) {
+    const chips = odds.asian.map(a =>
+      `<div class="apostas-odd-chip apostas-odd-chip--asian"><span class="apostas-odd-name">${escHtml(a.name)}</span><span class="apostas-odd-val">${a.odd.toFixed(2)}</span></div>`
+    ).join("");
+    parts.push(`
+      <div class="apostas-odds-group">
+        <span class="apostas-odds-label">Asian Handicap</span>
+        <div class="apostas-odds-row">${chips}</div>
+      </div>
+    `);
+  }
+
+  return `<div class="apostas-odds-content">${parts.join("")}</div>`;
 }
 
 function buildPosBadge(pos) {

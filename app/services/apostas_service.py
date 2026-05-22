@@ -22,6 +22,8 @@ _TIMEOUT = 12
 _CACHE_TTL = 1800  # 30 minutes
 
 _standings_cache: dict = {}
+_odds_cache: dict = {}
+_ODDS_CACHE_TTL = 300  # 5 minutes
 
 
 def get_mismatch_matches(date_str: str, min_diff: int) -> list[dict]:
@@ -124,6 +126,68 @@ def _get_standings_map(tournament_id: int, season_id: int) -> dict[int, int]:
     data = _fetch_standings(tournament_id, season_id)
     _standings_cache[key] = {"data": data, "expires": now + _CACHE_TTL}
     return data
+
+
+def get_event_odds(event_id: int) -> dict:
+    now = time.monotonic()
+    cached = _odds_cache.get(event_id)
+    if cached and cached["expires"] > now:
+        return cached["data"]
+
+    data = _fetch_featured_odds(event_id)
+    _odds_cache[event_id] = {"data": data, "expires": now + _ODDS_CACHE_TTL}
+    return data
+
+
+def _fetch_featured_odds(event_id: int) -> dict:
+    url = f"{_API_BASE}/event/{event_id}/odds/1/featured"
+    try:
+        resp = requests.get(url, headers=_HEADERS, timeout=_TIMEOUT)
+        if resp.status_code != 200:
+            return {}
+        payload = resp.json()
+        return _parse_featured_odds(payload)
+    except Exception as exc:
+        logger.warning("Sofascore odds fetch failed event=%s: %s", event_id, exc)
+        return {}
+
+
+def _parse_featured_odds(payload: dict) -> dict:
+    featured = payload.get("featured") or {}
+    result = {}
+
+    ft = featured.get("fullTime") or featured.get("default")
+    if ft:
+        choices = ft.get("choices") or []
+        odds_1x2 = {}
+        for c in choices:
+            name = c.get("name", "")
+            dec = _frac_to_decimal(c.get("fractionalValue", ""))
+            if name in ("1", "X", "2") and dec is not None:
+                odds_1x2[name] = dec
+        if odds_1x2:
+            result["fulltime"] = odds_1x2
+
+    asian = featured.get("asian")
+    if asian:
+        choices = asian.get("choices") or []
+        result["asian"] = [
+            {"name": c.get("name", ""), "odd": _frac_to_decimal(c.get("fractionalValue", ""))}
+            for c in choices
+            if _frac_to_decimal(c.get("fractionalValue", "")) is not None
+        ]
+
+    return result
+
+
+def _frac_to_decimal(frac: str) -> float | None:
+    if not frac:
+        return None
+    try:
+        num_str, den_str = frac.split("/")
+        return round(int(num_str) / int(den_str) + 1, 2)
+    except Exception:
+        return None
 
 
 def _fetch_standings(tournament_id: int, season_id: int) -> dict[int, int]:

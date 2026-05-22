@@ -1199,6 +1199,18 @@ def apostas_partidas():
         return jsonify({"error": "Erro ao buscar partidas"}), 500
 
 
+@bp.route("/apostas/odds/<int:event_id>", methods=["GET"])
+@login_required
+def apostas_odds(event_id):
+    from app.services import apostas_service
+    try:
+        odds = apostas_service.get_event_odds(event_id)
+        return jsonify(odds)
+    except Exception as exc:
+        logger.exception("apostas_odds error event=%s: %s", event_id, exc)
+        return jsonify({"error": "Erro ao buscar odds"}), 500
+
+
 # =============================================================
 # APOSTAS — TIPS (recomendações)
 # =============================================================
