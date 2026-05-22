@@ -261,6 +261,29 @@ def get_future_events(user_id: int, dias: int = 90) -> list:
             return cur.fetchall()
 
 
+def get_pending_pagamento_faturas(user_id: int, dias: int) -> list:
+    with get_db() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("""
+                SELECT
+                    l.data_vencimento::date AS data,
+                    l.descricao,
+                    l.valor,
+                    'despesa'              AS tipo,
+                    cb.nome                AS conta_nome
+                FROM lancamentos l
+                JOIN contas_bancarias cb ON cb.id = l.conta_id
+                WHERE cb.user_id = %s
+                  AND l.ativo = TRUE
+                  AND l.tipo = 'pagamento_fatura'
+                  AND l.efetivado = FALSE
+                  AND l.data_vencimento >= CURRENT_DATE
+                  AND l.data_vencimento <= CURRENT_DATE + (%s * INTERVAL '1 day')
+                ORDER BY l.data_vencimento ASC
+            """, (user_id, dias))
+            return cur.fetchall()
+
+
 def get_resumo_mes(user_id: int, mes: int, ano: int) -> dict:
     with get_db() as conn:
         with conn.cursor(row_factory=dict_row) as cur:

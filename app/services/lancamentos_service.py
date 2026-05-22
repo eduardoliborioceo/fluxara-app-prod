@@ -294,6 +294,11 @@ def get_future_events(user_id: int, dias: int = 90) -> list:
     return [dict(r) for r in rows]
 
 
+def get_pending_pagamento_faturas(user_id: int, dias: int = 90) -> list:
+    rows = repo.get_pending_pagamento_faturas(user_id, dias)
+    return [dict(r) for r in rows]
+
+
 def build_projecao(saldo_inicial: float, eventos: list) -> dict:
     saldo = float(saldo_inicial)
     projecao = []
