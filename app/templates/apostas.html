@@ -176,34 +176,35 @@
 
       <div class="tips-form-group">
         <label class="tips-form-label">Título <span class="tips-required">*</span></label>
-        <input type="text" id="tipTitulo" class="tips-form-input" placeholder="Ex: Flamengo vence o Palmeiras" maxlength="200">
+        <input type="text" id="tipTitulo" class="tips-form-input" placeholder="Ex: Múltipla do fim de semana" maxlength="200">
       </div>
 
       <div class="tips-form-row">
-        <div class="tips-form-group">
-          <label class="tips-form-label">Partida</label>
-          <input type="text" id="tipPartida" class="tips-form-input" placeholder="Ex: Flamengo x Palmeiras" maxlength="200">
-        </div>
-        <div class="tips-form-group">
-          <label class="tips-form-label">Campeonato</label>
-          <input type="text" id="tipCampeonato" class="tips-form-input" placeholder="Ex: Brasileirão" maxlength="100">
-        </div>
-      </div>
-
-      <div class="tips-form-row">
-        <div class="tips-form-group">
-          <label class="tips-form-label">Odd</label>
-          <input type="number" id="tipOdd" class="tips-form-input" placeholder="Ex: 1.85" step="0.01" min="1.01">
-        </div>
         <div class="tips-form-group">
           <label class="tips-form-label">Stake</label>
           <input type="text" id="tipStake" class="tips-form-input" placeholder="Ex: 2 unidades" maxlength="50">
         </div>
+        <div class="tips-form-group">
+          <label class="tips-form-label">Odd Total</label>
+          <div class="tips-odd-total-display" id="tipOddTotal">—</div>
+        </div>
       </div>
 
       <div class="tips-form-group">
-        <label class="tips-form-label">Data da partida</label>
-        <input type="date" id="tipDataPartida" class="tips-form-input">
+        <label class="tips-form-label">Link da aposta</label>
+        <input type="url" id="tipLinkAposta" class="tips-form-input" placeholder="https://...">
+      </div>
+
+      <div class="tips-jogos-section">
+        <div class="tips-jogos-header">
+          <span class="tips-jogos-label">
+            <i class="bi bi-list-check"></i> Jogos <span class="tips-required">*</span>
+          </span>
+          <button type="button" class="tips-btn-add-jogo" onclick="addJogoRow()">
+            <i class="bi bi-plus-lg"></i> Adicionar jogo
+          </button>
+        </div>
+        <div id="tipJogosContainer"></div>
       </div>
 
       <div class="tips-modal-actions">

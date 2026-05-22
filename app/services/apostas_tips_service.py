@@ -13,6 +13,8 @@ def _serialize(tip: dict) -> dict:
         result["data_partida"] = str(result["data_partida"])
     if result.get("odd") is not None:
         result["odd"] = float(result["odd"])
+    if result.get("jogos") is None:
+        result["jogos"] = []
     return result
 
 
@@ -30,24 +32,57 @@ def get_stats() -> dict:
     return {"total": total, "green": green, "red": red, "pendente": pendente, "taxa_acerto": taxa}
 
 
-def create_tip(titulo: str, partida: str, campeonato: str, odd,
-               stake: str, data_partida, user_id: int) -> dict:
+def create_tip(titulo: str, stake: str, link_aposta: str,
+               jogos: list, user_id: int) -> dict:
     titulo = (titulo or "").strip()
     if not titulo:
         raise ValueError("Título é obrigatório")
     if len(titulo) > 200:
         raise ValueError("Título muito longo (máx 200 caracteres)")
 
-    odd_val = None
-    if odd is not None and odd != "":
-        try:
-            odd_val = float(odd)
-        except (TypeError, ValueError):
-            raise ValueError("Odd inválida")
-        if odd_val <= 1.0:
-            raise ValueError("Odd deve ser maior que 1.00")
+    if not jogos:
+        raise ValueError("Adicione pelo menos um jogo à recomendação")
 
-    return _serialize(repo.create_tip(titulo, partida, campeonato, odd_val, stake, data_partida, user_id))
+    odd_total = 1.0
+    clean_jogos = []
+    for i, jogo in enumerate(jogos, 1):
+        partida = (jogo.get("partida") or "").strip()
+        if not partida:
+            raise ValueError(f"Jogo {i}: Partida é obrigatória")
+
+        mercado = (jogo.get("mercado") or "").strip()
+        if not mercado:
+            raise ValueError(f"Jogo {i}: Mercado é obrigatório")
+
+        try:
+            odd_jogo = float(jogo["odd"])
+        except (KeyError, TypeError, ValueError):
+            raise ValueError(f"Jogo {i}: Odd inválida")
+        if odd_jogo <= 1.0:
+            raise ValueError(f"Jogo {i}: Odd deve ser maior que 1.00")
+
+        odd_total *= odd_jogo
+        clean_jogos.append({
+            "partida": partida,
+            "campeonato": (jogo.get("campeonato") or "").strip(),
+            "mercado": mercado,
+            "odd": round(odd_jogo, 2),
+            "data_partida": (jogo.get("data_partida") or "").strip() or None,
+        })
+
+    odd_total = round(odd_total, 2)
+
+    return _serialize(repo.create_tip(
+        titulo=titulo,
+        partida=None,
+        campeonato=None,
+        odd=odd_total,
+        stake=stake or None,
+        data_partida=None,
+        created_by=user_id,
+        jogos=clean_jogos,
+        link_aposta=(link_aposta or "").strip() or None,
+    ))
 
 
 def update_status(tip_id: int, status: str) -> dict:
