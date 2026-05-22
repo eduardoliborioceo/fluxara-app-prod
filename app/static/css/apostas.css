@@ -720,6 +720,134 @@
 }
 
 /* ========================
+   ODDS TOGGLE
+======================== */
+.apostas-odds-toggle {
+  padding: 8px 12px 4px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.apostas-odds-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  font-size: .78rem;
+  font-weight: 600;
+  border: 1px solid var(--border, rgba(15,23,42,.09));
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-muted, #64748b);
+  cursor: pointer;
+  transition: all .15s;
+}
+
+.apostas-odds-btn:hover:not(:disabled) {
+  background: rgba(13,110,253,.07);
+  border-color: rgba(13,110,253,.25);
+  color: var(--primary, #0d6efd);
+}
+
+.apostas-odds-btn:disabled {
+  opacity: .6;
+  cursor: default;
+}
+
+/* ========================
+   ODDS PANEL
+======================== */
+.apostas-odds-panel {
+  border-top: 1px solid var(--border, rgba(15,23,42,.09));
+  margin-top: 4px;
+}
+
+.apostas-odds-content {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.apostas-odds-unavailable {
+  padding: 12px;
+  font-size: .8rem;
+  color: var(--text-muted, #64748b);
+  text-align: center;
+  margin: 0;
+}
+
+.apostas-odds-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.apostas-odds-label {
+  font-size: .7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--text-muted, #64748b);
+}
+
+.apostas-odds-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.apostas-odd-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 8px;
+  min-width: 64px;
+  flex: 1;
+  border: 1px solid transparent;
+}
+
+.apostas-odd-name {
+  font-size: .68rem;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+  text-transform: uppercase;
+  letter-spacing: .3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 110px;
+}
+
+.apostas-odd-val {
+  font-size: .95rem;
+  font-weight: 700;
+  color: var(--text, #1e293b);
+  margin-top: 1px;
+}
+
+.apostas-odd-chip--home {
+  background: rgba(13,110,253,.07);
+  border-color: rgba(13,110,253,.2);
+}
+
+.apostas-odd-chip--draw {
+  background: rgba(100,116,139,.07);
+  border-color: rgba(100,116,139,.2);
+}
+
+.apostas-odd-chip--away {
+  background: rgba(234,88,12,.07);
+  border-color: rgba(234,88,12,.2);
+}
+
+.apostas-odd-chip--asian {
+  background: rgba(124,58,237,.07);
+  border-color: rgba(124,58,237,.2);
+}
+
+/* ========================
    RESPONSIVE
 ======================== */
 @media (max-width: 480px) {
@@ -731,4 +859,7 @@
 
   .tips-stats-row { gap: 6px; }
   .tips-stat-value { font-size: 1rem; }
+
+  .apostas-odds-row { gap: 6px; }
+  .apostas-odd-chip { min-width: 52px; padding: 5px 8px; }
 }
