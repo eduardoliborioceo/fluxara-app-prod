@@ -45,6 +45,33 @@
   color: #fff !important;
 }
 
+.apostas-tab--active i {
+  color: #fff !important;
+}
+
+@media (max-width: 600px) {
+  .apostas-tabs {
+    gap: 3px;
+    padding: 3px;
+  }
+
+  .apostas-tab {
+    flex-direction: column;
+    gap: 3px;
+    padding: 7px 3px;
+    font-size: .62rem;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.2;
+    min-width: 0;
+  }
+
+  .apostas-tab i {
+    font-size: .95rem;
+    flex-shrink: 0;
+  }
+}
+
 /* ========================
    TIPS STATS ROW
 ======================== */
