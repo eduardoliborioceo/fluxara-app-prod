@@ -3,12 +3,19 @@
 // ============================================================
 
 function apostasTab(tab) {
-  const isRec = tab === "recomendacoes";
-  document.getElementById("panelRecomendacoes").style.display = isRec ? "block" : "none";
-  document.getElementById("panelAnalisador").style.display = isRec ? "none" : "block";
-  document.getElementById("tabBtnRec").classList.toggle("apostas-tab--active", isRec);
-  document.getElementById("tabBtnAna").classList.toggle("apostas-tab--active", !isRec);
+  const panels = { recomendacoes: "panelRecomendacoes", analisador: "panelAnalisador", tabelas: "panelTabelas" };
+  const buttons = { recomendacoes: "tabBtnRec", analisador: "tabBtnAna", tabelas: "tabBtnTab" };
+
+  Object.keys(panels).forEach(t => {
+    document.getElementById(panels[t]).style.display = t === tab ? "block" : "none";
+    document.getElementById(buttons[t]).classList.toggle("apostas-tab--active", t === tab);
+  });
+
   localStorage.setItem("apostas_tab", tab);
+
+  if (tab === "tabelas" && !window._tabelasLoaded) {
+    loadTabelasTournaments();
+  }
 }
 
 // ============================================================
@@ -252,7 +259,7 @@ async function apostasBuscar() {
     document.getElementById("apostasLoading").style.display = "none";
 
     if (!resp.ok) { showAnalisadorError(json.error || "Erro ao buscar partidas."); return; }
-    if (!json.matches || json.matches.length === 0) { showAnalisadorVazio(minDiff); return; }
+    if (!json.matches || json.matches.length === 0) { showAnalisadorVazio(minDiff, json.with_standings || 0); return; }
     renderMatches(json.matches, json.total);
   } catch {
     setLoadingState(false);
@@ -278,12 +285,16 @@ function hideAllAnalisador() {
   });
 }
 
-function showAnalisadorVazio(minDiff) {
+function showAnalisadorVazio(minDiff, withStandings) {
   const el  = document.getElementById("apostasVazio");
   const msg = document.getElementById("apostasVazioMsg");
-  msg.textContent = minDiff === "1"
-    ? "Nenhuma partida com tabela de classificação disponível para este dia."
-    : `Nenhuma partida com diferença de ≥ ${minDiff} posições encontrada para este dia.`;
+  if (withStandings === 0) {
+    msg.textContent = "Nenhuma partida com tabela de classificação disponível para este dia. Tente outra data ou veja as tabelas na aba Tabelas.";
+  } else if (minDiff === "1" || minDiff === 1) {
+    msg.textContent = `${withStandings} partida${withStandings !== 1 ? "s" : ""} encontrada${withStandings !== 1 ? "s" : ""} com tabela disponível, mas nenhuma passou pelo filtro. Tente reduzir a diferença mínima.`;
+  } else {
+    msg.textContent = `Nenhuma partida com diferença de ≥ ${minDiff} posições (${withStandings} tinham tabela disponível). Tente reduzir o filtro.`;
+  }
   el.style.display = "flex";
 }
 
@@ -449,4 +460,153 @@ function escHtml(str) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+// ============================================================
+//  TABELAS — tournament standings
+// ============================================================
+
+window._tabelasLoaded = false;
+window._activeTournamentId = null;
+
+async function loadTabelasTournaments() {
+  try {
+    const resp = await fetch("/api/apostas/tournaments");
+    const list = await resp.json();
+    renderTournamentChips(list);
+    window._tabelasLoaded = true;
+
+    const saved = localStorage.getItem("apostas_tournament_id");
+    const first = list[0];
+    const target = saved ? list.find(t => String(t.id) === saved) : null;
+    if (target || first) loadStandings((target || first).id);
+  } catch {
+    document.getElementById("tabelasTournamentList").innerHTML =
+      '<p class="apostas-odds-unavailable">Erro ao carregar campeonatos.</p>';
+  }
+}
+
+function renderTournamentChips(list) {
+  const wrap = document.getElementById("tabelasTournamentList");
+  const byCategory = {};
+  list.forEach(t => {
+    if (!byCategory[t.category]) byCategory[t.category] = [];
+    byCategory[t.category].push(t);
+  });
+
+  let html = "";
+  Object.entries(byCategory).forEach(([cat, items]) => {
+    html += `<div class="tabelas-category">
+      <span class="tabelas-category-label">${escHtml(cat)}</span>
+      <div class="tabelas-chips">`;
+    items.forEach(t => {
+      html += `<button class="tabelas-chip" id="chip-${t.id}" onclick="loadStandings(${t.id})">${escHtml(t.name)}</button>`;
+    });
+    html += `</div></div>`;
+  });
+  wrap.innerHTML = html;
+}
+
+function setActiveChip(tournamentId) {
+  document.querySelectorAll(".tabelas-chip").forEach(el => {
+    el.classList.toggle("tabelas-chip--active", el.id === `chip-${tournamentId}`);
+  });
+}
+
+async function loadStandings(tournamentId) {
+  window._activeTournamentId = tournamentId;
+  localStorage.setItem("apostas_tournament_id", String(tournamentId));
+  setActiveChip(tournamentId);
+
+  document.getElementById("tabelasContent").style.display = "none";
+  document.getElementById("tabelasErro").style.display = "none";
+  document.getElementById("tabelasLoading").style.display = "flex";
+
+  try {
+    const resp = await fetch(`/api/apostas/standings/${tournamentId}`);
+    const json = await resp.json();
+    document.getElementById("tabelasLoading").style.display = "none";
+
+    if (!resp.ok) {
+      showTabelasErro(json.error || "Erro ao carregar tabela.");
+      return;
+    }
+    if (!json.groups || json.groups.length === 0) {
+      showTabelasErro("Tabela não disponível para este campeonato no momento.");
+      return;
+    }
+    renderStandings(json);
+  } catch {
+    document.getElementById("tabelasLoading").style.display = "none";
+    showTabelasErro("Erro de conexão.");
+  }
+}
+
+function showTabelasErro(msg) {
+  document.getElementById("tabelasErroMsg").textContent = msg;
+  document.getElementById("tabelasErro").style.display = "flex";
+}
+
+function renderStandings(data) {
+  const content = document.getElementById("tabelasContent");
+  const isMultiGroup = data.groups.length > 1;
+
+  let html = `<div class="tabelas-season">${escHtml(data.season)}</div>`;
+
+  data.groups.forEach(group => {
+    if (isMultiGroup && group.name) {
+      html += `<div class="tabelas-group-name">${escHtml(group.name)}</div>`;
+    }
+    html += `
+      <div class="tabelas-table-wrap">
+        <table class="tabelas-table">
+          <thead>
+            <tr>
+              <th class="tabelas-th tabelas-th--pos">#</th>
+              <th class="tabelas-th tabelas-th--team">Time</th>
+              <th class="tabelas-th tabelas-th--num" title="Jogos">J</th>
+              <th class="tabelas-th tabelas-th--num" title="Vitórias">V</th>
+              <th class="tabelas-th tabelas-th--num" title="Empates">E</th>
+              <th class="tabelas-th tabelas-th--num" title="Derrotas">D</th>
+              <th class="tabelas-th tabelas-th--num" title="Gols marcados/sofridos">Gols</th>
+              <th class="tabelas-th tabelas-th--num" title="Saldo de gols">SG</th>
+              <th class="tabelas-th tabelas-th--pts">Pts</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${group.rows.map(r => buildStandingsRow(r)).join("")}
+          </tbody>
+        </table>
+      </div>
+    `;
+  });
+
+  content.innerHTML = html;
+  content.style.display = "block";
+}
+
+function buildStandingsRow(r) {
+  const posCls = posRowClass(r.position);
+  return `
+    <tr class="tabelas-row ${posCls}">
+      <td class="tabelas-td tabelas-td--pos"><span class="tabelas-pos">${r.position}</span></td>
+      <td class="tabelas-td tabelas-td--team">
+        <span class="tabelas-team-name">${escHtml(r.team_name)}</span>
+      </td>
+      <td class="tabelas-td tabelas-td--num">${r.matches}</td>
+      <td class="tabelas-td tabelas-td--num">${r.wins}</td>
+      <td class="tabelas-td tabelas-td--num">${r.draws}</td>
+      <td class="tabelas-td tabelas-td--num">${r.losses}</td>
+      <td class="tabelas-td tabelas-td--num">${r.goals_for}:${r.goals_against}</td>
+      <td class="tabelas-td tabelas-td--num">${r.goal_diff}</td>
+      <td class="tabelas-td tabelas-td--pts"><strong>${r.points}</strong></td>
+    </tr>
+  `;
+}
+
+function posRowClass(pos) {
+  if (pos <= 4)  return "tabelas-row--champions";
+  if (pos <= 6)  return "tabelas-row--europa";
+  if (pos >= 18) return "tabelas-row--relegation";
+  return "";
 }
