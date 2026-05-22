@@ -266,14 +266,14 @@ def get_pending_pagamento_faturas(user_id: int, dias: int) -> list:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("""
                 SELECT
-                    l.data_vencimento::date AS data,
+                    l.data_vencimento::date      AS data,
                     l.descricao,
                     l.valor,
-                    'despesa'              AS tipo,
-                    cb.nome                AS conta_nome
+                    'despesa'                    AS tipo,
+                    COALESCE(cb.nome, '')        AS conta_nome
                 FROM lancamentos l
-                JOIN contas_bancarias cb ON cb.id = l.conta_id
-                WHERE cb.user_id = %s
+                LEFT JOIN contas_bancarias cb ON cb.id = l.conta_id
+                WHERE l.user_id = %s
                   AND l.ativo = TRUE
                   AND l.tipo = 'pagamento_fatura'
                   AND l.efetivado = FALSE
