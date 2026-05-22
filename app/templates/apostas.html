@@ -88,17 +88,22 @@
 
   </div>
 
+  <!-- Seletor de campeonato compartilhado (Jogos + Tabelas) -->
+  <div id="leagueControlBar" class="league-select-bar" style="display:none">
+    <div class="league-select-wrap">
+      <label class="league-select-label" for="leagueSelect">
+        <i class="bi bi-trophy"></i> Campeonato
+      </label>
+      <select id="leagueSelect" class="apostas-filter-select" onchange="onLeagueSelectChange()">
+        <option value="" disabled selected>Carregando...</option>
+      </select>
+    </div>
+  </div>
+
   <!-- ======================================================
        PAINEL PRÓXIMOS JOGOS
   ====================================================== -->
   <div id="panelJogos" style="display:none">
-
-    <div id="jogosLeagueList" class="tabelas-chips-wrap">
-      <div class="apostas-loading">
-        <div class="apostas-spinner"></div>
-        <span>Carregando campeonatos...</span>
-      </div>
-    </div>
 
     <div class="jogos-filter-row">
       <label class="apostas-filter-label" for="jogosDays">Próximos dias</label>
@@ -139,13 +144,6 @@
        PAINEL TABELAS
   ====================================================== -->
   <div id="panelTabelas" style="display:none">
-
-    <div id="tabelasLeagueList" class="tabelas-chips-wrap">
-      <div class="apostas-loading">
-        <div class="apostas-spinner"></div>
-        <span>Carregando campeonatos...</span>
-      </div>
-    </div>
 
     <div id="tabelasLoading" class="apostas-loading" style="display:none">
       <div class="apostas-spinner"></div>
