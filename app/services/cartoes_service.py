@@ -96,9 +96,17 @@ def get_faturas_futuras(user_id: int, dias: int) -> list:
         fatura_mes = int(f['fatura_mes'])
         fatura_ano = int(f['fatura_ano'])
         dia_venc = int(f['dia_vencimento'] or 1)
+        dia_fech = int(f['dia_fechamento'] or 1)
 
-        venc_mes = fatura_mes + 1 if fatura_mes < 12 else 1
-        venc_ano = fatura_ano if fatura_mes < 12 else fatura_ano + 1
+        # Se vencimento > fechamento, a fatura vence no mesmo mês que fecha
+        # (ex: fecha dia 7, vence dia 18 → ambos em junho)
+        # Se vencimento <= fechamento, vence no mês seguinte
+        if dia_venc > dia_fech:
+            venc_mes = fatura_mes
+            venc_ano = fatura_ano
+        else:
+            venc_mes = fatura_mes + 1 if fatura_mes < 12 else 1
+            venc_ano = fatura_ano if fatura_mes < 12 else fatura_ano + 1
 
         ultimo_dia = calendar.monthrange(venc_ano, venc_mes)[1]
         try:

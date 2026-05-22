@@ -125,6 +125,7 @@ def get_faturas_pendentes(user_id: int) -> list:
                     cc.id             AS cartao_id,
                     cc.nome           AS cartao_nome,
                     cc.dia_vencimento,
+                    cc.dia_fechamento,
                     l.fatura_mes,
                     l.fatura_ano,
                     SUM(CASE
@@ -137,7 +138,7 @@ def get_faturas_pendentes(user_id: int) -> list:
                     AND l.tipo IN ('despesa_cartao', 'pagamento_fatura')
                     AND l.ativo = TRUE
                 WHERE cc.user_id = %s AND cc.ativo = TRUE
-                GROUP BY cc.id, cc.nome, cc.dia_vencimento, l.fatura_mes, l.fatura_ano
+                GROUP BY cc.id, cc.nome, cc.dia_vencimento, cc.dia_fechamento, l.fatura_mes, l.fatura_ano
                 HAVING SUM(CASE
                     WHEN l.tipo = 'despesa_cartao'   THEN l.valor
                     WHEN l.tipo = 'pagamento_fatura' THEN -l.valor
