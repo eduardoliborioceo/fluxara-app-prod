@@ -374,19 +374,62 @@ function renderTipsList(tips) {
 }
 
 function buildTipCard(tip, isAdmin) {
-  const statusBadge = buildStatusBadge(tip.status);
-  const meta = buildTipMeta(tip);
+  const statusBadge  = buildStatusBadge(tip.status);
   const adminActions = isAdmin ? buildTipAdminActions(tip) : "";
+  const hasMultipla  = Array.isArray(tip.jogos) && tip.jogos.length > 0;
+
+  const body = hasMultipla ? buildMultiplaBody(tip) : buildLegacyMeta(tip);
+  const link = tip.link_aposta
+    ? `<a href="${escHtml(tip.link_aposta)}" target="_blank" rel="noopener" class="tips-link-btn"><i class="bi bi-link-45deg"></i> Ver aposta</a>`
+    : "";
+
   return `
     <div class="tips-card" id="tip-${tip.id}" data-status="${escHtml(tip.status)}">
       <div class="tips-card-header">
         ${statusBadge}
         <span class="tips-card-title">${escHtml(tip.titulo)}</span>
       </div>
-      ${meta ? `<div class="tips-card-meta">${meta}</div>` : ""}
+      ${body}
+      ${link}
       ${adminActions}
     </div>
   `;
+}
+
+function buildMultiplaBody(tip) {
+  const jogosHtml = tip.jogos.map(j => {
+    const data = j.data_partida ? `<span class="tips-jogo-data">${formatDate(j.data_partida)}</span>` : "";
+    const camp = j.campeonato ? `<span class="tips-jogo-camp">${escHtml(j.campeonato)}</span>` : "";
+    return `
+      <div class="tips-multipla-jogo">
+        <div class="tips-jogo-partida">${escHtml(j.partida)} ${camp} ${data}</div>
+        <div class="tips-jogo-mercado">
+          <i class="bi bi-tag-fill"></i>
+          ${escHtml(j.mercado)}
+          <span class="tips-jogo-odd">@ ${j.odd.toFixed(2)}</span>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  const footer = [];
+  if (tip.odd != null) footer.push(`<span><i class="bi bi-calculator"></i>Odd total: <strong>${tip.odd.toFixed(2)}</strong></span>`);
+  if (tip.stake)       footer.push(`<span><i class="bi bi-coin"></i>${escHtml(tip.stake)}</span>`);
+
+  return `
+    <div class="tips-multipla-jogos">${jogosHtml}</div>
+    ${footer.length ? `<div class="tips-card-meta tips-card-footer">${footer.join("")}</div>` : ""}
+  `;
+}
+
+function buildLegacyMeta(tip) {
+  const parts = [];
+  if (tip.partida)      parts.push(`<span><i class="bi bi-shield-fill"></i>${escHtml(tip.partida)}</span>`);
+  if (tip.campeonato)   parts.push(`<span><i class="bi bi-trophy-fill"></i>${escHtml(tip.campeonato)}</span>`);
+  if (tip.odd != null)  parts.push(`<span><i class="bi bi-tag-fill"></i>Odd ${tip.odd.toFixed(2)}</span>`);
+  if (tip.stake)        parts.push(`<span><i class="bi bi-coin"></i>${escHtml(tip.stake)}</span>`);
+  if (tip.data_partida) parts.push(`<span><i class="bi bi-calendar3"></i>${formatDate(tip.data_partida)}</span>`);
+  return parts.length ? `<div class="tips-card-meta">${parts.join("")}</div>` : "";
 }
 
 function buildStatusBadge(status) {
@@ -398,16 +441,6 @@ function buildStatusBadge(status) {
   };
   const s = map[status] || map.pendente;
   return `<span class="tips-badge ${s.cls}"><i class="bi ${s.icon}"></i>${s.label}</span>`;
-}
-
-function buildTipMeta(tip) {
-  const parts = [];
-  if (tip.partida)      parts.push(`<span><i class="bi bi-shield-fill"></i>${escHtml(tip.partida)}</span>`);
-  if (tip.campeonato)   parts.push(`<span><i class="bi bi-trophy-fill"></i>${escHtml(tip.campeonato)}</span>`);
-  if (tip.odd != null)  parts.push(`<span><i class="bi bi-tag-fill"></i>Odd ${tip.odd.toFixed(2)}</span>`);
-  if (tip.stake)        parts.push(`<span><i class="bi bi-coin"></i>${escHtml(tip.stake)}</span>`);
-  if (tip.data_partida) parts.push(`<span><i class="bi bi-calendar3"></i>${formatDate(tip.data_partida)}</span>`);
-  return parts.join("");
 }
 
 function formatDate(iso) {
@@ -457,14 +490,129 @@ async function deleteTip(tipId) {
 }
 
 // ============================================================
-//  TIPS — modal
+//  TIPS — modal (múltipla)
 // ============================================================
 
+const _MERCADOS = [
+  { group: "Resultado Final",   options: ["Vitória Casa (1)", "Empate (X)", "Vitória Visitante (2)"] },
+  { group: "Dupla Hipótese",    options: ["1X", "X2", "12"] },
+  { group: "Total de Gols",     options: ["Over 0.5", "Over 1.5", "Over 2.5", "Over 3.5", "Over 4.5", "Under 0.5", "Under 1.5", "Under 2.5", "Under 3.5"] },
+  { group: "Ambos Marcam",      options: ["Ambos Marcam - Sim", "Ambos Marcam - Não"] },
+  { group: "Escanteios",        options: ["Escanteios Over 8.5", "Escanteios Over 9.5", "Escanteios Over 10.5", "Escanteios Under 8.5", "Escanteios Under 9.5"] },
+  { group: "Cartões",           options: ["Cartões Over 3.5", "Cartões Over 4.5", "Cartões Over 5.5"] },
+  { group: "1º Tempo",          options: ["Vitória Casa 1º Tempo", "Empate 1º Tempo", "Vitória Visitante 1º Tempo", "Over 0.5 no 1º Tempo", "Over 1.5 no 1º Tempo"] },
+  { group: "Outro",             options: ["Outro (especificar)"] },
+];
+
+let _jogoCounter = 0;
+
+function buildMercadoOptions() {
+  return _MERCADOS.map(g => {
+    const opts = g.options.map(o => `<option value="${escHtml(o)}">${escHtml(o)}</option>`).join("");
+    return `<optgroup label="${escHtml(g.group)}">${opts}</optgroup>`;
+  }).join("");
+}
+
+function addJogoRow() {
+  const idx = _jogoCounter++;
+  const mercadoOpts = buildMercadoOptions();
+  const container = document.getElementById("tipJogosContainer");
+
+  const row = document.createElement("div");
+  row.className = "tips-jogo-row";
+  row.id = `jogo-row-${idx}`;
+  row.innerHTML = `
+    <div class="tips-jogo-row-top">
+      <span class="tips-jogo-num">Jogo ${container.children.length + 1}</span>
+      <button type="button" class="tips-jogo-remove" onclick="removeJogoRow(${idx})" title="Remover jogo">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <div class="tips-form-group">
+      <label class="tips-form-label">Partida <span class="tips-required">*</span></label>
+      <input type="text" id="jogo-partida-${idx}" class="tips-form-input" placeholder="Ex: Flamengo x Palmeiras" maxlength="200">
+    </div>
+    <div class="tips-form-row">
+      <div class="tips-form-group">
+        <label class="tips-form-label">Campeonato</label>
+        <input type="text" id="jogo-campeonato-${idx}" class="tips-form-input" placeholder="Ex: Brasileirão" maxlength="100">
+      </div>
+      <div class="tips-form-group">
+        <label class="tips-form-label">Data</label>
+        <input type="date" id="jogo-data-${idx}" class="tips-form-input">
+      </div>
+    </div>
+    <div class="tips-form-row">
+      <div class="tips-form-group tips-form-group--flex2">
+        <label class="tips-form-label">Mercado <span class="tips-required">*</span></label>
+        <select id="jogo-mercado-${idx}" class="tips-form-input" onchange="onMercadoChange(${idx})">
+          <option value="" disabled selected>Selecione...</option>
+          ${mercadoOpts}
+        </select>
+      </div>
+      <div class="tips-form-group tips-form-group--flex1">
+        <label class="tips-form-label">Odd <span class="tips-required">*</span></label>
+        <input type="number" id="jogo-odd-${idx}" class="tips-form-input" step="0.01" min="1.01" placeholder="1.85" oninput="calcOddTotal()">
+      </div>
+    </div>
+    <div class="tips-form-group" id="jogo-outro-group-${idx}" style="display:none">
+      <label class="tips-form-label">Especificar mercado <span class="tips-required">*</span></label>
+      <input type="text" id="jogo-mercado-outro-${idx}" class="tips-form-input" placeholder="Ex: Handicap Asiático -0.5" maxlength="100">
+    </div>
+  `;
+
+  container.appendChild(row);
+  renumberJogos();
+  calcOddTotal();
+}
+
+function removeJogoRow(idx) {
+  const row = document.getElementById(`jogo-row-${idx}`);
+  if (row) row.remove();
+  renumberJogos();
+  calcOddTotal();
+}
+
+function renumberJogos() {
+  const rows = document.querySelectorAll("#tipJogosContainer .tips-jogo-row");
+  rows.forEach((row, i) => {
+    const num = row.querySelector(".tips-jogo-num");
+    if (num) num.textContent = `Jogo ${i + 1}`;
+  });
+}
+
+function onMercadoChange(idx) {
+  const sel = document.getElementById(`jogo-mercado-${idx}`);
+  const grp = document.getElementById(`jogo-outro-group-${idx}`);
+  if (sel && grp) grp.style.display = sel.value === "Outro (especificar)" ? "block" : "none";
+}
+
+function calcOddTotal() {
+  const rows = document.querySelectorAll("#tipJogosContainer .tips-jogo-row");
+  let total = 1;
+  let valid = rows.length > 0;
+
+  rows.forEach(row => {
+    const id = row.id.replace("jogo-row-", "");
+    const val = parseFloat(document.getElementById(`jogo-odd-${id}`)?.value);
+    if (!val || val <= 1) { valid = false; }
+    else total *= val;
+  });
+
+  const el = document.getElementById("tipOddTotal");
+  if (el) el.textContent = (valid && rows.length > 0) ? total.toFixed(2) : "—";
+}
+
 function openTipModal() {
-  ["tipTitulo","tipPartida","tipCampeonato","tipOdd","tipStake","tipDataPartida"]
-    .forEach(id => { document.getElementById(id).value = ""; });
+  document.getElementById("tipTitulo").value    = "";
+  document.getElementById("tipStake").value     = "";
+  document.getElementById("tipLinkAposta").value = "";
+  document.getElementById("tipJogosContainer").innerHTML = "";
+  document.getElementById("tipOddTotal").textContent = "—";
+  _jogoCounter = 0;
   hideTipFormError();
   document.getElementById("tipModalOverlay").style.display = "flex";
+  addJogoRow();
 }
 
 function closeTipModal() {
@@ -487,18 +635,33 @@ function hideTipFormError() {
 
 async function submitTipForm() {
   hideTipFormError();
-  const titulo      = document.getElementById("tipTitulo").value.trim();
-  const partida     = document.getElementById("tipPartida").value.trim();
-  const campeonato  = document.getElementById("tipCampeonato").value.trim();
-  const oddRaw      = document.getElementById("tipOdd").value.trim();
-  const stake       = document.getElementById("tipStake").value.trim();
-  const dataPartida = document.getElementById("tipDataPartida").value || null;
+
+  const titulo     = document.getElementById("tipTitulo").value.trim();
+  const stake      = document.getElementById("tipStake").value.trim();
+  const linkAposta = document.getElementById("tipLinkAposta").value.trim();
 
   if (!titulo) { showTipFormError("Título é obrigatório"); return; }
-  const odd = oddRaw !== "" ? parseFloat(oddRaw) : null;
-  if (oddRaw !== "" && (isNaN(odd) || odd <= 1)) {
-    showTipFormError("Odd deve ser maior que 1.00");
-    return;
+
+  const rows = document.querySelectorAll("#tipJogosContainer .tips-jogo-row");
+  if (rows.length === 0) { showTipFormError("Adicione pelo menos um jogo"); return; }
+
+  const jogos = [];
+  for (const row of rows) {
+    const idx       = row.id.replace("jogo-row-", "");
+    const partida   = (document.getElementById(`jogo-partida-${idx}`)?.value || "").trim();
+    const campeonato = (document.getElementById(`jogo-campeonato-${idx}`)?.value || "").trim();
+    const data      = document.getElementById(`jogo-data-${idx}`)?.value || "";
+    const selVal    = document.getElementById(`jogo-mercado-${idx}`)?.value || "";
+    const mercado   = selVal === "Outro (especificar)"
+      ? (document.getElementById(`jogo-mercado-outro-${idx}`)?.value || "").trim()
+      : selVal;
+    const oddVal    = parseFloat(document.getElementById(`jogo-odd-${idx}`)?.value);
+
+    if (!partida)        { showTipFormError(`Partida obrigatória`); return; }
+    if (!mercado)        { showTipFormError(`Mercado obrigatório`); return; }
+    if (!oddVal || oddVal <= 1) { showTipFormError(`Odd inválida (deve ser > 1.00)`); return; }
+
+    jogos.push({ partida, campeonato, mercado, odd: oddVal, data_partida: data || null });
   }
 
   const btn = document.getElementById("tipSubmitBtn");
@@ -508,7 +671,7 @@ async function submitTipForm() {
     const resp = await fetch("/api/apostas/tips", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ titulo, partida, campeonato, odd, stake, data_partida: dataPartida }),
+      body: JSON.stringify({ titulo, stake, link_aposta: linkAposta, jogos }),
     });
     const json = await resp.json();
     if (!resp.ok) { showTipFormError(json.error || "Erro ao criar recomendação"); return; }

@@ -1306,11 +1306,9 @@ def apostas_tips_create():
     try:
         tip = apostas_tips_service.create_tip(
             titulo=data.get("titulo", ""),
-            partida=data.get("partida", ""),
-            campeonato=data.get("campeonato", ""),
-            odd=data.get("odd"),
             stake=data.get("stake", ""),
-            data_partida=data.get("data_partida") or None,
+            link_aposta=data.get("link_aposta", ""),
+            jogos=data.get("jogos") or [],
             user_id=current_user.id,
         )
         return jsonify(tip), 201
