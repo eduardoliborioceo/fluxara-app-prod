@@ -29,9 +29,9 @@
       <i class="bi bi-bookmark-star-fill"></i>
       Recomendações
     </button>
-    <button class="apostas-tab" id="tabBtnAna" onclick="apostasTab('analisador')">
-      <i class="bi bi-search"></i>
-      Analisador
+    <button class="apostas-tab" id="tabBtnJogos" onclick="apostasTab('jogos')">
+      <i class="bi bi-calendar3"></i>
+      Próximos Jogos
     </button>
     <button class="apostas-tab" id="tabBtnTab" onclick="apostasTab('tabelas')">
       <i class="bi bi-table"></i>
@@ -44,7 +44,6 @@
   ====================================================== -->
   <div id="panelRecomendacoes">
 
-    <!-- STATS -->
     <div class="tips-stats-row" id="tipsStatsRow">
       <div class="tips-stat tips-stat--green">
         <span class="tips-stat-value" id="statGreen">–</span>
@@ -64,7 +63,6 @@
       </div>
     </div>
 
-    <!-- ADMIN TOOLBAR -->
     {% if current_user.is_admin %}
     <div class="tips-admin-toolbar">
       <button class="tips-btn-nova" onclick="openTipModal()">
@@ -74,22 +72,15 @@
     </div>
     {% endif %}
 
-    <!-- LOADING TIPS -->
     <div id="tipsLoading" class="apostas-loading">
       <div class="apostas-spinner"></div>
       <span>Carregando recomendações...</span>
     </div>
-
-    <!-- LISTA TIPS -->
     <div id="tipsList" style="display:none"></div>
-
-    <!-- VAZIO TIPS -->
     <div id="tipsVazio" class="apostas-vazio" style="display:none">
       <i class="bi bi-bookmark-x"></i>
       <p>Nenhuma recomendação publicada ainda.</p>
     </div>
-
-    <!-- ERRO TIPS -->
     <div id="tipsErro" class="apostas-erro" style="display:none">
       <i class="bi bi-exclamation-triangle"></i>
       <p id="tipsErroMsg">Erro ao carregar recomendações.</p>
@@ -98,66 +89,39 @@
   </div>
 
   <!-- ======================================================
-       PAINEL ANALISADOR
+       PAINEL PRÓXIMOS JOGOS
   ====================================================== -->
-  <div id="panelAnalisador" style="display:none">
+  <div id="panelJogos" style="display:none">
 
-    <!-- FILTROS -->
-    <div class="apostas-filters-card">
-      <div class="apostas-filter-row">
-        <div class="apostas-filter-item">
-          <label class="apostas-filter-label" for="apostasDate">Data</label>
-          <input type="date" id="apostasDate" class="apostas-filter-input">
-        </div>
-        <div class="apostas-filter-item">
-          <label class="apostas-filter-label" for="apostasMinDiff">Diferença mínima na tabela</label>
-          <select id="apostasMinDiff" class="apostas-filter-select">
-            <option value="1" selected>Todos os duelos</option>
-            <option value="3">≥ 3 posições</option>
-            <option value="5">≥ 5 posições</option>
-            <option value="8">≥ 8 posições</option>
-            <option value="10">≥ 10 posições</option>
-            <option value="15">≥ 15 posições</option>
-          </select>
-        </div>
+    <div id="jogosLeagueList" class="tabelas-chips-wrap">
+      <div class="apostas-loading">
+        <div class="apostas-spinner"></div>
+        <span>Carregando campeonatos...</span>
       </div>
-      <button class="apostas-btn-buscar" id="apostasBtnBuscar" onclick="apostasBuscar()">
-        <i class="bi bi-search" id="apostasBuscarIcon"></i>
-        <span id="apostasBuscarLabel">Buscar partidas</span>
-      </button>
     </div>
 
-    <!-- INFO BANNER -->
-    <div class="apostas-info-banner">
-      <i class="bi bi-info-circle"></i>
-      Mostra jogos onde há diferença na classificação do campeonato — ex.: o 2º colocado enfrenta o 15º.
-      Apenas competições com tabela disponível no Sofascore.
+    <div class="jogos-filter-row">
+      <label class="apostas-filter-label" for="jogosDays">Próximos dias</label>
+      <select id="jogosDays" class="apostas-filter-select" onchange="reloadJogos()">
+        <option value="7">7 dias</option>
+        <option value="14" selected>14 dias</option>
+        <option value="21">21 dias</option>
+        <option value="30">30 dias</option>
+      </select>
     </div>
 
-    <!-- LOADING -->
-    <div id="apostasLoading" class="apostas-loading" style="display:none">
+    <div id="jogosLoading" class="apostas-loading" style="display:none">
       <div class="apostas-spinner"></div>
-      <span>Buscando partidas e classificações...<br><small>Pode levar alguns segundos na primeira consulta do dia.</small></span>
+      <span>Buscando jogos e classificações...</span>
     </div>
-
-    <!-- VAZIO -->
-    <div id="apostasVazio" class="apostas-vazio" style="display:none">
+    <div id="jogosContent" style="display:none"></div>
+    <div id="jogosVazio" class="apostas-vazio" style="display:none">
       <i class="bi bi-calendar-x"></i>
-      <p id="apostasVazioMsg">Nenhuma partida com essa diferença de classificação encontrada para este dia.</p>
+      <p>Nenhum jogo agendado para este período.</p>
     </div>
-
-    <!-- ERRO -->
-    <div id="apostasErro" class="apostas-erro" style="display:none">
+    <div id="jogosErro" class="apostas-erro" style="display:none">
       <i class="bi bi-exclamation-triangle"></i>
-      <p id="apostasErroMsg">Erro ao buscar partidas. Tente novamente.</p>
-    </div>
-
-    <!-- RESULTADO -->
-    <div id="apostasResultado" style="display:none">
-      <div class="apostas-resultado-header">
-        <span id="apostasTotal"></span>
-      </div>
-      <div id="apostasLista"></div>
+      <p id="jogosErroMsg">Erro ao buscar jogos.</p>
     </div>
 
   </div>
@@ -167,24 +131,18 @@
   ====================================================== -->
   <div id="panelTabelas" style="display:none">
 
-    <!-- SELETOR DE CAMPEONATO -->
-    <div id="tabelasTournamentList" class="tabelas-chips-wrap">
+    <div id="tabelasLeagueList" class="tabelas-chips-wrap">
       <div class="apostas-loading">
         <div class="apostas-spinner"></div>
         <span>Carregando campeonatos...</span>
       </div>
     </div>
 
-    <!-- LOADING -->
     <div id="tabelasLoading" class="apostas-loading" style="display:none">
       <div class="apostas-spinner"></div>
       <span>Buscando tabela...</span>
     </div>
-
-    <!-- CONTEÚDO DA TABELA -->
     <div id="tabelasContent" style="display:none"></div>
-
-    <!-- ERRO -->
     <div id="tabelasErro" class="apostas-erro" style="display:none">
       <i class="bi bi-exclamation-triangle"></i>
       <p id="tabelasErroMsg">Erro ao carregar tabela.</p>

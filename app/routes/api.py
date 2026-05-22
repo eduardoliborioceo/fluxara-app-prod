@@ -1239,6 +1239,47 @@ def apostas_odds(event_id):
 
 
 # =============================================================
+# APOSTAS — ESPN (standings + fixtures)
+# =============================================================
+
+@bp.route("/apostas/espn/leagues", methods=["GET"])
+@login_required
+def apostas_espn_leagues():
+    from app.services import apostas_espn_service
+    return jsonify(apostas_espn_service.get_leagues())
+
+
+@bp.route("/apostas/espn/standings/<league_slug>", methods=["GET"])
+@login_required
+def apostas_espn_standings(league_slug):
+    from app.services import apostas_espn_service
+    if league_slug not in apostas_espn_service.KNOWN_SLUGS:
+        return jsonify({"error": "Campeonato não suportado"}), 400
+    try:
+        data = apostas_espn_service.get_standings(league_slug)
+        return jsonify(data)
+    except Exception as exc:
+        logger.exception("apostas_espn_standings error league=%s: %s", league_slug, exc)
+        return jsonify({"error": "Erro ao buscar tabela"}), 500
+
+
+@bp.route("/apostas/espn/fixtures/<league_slug>", methods=["GET"])
+@login_required
+def apostas_espn_fixtures(league_slug):
+    from app.services import apostas_espn_service
+    if league_slug not in apostas_espn_service.KNOWN_SLUGS:
+        return jsonify({"error": "Campeonato não suportado"}), 400
+    try:
+        days = int(request.args.get("days", 14))
+        days = max(1, min(30, days))
+        data = apostas_espn_service.get_upcoming_fixtures(league_slug, days)
+        return jsonify(data)
+    except Exception as exc:
+        logger.exception("apostas_espn_fixtures error league=%s: %s", league_slug, exc)
+        return jsonify({"error": "Erro ao buscar jogos"}), 500
+
+
+# =============================================================
 # APOSTAS — TIPS (recomendações)
 # =============================================================
 
