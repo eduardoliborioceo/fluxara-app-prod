@@ -12,8 +12,14 @@ function apostasTab(tab) {
   });
   localStorage.setItem("apostas_tab", tab);
 
+  const bar = document.getElementById("leagueControlBar");
+  if (bar) bar.style.display = (tab === "jogos" || tab === "tabelas") ? "block" : "none";
+
   if ((tab === "jogos" || tab === "tabelas") && !window._leaguesLoaded) {
     loadLeagues();
+  } else if (window._leaguesLoaded && window._activeLeague) {
+    if (tab === "jogos") loadJogos(window._activeLeague);
+    if (tab === "tabelas") loadTabela(window._activeLeague);
   }
 }
 
@@ -37,55 +43,53 @@ window._leaguesLoaded  = false;
 window._activeLeague   = null;
 
 async function loadLeagues() {
+  const sel = document.getElementById("leagueSelect");
   try {
     const resp = await fetch("/api/apostas/espn/leagues");
     const list = await resp.json();
-    renderLeagueChips("jogosLeagueList", list, slug => selectLeague(slug));
-    renderLeagueChips("tabelasLeagueList", list, slug => selectLeague(slug));
+
+    const byCategory = {};
+    list.forEach(lg => {
+      if (!byCategory[lg.category]) byCategory[lg.category] = [];
+      byCategory[lg.category].push(lg);
+    });
+
+    sel.innerHTML = "";
+    Object.entries(byCategory).forEach(([cat, items]) => {
+      const grp = document.createElement("optgroup");
+      grp.label = cat;
+      items.forEach(lg => {
+        const opt = document.createElement("option");
+        opt.value = lg.slug;
+        opt.textContent = lg.name;
+        grp.appendChild(opt);
+      });
+      sel.appendChild(grp);
+    });
+
     window._leaguesLoaded = true;
 
     const saved = localStorage.getItem("apostas_league") || list[0]?.slug;
-    if (saved) selectLeague(saved);
+    if (saved) {
+      sel.value = saved;
+      selectLeague(saved);
+    }
   } catch {
-    document.getElementById("jogosLeagueList").innerHTML =
-      '<p class="apostas-odds-unavailable">Erro ao carregar campeonatos.</p>';
-    document.getElementById("tabelasLeagueList").innerHTML =
-      '<p class="apostas-odds-unavailable">Erro ao carregar campeonatos.</p>';
+    sel.innerHTML = '<option disabled selected>Erro ao carregar campeonatos</option>';
   }
 }
 
-function renderLeagueChips(containerId, list, onSelect) {
-  const wrap = document.getElementById(containerId);
-  const byCategory = {};
-  list.forEach(lg => {
-    if (!byCategory[lg.category]) byCategory[lg.category] = [];
-    byCategory[lg.category].push(lg);
-  });
-
-  let html = "";
-  Object.entries(byCategory).forEach(([cat, items]) => {
-    html += `<div class="tabelas-category">
-      <span class="tabelas-category-label">${escHtml(cat)}</span>
-      <div class="tabelas-chips">`;
-    items.forEach(lg => {
-      html += `<button class="tabelas-chip" id="${containerId}-chip-${lg.slug}"
-        onclick="selectLeague('${escHtml(lg.slug)}')">${escHtml(lg.name)}</button>`;
-    });
-    html += `</div></div>`;
-  });
-  wrap.innerHTML = html;
-}
-
-function setActiveChips(slug) {
-  document.querySelectorAll(".tabelas-chip").forEach(el => {
-    el.classList.toggle("tabelas-chip--active", el.id.endsWith(`-chip-${slug}`));
-  });
+function onLeagueSelectChange() {
+  const sel = document.getElementById("leagueSelect");
+  if (sel && sel.value) selectLeague(sel.value);
 }
 
 function selectLeague(slug) {
   window._activeLeague = slug;
   localStorage.setItem("apostas_league", slug);
-  setActiveChips(slug);
+
+  const sel = document.getElementById("leagueSelect");
+  if (sel && sel.value !== slug) sel.value = slug;
 
   const currentTab = localStorage.getItem("apostas_tab") || "recomendacoes";
   if (currentTab === "jogos") loadJogos(slug);

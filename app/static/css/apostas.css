@@ -404,6 +404,37 @@
 .tips-btn-submit:disabled { opacity: .6; cursor: not-allowed; }
 
 /* ========================
+   LEAGUE SELECT BAR
+======================== */
+.league-select-bar {
+  margin-bottom: 14px;
+}
+
+.league-select-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.league-select-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: .75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--text-muted, #64748b);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.league-select-bar .apostas-filter-select {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ========================
    FILTERS CARD
 ======================== */
 .apostas-filters-card {
