@@ -96,8 +96,34 @@ function selectLeague(slug) {
 //  PRÓXIMOS JOGOS
 // ============================================================
 
+window._jogosData = null;
+
 function reloadJogos() {
   if (window._activeLeague) loadJogos(window._activeLeague);
+}
+
+function applyJogosFilter() {
+  if (!window._jogosData) return;
+
+  const minDiff = parseInt(document.getElementById("jogosDiff")?.value || "0", 10);
+
+  let matches = window._jogosData.matches;
+  if (minDiff > 0) {
+    matches = matches.filter(m => m.pos_diff != null && m.pos_diff >= minDiff);
+  }
+
+  if (matches.length === 0) {
+    const total = window._jogosData.matches.length;
+    const msg = minDiff > 0
+      ? `Nenhum jogo com diferença ≥ ${minDiff} posições (${total} jogos no período sem esse filtro).`
+      : "Nenhum jogo agendado para este período.";
+    document.getElementById("jogosVazioMsg").textContent = msg;
+    setJogosState("vazio");
+    return;
+  }
+
+  renderJogosMatches(window._jogosData, matches);
+  setJogosState("content");
 }
 
 async function loadJogos(slug) {
@@ -108,9 +134,9 @@ async function loadJogos(slug) {
     const resp = await fetch(`/api/apostas/espn/fixtures/${encodeURIComponent(slug)}?days=${days}`);
     const json = await resp.json();
     if (!resp.ok) { setJogosState("erro", json.error); return; }
-    if (!json.matches || json.matches.length === 0) { setJogosState("vazio"); return; }
-    renderJogos(json);
-    setJogosState("content");
+
+    window._jogosData = json;
+    applyJogosFilter();
   } catch {
     setJogosState("erro", "Não foi possível conectar ao servidor.");
   }
@@ -124,26 +150,23 @@ function setJogosState(state, msg) {
   if (state === "erro" && msg) document.getElementById("jogosErroMsg").textContent = msg;
 }
 
-function renderJogos(data) {
+function renderJogosMatches(data, matches) {
   const content = document.getElementById("jogosContent");
-  if (data.season) {
-    content.innerHTML = `<div class="tabelas-season">${escHtml(data.season)}</div>`;
-  } else {
-    content.innerHTML = "";
-  }
+  content.innerHTML = data.season
+    ? `<div class="tabelas-season">${escHtml(data.season)}</div>`
+    : "";
 
   const byDate = {};
-  data.matches.forEach(m => {
+  matches.forEach(m => {
     const dayKey = m.date_brt ? m.date_brt.slice(0, 10) : "?";
     if (!byDate[dayKey]) byDate[dayKey] = [];
     byDate[dayKey].push(m);
   });
 
-  Object.entries(byDate).forEach(([day, matches]) => {
-    const label = formatDayLabel(day);
+  Object.entries(byDate).forEach(([day, dayMatches]) => {
     let html = `<div class="jogos-day-group">
-      <div class="jogos-day-header">${label}</div>`;
-    matches.forEach(m => { html += buildMatchRow(m); });
+      <div class="jogos-day-header">${formatDayLabel(day)}</div>`;
+    dayMatches.forEach(m => { html += buildMatchRow(m); });
     html += `</div>`;
     content.innerHTML += html;
   });

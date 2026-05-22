@@ -1004,20 +1004,22 @@
 .jogos-filter-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   margin-bottom: 16px;
+  flex-wrap: wrap;
 }
 
 .jogos-filter-row .apostas-filter-label {
   white-space: nowrap;
-  font-size: .8rem;
+  font-size: .78rem;
   font-weight: 600;
   color: var(--text-muted, #64748b);
 }
 
 .jogos-filter-row .apostas-filter-select {
   flex: 1;
-  max-width: 160px;
+  min-width: 80px;
+  max-width: 140px;
 }
 
 /* ========================

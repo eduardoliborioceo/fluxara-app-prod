@@ -108,6 +108,15 @@
         <option value="21">21 dias</option>
         <option value="30">30 dias</option>
       </select>
+
+      <label class="apostas-filter-label" for="jogosDiff">Diferença</label>
+      <select id="jogosDiff" class="apostas-filter-select" onchange="applyJogosFilter()">
+        <option value="0">Todos</option>
+        <option value="2">Δ ≥ 2</option>
+        <option value="5">Δ ≥ 5</option>
+        <option value="8">Δ ≥ 8</option>
+        <option value="10">Δ ≥ 10</option>
+      </select>
     </div>
 
     <div id="jogosLoading" class="apostas-loading" style="display:none">
@@ -117,7 +126,7 @@
     <div id="jogosContent" style="display:none"></div>
     <div id="jogosVazio" class="apostas-vazio" style="display:none">
       <i class="bi bi-calendar-x"></i>
-      <p>Nenhum jogo agendado para este período.</p>
+      <p id="jogosVazioMsg">Nenhum jogo encontrado para este filtro.</p>
     </div>
     <div id="jogosErro" class="apostas-erro" style="display:none">
       <i class="bi bi-exclamation-triangle"></i>
