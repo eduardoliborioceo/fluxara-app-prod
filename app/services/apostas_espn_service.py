@@ -21,13 +21,32 @@ _STANDINGS_TTL = 1800   # 30 min
 _FIXTURES_TTL  = 600    # 10 min
 
 _LEAGUES = [
-    {"slug": "bra.1", "name": "Brasileirão Série A", "category": "Brasil"},
-    {"slug": "bra.2", "name": "Brasileirão Série B",  "category": "Brasil"},
-    {"slug": "eng.1", "name": "Premier League",        "category": "Europa"},
-    {"slug": "esp.1", "name": "La Liga",               "category": "Europa"},
-    {"slug": "ger.1", "name": "Bundesliga",            "category": "Europa"},
-    {"slug": "ita.1", "name": "Serie A",               "category": "Europa"},
-    {"slug": "fra.1", "name": "Ligue 1",               "category": "Europa"},
+    # Brasil
+    {"slug": "bra.1",   "name": "Brasileirão Série A",   "category": "Brasil"},
+    {"slug": "bra.2",   "name": "Brasileirão Série B",   "category": "Brasil"},
+    {"slug": "bra.3",   "name": "Brasileirão Série C",   "category": "Brasil"},
+    {"slug": "bra.cup", "name": "Copa do Brasil",         "category": "Brasil"},
+    # América do Sul
+    {"slug": "arg.1",                  "name": "Liga Argentina",      "category": "América do Sul"},
+    {"slug": "col.1",                  "name": "Liga Colombiana",     "category": "América do Sul"},
+    {"slug": "chi.1",                  "name": "Primera División (Chile)", "category": "América do Sul"},
+    {"slug": "uru.1",                  "name": "Primera División (Uruguai)", "category": "América do Sul"},
+    {"slug": "CONMEBOL.LIBERTADORES",  "name": "Copa Libertadores",   "category": "América do Sul"},
+    {"slug": "CONMEBOL.SUDAMERICANA",  "name": "Copa Sudamericana",   "category": "América do Sul"},
+    # Europa
+    {"slug": "eng.1", "name": "Premier League",    "category": "Europa"},
+    {"slug": "eng.2", "name": "Championship",      "category": "Europa"},
+    {"slug": "esp.1", "name": "La Liga",           "category": "Europa"},
+    {"slug": "ger.1", "name": "Bundesliga",        "category": "Europa"},
+    {"slug": "ita.1", "name": "Serie A",           "category": "Europa"},
+    {"slug": "fra.1", "name": "Ligue 1",           "category": "Europa"},
+    {"slug": "por.1", "name": "Primeira Liga",     "category": "Europa"},
+    {"slug": "ned.1", "name": "Eredivisie",        "category": "Europa"},
+    {"slug": "sco.1", "name": "Scottish Premiership", "category": "Europa"},
+    # Competições mundiais / continentais
+    {"slug": "UEFA.CHAMPIONS",         "name": "Champions League",    "category": "Mundial"},
+    {"slug": "UEFA.EUROPA",            "name": "Europa League",       "category": "Mundial"},
+    {"slug": "UEFA.EUROPA.CONFERENCE", "name": "Conference League",   "category": "Mundial"},
 ]
 
 KNOWN_SLUGS = {lg["slug"] for lg in _LEAGUES}
