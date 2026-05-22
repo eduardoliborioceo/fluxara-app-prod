@@ -1192,11 +1192,38 @@ def apostas_partidas():
         min_diff = 5
 
     try:
-        matches = apostas_service.get_mismatch_matches(date_str, min_diff)
-        return jsonify({"matches": matches, "total": len(matches), "date": date_str, "min_diff": min_diff})
+        matches, with_standings = apostas_service.get_mismatch_matches(date_str, min_diff)
+        return jsonify({
+            "matches": matches,
+            "total": len(matches),
+            "with_standings": with_standings,
+            "date": date_str,
+            "min_diff": min_diff,
+        })
     except Exception as exc:
         logger.exception("apostas_partidas error: %s", exc)
         return jsonify({"error": "Erro ao buscar partidas"}), 500
+
+
+@bp.route("/apostas/tournaments", methods=["GET"])
+@login_required
+def apostas_tournaments():
+    from app.services import apostas_service
+    return jsonify(apostas_service.get_tournaments_list())
+
+
+@bp.route("/apostas/standings/<int:tournament_id>", methods=["GET"])
+@login_required
+def apostas_standings(tournament_id):
+    from app.services import apostas_service
+    if tournament_id not in apostas_service._KNOWN_TOURNAMENT_IDS:
+        return jsonify({"error": "Campeonato não suportado"}), 400
+    try:
+        data = apostas_service.get_tournament_standings(tournament_id)
+        return jsonify(data)
+    except Exception as exc:
+        logger.exception("apostas_standings error t=%s: %s", tournament_id, exc)
+        return jsonify({"error": "Erro ao buscar tabela"}), 500
 
 
 @bp.route("/apostas/odds/<int:event_id>", methods=["GET"])

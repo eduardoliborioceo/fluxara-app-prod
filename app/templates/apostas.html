@@ -33,6 +33,10 @@
       <i class="bi bi-search"></i>
       Analisador
     </button>
+    <button class="apostas-tab" id="tabBtnTab" onclick="apostasTab('tabelas')">
+      <i class="bi bi-table"></i>
+      Tabelas
+    </button>
   </div>
 
   <!-- ======================================================
@@ -108,9 +112,9 @@
         <div class="apostas-filter-item">
           <label class="apostas-filter-label" for="apostasMinDiff">Diferença mínima na tabela</label>
           <select id="apostasMinDiff" class="apostas-filter-select">
-            <option value="1">Todos os duelos</option>
+            <option value="1" selected>Todos os duelos</option>
             <option value="3">≥ 3 posições</option>
-            <option value="5" selected>≥ 5 posições</option>
+            <option value="5">≥ 5 posições</option>
             <option value="8">≥ 8 posições</option>
             <option value="10">≥ 10 posições</option>
             <option value="15">≥ 15 posições</option>
@@ -154,6 +158,36 @@
         <span id="apostasTotal"></span>
       </div>
       <div id="apostasLista"></div>
+    </div>
+
+  </div>
+
+  <!-- ======================================================
+       PAINEL TABELAS
+  ====================================================== -->
+  <div id="panelTabelas" style="display:none">
+
+    <!-- SELETOR DE CAMPEONATO -->
+    <div id="tabelasTournamentList" class="tabelas-chips-wrap">
+      <div class="apostas-loading">
+        <div class="apostas-spinner"></div>
+        <span>Carregando campeonatos...</span>
+      </div>
+    </div>
+
+    <!-- LOADING -->
+    <div id="tabelasLoading" class="apostas-loading" style="display:none">
+      <div class="apostas-spinner"></div>
+      <span>Buscando tabela...</span>
+    </div>
+
+    <!-- CONTEÚDO DA TABELA -->
+    <div id="tabelasContent" style="display:none"></div>
+
+    <!-- ERRO -->
+    <div id="tabelasErro" class="apostas-erro" style="display:none">
+      <i class="bi bi-exclamation-triangle"></i>
+      <p id="tabelasErroMsg">Erro ao carregar tabela.</p>
     </div>
 
   </div>
