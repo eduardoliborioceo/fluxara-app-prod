@@ -222,7 +222,12 @@
 
       <div class="tips-form-group">
         <label class="tips-form-label">Link da aposta</label>
-        <input type="text" id="tipLinkAposta" class="tips-form-input" placeholder="https://...">
+        <div class="link-aposta-wrap">
+          <input type="text" id="tipLinkAposta" class="tips-form-input" placeholder="https://..." autocomplete="off" autocorrect="off" spellcheck="false">
+          <button type="button" class="link-paste-btn" onclick="pasteLink()" title="Colar link">
+            <i class="bi bi-clipboard"></i>
+          </button>
+        </div>
       </div>
 
       <div class="tips-jogos-section">

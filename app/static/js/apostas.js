@@ -608,6 +608,18 @@ function calcOddTotal() {
   if (el) el.textContent = (valid && rows.length > 0) ? total.toFixed(2) : "—";
 }
 
+async function pasteLink() {
+  const input = document.getElementById("tipLinkAposta");
+  try {
+    const text = await navigator.clipboard.readText();
+    input.value = text.trim();
+    input.focus();
+  } catch {
+    input.focus();
+    document.execCommand("paste");
+  }
+}
+
 function openTipModal() {
   document.getElementById("tipTitulo").value    = "";
   document.getElementById("tipStake").value     = "";
