@@ -4,16 +4,35 @@ from app.extensions import get_db
 from psycopg.rows import dict_row
 
 
+def _columns_exist(conn) -> bool:
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT COUNT(*) FROM information_schema.columns
+            WHERE table_name = 'apostas_tips'
+              AND column_name IN ('jogos', 'link_aposta')
+        """)
+        return cur.fetchone()[0] == 2
+
+
 def list_tips():
     with get_db() as conn:
+        migrated = _columns_exist(conn)
         with conn.cursor(row_factory=dict_row) as cur:
-            cur.execute("""
-                SELECT id, titulo, partida, campeonato, odd, stake,
-                       data_partida, status, created_by, created_at, updated_at,
-                       jogos, link_aposta
-                FROM apostas_tips
-                ORDER BY created_at DESC
-            """)
+            if migrated:
+                cur.execute("""
+                    SELECT id, titulo, partida, campeonato, odd, stake,
+                           data_partida, status, created_by, created_at, updated_at,
+                           jogos, link_aposta
+                    FROM apostas_tips
+                    ORDER BY created_at DESC
+                """)
+            else:
+                cur.execute("""
+                    SELECT id, titulo, partida, campeonato, odd, stake,
+                           data_partida, status, created_by, created_at, updated_at
+                    FROM apostas_tips
+                    ORDER BY created_at DESC
+                """)
             return cur.fetchall()
 
 
@@ -34,16 +53,26 @@ def get_stats():
 def create_tip(titulo: str, partida, campeonato, odd, stake, data_partida,
                created_by: int, jogos: list, link_aposta):
     with get_db() as conn:
+        migrated = _columns_exist(conn)
         with conn.cursor(row_factory=dict_row) as cur:
-            cur.execute("""
-                INSERT INTO apostas_tips
-                    (titulo, partida, campeonato, odd, stake, data_partida,
-                     created_by, jogos, link_aposta)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s)
-                RETURNING *
-            """, (titulo, partida or None, campeonato or None, odd,
-                  stake or None, data_partida or None, created_by,
-                  json.dumps(jogos), link_aposta or None))
+            if migrated:
+                cur.execute("""
+                    INSERT INTO apostas_tips
+                        (titulo, partida, campeonato, odd, stake, data_partida,
+                         created_by, jogos, link_aposta)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s)
+                    RETURNING *
+                """, (titulo, partida or None, campeonato or None, odd,
+                      stake or None, data_partida or None, created_by,
+                      json.dumps(jogos), link_aposta or None))
+            else:
+                cur.execute("""
+                    INSERT INTO apostas_tips
+                        (titulo, partida, campeonato, odd, stake, data_partida, created_by)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    RETURNING *
+                """, (titulo, partida or None, campeonato or None, odd,
+                      stake or None, data_partida or None, created_by))
             row = cur.fetchone()
             conn.commit()
             return row
