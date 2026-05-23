@@ -530,7 +530,12 @@ function addJogoRow() {
     </div>
     <div class="tips-form-group">
       <label class="tips-form-label">Partida <span class="tips-required">*</span></label>
-      <input type="text" id="jogo-partida-${idx}" class="tips-form-input" placeholder="Ex: Flamengo x Palmeiras" maxlength="200">
+      <div class="jogo-partida-wrap">
+        <input type="text" id="jogo-partida-${idx}" class="tips-form-input" placeholder="Ex: Flamengo x Palmeiras" maxlength="200">
+        <button type="button" class="jogo-pick-btn" onclick="openMatchPicker(${idx})" title="Buscar nos próximos jogos">
+          <i class="bi bi-calendar3"></i>
+        </button>
+      </div>
     </div>
     <div class="tips-form-row">
       <div class="tips-form-group">
@@ -682,6 +687,168 @@ async function submitTipForm() {
   } finally {
     btn.disabled = false;
   }
+}
+
+// ============================================================
+//  MATCH PICKER
+// ============================================================
+
+let _pickerJogoIdx      = null;
+let _pickerLeaguesReady = false;
+
+function openMatchPicker(jogoIdx) {
+  _pickerJogoIdx = jogoIdx;
+  document.getElementById("matchPickerOverlay").style.display = "flex";
+  if (!_pickerLeaguesReady) {
+    _loadPickerLeagues();
+  } else {
+    const sel = document.getElementById("pickerLeagueSelect");
+    if (sel.value) _loadPickerMatches(sel.value);
+  }
+}
+
+function closeMatchPicker() {
+  document.getElementById("matchPickerOverlay").style.display = "none";
+  _pickerJogoIdx = null;
+}
+
+function closeMatchPickerOverlay(e) {
+  if (e.target === document.getElementById("matchPickerOverlay")) closeMatchPicker();
+}
+
+async function _loadPickerLeagues() {
+  const sel = document.getElementById("pickerLeagueSelect");
+  try {
+    const resp = await fetch("/api/apostas/espn/leagues");
+    const list = await resp.json();
+
+    const byCategory = {};
+    list.forEach(lg => {
+      if (!byCategory[lg.category]) byCategory[lg.category] = [];
+      byCategory[lg.category].push(lg);
+    });
+
+    sel.innerHTML = "";
+    Object.entries(byCategory).forEach(([cat, items]) => {
+      const grp = document.createElement("optgroup");
+      grp.label = cat;
+      items.forEach(lg => {
+        const opt = document.createElement("option");
+        opt.value = lg.slug;
+        opt.textContent = lg.name;
+        grp.appendChild(opt);
+      });
+      sel.appendChild(grp);
+    });
+
+    _pickerLeaguesReady = true;
+
+    const defaultSlug = window._activeLeague || list[0]?.slug;
+    if (defaultSlug) {
+      sel.value = defaultSlug;
+      _loadPickerMatches(defaultSlug);
+    }
+  } catch {
+    sel.innerHTML = '<option disabled>Erro ao carregar campeonatos</option>';
+  }
+}
+
+function onPickerLeagueChange() {
+  const sel = document.getElementById("pickerLeagueSelect");
+  if (sel.value) _loadPickerMatches(sel.value);
+}
+
+async function _loadPickerMatches(slug) {
+  const listEl    = document.getElementById("pickerMatchList");
+  const loadingEl = document.getElementById("pickerLoading");
+  const emptyEl   = document.getElementById("pickerEmpty");
+
+  listEl.innerHTML = "";
+  emptyEl.style.display = "none";
+  loadingEl.style.display = "flex";
+
+  try {
+    const resp = await fetch(`/api/apostas/espn/fixtures/${encodeURIComponent(slug)}?days=30`);
+    const json = await resp.json();
+    loadingEl.style.display = "none";
+
+    const upcoming = (json.matches || []).filter(m => m.state === "pre" || m.state === "in");
+    if (!resp.ok || upcoming.length === 0) {
+      emptyEl.style.display = "flex";
+      return;
+    }
+
+    const sel    = document.getElementById("pickerLeagueSelect");
+    const season = json.season || sel.options[sel.selectedIndex]?.text || "";
+    _renderPickerMatches(upcoming, season);
+  } catch {
+    loadingEl.style.display = "none";
+    emptyEl.style.display = "flex";
+  }
+}
+
+function _renderPickerMatches(matches, season) {
+  const listEl = document.getElementById("pickerMatchList");
+
+  const byDate = {};
+  matches.forEach(m => {
+    const dayKey = m.date_brt ? m.date_brt.slice(0, 10) : "?";
+    if (!byDate[dayKey]) byDate[dayKey] = [];
+    byDate[dayKey].push(m);
+  });
+
+  let html = "";
+  Object.entries(byDate).forEach(([day, dayMatches]) => {
+    html += `<div class="picker-day-group">
+      <div class="picker-day-header">${formatDayLabel(day)}</div>`;
+    dayMatches.forEach(m => {
+      const time   = m.date_brt ? m.date_brt.slice(11, 16) : "";
+      const partida = `${m.home_name} x ${m.away_name}`;
+      const date   = m.date_brt ? m.date_brt.slice(0, 10) : "";
+      const diff   = m.pos_diff != null && m.pos_diff >= 2 ? buildJogosDiff(m.pos_diff) : "";
+      const homePosHtml = m.home_pos ? `<span class="picker-pos picker-pos--${posTier(m.home_pos)}">#${m.home_pos}</span>` : "";
+      const awayPosHtml = m.away_pos ? `<span class="picker-pos picker-pos--${posTier(m.away_pos)}">#${m.away_pos}</span>` : "";
+      html += `
+        <div class="picker-match-row"
+             data-partida="${escHtml(partida)}"
+             data-season="${escHtml(season)}"
+             data-date="${escHtml(date)}"
+             onclick="_selectPickerMatch(this)">
+          <div class="picker-match-teams">
+            ${homePosHtml}
+            <span class="picker-team picker-team--home">${escHtml(m.home_name)}</span>
+            <span class="picker-vs">×</span>
+            <span class="picker-team picker-team--away">${escHtml(m.away_name)}</span>
+            ${awayPosHtml}
+          </div>
+          <div class="picker-match-meta">
+            ${time ? `<span class="picker-time"><i class="bi bi-clock"></i>${time}</span>` : ""}
+            ${diff}
+          </div>
+        </div>`;
+    });
+    html += `</div>`;
+  });
+
+  listEl.innerHTML = html;
+}
+
+function _selectPickerMatch(el) {
+  if (_pickerJogoIdx === null) return;
+  const idx     = _pickerJogoIdx;
+  const partida = el.dataset.partida;
+  const season  = el.dataset.season;
+  const date    = el.dataset.date;
+
+  const partidaEl = document.getElementById(`jogo-partida-${idx}`);
+  const campEl    = document.getElementById(`jogo-campeonato-${idx}`);
+  const dataEl    = document.getElementById(`jogo-data-${idx}`);
+
+  if (partidaEl) partidaEl.value = partida;
+  if (campEl)    campEl.value    = season;
+  if (dataEl && date) dataEl.value = date;
+
+  closeMatchPicker();
 }
 
 // ============================================================
