@@ -31,17 +31,20 @@
   cursor: pointer;
   background: transparent;
   color: var(--text-muted, #64748b);
-  transition: all .15s;
+  transition: background .15s, color .15s;
   white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.apostas-tab:hover {
-  background: rgba(13,110,253,.06);
-  color: var(--primary, #0d6efd);
+@media (hover: hover) and (pointer: fine) {
+  .apostas-tab:hover:not(.apostas-tab--active) {
+    background: rgba(13,110,253,.06);
+    color: var(--primary, #0d6efd);
+  }
 }
 
 .apostas-tab--active {
-  background: var(--primary, #0d6efd);
+  background: var(--primary, #0d6efd) !important;
   color: #fff !important;
 }
 
