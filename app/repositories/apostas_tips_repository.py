@@ -7,11 +7,11 @@ from psycopg.rows import dict_row
 def _columns_exist(conn) -> bool:
     with conn.cursor() as cur:
         cur.execute("""
-            SELECT COUNT(*) FROM information_schema.columns
+            SELECT COUNT(*) AS cnt FROM information_schema.columns
             WHERE table_name = 'apostas_tips'
               AND column_name IN ('jogos', 'link_aposta')
         """)
-        return cur.fetchone()[0] == 2
+        return cur.fetchone()["cnt"] == 2
 
 
 def list_tips():
