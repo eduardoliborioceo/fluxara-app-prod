@@ -1117,6 +1117,46 @@
   cursor: grabbing;
 }
 
+.gerenciar-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.gerenciar-vis-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  font-size: .95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background .12s, color .12s;
+  flex-shrink: 0;
+}
+
+.gerenciar-vis-btn:hover {
+  background: rgba(0,0,0,.06);
+  color: #475569;
+}
+
+.gerenciar-item--hidden {
+  opacity: .55;
+}
+
+.gerenciar-item--hidden .gerenciar-vis-btn {
+  color: #dc3545;
+}
+
+.card-hidden {
+  display: none !important;
+}
+
 .gerenciar-footer {
   padding: 16px 16px 24px;
   flex-shrink: 0;

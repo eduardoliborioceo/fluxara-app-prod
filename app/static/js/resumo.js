@@ -446,7 +446,19 @@
     }
   }
 
-  var CARDS_ORDER_KEY = 'fluxara_cards_order';
+  var CARDS_ORDER_KEY      = 'fluxara_cards_order';
+  var CARD_VISIBILITY_KEY  = 'fluxara_cards_visibility';
+
+  function loadVisibility() {
+    try { return JSON.parse(localStorage.getItem(CARD_VISIBILITY_KEY)) || {}; } catch (e) { return {}; }
+  }
+
+  function applyCardVisibility() {
+    var vis = loadVisibility();
+    document.querySelectorAll('#cardsContainer [data-card-id]').forEach(function (el) {
+      el.classList.toggle('card-hidden', vis[el.dataset.cardId] === false);
+    });
+  }
 
   function applyCardOrder() {
     var container = document.getElementById('cardsContainer');
@@ -749,20 +761,41 @@
     }
 
     function buildList(order) {
+      var vis = loadVisibility();
       list.innerHTML = '';
       order.forEach(function (id) {
         var meta = CARD_META[id];
         if (!meta) return;
+        var visible = vis[id] !== false;
         var item = document.createElement('div');
-        item.className   = 'gerenciar-item';
+        item.className      = 'gerenciar-item' + (visible ? '' : ' gerenciar-item--hidden');
         item.dataset.cardId = id;
-        item.draggable   = true;
-        item.innerHTML   = '<div class="gerenciar-item-left">'
+        item.dataset.visible = visible ? '1' : '0';
+        item.draggable      = true;
+        item.innerHTML = '<div class="gerenciar-item-left">'
           + '<div class="gerenciar-item-icon" style="color:' + meta.cor + '"><i class="bi ' + meta.icone + '"></i></div>'
           + '<span class="gerenciar-item-nome">' + meta.nome + '</span>'
           + '</div>'
-          + '<i class="bi bi-grip-vertical gerenciar-item-handle"></i>';
+          + '<div class="gerenciar-item-actions">'
+          + '<button type="button" class="gerenciar-vis-btn" title="' + (visible ? 'Ocultar' : 'Mostrar') + '">'
+          + '<i class="bi ' + (visible ? 'bi-eye' : 'bi-eye-slash') + '"></i>'
+          + '</button>'
+          + '<i class="bi bi-grip-vertical gerenciar-item-handle"></i>'
+          + '</div>';
         list.appendChild(item);
+      });
+
+      list.querySelectorAll('.gerenciar-vis-btn').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var item = btn.closest('[data-card-id]');
+          var nowVisible = item.dataset.visible !== '0';
+          var next = !nowVisible;
+          item.dataset.visible = next ? '1' : '0';
+          item.classList.toggle('gerenciar-item--hidden', !next);
+          btn.title = next ? 'Ocultar' : 'Mostrar';
+          btn.querySelector('i').className = 'bi ' + (next ? 'bi-eye' : 'bi-eye-slash');
+        });
       });
     }
 
@@ -862,13 +895,21 @@
     overlay.addEventListener('click', function (e) { if (e.target === overlay) closeModal(); });
 
     saveBtn.addEventListener('click', function () {
-      var newOrder = Array.from(list.querySelectorAll('[data-card-id]')).map(function (el) {
-        return el.dataset.cardId;
+      var newOrder = [];
+      var newVis   = {};
+      list.querySelectorAll('[data-card-id]').forEach(function (el) {
+        newOrder.push(el.dataset.cardId);
+        newVis[el.dataset.cardId] = el.dataset.visible !== '0';
       });
       localStorage.setItem(CARDS_ORDER_KEY, JSON.stringify(newOrder));
+      localStorage.setItem(CARD_VISIBILITY_KEY, JSON.stringify(newVis));
       newOrder.forEach(function (id) {
         var el = cardsContainer.querySelector('[data-card-id="' + id + '"]');
         if (el) cardsContainer.appendChild(el);
+      });
+      Object.keys(newVis).forEach(function (id) {
+        var el = cardsContainer.querySelector('[data-card-id="' + id + '"]');
+        if (el) el.classList.toggle('card-hidden', !newVis[id]);
       });
       var orig = saveBtn.innerHTML;
       saveBtn.innerHTML = '<i class="bi bi-check-lg"></i> Salvo!';
@@ -976,6 +1017,7 @@
   });
 
   applyCardOrder();
+  applyCardVisibility();
   initGerenciar();
   loadContas();
   loadCartoes();
