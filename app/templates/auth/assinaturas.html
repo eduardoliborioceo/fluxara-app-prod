@@ -2,21 +2,399 @@
 {% block title %}Fluxara · Assinaturas{% endblock %}
 
 {% block page_title %}
-<div class="d-flex align-items-center w-100">
-  <span class="me-auto">Assinaturas</span>
-  <a href="{{ url_for('auth.my_profile') }}" class="btn btn-outline-secondary ms-auto">
-    <i class="bi bi-arrow-left"></i> Voltar
-  </a>
+<div class="page-header">
+  <div class="page-header-title">
+    <span class="page-header-section">Conta</span>
+    <h1 class="page-header-name">Assinaturas</h1>
+  </div>
+  <div class="page-header-actions">
+    <a href="{{ url_for('auth.my_profile') }}" class="btn-header-icon" title="Voltar">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+    <button class="btn-header-icon" onclick="toggleFullscreen()" title="Tela cheia">
+      <i class="bi bi-arrows-fullscreen"></i>
+    </button>
+  </div>
 </div>
 {% endblock %}
 
 {% block content %}
-<div class="card shadow-sm p-4 text-center" style="max-width: 520px">
-  <i class="bi bi-star-fill text-warning" style="font-size: 3rem;"></i>
-  <h4 class="mt-3 mb-2">Assinaturas</h4>
-  <p class="text-muted">Os planos de assinatura estarão disponíveis em breve.</p>
-  <a href="{{ url_for('auth.my_profile') }}" class="btn btn-outline-secondary mt-2">
-    Voltar ao perfil
-  </a>
-</div>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/assinaturas.css') }}?v={{ static_v }}">
+
+<div class="assin-wrapper">
+
+  {% if is_admin or is_owner %}
+  <!-- ====== TABS ADMIN/USUÁRIO ====== -->
+  <div class="assin-tabs">
+    <button class="assin-tab-btn active" data-tab="minha" onclick="trocarTab('minha', this)">
+      <i class="bi bi-person"></i> Minha Assinatura
+    </button>
+    <button class="assin-tab-btn" data-tab="admin" onclick="trocarTab('admin', this)">
+      <i class="bi bi-shield-check"></i> Painel Admin
+    </button>
+  </div>
+  {% endif %}
+
+  <!-- ====== TAB: MINHA ASSINATURA ====== -->
+  <div id="tab-minha">
+
+    <!-- Hero -->
+    <div class="assin-hero">
+      <div class="assin-hero-badge">
+        <i class="bi bi-star-fill"></i> Planos Premium
+      </div>
+      <h2 class="assin-hero-title">Acesso Apostas Esportivas</h2>
+      <p class="assin-hero-sub">
+        Assine o plano Apostas Premium e tenha acesso completo ao painel de apostas,
+        análises de IA e calculadora de surebet.
+      </p>
+    </div>
+
+    {% if dados.assinatura_ativa %}
+    <!-- Status: assinatura ativa -->
+    <div class="assin-ativa-card">
+      <div class="assin-ativa-icon">
+        <i class="bi bi-patch-check-fill"></i>
+      </div>
+      <div class="assin-ativa-info">
+        <div class="assin-ativa-title">Apostas Premium ativo</div>
+        <div class="assin-ativa-meta">
+          {% set a = dados.assinatura_ativa %}
+          {% if a.expira_em %}
+            Válido até {{ a.expira_em.strftime('%d/%m/%Y') }}
+          {% else %}
+            Assinatura ativa
+          {% endif %}
+          · R$ {{ "%.2f"|format(a.valor_brl) }}/mês
+        </div>
+      </div>
+      <span class="assin-ativa-badge">
+        <i class="bi bi-check-circle-fill"></i> Ativo
+      </span>
+    </div>
+
+    <div class="assin-plan-card" style="border-color: rgba(25,135,84,0.3);">
+      <div style="text-align:center;padding:16px 0;">
+        <i class="bi bi-trophy-fill" style="font-size:2rem;color:#198754;display:block;margin-bottom:8px;"></i>
+        <div style="font-size:0.95rem;font-weight:700;color:var(--text);margin-bottom:4px;">Você já tem acesso!</div>
+        <div style="font-size:0.82rem;color:var(--text-muted);">Aproveite todos os recursos do plano Apostas Premium.</div>
+        <a href="{{ url_for('pages.apostas') }}" class="assin-cta-btn" style="max-width:260px;margin:16px auto 0;text-decoration:none;">
+          <i class="bi bi-graph-up-arrow"></i> Ir para Apostas
+        </a>
+      </div>
+    </div>
+
+    {% else %}
+    <!-- Plan card: selecionar e assinar -->
+    <div class="assin-plan-card" id="planCard">
+      <div class="assin-plan-header">
+        <div class="assin-plan-icon">
+          <i class="bi bi-graph-up-arrow"></i>
+        </div>
+        <div>
+          <div class="assin-plan-name">Apostas Premium</div>
+          <div class="assin-plan-desc">Análises, recomendações de IA e calculadora de surebet em um único lugar.</div>
+        </div>
+      </div>
+
+      <div class="assin-price-row">
+        <div class="assin-price-brl">
+          <span>R$</span> 11,40
+        </div>
+        <div class="assin-price-usd">≈ US$ 2,00 <span style="font-size:.7rem;">(câmbio ~R$ 5,70)</span></div>
+        <div class="assin-price-period">por mês</div>
+      </div>
+
+      <ul class="assin-features">
+        {% for plano in dados.planos.values() %}
+          {% for feat in plano.features %}
+          <li><i class="bi bi-check-circle-fill"></i> {{ feat }}</li>
+          {% endfor %}
+        {% endfor %}
+      </ul>
+
+      <!-- Selecionar forma de pagamento -->
+      <div class="assin-payment-title">Escolha como pagar</div>
+
+      <div class="assin-payment-methods">
+        <button class="assin-method-btn" id="btnPix" onclick="selecionarMetodo('pix')">
+          <div class="assin-method-icon">
+            <i class="bi bi-qr-code"></i>
+          </div>
+          <div class="assin-method-label">PIX</div>
+          <div class="assin-method-sub">Instantâneo</div>
+        </button>
+        <button class="assin-method-btn" id="btnCartao" onclick="selecionarMetodo('cartao')">
+          <div class="assin-method-icon">
+            <i class="bi bi-credit-card"></i>
+          </div>
+          <div class="assin-method-label">Cartão</div>
+          <div class="assin-method-sub">Crédito / Débito</div>
+        </button>
+      </div>
+
+      <!-- Detalhe PIX -->
+      <div class="assin-payment-detail" id="detalhePix">
+        <div class="assin-pix-steps">
+          <div class="assin-pix-step">
+            <div class="assin-pix-step-num">1</div>
+            <span>Abra o app do seu banco e vá em <strong>PIX → Copiar chave</strong></span>
+          </div>
+          <div class="assin-pix-step">
+            <div class="assin-pix-step-num">2</div>
+            <span>Copie a chave abaixo e faça o pagamento de <strong>R$ 11,40</strong></span>
+          </div>
+          <div class="assin-pix-step">
+            <div class="assin-pix-step-num">3</div>
+            <span>Clique em <strong>"Confirmar pagamento"</strong> — ativação em até 24h</span>
+          </div>
+        </div>
+        <div class="assin-pix-chave-wrap">
+          <span class="assin-pix-chave" id="pixChaveTexto">eduardosolenomorizliborio@gmail.com</span>
+          <button class="assin-pix-copy-btn" onclick="copiarChavePix()">
+            <i class="bi bi-copy"></i> Copiar
+          </button>
+        </div>
+        <div style="font-size:0.75rem;color:var(--text-muted);margin-top:8px;">
+          Chave PIX tipo e-mail · Titular: Eduardo Libório
+        </div>
+      </div>
+
+      <!-- Detalhe Cartão -->
+      <div class="assin-payment-detail" id="detalheCartao">
+        <div class="assin-gateway-notice">
+          <i class="bi bi-info-circle-fill"></i>
+          <span>
+            O pagamento por cartão está sendo configurado. Em breve você poderá pagar
+            com crédito ou débito via gateway de pagamento seguro.
+            Por enquanto, utilize o <strong>PIX</strong> para ativar sua assinatura.
+          </span>
+        </div>
+      </div>
+
+      <!-- Botão confirmar -->
+      <button class="assin-cta-btn" id="btnAssinar" onclick="confirmarAssinatura()" style="margin-top:8px;" disabled>
+        <i class="bi bi-lock-fill"></i>
+        <span id="btnAssinarTexto">Selecione uma forma de pagamento</span>
+      </button>
+    </div>
+
+    <!-- Banner de sucesso -->
+    <div class="assin-success-banner" id="successBanner">
+      <i class="bi bi-check-circle-fill"></i>
+      <div class="assin-success-title">Solicitação enviada!</div>
+      <div class="assin-success-sub">
+        Após confirmarmos o pagamento sua assinatura será ativada em até 24h.
+        Você receberá uma notificação quando o acesso for liberado.
+      </div>
+    </div>
+
+    {% endif %}
+
+    <!-- Histórico -->
+    {% if dados.historico %}
+    <div class="assin-historico-card">
+      <div class="assin-historico-title">Histórico de assinaturas</div>
+      {% for item in dados.historico %}
+      <div class="assin-historico-item">
+        <div class="assin-hist-dot assin-hist-dot--{{ item.status }}"></div>
+        <div class="assin-hist-info">
+          <div class="assin-hist-plano">{{ item.plano|capitalize }}</div>
+          <div class="assin-hist-meta">
+            {{ item.criado_em.strftime('%d/%m/%Y') }}
+            · {{ item.metodo_pagamento or '—' }}
+          </div>
+        </div>
+        <div class="assin-hist-valor">R$ {{ "%.2f"|format(item.valor_brl) }}</div>
+        <span class="assin-hist-status assin-hist-status--{{ item.status }}">{{ item.status }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+  </div><!-- /tab-minha -->
+
+  <!-- ====== TAB: PAINEL ADMIN ====== -->
+  {% if is_admin or is_owner %}
+  <div id="tab-admin" style="display:none">
+
+    <!-- Stats admin -->
+    <div class="assin-admin-stats" id="adminStats">
+      <div class="assin-stat-card">
+        <div class="assin-stat-val" id="statAtivas">—</div>
+        <div class="assin-stat-lbl">Ativas</div>
+      </div>
+      <div class="assin-stat-card">
+        <div class="assin-stat-val" id="statPendentes">—</div>
+        <div class="assin-stat-lbl">Pendentes</div>
+      </div>
+      <div class="assin-stat-card">
+        <div class="assin-stat-val" id="statCanceladas">—</div>
+        <div class="assin-stat-lbl">Canceladas</div>
+      </div>
+      <div class="assin-stat-card">
+        <div class="assin-stat-val" id="statReceita">—</div>
+        <div class="assin-stat-lbl">Receita/mês</div>
+      </div>
+    </div>
+
+    <!-- Tabela de assinantes -->
+    <div class="assin-table-wrap" id="adminTableWrap">
+      <table class="assin-table">
+        <thead>
+          <tr>
+            <th>Usuário</th>
+            <th>Plano</th>
+            <th>Status</th>
+            <th>Pagamento</th>
+            <th>Valor</th>
+            <th>Criado em</th>
+            <th>Expira em</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="adminTableBody">
+          <tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:20px;">Carregando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+  {% endif %}
+
+</div><!-- /assin-wrapper -->
+
+<script>
+(function () {
+  var _metodoAtual = null;
+
+  window.trocarTab = function (tab, btn) {
+    document.querySelectorAll('.assin-tab-btn').forEach(function (b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    document.getElementById('tab-minha').style.display = tab === 'minha' ? '' : 'none';
+    var adminTab = document.getElementById('tab-admin');
+    if (adminTab) adminTab.style.display = tab === 'admin' ? '' : 'none';
+    if (tab === 'admin') carregarAdmin();
+  };
+
+  window.selecionarMetodo = function (metodo) {
+    _metodoAtual = metodo;
+    document.getElementById('btnPix').classList.toggle('selected', metodo === 'pix');
+    document.getElementById('btnCartao').classList.toggle('selected', metodo === 'cartao');
+
+    var detPix = document.getElementById('detalhePix');
+    var detCartao = document.getElementById('detalheCartao');
+    if (detPix) detPix.classList.toggle('visible', metodo === 'pix');
+    if (detCartao) detCartao.classList.toggle('visible', metodo === 'cartao');
+
+    var btnAssinar = document.getElementById('btnAssinar');
+    var btnTexto = document.getElementById('btnAssinarTexto');
+    if (btnAssinar && btnTexto) {
+      if (metodo === 'pix') {
+        btnAssinar.disabled = false;
+        btnTexto.textContent = 'Confirmar pagamento via PIX';
+      } else if (metodo === 'cartao') {
+        btnAssinar.disabled = true;
+        btnTexto.textContent = 'Cartão em breve';
+      }
+    }
+  };
+
+  window.copiarChavePix = function () {
+    var chave = document.getElementById('pixChaveTexto');
+    if (!chave) return;
+    navigator.clipboard.writeText(chave.textContent.trim()).then(function () {
+      var btn = document.querySelector('.assin-pix-copy-btn');
+      if (btn) {
+        btn.innerHTML = '<i class="bi bi-check-lg"></i> Copiado!';
+        setTimeout(function () { btn.innerHTML = '<i class="bi bi-copy"></i> Copiar'; }, 2000);
+      }
+    }).catch(function () {
+      var range = document.createRange();
+      range.selectNode(chave);
+      window.getSelection().removeAllRanges();
+      window.getSelection().addRange(range);
+    });
+  };
+
+  window.confirmarAssinatura = function () {
+    if (!_metodoAtual) return;
+    var btn = document.getElementById('btnAssinar');
+    btn.disabled = true;
+
+    fetch('/api/assinaturas/iniciar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ plano: 'apostas', metodo_pagamento: _metodoAtual }),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.error) { alert(data.error); btn.disabled = false; return; }
+        var planCard = document.getElementById('planCard');
+        var successBanner = document.getElementById('successBanner');
+        if (planCard) planCard.style.display = 'none';
+        if (successBanner) successBanner.classList.add('visible');
+      })
+      .catch(function () {
+        btn.disabled = false;
+        alert('Erro ao processar. Tente novamente.');
+      });
+  };
+
+  function carregarAdmin() {
+    fetch('/api/assinaturas/admin')
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var s = data.stats || {};
+        document.getElementById('statAtivas').textContent = s.ativas || 0;
+        document.getElementById('statPendentes').textContent = s.pendentes || 0;
+        document.getElementById('statCanceladas').textContent = s.canceladas || 0;
+        document.getElementById('statReceita').textContent = 'R$ ' + parseFloat(s.receita_brl || 0).toFixed(2).replace('.', ',');
+
+        var tbody = document.getElementById('adminTableBody');
+        if (!data.assinaturas || !data.assinaturas.length) {
+          tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:20px;">Nenhuma assinatura encontrada</td></tr>';
+          return;
+        }
+        tbody.innerHTML = data.assinaturas.map(function (a) {
+          var statusClass = 'assin-hist-status--' + a.status;
+          var expira = a.expira_em ? new Date(a.expira_em).toLocaleDateString('pt-BR') : '—';
+          var criado = a.criado_em ? new Date(a.criado_em).toLocaleDateString('pt-BR') : '—';
+          var ativarBtn = a.status === 'pendente'
+            ? '<button class="assin-admin-activate-btn" onclick="ativarAssinatura(' + a.id + ')">Ativar</button>'
+            : '';
+          return '<tr>' +
+            '<td><strong>' + (a.username || '') + '</strong><br><span style="font-size:.75rem;color:var(--text-muted)">' + (a.email || '') + '</span></td>' +
+            '<td>' + (a.plano || '') + '</td>' +
+            '<td><span class="assin-hist-status ' + statusClass + '">' + a.status + '</span></td>' +
+            '<td>' + (a.metodo_pagamento || '—') + '</td>' +
+            '<td>R$ ' + parseFloat(a.valor_brl || 0).toFixed(2).replace('.', ',') + '</td>' +
+            '<td>' + criado + '</td>' +
+            '<td>' + expira + '</td>' +
+            '<td>' + ativarBtn + '</td>' +
+            '</tr>';
+        }).join('');
+      })
+      .catch(function () {
+        document.getElementById('adminTableBody').innerHTML =
+          '<tr><td colspan="8" style="text-align:center;color:#dc3545;padding:20px;">Erro ao carregar dados</td></tr>';
+      });
+  }
+
+  window.ativarAssinatura = function (id) {
+    if (!confirm('Ativar esta assinatura manualmente?')) return;
+    fetch('/api/assinaturas/' + id + '/ativar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ referencia: 'manual-admin', meses: 1 }),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.error) { alert(data.error); return; }
+        carregarAdmin();
+      })
+      .catch(function () { alert('Erro ao ativar'); });
+  };
+})();
+</script>
 {% endblock %}
