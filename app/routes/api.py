@@ -1339,6 +1339,18 @@ def apostas_apifootball_usage():
     return jsonify(apostas_apifootball_service.get_daily_usage())
 
 
+@bp.route("/apostas/apifootball/odds/<int:fixture_id>", methods=["GET"])
+@login_required
+def apostas_apifootball_odds(fixture_id):
+    from app.services import apostas_apifootball_service
+    try:
+        data = apostas_apifootball_service.get_fixture_odds(fixture_id)
+        return jsonify(data)
+    except Exception as exc:
+        logger.exception("apostas_apifootball_odds error fixture=%s: %s", fixture_id, exc)
+        return jsonify({"error": "Erro ao buscar odds"}), 500
+
+
 # =============================================================
 # APOSTAS — TIPS (recomendações)
 # =============================================================

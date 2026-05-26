@@ -34,8 +34,11 @@ _LEAGUE_MAP = {lg["id"]: lg for lg in _LEAGUES}
 
 _standings_cache: dict = {}
 _fixtures_cache: dict = {}
+_odds_cache: dict = {}
 
 _daily_budget: dict = {"date": None, "count": 0}
+
+_ODDS_TTL = 300  # 5 min
 
 
 # ============================================================
@@ -96,6 +99,20 @@ def get_upcoming_fixtures(league_id: int, days: int = 14) -> dict:
 def get_daily_usage() -> dict:
     _reset_budget_if_new_day()
     return {"used": _daily_budget["count"], "limit": 100, "soft_limit": _DAILY_SOFT_LIMIT}
+
+
+def get_fixture_odds(fixture_id: int) -> dict:
+    now = time.monotonic()
+    cached = _odds_cache.get(fixture_id)
+    if cached and cached["expires"] > now:
+        return cached["data"]
+
+    if not _budget_available():
+        return _odds_cache.get(fixture_id, {}).get("data") or {}
+
+    data = _fetch_fixture_odds(fixture_id)
+    _odds_cache[fixture_id] = {"data": data, "expires": now + _ODDS_TTL}
+    return data
 
 
 # ============================================================
@@ -264,6 +281,7 @@ def _parse_fixture(fixture: dict, standings_map: dict[str, int]) -> dict:
     score_away = "" if goals.get("away") is None else str(goals["away"])
 
     return {
+        "source":     "afl",
         "event_id":   str(fix_node.get("id") or ""),
         "date_iso":   date_iso,
         "date_brt":   _to_brt(date_iso),
@@ -279,7 +297,50 @@ def _parse_fixture(fixture: dict, standings_map: dict[str, int]) -> dict:
         "score_away": score_away,
         "venue":      venue.get("name") or "",
         "city":       venue.get("city") or "",
+        "odds":       None,
     }
+
+
+def _fetch_fixture_odds(fixture_id: int) -> dict:
+    url = f"{_BASE_URL}/odds"
+    params = {"fixture": fixture_id, "bet": 1}
+    try:
+        resp = _get(url, params)
+        if resp is None:
+            return {}
+        return _parse_fixture_odds(resp)
+    except Exception as exc:
+        logger.warning("api-football fixture odds failed fixture=%s: %s", fixture_id, exc)
+        return {}
+
+
+def _parse_fixture_odds(payload: dict) -> dict:
+    response = payload.get("response") or []
+    if not response:
+        return {}
+    bookmakers = response[0].get("bookmakers") or []
+    if not bookmakers:
+        return {}
+    bets = bookmakers[0].get("bets") or []
+    for bet in bets:
+        if bet.get("id") == 1:
+            values = bet.get("values") or []
+            r: dict = {}
+            for v in values:
+                name = v.get("value", "")
+                try:
+                    odd = round(float(v.get("odd") or 0), 2)
+                except (TypeError, ValueError):
+                    odd = None
+                if odd and odd > 1:
+                    if name == "Home":
+                        r["1"] = odd
+                    elif name == "Draw":
+                        r["X"] = odd
+                    elif name == "Away":
+                        r["2"] = odd
+            return {"fulltime": r} if r else {}
+    return {}
 
 
 # ============================================================

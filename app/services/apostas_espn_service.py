@@ -192,6 +192,38 @@ def _fetch_scoreboard(league_slug: str, from_str: str, to_str: str) -> list[dict
         return []
 
 
+def _ml_to_decimal(ml) -> float | None:
+    if ml is None:
+        return None
+    try:
+        ml = int(ml)
+        if ml == 0:
+            return None
+        if ml > 0:
+            return round(ml / 100 + 1, 2)
+        return round(100 / abs(ml) + 1, 2)
+    except (TypeError, ValueError, ZeroDivisionError):
+        return None
+
+
+def _parse_espn_odds(comp: dict) -> dict | None:
+    odds_list = comp.get("odds") or []
+    if not odds_list:
+        return None
+    o = odds_list[0]
+    r: dict = {}
+    h = _ml_to_decimal((o.get("homeTeamOdds") or {}).get("moneyLine"))
+    d = _ml_to_decimal((o.get("drawOdds") or {}).get("moneyLine"))
+    a = _ml_to_decimal((o.get("awayTeamOdds") or {}).get("moneyLine"))
+    if h:
+        r["1"] = h
+    if d:
+        r["X"] = d
+    if a:
+        r["2"] = a
+    return {"fulltime": r} if r else None
+
+
 def _parse_event(event: dict, standings_map: dict[str, int]) -> dict:
     comp = (event.get("competitions") or [{}])[0]
     competitors = comp.get("competitors") or []
@@ -221,6 +253,7 @@ def _parse_event(event: dict, standings_map: dict[str, int]) -> dict:
     date_brt  = _to_brt(date_iso)
 
     return {
+        "source":     "espn",
         "event_id":   event.get("id", ""),
         "date_iso":   date_iso,
         "date_brt":   date_brt,
@@ -236,6 +269,7 @@ def _parse_event(event: dict, standings_map: dict[str, int]) -> dict:
         "score_away": score_away,
         "venue":      venue.get("fullName", ""),
         "city":       (venue.get("address") or {}).get("city", ""),
+        "odds":       _parse_espn_odds(comp),
     }
 
 

@@ -125,6 +125,24 @@ def get_mismatch_matches(date_str: str, min_diff: int) -> tuple[list[dict], int]
         })
 
     results.sort(key=lambda x: x["pos_diff"], reverse=True)
+
+    def _fetch_one_odds(event_id):
+        return event_id, get_event_odds(event_id)
+
+    odds_map: dict = {}
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        odds_futures = {executor.submit(_fetch_one_odds, r["event_id"]): r["event_id"] for r in results}
+        for future in concurrent.futures.as_completed(odds_futures):
+            try:
+                eid, odds = future.result()
+                if odds:
+                    odds_map[eid] = odds
+            except Exception as exc:
+                logger.warning("mismatch odds fetch error: %s", exc)
+
+    for r in results:
+        r["odds"] = odds_map.get(r["event_id"])
+
     return results, with_standings
 
 

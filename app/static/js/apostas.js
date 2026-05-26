@@ -211,6 +211,8 @@ function buildMatchRow(m) {
     scoreHtml = `<span class="jogos-time">${escHtml(time)}</span>`;
   }
 
+  const oddsHtml = buildOddsRow(m);
+
   return `
     <div class="jogos-match-row">
       <div class="jogos-team jogos-team--home">
@@ -225,9 +227,44 @@ function buildMatchRow(m) {
         <span class="jogos-team-name">${escHtml(m.away_name)}</span>
         ${awayPosHtml}
       </div>
-      <div class="jogos-meta">${venue}</div>
+      <div class="jogos-meta">${venue}${oddsHtml}</div>
     </div>
   `;
+}
+
+function buildOddsRow(m) {
+  if (m.odds && m.odds.fulltime && Object.keys(m.odds.fulltime).length) {
+    return buildOddsPills(m.odds.fulltime);
+  }
+  if (m.source === "afl" && m.state === "pre" && m.event_id) {
+    return `<span class="jogos-odds-btn" onclick="loadAflOdds('${escHtml(String(m.event_id))}', this)" title="Ver odds"><i class="bi bi-graph-up"></i> odds</span>`;
+  }
+  return "";
+}
+
+function buildOddsPills(ft) {
+  const parts = [];
+  if (ft["1"] != null) parts.push(`<span class="jogos-odd-pill jogos-odd-pill--home">1&nbsp;${Number(ft["1"]).toFixed(2)}</span>`);
+  if (ft["X"] != null) parts.push(`<span class="jogos-odd-pill jogos-odd-pill--draw">X&nbsp;${Number(ft["X"]).toFixed(2)}</span>`);
+  if (ft["2"] != null) parts.push(`<span class="jogos-odd-pill jogos-odd-pill--away">2&nbsp;${Number(ft["2"]).toFixed(2)}</span>`);
+  if (!parts.length) return "";
+  return `<div class="jogos-odds-row">${parts.join("")}</div>`;
+}
+
+async function loadAflOdds(fixtureId, btn) {
+  btn.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+  btn.onclick = null;
+  try {
+    const resp = await fetch(`/api/apostas/apifootball/odds/${fixtureId}`);
+    const odds = await resp.json();
+    if (!resp.ok || !odds.fulltime || !Object.keys(odds.fulltime).length) {
+      btn.outerHTML = '<span class="jogos-odds-na">—</span>';
+      return;
+    }
+    btn.outerHTML = buildOddsPills(odds.fulltime);
+  } catch {
+    btn.innerHTML = '<i class="bi bi-exclamation-circle"></i>';
+  }
 }
 
 function buildJogosDiff(diff) {
