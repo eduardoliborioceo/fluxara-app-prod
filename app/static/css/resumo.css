@@ -2233,6 +2233,123 @@
   color: #a5b4fc;
 }
 
+/* ========================
+   CARD DÉBITOS
+======================== */
+.debito-group {
+  margin-bottom: 14px;
+}
+
+.debito-group:last-child {
+  margin-bottom: 0;
+}
+
+.debito-group-title {
+  font-size: .7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.debito-group-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: .65rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.debito-group--vencido .debito-group-title { color: #dc3545; }
+.debito-group--vencido .debito-group-badge { background: #dc3545; }
+
+.debito-group--hoje .debito-group-title { color: #ea580c; }
+.debito-group--hoje .debito-group-badge { background: #ea580c; }
+
+.debito-group--breve .debito-group-title { color: #d97706; }
+.debito-group--breve .debito-group-badge { background: #d97706; }
+
+.debito-group--pago .debito-group-title { color: #16a34a; }
+.debito-group--pago .debito-group-badge { background: #16a34a; }
+
+.debito-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border, rgba(15,23,42,.06));
+}
+
+.debito-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.debito-row:first-child {
+  padding-top: 0;
+}
+
+.debito-row-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.debito-row-desc {
+  font-size: .84rem;
+  font-weight: 600;
+  color: var(--text, #1e293b);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.debito-row-cat {
+  font-size: .72rem;
+  color: var(--text-muted, #64748b);
+}
+
+.debito-row-right {
+  text-align: right;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.debito-row-valor {
+  font-size: .84rem;
+  font-weight: 700;
+  color: var(--text, #1e293b);
+  white-space: nowrap;
+}
+
+.debito-row-data {
+  font-size: .72rem;
+  color: var(--text-muted, #64748b);
+}
+
+.debito-vazio {
+  text-align: center;
+  padding: 24px 0 8px;
+  color: var(--text-muted, #64748b);
+  font-size: .85rem;
+}
+
+[data-theme="escuro"] .debito-row-desc {
+  color: #e2e8f0;
+}
+
 [data-theme="escuro"] .flux-text {
   color: rgba(255,255,255,.85);
 }

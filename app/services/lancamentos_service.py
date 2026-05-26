@@ -343,3 +343,44 @@ def get_sugestoes_descricao(user_id: int, tipo: str, query: str, limit: int = 6)
         return []
     rows = repo.get_sugestoes_descricao(user_id, tipo, query.strip(), limit)
     return [dict(r) for r in rows]
+
+
+def get_debitos_resumo(user_id: int) -> dict:
+    today = datetime.date.today()
+    rows = repo.get_debitos_status(user_id)
+
+    vencidos = []
+    hoje = []
+    breve = []
+    pagos_recentes = []
+    total_pendente = 0.0
+
+    for row in rows:
+        v = row['vencimento']
+        val = float(row['valor'] or 0)
+        item = {
+            'id':            row['id'],
+            'descricao':     row['descricao'] or 'Sem descrição',
+            'valor':         val,
+            'vencimento':    v.isoformat() if v else None,
+            'categoria':     row['categoria_nome'],
+        }
+        if row['efetivado']:
+            pagos_recentes.append(item)
+        elif v < today:
+            vencidos.append(item)
+            total_pendente += val
+        elif v == today:
+            hoje.append(item)
+            total_pendente += val
+        else:
+            breve.append(item)
+            total_pendente += val
+
+    return {
+        'vencidos':       vencidos,
+        'hoje':           hoje,
+        'breve':          breve,
+        'pagos_recentes': pagos_recentes,
+        'total_pendente': round(total_pendente, 2),
+    }

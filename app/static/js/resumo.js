@@ -717,6 +717,66 @@
     setValoresOcultos(!cardsContainer.classList.contains('valores-ocultos'));
   });
 
+  // ── Card Débitos ─────────────────────────────────────────────────────────────
+  async function loadDebitos() {
+    var body    = document.getElementById('debitosBody');
+    var totalEl = document.getElementById('totalDebitos');
+    if (!body) return;
+    try {
+      var r    = await fetch('/api/resumo/debitos');
+      var data = await r.json();
+
+      if (totalEl) totalEl.textContent = formatMoney(data.total_pendente || 0);
+
+      var vencidos = data.vencidos || [];
+      var hoje     = data.hoje     || [];
+      var breve    = data.breve    || [];
+      var pagos    = data.pagos_recentes || [];
+
+      if (!vencidos.length && !hoje.length && !breve.length && !pagos.length) {
+        body.innerHTML = '<div class="debito-vazio">'
+          + '<i class="bi bi-check-circle text-success" style="font-size:1.8rem;opacity:.6;display:block;margin-bottom:8px"></i>'
+          + '<span>Nenhum débito pendente</span>'
+          + '</div>';
+        return;
+      }
+
+      function buildGroup(titulo, items, classe) {
+        if (!items.length) return '';
+        var rows = items.map(function (it) {
+          var dt = it.vencimento
+            ? new Date(it.vencimento + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+            : '—';
+          return '<div class="debito-row">'
+            + '<div class="debito-row-info">'
+            +   '<span class="debito-row-desc">' + esc(it.descricao) + '</span>'
+            +   '<span class="debito-row-cat">' + esc(it.categoria) + '</span>'
+            + '</div>'
+            + '<div class="debito-row-right">'
+            +   '<span class="debito-row-valor">' + formatMoney(it.valor) + '</span>'
+            +   '<span class="debito-row-data">' + dt + '</span>'
+            + '</div>'
+            + '</div>';
+        }).join('');
+        return '<div class="debito-group debito-group--' + classe + '">'
+          + '<div class="debito-group-title">' + titulo
+          + ' <span class="debito-group-badge">' + items.length + '</span>'
+          + '</div>'
+          + rows
+          + '</div>';
+      }
+
+      body.innerHTML =
+        buildGroup('Vencidos', vencidos, 'vencido')
+        + buildGroup('Vence hoje', hoje, 'hoje')
+        + buildGroup('Próximos 7 dias', breve, 'breve')
+        + buildGroup('Pagos recentes', pagos, 'pago');
+
+    } catch (e) {
+      body.innerHTML = '<div class="text-center py-2 text-muted small">Erro ao carregar débitos.</div>';
+    }
+  }
+
   // ── Gerenciar tela inicial ───────────────────────────────────────────────────
   var CARD_META = {
     'contas':         { nome: 'Contas',                icone: 'bi-wallet2',        cor: '#0d6efd' },
@@ -725,6 +785,7 @@
     'projecao':       { nome: 'Projeção de Saldo',      icone: 'bi-graph-up-arrow', cor: '#0d6efd' },
     'despesas-conta': { nome: 'Despesas por Conta',     icone: 'bi-pie-chart',      cor: '#dc3545' },
     'despesas-cat':   { nome: 'Despesas por Categoria', icone: 'bi-tags',           cor: '#f59e0b' },
+    'debitos':        { nome: 'Débitos',                icone: 'bi-calendar-x',     cor: '#dc3545' },
     'assistente':     { nome: 'Assistente Flux',        icone: 'bi-stars',          cor: '#6366f1' },
   };
 
@@ -983,5 +1044,6 @@
   loadProjecao();
   loadDespesasPorConta();
   loadDespesasPorCategoria();
+  loadDebitos();
   loadAssistente('semana');
 })();
