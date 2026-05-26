@@ -4,6 +4,13 @@
   padding: 4px 16px 100px;
 }
 
+@media (min-width: 992px) {
+  .apostas-wrapper {
+    max-width: none;
+    padding: 0 28px 60px;
+  }
+}
+
 /* ========================
    TABS
 ======================== */

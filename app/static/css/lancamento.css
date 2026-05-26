@@ -4,6 +4,12 @@
   padding-bottom: 40px;
 }
 
+@media (min-width: 992px) {
+  .lancamento-wrapper {
+    max-width: 800px;
+  }
+}
+
 .lancamento-card {
   background: var(--card, #fff);
   border-radius: 12px;
