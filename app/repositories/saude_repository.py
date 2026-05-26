@@ -56,16 +56,16 @@ def registrar_peso(user_id: int, peso_kg: float):
             return row
 
 
-def get_acordei_hoje(user_id: int):
+def get_acordei_hoje(user_id: int, timezone: str = 'America/Sao_Paulo'):
     with get_db() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("""
                 SELECT id, hora_acordou
                 FROM saude_acordei
-                WHERE user_id = %s AND DATE(hora_acordou AT TIME ZONE 'America/Sao_Paulo') = CURRENT_DATE
+                WHERE user_id = %s AND DATE(hora_acordou AT TIME ZONE %s) = DATE(NOW() AT TIME ZONE %s)
                 ORDER BY hora_acordou DESC
                 LIMIT 1
-            """, (user_id,))
+            """, (user_id, timezone, timezone))
             return cur.fetchone()
 
 
@@ -82,7 +82,7 @@ def registrar_acordei(user_id: int):
             return row
 
 
-def get_refeicoes_hoje(user_id: int):
+def get_refeicoes_hoje(user_id: int, timezone: str = 'America/Sao_Paulo'):
     with get_db() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("""
@@ -91,9 +91,9 @@ def get_refeicoes_hoje(user_id: int):
                        fonte, registrado_em
                 FROM saude_refeicoes
                 WHERE user_id = %s
-                  AND DATE(registrado_em AT TIME ZONE 'America/Sao_Paulo') = CURRENT_DATE
+                  AND DATE(registrado_em AT TIME ZONE %s) = DATE(NOW() AT TIME ZONE %s)
                 ORDER BY registrado_em
-            """, (user_id,))
+            """, (user_id, timezone, timezone))
             return cur.fetchall()
 
 
@@ -124,29 +124,29 @@ def delete_refeicao(user_id: int, refeicao_id: int):
             conn.commit()
 
 
-def get_agua_hoje_total(user_id: int) -> int:
+def get_agua_hoje_total(user_id: int, timezone: str = 'America/Sao_Paulo') -> int:
     with get_db() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("""
                 SELECT COALESCE(SUM(quantidade_ml), 0) AS total_ml
                 FROM saude_agua
                 WHERE user_id = %s
-                  AND DATE(registrado_em AT TIME ZONE 'America/Sao_Paulo') = CURRENT_DATE
-            """, (user_id,))
+                  AND DATE(registrado_em AT TIME ZONE %s) = DATE(NOW() AT TIME ZONE %s)
+            """, (user_id, timezone, timezone))
             row = cur.fetchone()
             return int(row["total_ml"]) if row else 0
 
 
-def get_agua_registros_hoje(user_id: int):
+def get_agua_registros_hoje(user_id: int, timezone: str = 'America/Sao_Paulo'):
     with get_db() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("""
                 SELECT id, quantidade_ml, registrado_em
                 FROM saude_agua
                 WHERE user_id = %s
-                  AND DATE(registrado_em AT TIME ZONE 'America/Sao_Paulo') = CURRENT_DATE
+                  AND DATE(registrado_em AT TIME ZONE %s) = DATE(NOW() AT TIME ZONE %s)
                 ORDER BY registrado_em DESC
-            """, (user_id,))
+            """, (user_id, timezone, timezone))
             return cur.fetchall()
 
 

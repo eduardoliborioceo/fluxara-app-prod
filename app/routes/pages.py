@@ -56,7 +56,8 @@ def apostas():
 @login_required
 def minha_saude():
     from app.services import saude_service
-    dados = saude_service.get_dados_hoje(current_user.id)
+    tz = request.cookies.get('user_tz', 'America/Sao_Paulo')
+    dados = saude_service.get_dados_hoje(current_user.id, timezone=tz)
     historico_peso = saude_service.get_peso_historico(current_user.id)
     return render_template(
         "minha_saude.html",
