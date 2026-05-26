@@ -8,6 +8,13 @@
   padding: 4px 16px 100px;
 }
 
+@media (min-width: 992px) {
+  .saude-wrapper {
+    max-width: 860px;
+    padding: 0 28px 60px;
+  }
+}
+
 /* ========================
    TABS
 ======================== */
