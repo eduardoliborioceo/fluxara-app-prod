@@ -1400,3 +1400,57 @@ def apostas_tips_delete(tip_id):
     except Exception as exc:
         logger.exception("apostas_tips_delete error tip=%s: %s", tip_id, exc)
         return jsonify({"error": "Erro ao excluir recomendação"}), 500
+
+
+@bp.route("/assinaturas/iniciar", methods=["POST"])
+@login_required
+def assinatura_iniciar():
+    from app.services import assinaturas_service
+    data = request.get_json() or {}
+    try:
+        assinatura = assinaturas_service.iniciar_assinatura(
+            current_user.id,
+            data.get("plano", "apostas"),
+            data.get("metodo_pagamento", ""),
+        )
+        return jsonify(assinatura)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@bp.route("/assinaturas/<int:assinatura_id>/cancelar", methods=["POST"])
+@login_required
+def assinatura_cancelar(assinatura_id):
+    from app.services import assinaturas_service
+    try:
+        assinatura = assinaturas_service.cancelar_assinatura(assinatura_id, current_user.id)
+        return jsonify(assinatura)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@bp.route("/assinaturas/<int:assinatura_id>/ativar", methods=["POST"])
+@login_required
+def assinatura_ativar(assinatura_id):
+    if not (current_user.is_admin or current_user.is_owner):
+        return jsonify({"error": "Sem permissão"}), 403
+    from app.services import assinaturas_service
+    data = request.get_json() or {}
+    try:
+        assinatura = assinaturas_service.ativar_assinatura(
+            assinatura_id,
+            data.get("referencia", "manual"),
+            int(data.get("meses", 1)),
+        )
+        return jsonify(assinatura)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@bp.route("/assinaturas/admin", methods=["GET"])
+@login_required
+def assinaturas_admin():
+    if not (current_user.is_admin or current_user.is_owner):
+        return jsonify({"error": "Sem permissão"}), 403
+    from app.services import assinaturas_service
+    return jsonify(assinaturas_service.get_dados_admin())
