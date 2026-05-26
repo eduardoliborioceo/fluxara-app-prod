@@ -516,6 +516,14 @@ def resumo_despesas_por_categoria():
     return jsonify(data)
 
 
+@bp.route("/resumo/debitos", methods=["GET"])
+@login_required
+def resumo_debitos():
+    from app.services import lancamentos_service
+    data = lancamentos_service.get_debitos_resumo(current_user.id)
+    return jsonify(data)
+
+
 @bp.route("/assistente/analise", methods=["GET"])
 @login_required
 def assistente_analise():

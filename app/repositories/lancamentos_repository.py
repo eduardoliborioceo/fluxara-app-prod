@@ -351,6 +351,34 @@ def get_despesas_por_categoria(user_id: int, mes: int, ano: int) -> list:
             return cur.fetchall()
 
 
+def get_debitos_status(user_id: int) -> list:
+    with get_db() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("""
+                SELECT l.id, l.descricao, l.valor,
+                       l.data_vencimento::date AS vencimento,
+                       l.efetivado, l.tipo,
+                       COALESCE(c.nome, 'Sem categoria') AS categoria_nome
+                FROM lancamentos l
+                LEFT JOIN categorias c ON c.id = l.categoria_id
+                WHERE l.user_id = %s
+                  AND l.ativo = TRUE
+                  AND l.tipo IN ('despesa', 'pagamento_fatura')
+                  AND (
+                    (l.efetivado = FALSE
+                     AND l.data_vencimento IS NOT NULL
+                     AND l.data_vencimento <= CURRENT_DATE + INTERVAL '7 days')
+                    OR
+                    (l.efetivado = TRUE
+                     AND l.data_vencimento IS NOT NULL
+                     AND l.data_vencimento >= CURRENT_DATE - INTERVAL '7 days'
+                     AND l.data_vencimento <= CURRENT_DATE)
+                  )
+                ORDER BY l.data_vencimento ASC
+            """, (user_id,))
+            return cur.fetchall()
+
+
 def get_sugestoes_descricao(user_id: int, tipo: str, query: str, limit: int = 6) -> list:
     with get_db() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
