@@ -45,13 +45,26 @@ window._activeLeague   = null;
 async function loadLeagues() {
   const sel = document.getElementById("leagueSelect");
   try {
-    const resp = await fetch("/api/apostas/espn/leagues");
-    const list = await resp.json();
+    const [respEspn, respAfl] = await Promise.all([
+      fetch("/api/apostas/espn/leagues"),
+      fetch("/api/apostas/apifootball/leagues"),
+    ]);
+
+    const espnList = respEspn.ok ? await respEspn.json() : [];
+    const aflList  = respAfl.ok  ? await respAfl.json()  : [];
 
     const byCategory = {};
-    list.forEach(lg => {
-      if (!byCategory[lg.category]) byCategory[lg.category] = [];
-      byCategory[lg.category].push(lg);
+
+    espnList.forEach(lg => {
+      const cat = lg.category;
+      if (!byCategory[cat]) byCategory[cat] = [];
+      byCategory[cat].push({ value: lg.slug, name: lg.name });
+    });
+
+    aflList.forEach(lg => {
+      const cat = lg.category;
+      if (!byCategory[cat]) byCategory[cat] = [];
+      byCategory[cat].push({ value: `afl:${lg.id}`, name: lg.name });
     });
 
     sel.innerHTML = "";
@@ -60,7 +73,7 @@ async function loadLeagues() {
       grp.label = cat;
       items.forEach(lg => {
         const opt = document.createElement("option");
-        opt.value = lg.slug;
+        opt.value = lg.value;
         opt.textContent = lg.name;
         grp.appendChild(opt);
       });
@@ -69,7 +82,8 @@ async function loadLeagues() {
 
     window._leaguesLoaded = true;
 
-    const saved = localStorage.getItem("apostas_league") || list[0]?.slug;
+    const firstValue = espnList[0]?.slug || (aflList[0] ? `afl:${aflList[0].id}` : null);
+    const saved = localStorage.getItem("apostas_league") || firstValue;
     if (saved) {
       sel.value = saved;
       selectLeague(saved);
@@ -135,7 +149,11 @@ async function loadJogos(slug) {
   setJogosState("loading");
 
   try {
-    const resp = await fetch(`/api/apostas/espn/fixtures/${encodeURIComponent(slug)}?days=${days}`);
+    const url = slug.startsWith("afl:")
+      ? `/api/apostas/apifootball/fixtures/${slug.slice(4)}?days=${days}`
+      : `/api/apostas/espn/fixtures/${encodeURIComponent(slug)}?days=${days}`;
+
+    const resp = await fetch(url);
     const json = await resp.json();
     if (!resp.ok) { setJogosState("erro", json.error); return; }
 
@@ -249,7 +267,11 @@ async function loadTabela(slug) {
   document.getElementById("tabelasLoading").style.display = "flex";
 
   try {
-    const resp = await fetch(`/api/apostas/espn/standings/${encodeURIComponent(slug)}`);
+    const url = slug.startsWith("afl:")
+      ? `/api/apostas/apifootball/standings/${slug.slice(4)}`
+      : `/api/apostas/espn/standings/${encodeURIComponent(slug)}`;
+
+    const resp = await fetch(url);
     const json = await resp.json();
     document.getElementById("tabelasLoading").style.display = "none";
 
