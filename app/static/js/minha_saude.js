@@ -1,6 +1,16 @@
 (function () {
   'use strict';
 
+  /* ========== TIMEZONE DETECTION ========== */
+  (function () {
+    try {
+      var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (tz) {
+        document.cookie = 'user_tz=' + encodeURIComponent(tz) + '; path=/; max-age=31536000; SameSite=Lax';
+      }
+    } catch (e) {}
+  })();
+
   /* ========== TABS ========== */
   var _produtosCarregados = false;
 
@@ -163,10 +173,6 @@
   }
 
   /* ========== REFEIÇÕES ========== */
-  var _fonteAtual = 'manual';
-  var _embalagemData = null;
-  var _pratoData = null;
-  var _porcaoAtual = 0.5;
   var _produtoSelecionado = null;
   var _porcaoManualAtual = 1;
   var _buscaTimer = null;
@@ -174,10 +180,6 @@
   window.abrirModalRefeicao = function (tipo, label) {
     document.getElementById('modalTipoRefeicao').value = tipo;
     document.getElementById('modalRefeicaoTitulo').textContent = 'Registrar — ' + label;
-    _fonteAtual = 'manual';
-    _embalagemData = null;
-    _pratoData = null;
-    _porcaoAtual = 0.5;
     limparModalRefeicao();
     document.getElementById('modalRefeicao').style.display = 'flex';
   };
@@ -199,38 +201,6 @@
     document.getElementById('proteinasManual').value = '';
     document.getElementById('carbosManual').value = '';
     document.getElementById('gordurasManual').value = '';
-    document.getElementById('fotoEmbalagem').value = '';
-    document.getElementById('fotoPrato').value = '';
-    document.getElementById('btnAnalisarEmbalagem').style.display = 'none';
-    document.getElementById('btnAnalisarPrato').style.display = 'none';
-    document.getElementById('resultadoEmbalagem').style.display = 'none';
-    var badge = document.getElementById('produtoSalvoBadge');
-    if (badge) badge.style.display = 'none';
-    document.getElementById('resultadoPrato').style.display = 'none';
-    document.getElementById('previewAreaEmbalagem').innerHTML =
-      '<div class="saude-photo-area-icon"><i class="bi bi-upc-scan"></i></div>' +
-      '<div class="saude-photo-area-text">Toque para tirar foto ou selecionar arquivo</div>';
-    document.getElementById('previewAreaPrato').innerHTML =
-      '<div class="saude-photo-area-icon"><i class="bi bi-camera"></i></div>' +
-      '<div class="saude-photo-area-text">Toque para tirar foto ou selecionar arquivo</div>';
-    mostrarFonte('manual');
-    document.querySelectorAll('.saude-source-btn').forEach(function (b) {
-      b.classList.toggle('active', b.dataset.fonte === 'manual');
-    });
-  }
-
-  window.selecionarFonte = function (btn) {
-    document.querySelectorAll('.saude-source-btn').forEach(function (b) { b.classList.remove('active'); });
-    btn.classList.add('active');
-    _fonteAtual = btn.dataset.fonte;
-    mostrarFonte(_fonteAtual);
-  };
-
-  function mostrarFonte(fonte) {
-    ['manual', 'foto_produto', 'foto_prato'].forEach(function (f) {
-      var el = document.getElementById('fonte-' + f);
-      if (el) el.style.display = f === fonte ? '' : 'none';
-    });
   }
 
   /* ========== BUSCA DE PRODUTO (modo manual) ========== */
@@ -322,162 +292,17 @@
     }
   });
 
-  window.previewFotoEmbalagem = function (input) {
-    if (!input.files || !input.files[0]) return;
-    var file = input.files[0];
-    var url = URL.createObjectURL(file);
-    document.getElementById('previewAreaEmbalagem').innerHTML =
-      '<img src="' + url + '" class="saude-photo-preview" alt="Preview">';
-    document.getElementById('btnAnalisarEmbalagem').style.display = 'flex';
-  };
-
-  window.previewFotoPrato = function (input) {
-    if (!input.files || !input.files[0]) return;
-    var file = input.files[0];
-    var url = URL.createObjectURL(file);
-    document.getElementById('previewAreaPrato').innerHTML =
-      '<img src="' + url + '" class="saude-photo-preview" alt="Preview">';
-    document.getElementById('btnAnalisarPrato').style.display = 'flex';
-  };
-
-  window.analisarEmbalagem = function () {
-    var fileInput = document.getElementById('fotoEmbalagem');
-    if (!fileInput.files || !fileInput.files[0]) { alert('Selecione uma foto'); return; }
-
-    var spinner = document.getElementById('spinnerEmbalagem');
-    var btn = document.getElementById('btnAnalisarEmbalagem');
-    spinner.style.display = 'inline-block';
-    btn.disabled = true;
-
-    var formData = new FormData();
-    formData.append('foto', fileInput.files[0]);
-
-    fetch('/api/saude/analisar-embalagem', { method: 'POST', body: formData })
-      .then(function (r) { return r.json(); })
-      .then(function (data) {
-        spinner.style.display = 'none';
-        btn.disabled = false;
-        if (data.error) { alert(data.error); return; }
-        _embalagemData = data;
-        _porcaoAtual = 0.5;
-        exibirResultadoEmbalagem(data);
-        // Auto-salva na base de produtos
-        fetch('/api/saude/produto', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data),
-        }).then(function (r) { return r.json(); })
-          .then(function (prod) {
-            if (!prod.error) {
-              var badge = document.getElementById('produtoSalvoBadge');
-              if (badge) badge.style.display = 'flex';
-            }
-          }).catch(function () {});
-      })
-      .catch(function () {
-        spinner.style.display = 'none';
-        btn.disabled = false;
-        alert('Erro ao analisar imagem. Tente novamente.');
-      });
-  };
-
-  function exibirResultadoEmbalagem(data) {
-    document.getElementById('produtoNome').textContent = data.produto_nome || 'Produto';
-    document.getElementById('embPorcao').textContent = (data.porcao_g || '—') + ' g';
-    document.getElementById('embCalorias').textContent = (data.calorias_por_porcao || '—') + ' kcal';
-    document.getElementById('embProteinas').textContent = (data.proteinas_g || '—') + ' g';
-    document.getElementById('embCarbos').textContent = (data.carboidratos_g || '—') + ' g';
-    document.getElementById('embGorduras').textContent = (data.gorduras_totais_g || '—') + ' g';
-    document.getElementById('resultadoEmbalagem').style.display = '';
-
-    document.querySelectorAll('#porcaoSteps .saude-porcao-btn').forEach(function (btn) {
-      btn.classList.toggle('active', parseFloat(btn.dataset.porcao) === _porcaoAtual);
-      btn.onclick = function () {
-        _porcaoAtual = parseFloat(this.dataset.porcao);
-        document.querySelectorAll('#porcaoSteps .saude-porcao-btn').forEach(function (b) {
-          b.classList.toggle('active', parseFloat(b.dataset.porcao) === _porcaoAtual);
-        });
-      };
-    });
-  }
-
-  window.analisarPrato = function () {
-    var fileInput = document.getElementById('fotoPrato');
-    if (!fileInput.files || !fileInput.files[0]) { alert('Selecione uma foto'); return; }
-
-    var spinner = document.getElementById('spinnerPrato');
-    var btn = document.getElementById('btnAnalisarPrato');
-    spinner.style.display = 'inline-block';
-    btn.disabled = true;
-
-    var formData = new FormData();
-    formData.append('foto', fileInput.files[0]);
-
-    fetch('/api/saude/analisar-prato', { method: 'POST', body: formData })
-      .then(function (r) { return r.json(); })
-      .then(function (data) {
-        spinner.style.display = 'none';
-        btn.disabled = false;
-        if (data.error) { alert(data.error); return; }
-        _pratoData = data;
-        exibirResultadoPrato(data);
-      })
-      .catch(function () {
-        spinner.style.display = 'none';
-        btn.disabled = false;
-        alert('Erro ao analisar imagem. Tente novamente.');
-      });
-  };
-
-  function exibirResultadoPrato(data) {
-    document.getElementById('pratoDescricao').textContent = data.descricao || '';
-    document.getElementById('pratoCalorias').textContent = (data.calorias_totais_estimadas || '—') + ' kcal';
-    var conf = { alto: 'Alta', medio: 'Média', baixo: 'Baixa' };
-    document.getElementById('pratoConfianca').textContent = conf[data.nivel_confianca] || data.nivel_confianca || '';
-
-    var itensHtml = '';
-    if (data.itens && data.itens.length) {
-      data.itens.forEach(function (item) {
-        itensHtml +=
-          '<div class="saude-ai-result-row">' +
-          '<span class="saude-ai-result-key">' + (item.nome || '') + ' (' + (item.quantidade_estimada || '') + ')</span>' +
-          '<span class="saude-ai-result-val">' + (item.calorias_estimadas || '—') + ' kcal</span>' +
-          '</div>';
-      });
-    }
-    document.getElementById('pratoItens').innerHTML = itensHtml;
-    document.getElementById('caloriasAjustePrato').value = data.calorias_totais_estimadas || '';
-    document.getElementById('resultadoPrato').style.display = '';
-  }
-
   window.salvarRefeicao = function () {
     var tipo = document.getElementById('modalTipoRefeicao').value;
-    var payload = { tipo_refeicao: tipo, fonte: _fonteAtual };
-
-    if (_fonteAtual === 'manual') {
-      payload.descricao = document.getElementById('descricaoManual').value.trim();
-      payload.calorias = parseInt(document.getElementById('caloriasManual').value, 10) || 0;
-      payload.proteinas_g = parseFloat(document.getElementById('proteinasManual').value) || null;
-      payload.carboidratos_g = parseFloat(document.getElementById('carbosManual').value) || null;
-      payload.gorduras_g = parseFloat(document.getElementById('gordurasManual').value) || null;
-    } else if (_fonteAtual === 'foto_produto' && _embalagemData) {
-      var p = _porcaoAtual;
-      payload.descricao = (_embalagemData.produto_nome || 'Produto') + ' (' + p + ' porção)';
-      payload.calorias = Math.round((_embalagemData.calorias_por_porcao || 0) * p);
-      payload.proteinas_g = _embalagemData.proteinas_g ? _embalagemData.proteinas_g * p : null;
-      payload.carboidratos_g = _embalagemData.carboidratos_g ? _embalagemData.carboidratos_g * p : null;
-      payload.gorduras_g = _embalagemData.gorduras_totais_g ? _embalagemData.gorduras_totais_g * p : null;
-    } else if (_fonteAtual === 'foto_prato' && _pratoData) {
-      var calAjuste = parseInt(document.getElementById('caloriasAjustePrato').value, 10);
-      payload.descricao = _pratoData.descricao || 'Prato fotografado';
-      payload.calorias = calAjuste || _pratoData.calorias_totais_estimadas || 0;
-      payload.proteinas_g = _pratoData.proteinas_g_estimadas || null;
-      payload.carboidratos_g = _pratoData.carboidratos_g_estimados || null;
-      payload.gorduras_g = _pratoData.gorduras_g_estimadas || null;
-    } else {
-      alert('Preencha os dados ou analise a foto antes de salvar.');
-      return;
-    }
+    var payload = {
+      tipo_refeicao: tipo,
+      fonte: 'manual',
+      descricao: document.getElementById('descricaoManual').value.trim(),
+      calorias: parseInt(document.getElementById('caloriasManual').value, 10) || 0,
+      proteinas_g: parseFloat(document.getElementById('proteinasManual').value) || null,
+      carboidratos_g: parseFloat(document.getElementById('carbosManual').value) || null,
+      gorduras_g: parseFloat(document.getElementById('gordurasManual').value) || null,
+    };
 
     var btn = document.getElementById('btnSalvarRefeicao');
     btn.disabled = true;

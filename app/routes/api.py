@@ -900,12 +900,13 @@ def saude_delete_refeicao(refeicao_id):
 def saude_add_agua():
     from app.services import saude_service
     data = request.get_json() or {}
+    tz = request.cookies.get('user_tz', 'America/Sao_Paulo')
     try:
         registro = saude_service.registrar_agua(
             current_user.id,
             int(data.get("quantidade_ml", 0)),
         )
-        total_ml = saude_service.get_agua_hoje(current_user.id)["total_ml"]
+        total_ml = saude_service.get_agua_hoje(current_user.id, timezone=tz)["total_ml"]
         return jsonify({"registro": registro, "total_ml": total_ml})
     except (ValueError, TypeError) as e:
         return jsonify({"error": str(e)}), 400
@@ -915,8 +916,9 @@ def saude_add_agua():
 @login_required
 def saude_delete_agua(registro_id):
     from app.services import saude_service
+    tz = request.cookies.get('user_tz', 'America/Sao_Paulo')
     saude_service.delete_agua(current_user.id, registro_id)
-    total_ml = saude_service.get_agua_hoje(current_user.id)["total_ml"]
+    total_ml = saude_service.get_agua_hoje(current_user.id, timezone=tz)["total_ml"]
     return jsonify({"ok": True, "total_ml": total_ml})
 
 

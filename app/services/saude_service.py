@@ -1,7 +1,16 @@
 import base64
 import json
+import re
 from datetime import datetime
 from app.repositories import saude_repository as repo
+
+_TZ_PATTERN = re.compile(r'^[A-Za-z]+(/[A-Za-z_]+){0,2}$')
+
+
+def _safe_timezone(tz: str) -> str:
+    if tz and _TZ_PATTERN.match(tz):
+        return tz
+    return 'America/Sao_Paulo'
 
 REFEICOES = [
     ("cafe_manha",    "07:00", "08:00", "Café da manhã"),
@@ -140,8 +149,8 @@ def get_peso_historico(user_id: int) -> list:
     return [dict(r) for r in repo.get_peso_historico(user_id)]
 
 
-def get_acordei_hoje(user_id: int):
-    row = repo.get_acordei_hoje(user_id)
+def get_acordei_hoje(user_id: int, timezone: str = 'America/Sao_Paulo'):
+    row = repo.get_acordei_hoje(user_id, _safe_timezone(timezone))
     return dict(row) if row else None
 
 
@@ -149,8 +158,8 @@ def registrar_acordei(user_id: int) -> dict:
     return dict(repo.registrar_acordei(user_id))
 
 
-def get_refeicoes_hoje(user_id: int) -> list:
-    return [dict(r) for r in repo.get_refeicoes_hoje(user_id)]
+def get_refeicoes_hoje(user_id: int, timezone: str = 'America/Sao_Paulo') -> list:
+    return [dict(r) for r in repo.get_refeicoes_hoje(user_id, _safe_timezone(timezone))]
 
 
 def registrar_refeicao(user_id: int, tipo_refeicao: str, descricao: str,
@@ -172,10 +181,11 @@ def delete_refeicao(user_id: int, refeicao_id: int):
     repo.delete_refeicao(user_id, refeicao_id)
 
 
-def get_agua_hoje(user_id: int) -> dict:
+def get_agua_hoje(user_id: int, timezone: str = 'America/Sao_Paulo') -> dict:
+    tz = _safe_timezone(timezone)
     return {
-        "total_ml": repo.get_agua_hoje_total(user_id),
-        "registros": [dict(r) for r in repo.get_agua_registros_hoje(user_id)],
+        "total_ml": repo.get_agua_hoje_total(user_id, tz),
+        "registros": [dict(r) for r in repo.get_agua_registros_hoje(user_id, tz)],
     }
 
 
@@ -190,11 +200,12 @@ def delete_agua(user_id: int, registro_id: int):
     repo.delete_agua(user_id, registro_id)
 
 
-def get_dados_hoje(user_id: int) -> dict:
+def get_dados_hoje(user_id: int, timezone: str = 'America/Sao_Paulo') -> dict:
+    tz = _safe_timezone(timezone)
     perfil = get_perfil(user_id)
-    refeicoes_hoje = get_refeicoes_hoje(user_id)
-    agua_hoje = get_agua_hoje(user_id)
-    acordei = get_acordei_hoje(user_id)
+    refeicoes_hoje = get_refeicoes_hoje(user_id, tz)
+    agua_hoje = get_agua_hoje(user_id, tz)
+    acordei = get_acordei_hoje(user_id, tz)
 
     tipos_registrados = {r["tipo_refeicao"] for r in refeicoes_hoje}
     agora = datetime.now().time()

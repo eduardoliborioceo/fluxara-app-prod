@@ -337,164 +337,51 @@
     <input type="hidden" id="modalTipoRefeicao">
 
     <div class="saude-modal-field">
-      <label>Fonte</label>
-      <div class="saude-modal-source-toggle">
-        <button class="saude-source-btn active" data-fonte="manual" onclick="selecionarFonte(this)">
-          <i class="bi bi-pencil"></i> Manual
-        </button>
-        <button class="saude-source-btn" data-fonte="foto_produto" onclick="selecionarFonte(this)">
-          <i class="bi bi-upc-scan"></i> Foto embalagem
-        </button>
-        <button class="saude-source-btn" data-fonte="foto_prato" onclick="selecionarFonte(this)">
-          <i class="bi bi-camera"></i> Foto do prato
-        </button>
+      <label>Buscar produto salvo</label>
+      <div class="saude-produto-search-wrap">
+        <input type="text" id="buscaProduto" placeholder="Digite para buscar..." autocomplete="off"
+               oninput="buscarProdutos(this.value)">
+        <div class="saude-produto-dropdown" id="produtoDropdown" style="display:none"></div>
       </div>
     </div>
 
-    <!-- Fonte: manual -->
-    <div id="fonte-manual">
-      <!-- Busca na base de produtos -->
-      <div class="saude-modal-field">
-        <label>Buscar produto salvo</label>
-        <div class="saude-produto-search-wrap">
-          <input type="text" id="buscaProduto" placeholder="Digite para buscar..." autocomplete="off"
-                 oninput="buscarProdutos(this.value)">
-          <div class="saude-produto-dropdown" id="produtoDropdown" style="display:none"></div>
+    <div id="produtoSelecionadoWrap" style="display:none">
+      <div class="saude-ai-result" id="produtoSelecionadoInfo" style="margin-bottom:10px"></div>
+      <div class="saude-porcao-wrap">
+        <span class="saude-porcao-label">Porções:</span>
+        <div class="saude-porcao-steps" id="porcaoManualSteps">
+          <button class="saude-porcao-btn" data-porcao="0.5">½</button>
+          <button class="saude-porcao-btn active" data-porcao="1">1</button>
+          <button class="saude-porcao-btn" data-porcao="1.5">1½</button>
+          <button class="saude-porcao-btn" data-porcao="2">2</button>
+          <button class="saude-porcao-btn" data-porcao="3">3</button>
         </div>
       </div>
-
-      <!-- Seletor de porções (aparece após selecionar produto da base) -->
-      <div id="produtoSelecionadoWrap" style="display:none">
-        <div class="saude-ai-result" id="produtoSelecionadoInfo" style="margin-bottom:10px"></div>
-        <div class="saude-porcao-wrap">
-          <span class="saude-porcao-label">Porções:</span>
-          <div class="saude-porcao-steps" id="porcaoManualSteps">
-            <button class="saude-porcao-btn" data-porcao="0.5">½</button>
-            <button class="saude-porcao-btn active" data-porcao="1">1</button>
-            <button class="saude-porcao-btn" data-porcao="1.5">1½</button>
-            <button class="saude-porcao-btn" data-porcao="2">2</button>
-            <button class="saude-porcao-btn" data-porcao="3">3</button>
-          </div>
-        </div>
-        <button class="saude-produto-clear-btn" onclick="limparProdutoSelecionado()">
-          <i class="bi bi-x-circle"></i> Remover seleção
-        </button>
-      </div>
-
-      <div class="saude-modal-field">
-        <label>Descrição</label>
-        <textarea id="descricaoManual" placeholder="Ex: Arroz, feijão, frango grelhado..."></textarea>
-      </div>
-      <div class="saude-modal-field">
-        <label>Calorias (kcal)</label>
-        <input type="number" id="caloriasManual" placeholder="Ex: 650" min="0">
-      </div>
-      <div class="saude-modal-field" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-        <div>
-          <label>Proteínas (g)</label>
-          <input type="number" id="proteinasManual" placeholder="0" min="0" step="0.1">
-        </div>
-        <div>
-          <label>Carboidratos (g)</label>
-          <input type="number" id="carbosManual" placeholder="0" min="0" step="0.1">
-        </div>
-        <div>
-          <label>Gorduras (g)</label>
-          <input type="number" id="gordurasManual" placeholder="0" min="0" step="0.1">
-        </div>
-      </div>
+      <button class="saude-produto-clear-btn" onclick="limparProdutoSelecionado()">
+        <i class="bi bi-x-circle"></i> Remover seleção
+      </button>
     </div>
 
-    <!-- Fonte: foto embalagem — adiciona produto à base -->
-    <div id="fonte-foto_produto" style="display:none">
-      <div class="saude-modal-field">
-        <label>Foto da tabela nutricional</label>
-        <label class="saude-photo-area" id="areaEmbalagem">
-          <input type="file" id="fotoEmbalagem" accept="image/*" capture="environment" onchange="previewFotoEmbalagem(this)">
-          <div id="previewAreaEmbalagem">
-            <div class="saude-photo-area-icon"><i class="bi bi-upc-scan"></i></div>
-            <div class="saude-photo-area-text">Toque para tirar foto ou selecionar arquivo</div>
-          </div>
-        </label>
-        <button class="saude-btn-submit" id="btnAnalisarEmbalagem" onclick="analisarEmbalagem()" style="margin-top:10px;display:none">
-          <span class="saude-spinner" id="spinnerEmbalagem" style="display:none"></span>
-          Analisar e salvar na base
-        </button>
-      </div>
-
-      <div id="resultadoEmbalagem" style="display:none">
-        <div class="saude-produto-salvo-badge" id="produtoSalvoBadge" style="display:none">
-          <i class="bi bi-check-circle-fill"></i> Produto salvo na sua base
-        </div>
-        <div class="saude-ai-result">
-          <div class="saude-ai-result-title" id="produtoNome"></div>
-          <div class="saude-ai-result-row">
-            <span class="saude-ai-result-key">Por porção</span>
-            <span class="saude-ai-result-val" id="embPorcao"></span>
-          </div>
-          <div class="saude-ai-result-row">
-            <span class="saude-ai-result-key">Calorias</span>
-            <span class="saude-ai-result-val" id="embCalorias"></span>
-          </div>
-          <div class="saude-ai-result-row">
-            <span class="saude-ai-result-key">Proteínas</span>
-            <span class="saude-ai-result-val" id="embProteinas"></span>
-          </div>
-          <div class="saude-ai-result-row">
-            <span class="saude-ai-result-key">Carboidratos</span>
-            <span class="saude-ai-result-val" id="embCarbos"></span>
-          </div>
-          <div class="saude-ai-result-row">
-            <span class="saude-ai-result-key">Gorduras</span>
-            <span class="saude-ai-result-val" id="embGorduras"></span>
-          </div>
-        </div>
-        <div class="saude-porcao-wrap">
-          <span class="saude-porcao-label">Porções:</span>
-          <div class="saude-porcao-steps" id="porcaoSteps">
-            <button class="saude-porcao-btn active" data-porcao="0.5">½</button>
-            <button class="saude-porcao-btn" data-porcao="1">1</button>
-            <button class="saude-porcao-btn" data-porcao="1.5">1½</button>
-            <button class="saude-porcao-btn" data-porcao="2">2</button>
-            <button class="saude-porcao-btn" data-porcao="3">3</button>
-          </div>
-        </div>
-      </div>
+    <div class="saude-modal-field">
+      <label>Descrição</label>
+      <textarea id="descricaoManual" placeholder="Ex: Arroz, feijão, frango grelhado..."></textarea>
     </div>
-
-    <!-- Fonte: foto prato -->
-    <div id="fonte-foto_prato" style="display:none">
-      <div class="saude-modal-field">
-        <label>Foto do prato</label>
-        <label class="saude-photo-area" id="areaPrato">
-          <input type="file" id="fotoPrato" accept="image/*" capture="environment" onchange="previewFotoPrato(this)">
-          <div id="previewAreaPrato">
-            <div class="saude-photo-area-icon"><i class="bi bi-camera"></i></div>
-            <div class="saude-photo-area-text">Toque para tirar foto ou selecionar arquivo</div>
-          </div>
-        </label>
-        <button class="saude-btn-submit" id="btnAnalisarPrato" onclick="analisarPrato()" style="margin-top:10px;display:none">
-          <span class="saude-spinner" id="spinnerPrato" style="display:none"></span>
-          Estimar calorias com IA
-        </button>
+    <div class="saude-modal-field">
+      <label>Calorias (kcal)</label>
+      <input type="number" id="caloriasManual" placeholder="Ex: 650" min="0">
+    </div>
+    <div class="saude-modal-field" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+      <div>
+        <label>Proteínas (g)</label>
+        <input type="number" id="proteinasManual" placeholder="0" min="0" step="0.1">
       </div>
-
-      <div id="resultadoPrato" style="display:none">
-        <div class="saude-ai-result">
-          <div class="saude-ai-result-title" id="pratoDescricao"></div>
-          <div id="pratoItens"></div>
-          <div class="saude-ai-result-row" style="margin-top:8px">
-            <span class="saude-ai-result-key">Calorias estimadas</span>
-            <span class="saude-ai-result-val" id="pratoCalorias"></span>
-          </div>
-          <div class="saude-ai-result-row" style="font-size:.75rem;color:var(--text-muted);padding:4px 0 0">
-            <span>Confiança: <span id="pratoConfianca"></span></span>
-          </div>
-        </div>
-        <div class="saude-modal-field" style="margin-top:12px">
-          <label>Ajustar calorias (opcional)</label>
-          <input type="number" id="caloriasAjustePrato" placeholder="Calorias estimadas" min="0">
-        </div>
+      <div>
+        <label>Carboidratos (g)</label>
+        <input type="number" id="carbosManual" placeholder="0" min="0" step="0.1">
+      </div>
+      <div>
+        <label>Gorduras (g)</label>
+        <input type="number" id="gordurasManual" placeholder="0" min="0" step="0.1">
       </div>
     </div>
 
