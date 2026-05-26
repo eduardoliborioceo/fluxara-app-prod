@@ -1280,6 +1280,56 @@ def apostas_espn_fixtures(league_slug):
 
 
 # =============================================================
+# APOSTAS — API-FOOTBALL (standings + fixtures)
+# =============================================================
+
+@bp.route("/apostas/apifootball/leagues", methods=["GET"])
+@login_required
+def apostas_apifootball_leagues():
+    from app.services import apostas_apifootball_service
+    return jsonify(apostas_apifootball_service.get_leagues())
+
+
+@bp.route("/apostas/apifootball/standings/<int:league_id>", methods=["GET"])
+@login_required
+def apostas_apifootball_standings(league_id):
+    from app.services import apostas_apifootball_service
+    if league_id not in apostas_apifootball_service.KNOWN_IDS:
+        return jsonify({"error": "Campeonato não suportado"}), 400
+    try:
+        data = apostas_apifootball_service.get_standings(league_id)
+        return jsonify(data)
+    except Exception as exc:
+        logger.exception("apostas_apifootball_standings error league=%s: %s", league_id, exc)
+        return jsonify({"error": "Erro ao buscar tabela"}), 500
+
+
+@bp.route("/apostas/apifootball/fixtures/<int:league_id>", methods=["GET"])
+@login_required
+def apostas_apifootball_fixtures(league_id):
+    from app.services import apostas_apifootball_service
+    if league_id not in apostas_apifootball_service.KNOWN_IDS:
+        return jsonify({"error": "Campeonato não suportado"}), 400
+    try:
+        days = int(request.args.get("days", 14))
+        days = max(1, min(30, days))
+        data = apostas_apifootball_service.get_upcoming_fixtures(league_id, days)
+        return jsonify(data)
+    except Exception as exc:
+        logger.exception("apostas_apifootball_fixtures error league=%s: %s", league_id, exc)
+        return jsonify({"error": "Erro ao buscar jogos"}), 500
+
+
+@bp.route("/apostas/apifootball/usage", methods=["GET"])
+@login_required
+def apostas_apifootball_usage():
+    from app.services import apostas_apifootball_service
+    if not current_user.is_admin:
+        return jsonify({"error": "Sem permissão"}), 403
+    return jsonify(apostas_apifootball_service.get_daily_usage())
+
+
+# =============================================================
 # APOSTAS — TIPS (recomendações)
 # =============================================================
 
