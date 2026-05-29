@@ -217,7 +217,14 @@
 
 .cat-icon {
   font-size: 1.1rem;
-  width: 26px;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background .15s, color .15s;
   text-align: center;
   flex-shrink: 0;
   color: #475569;
@@ -280,6 +287,112 @@
 
 .sub-item:hover .sub-actions {
   opacity: 1;
+}
+
+/* ========================
+   COR PICKER
+======================== */
+.cat-cor-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.cat-cor-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex: 1;
+}
+
+.cat-cor-swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: transform .1s, border-color .1s;
+  flex-shrink: 0;
+}
+
+.cat-cor-swatch:hover {
+  transform: scale(1.2);
+}
+
+.cat-cor-swatch.selected {
+  border-color: #1e293b;
+  transform: scale(1.15);
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px currentColor;
+}
+
+.cat-cor-custom {
+  flex-shrink: 0;
+}
+
+.cat-cor-custom-label {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,.12);
+  cursor: pointer;
+  font-size: .9rem;
+  color: #64748b;
+  background: #f1f5f9;
+  transition: background .1s;
+}
+
+.cat-cor-custom-label:hover {
+  background: #e2e8f0;
+}
+
+.cat-cor-custom-label input[type="color"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  border: none;
+  padding: 0;
+}
+
+.cat-cor-clear {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,.12);
+  background: #f1f5f9;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .75rem;
+  color: #64748b;
+  flex-shrink: 0;
+  transition: background .1s;
+}
+
+.cat-cor-clear:hover {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #fca5a5;
+}
+
+.cat-icone-preview-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #f1f5f9;
+  transition: background .15s, color .15s;
 }
 
 /* ========================

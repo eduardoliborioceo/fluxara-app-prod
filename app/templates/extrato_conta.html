@@ -37,12 +37,20 @@
   </div>
 
   <div class="extrato-filtros">
-    <div class="extrato-filtro-status">
-      <button class="extrato-status-pill active" data-status="todas">Todas</button>
-      <button class="extrato-status-pill" data-status="efetivadas">Efetivadas</button>
-      <button class="extrato-status-pill" data-status="pendentes">Pendentes</button>
-      <button class="extrato-status-pill extrato-select-toggle" id="btnSelectMode">
-        <i class="bi bi-check2-square me-1"></i>Selecionar
+    <div class="extrato-filtro-row">
+      <select id="filtroStatus" class="extrato-filtro-select">
+        <option value="todas">Todas</option>
+        <option value="efetivadas">Efetivadas</option>
+        <option value="pendentes">Pendentes</option>
+      </select>
+      <button class="extrato-select-toggle" id="btnSelectMode">
+        <i class="bi bi-check2-square"></i> Selecionar
+      </button>
+    </div>
+    <div class="extrato-filtro-row" id="extratoTagsBar" style="display:none">
+      <select id="filtroTagSelect" class="extrato-filtro-select extrato-tag-select"></select>
+      <button class="extrato-tag-del-btn" id="btnDeleteTag" title="Excluir esta tag" style="display:none">
+        <i class="bi bi-trash3"></i>
       </button>
     </div>
     <div class="extrato-filtro-datas">
@@ -60,7 +68,6 @@
     </div>
   </div>
 
-  <div id="extratoTagsBar" class="extrato-tags-bar" style="display:none"></div>
   <div id="extratoTagTotal" class="extrato-tag-total" style="display:none"></div>
 
   <div class="extrato-card" id="extratoBody">

@@ -405,7 +405,7 @@ def assinaturas():
     dados = assinaturas_service.get_dados_pagina(current_user.id)
     return render_template(
         "auth/assinaturas.html",
-        active_menu="perfil",
+        active_menu="assinaturas",
         dados=dados,
         is_admin=current_user.is_admin,
         is_owner=current_user.is_owner,

@@ -299,6 +299,20 @@ def get_pending_pagamento_faturas(user_id: int, dias: int = 90) -> list:
     return [dict(r) for r in rows]
 
 
+def get_debitos_vencidos(user_id: int) -> list:
+    rows = repo.get_debitos_vencidos(user_id)
+    result = []
+    for r in rows:
+        item = dict(r)
+        if item.get('data_vencimento'):
+            item['data_vencimento'] = str(item['data_vencimento'])
+        if item.get('dias_atraso') is not None:
+            item['dias_atraso'] = int(item['dias_atraso'])
+        item['valor'] = float(item.get('valor') or 0)
+        result.append(item)
+    return result
+
+
 def build_projecao(saldo_inicial: float, eventos: list) -> dict:
     saldo = float(saldo_inicial)
     projecao = []

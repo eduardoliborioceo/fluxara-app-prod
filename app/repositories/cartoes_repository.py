@@ -6,7 +6,7 @@ def list_cartoes(user_id: int, mes: int = 0, ano: int = 0) -> list:
     with get_db() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("""
-                SELECT cc.*, cb.nome AS conta_nome,
+                SELECT cc.*, cb.nome AS conta_nome, cb.instituicao AS conta_instituicao,
                     COALESCE((
                         SELECT SUM(CASE WHEN l.tipo = 'pagamento_fatura' THEN -l.valor ELSE l.valor END)
                         FROM lancamentos l

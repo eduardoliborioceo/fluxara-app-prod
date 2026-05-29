@@ -476,6 +476,16 @@
   text-align: center;
 }
 
+.visao-item .visao-icon {
+  font-size: 1.5rem;
+  margin-bottom: 6px;
+  line-height: 1;
+}
+
+.visao-receita  .visao-icon { color: #198754; }
+.visao-despesa  .visao-icon { color: #dc3545; }
+.visao-resultado .visao-icon { color: #0d6efd; }
+
 .visao-item .visao-label {
   font-size: .75rem;
   font-weight: 600;
@@ -639,6 +649,72 @@
 }
 
 /* ========================
+   CARD DÉBITOS VENCIDOS
+======================== */
+.debito-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.debito-item:last-child {
+  border-bottom: none;
+}
+
+.debito-desc {
+  font-size: .875rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.debito-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: .78rem;
+  color: var(--text-muted);
+}
+
+.debito-conta {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.debito-data {
+  white-space: nowrap;
+}
+
+.debito-atraso {
+  white-space: nowrap;
+  background: rgba(220, 53, 69, .1);
+  color: #dc3545;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: .72rem;
+  font-weight: 700;
+}
+
+.debito-atraso--hoje {
+  background: rgba(245, 158, 11, .1);
+  color: #b45309;
+}
+
+.debito-valor {
+  font-size: .92rem;
+  font-weight: 700;
+  color: #dc3545;
+  margin-top: 2px;
+}
+
+/* ========================
    DRAG & DROP
 ======================== */
 .card-drag-handle {
@@ -705,6 +781,13 @@
   align-items: center;
   gap: 10px;
   margin-bottom: 14px;
+}
+
+.cartao-logos {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
 }
 
 .cartao-card-nome {

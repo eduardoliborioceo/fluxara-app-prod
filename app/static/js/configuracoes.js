@@ -73,18 +73,47 @@
   }
 
   const ICONES = [
-    'bi-tag','bi-house','bi-car-front','bi-heart-pulse','bi-book','bi-controller',
-    'bi-bag','bi-bag-heart','bi-person-hearts','bi-heart','bi-phone','bi-credit-card',
-    'bi-file-text','bi-gift','bi-three-dots','bi-briefcase','bi-laptop',
-    'bi-graph-up-arrow','bi-graph-up','bi-wallet2','bi-bank2','bi-piggy-bank',
-    'bi-plus-circle','bi-star','bi-tag-fill','bi-cash','bi-cash-coin',
-    'bi-cup-hot','bi-bicycle','bi-bus-front','bi-airplane','bi-music-note',
-    'bi-camera','bi-scissors','bi-tools','bi-box','bi-basket',
-    'bi-droplet','bi-lightning','bi-wifi','bi-tv','bi-shield',
+    'bi-tag','bi-tag-fill','bi-star','bi-star-fill','bi-heart','bi-heart-fill',
+    'bi-house','bi-house-fill','bi-house-heart','bi-building','bi-buildings',
+    'bi-car-front','bi-car-front-fill','bi-bicycle','bi-bus-front','bi-train-front',
+    'bi-airplane','bi-airplane-fill','bi-scooter','bi-fuel-pump','bi-truck',
+    'bi-bag','bi-bag-fill','bi-bag-heart','bi-bag-check','bi-cart','bi-cart-fill',
+    'bi-basket','bi-basket-fill','bi-box','bi-box-fill','bi-boxes',
+    'bi-briefcase','bi-briefcase-fill','bi-laptop','bi-pc-display','bi-phone',
+    'bi-phone-fill','bi-tablet','bi-headphones','bi-camera','bi-camera-fill',
+    'bi-heart-pulse','bi-heart-pulse-fill','bi-hospital','bi-capsule','bi-bandaid',
+    'bi-activity','bi-lungs','bi-eye','bi-eye-fill','bi-thermometer',
+    'bi-book','bi-book-fill','bi-journal','bi-journal-text','bi-pencil',
+    'bi-mortarboard','bi-mortarboard-fill','bi-award','bi-award-fill','bi-trophy',
+    'bi-controller','bi-joystick','bi-music-note','bi-music-note-beamed','bi-film',
+    'bi-camera-video','bi-tv','bi-tv-fill','bi-ticket','bi-ticket-fill',
+    'bi-credit-card','bi-credit-card-fill','bi-wallet','bi-wallet2','bi-wallet-fill',
+    'bi-cash','bi-cash-coin','bi-cash-stack','bi-piggy-bank','bi-piggy-bank-fill',
+    'bi-bank','bi-bank2','bi-safe','bi-safe-fill','bi-graph-up',
+    'bi-graph-up-arrow','bi-bar-chart','bi-bar-chart-fill','bi-pie-chart','bi-pie-chart-fill',
+    'bi-cup-hot','bi-cup-hot-fill','bi-cup-straw','bi-egg-fried','bi-fork-knife',
+    'bi-fire','bi-snow','bi-droplet','bi-droplet-fill','bi-lightning',
+    'bi-lightning-fill','bi-wifi','bi-plug','bi-plug-fill','bi-gear',
+    'bi-gear-fill','bi-tools','bi-wrench','bi-hammer','bi-scissors',
+    'bi-shield','bi-shield-fill','bi-shield-check','bi-lock','bi-lock-fill',
+    'bi-person','bi-person-fill','bi-person-hearts','bi-people','bi-people-fill',
+    'bi-gift','bi-gift-fill','bi-balloon-heart','bi-emoji-smile','bi-emoji-heart-eyes',
+    'bi-file-text','bi-file-earmark-text','bi-receipt','bi-receipt-cutoff','bi-three-dots',
+    'bi-plus-circle','bi-plus-circle-fill','bi-arrow-repeat','bi-recycle','bi-globe',
+    'bi-globe2','bi-map','bi-map-fill','bi-geo-alt','bi-geo-alt-fill',
+    'bi-sun','bi-moon','bi-cloud','bi-cloud-fill','bi-flower1',
+    'bi-tree','bi-tree-fill','bi-pet','bi-paw','bi-scissors',
+  ];
+
+  const CAT_CORES = [
+    '#ef4444','#f97316','#f59e0b','#84cc16','#22c55e',
+    '#10b981','#06b6d4','#3b82f6','#6366f1','#8b5cf6',
+    '#a855f7','#ec4899','#14b8a6','#0ea5e9','#64748b',
   ];
 
   let tipoAtivo = 'despesa';
   let catSelecionadaIcone = 'bi-tag';
+  let catCorFundoSelecionada = '';
   const modalCat = new bootstrap.Modal(document.getElementById('modalCat'));
   const modalSub = new bootstrap.Modal(document.getElementById('modalSub'));
 
@@ -196,14 +225,18 @@
       el.innerHTML = '<p class="text-muted text-center py-3 mb-0">Nenhuma categoria ainda.</p>';
       return;
     }
-    el.innerHTML = cats.map(cat =>
-      '<div class="cat-item" id="cat-' + cat.id + '">' +
+    el.innerHTML = cats.map(cat => {
+      const icone = cat.icone || 'bi-tag';
+      const cor = cat.cor_fundo || '';
+      const iconStyle = cor ? 'background:' + cor + ';color:#fff;' : '';
+      const corEncoded = esc(cor);
+      return '<div class="cat-item" id="cat-' + cat.id + '">' +
         '<div class="cat-header" onclick="toggleCat(' + cat.id + ')">' +
-          '<span class="cat-icon"><i class="bi ' + (cat.icone || 'bi-tag') + '"></i></span>' +
+          '<span class="cat-icon" style="' + iconStyle + '"><i class="bi ' + icone + '"></i></span>' +
           '<span class="cat-nome">' + esc(cat.nome) + '</span>' +
           '<div class="cat-actions" onclick="event.stopPropagation()">' +
             '<button class="btn btn-sm btn-outline-secondary py-0 px-1" ' +
-                    'onclick="openEditCat(' + cat.id + ',\'' + esc(cat.nome) + '\',\'' + (cat.icone || 'bi-tag') + '\')">' +
+                    'onclick="openEditCat(' + cat.id + ',\'' + esc(cat.nome) + '\',\'' + icone + '\',\'' + corEncoded + '\')">' +
               '<i class="bi bi-pencil"></i></button>' +
             '<button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="deleteCat(' + cat.id + ')">' +
               '<i class="bi bi-trash"></i></button>' +
@@ -215,8 +248,8 @@
           '<button class="btn btn-sm btn-outline-primary mt-2" onclick="openAddSub(' + cat.id + ')">' +
             '<i class="bi bi-plus-lg me-1"></i>Adicionar subcategoria</button>' +
         '</div>' +
-      '</div>'
-    ).join('');
+      '</div>';
+    }).join('');
   }
 
   function renderSubs(subs) {
@@ -238,6 +271,67 @@
     document.getElementById('body-' + id).classList.toggle('open');
     document.getElementById('toggle-' + id).classList.toggle('open');
   };
+
+  // ── COR PICKER ───────────────────────────────────────
+  (function initCorPicker() {
+    const swatches = document.getElementById('catCorSwatches');
+    if (!swatches) return;
+
+    swatches.addEventListener('click', (e) => {
+      const btn = e.target.closest('.cat-cor-swatch');
+      if (!btn) return;
+      swatches.querySelectorAll('.cat-cor-swatch').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      catCorFundoSelecionada = btn.dataset.cor;
+      document.getElementById('catCorFundo').value = catCorFundoSelecionada;
+      const ci = document.getElementById('catCorCustomInput');
+      if (ci) ci.value = catCorFundoSelecionada;
+      updateIconePreviewCor();
+    });
+
+    const customInput = document.getElementById('catCorCustomInput');
+    if (customInput) {
+      customInput.addEventListener('input', () => {
+        swatches.querySelectorAll('.cat-cor-swatch').forEach(b => b.classList.remove('selected'));
+        catCorFundoSelecionada = customInput.value;
+        document.getElementById('catCorFundo').value = catCorFundoSelecionada;
+        updateIconePreviewCor();
+      });
+    }
+
+    document.getElementById('btnClearCor')?.addEventListener('click', () => {
+      swatches.querySelectorAll('.cat-cor-swatch').forEach(b => b.classList.remove('selected'));
+      catCorFundoSelecionada = '';
+      document.getElementById('catCorFundo').value = '';
+      updateIconePreviewCor();
+    });
+  })();
+
+  function buildCorPicker(selected) {
+    catCorFundoSelecionada = selected || '';
+    const swatches = document.getElementById('catCorSwatches');
+    if (!swatches) return;
+    swatches.innerHTML = CAT_CORES.map(c =>
+      '<button type="button" class="cat-cor-swatch' + (c === selected ? ' selected' : '') + '" ' +
+        'data-cor="' + c + '" style="background:' + c + '" title="' + c + '"></button>'
+    ).join('');
+    const ci = document.getElementById('catCorCustomInput');
+    if (ci) ci.value = selected || '#3b82f6';
+    document.getElementById('catCorFundo').value = selected || '';
+    updateIconePreviewCor();
+  }
+
+  function updateIconePreviewCor() {
+    const wrap = document.getElementById('catIconePreviewWrap');
+    if (!wrap) return;
+    if (catCorFundoSelecionada) {
+      wrap.style.background = catCorFundoSelecionada;
+      wrap.style.color = '#fff';
+    } else {
+      wrap.style.background = '';
+      wrap.style.color = '';
+    }
+  }
 
   // ── ÍCONE PICKER ─────────────────────────────────────
   function buildIconePicker(selected) {
@@ -265,17 +359,19 @@
     catSelecionadaIcone = 'bi-tag';
     document.getElementById('catIconePreview').className = 'bi bi-tag fs-4';
     document.getElementById('catIconeNome').textContent = 'bi-tag';
+    buildCorPicker('');
     buildIconePicker('bi-tag');
     modalCat.show();
   });
 
-  window.openEditCat = function (id, nome, icone) {
+  window.openEditCat = function (id, nome, icone, corFundo) {
     document.getElementById('catEditId').value = id;
     document.getElementById('catNome').value = nome;
     document.getElementById('modalCatTitle').textContent = 'Editar Categoria';
     catSelecionadaIcone = icone;
     document.getElementById('catIconePreview').className = 'bi ' + icone + ' fs-4';
     document.getElementById('catIconeNome').textContent = icone;
+    buildCorPicker(corFundo || '');
     buildIconePicker(icone);
     modalCat.show();
   };
@@ -284,11 +380,12 @@
     const id   = document.getElementById('catEditId').value;
     const nome = document.getElementById('catNome').value.trim();
     if (!nome) return;
+    const cor  = document.getElementById('catCorFundo').value || null;
     const url    = id ? '/api/config/categorias/' + id : '/api/config/categorias';
     const method = id ? 'PUT' : 'POST';
     const body   = id
-      ? { nome, icone: catSelecionadaIcone }
-      : { tipo: tipoAtivo, nome, icone: catSelecionadaIcone };
+      ? { nome, icone: catSelecionadaIcone, cor_fundo: cor }
+      : { tipo: tipoAtivo, nome, icone: catSelecionadaIcone, cor_fundo: cor };
     await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     modalCat.hide();
     loadCategorias();

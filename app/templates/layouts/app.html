@@ -34,9 +34,9 @@
 <!-- ================= HEADER MOBILE ================= -->
 <header class="mobile-header d-md-none">
   <div class="mobile-left">
-    <div class="avatar">
+    <a href="{{ url_for('auth.my_profile') }}" class="avatar" title="Meu perfil">
       <img src="{{ url_for('static', filename='images/logos/pwa-512.png') }}?v={{ static_v }}">
-    </div>
+    </a>
 
     {% set page_titles = {
       "resumo":        "Resumo",
@@ -163,11 +163,7 @@
              class="sidebar-subitem">
             <i class="bi bi-code-square"></i> Gastos Developer
           </a>
-          <a href="{{ url_for('pages.usuario_debug_push') }}"
-             class="sidebar-subitem{% if active_menu == 'usuario' %} active{% endif %}">
-            <i class="bi bi-person-circle"></i> Área do usuário
-          </a>
-          {% if current_user.is_authenticated and (current_user.is_admin or current_user.is_owner) %}
+{% if current_user.is_authenticated and (current_user.is_admin or current_user.is_owner) %}
           <a href="{{ url_for('pages.configuracoes') }}?panel=admin"
              class="sidebar-subitem{% if active_menu == 'admin' %} active{% endif %}">
             <i class="bi bi-shield-check"></i> Área do Administrador
@@ -267,16 +263,12 @@
     <small>Planejamento</small>
   </a>
 
-  <a href="{{ url_for('auth.my_profile') }}"
-     class="{% if active_menu == 'perfil' %}active{% endif %}">
+  <a href="{{ url_for('auth.assinaturas') }}"
+     class="{% if active_menu == 'assinaturas' %}active{% endif %}">
     <div class="bottom-icon">
-      {% if current_user.is_authenticated and current_user.profile_image %}
-        <img src="{{ current_user.profile_image }}" class="bottom-nav-avatar" alt="Perfil">
-      {% else %}
-        <i class="bi bi-person-circle"></i>
-      {% endif %}
+      <i class="bi bi-patch-check"></i>
     </div>
-    <small>Perfil</small>
+    <small>Assinaturas</small>
   </a>
 
   <a href="{{ url_for('pages.mais') }}"
