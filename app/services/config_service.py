@@ -64,22 +64,24 @@ def get_categorias(user_id: int, tipo: str) -> list:
     return repo.get_categorias(user_id, tipo)
 
 
-def add_categoria(user_id: int, tipo: str, nome: str, icone: str) -> dict:
+def add_categoria(user_id: int, tipo: str, nome: str, icone: str, cor_fundo: str | None = None) -> dict:
     nome = nome.strip()[:100]
     icone = icone.strip() or "bi-tag"
+    cor_fundo = cor_fundo.strip()[:20] if cor_fundo else None
     if not nome:
         raise ValueError("Nome obrigatório")
     if tipo not in ("despesa", "receita", "conta"):
         raise ValueError("Tipo inválido")
-    return repo.create_categoria(user_id, tipo, nome, icone)
+    return repo.create_categoria(user_id, tipo, nome, icone, cor_fundo=cor_fundo)
 
 
-def edit_categoria(categoria_id: int, user_id: int, nome: str, icone: str):
+def edit_categoria(categoria_id: int, user_id: int, nome: str, icone: str, cor_fundo: str | None = None):
     nome = nome.strip()[:100]
     icone = icone.strip() or "bi-tag"
+    cor_fundo = cor_fundo.strip()[:20] if cor_fundo else None
     if not nome:
         raise ValueError("Nome obrigatório")
-    repo.update_categoria(categoria_id, user_id, nome, icone)
+    repo.update_categoria(categoria_id, user_id, nome, icone, cor_fundo=cor_fundo)
 
 
 def remove_categoria(categoria_id: int, user_id: int):

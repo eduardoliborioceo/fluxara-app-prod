@@ -185,52 +185,59 @@
   }
 
   function renderTagsBar() {
-    var bar = document.getElementById('extratoTagsBar');
+    var bar    = document.getElementById('extratoTagsBar');
+    var sel    = document.getElementById('filtroTagSelect');
+    var delBtn = document.getElementById('btnDeleteTag');
     if (!allUserTags.length) { bar.style.display = 'none'; return; }
     bar.style.display = 'flex';
-    bar.innerHTML = allUserTags.map(function (t) {
-      var isActive = activeTagFilter === t.id;
-      var bg = isActive ? t.cor : hexToAlpha(t.cor, 0.1);
-      var color = isActive ? '#fff' : t.cor;
-      return '<button class="extrato-tag-filter-pill' + (isActive ? ' active' : '') + '" data-tag-id="' + t.id + '"'
-        + ' style="background:' + bg + ';color:' + color + ';border-color:' + t.cor + '">'
-        + '<i class="bi bi-tag-fill" style="font-size:.65rem;margin-right:2px"></i>'
-        + '<span class="extrato-tag-pill-nome">' + esc(t.nome) + '</span>'
-        + '<span class="extrato-tag-pill-del" data-tag-id="' + t.id + '" title="Excluir tag">×</span>'
-        + '</button>';
-    }).join('');
 
-    bar.querySelectorAll('.extrato-tag-filter-pill').forEach(function (btn) {
-      btn.addEventListener('click', function (e) {
-        if (e.target.closest('.extrato-tag-pill-del')) return;
-        var id = parseInt(this.dataset.tagId);
-        activeTagFilter = (activeTagFilter === id) ? null : id;
-        renderTagsBar();
+    var prevVal = sel ? sel.value : '';
+    if (sel) {
+      sel.innerHTML = '<option value="">Todas as tags</option>'
+        + allUserTags.map(function (t) {
+            return '<option value="' + t.id + '">' + esc(t.nome) + '</option>';
+          }).join('');
+      if (activeTagFilter !== null) {
+        sel.value = String(activeTagFilter);
+      } else {
+        sel.value = '';
+      }
+    }
+
+    if (delBtn) {
+      delBtn.style.display = activeTagFilter !== null ? 'flex' : 'none';
+    }
+
+    if (sel && !sel._tagListenerBound) {
+      sel._tagListenerBound = true;
+      sel.addEventListener('change', function () {
+        activeTagFilter = this.value ? parseInt(this.value) : null;
+        if (delBtn) delBtn.style.display = activeTagFilter !== null ? 'flex' : 'none';
         applyFilters();
       });
-    });
+    }
 
-    bar.querySelectorAll('.extrato-tag-pill-del').forEach(function (del) {
-      del.addEventListener('click', async function (e) {
-        e.stopPropagation();
-        var tagId = parseInt(this.dataset.tagId);
-        var tag = allUserTags.find(function (t) { return t.id === tagId; });
+    if (delBtn && !delBtn._tagDelListenerBound) {
+      delBtn._tagDelListenerBound = true;
+      delBtn.addEventListener('click', async function () {
+        if (activeTagFilter === null) return;
+        var tag = allUserTags.find(function (t) { return t.id === activeTagFilter; });
         if (!tag) return;
         if (!confirm('Excluir a tag "' + tag.nome + '"?\nEla será removida de todas as transações.')) return;
         try {
-          var r = await fetch('/api/tags/' + tagId, { method: 'DELETE' });
+          var r = await fetch('/api/tags/' + tag.id, { method: 'DELETE' });
           if (r.ok) {
-            allUserTags = allUserTags.filter(function (t) { return t.id !== tagId; });
+            allUserTags = allUserTags.filter(function (t) { return t.id !== tag.id; });
             Object.keys(lancamentoTagsMapa).forEach(function (lid) {
-              lancamentoTagsMapa[lid] = lancamentoTagsMapa[lid].filter(function (t) { return t.id !== tagId; });
+              lancamentoTagsMapa[lid] = lancamentoTagsMapa[lid].filter(function (t) { return t.id !== tag.id; });
             });
-            if (activeTagFilter === tagId) activeTagFilter = null;
+            activeTagFilter = null;
             renderTagsBar();
             applyFilters();
           }
         } catch (err) {}
       });
-    });
+    }
   }
 
   async function loadAllLancamentoTags(transactions) {
@@ -503,13 +510,9 @@
     }
   }
 
-  document.querySelectorAll('.extrato-status-pill').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      document.querySelectorAll('.extrato-status-pill').forEach(function (b) { b.classList.remove('active'); });
-      this.classList.add('active');
-      activeStatusFilter = this.dataset.status;
-      applyFilters();
-    });
+  document.getElementById('filtroStatus').addEventListener('change', function () {
+    activeStatusFilter = this.value;
+    applyFilters();
   });
 
   document.getElementById('filtroDataDe').addEventListener('change', function () {
@@ -558,10 +561,10 @@
       selectedIds.clear();
       if (selectMode) {
         this.classList.add('active');
-        this.innerHTML = '<i class="bi bi-x-square me-1"></i>Cancelar';
+        this.innerHTML = '<i class="bi bi-x-square"></i> Cancelar';
       } else {
         this.classList.remove('active');
-        this.innerHTML = '<i class="bi bi-check2-square me-1"></i>Selecionar';
+        this.innerHTML = '<i class="bi bi-check2-square"></i> Selecionar';
       }
       document.getElementById('extratoSumBar').style.display = 'none';
       applyFilters();

@@ -743,6 +743,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  text-decoration: none;
 }
 
 .avatar img {

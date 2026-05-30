@@ -62,7 +62,9 @@
     binance:     { cor: '#F3BA2F', letra: 'B', corLetra: '#000', svg: 'binance.svg' },
     metamask:    { cor: '#E2761B', letra: 'M', svg: 'metamask.svg' },
     bitybank:    { cor: '#0066FF', letra: 'B', svg: 'bitybank.svg' },
-    outro:       { cor: '#6c757d', letra: 'O' },
+    bet365:      { cor: '#116B14', letra: 'B', corLetra: '#fff' },
+    riachuelo:   { cor: '#C41E3A', letra: 'R', corLetra: '#fff' },
+    outro:       { cor: '#64748b', icone: 'bi-wallet2', corLetra: '#fff' },
   };
 
   var BANDEIRAS = {
@@ -143,9 +145,14 @@
       return '<div class="conta-logo" style="background:#f8fafc;width:' + size + 'px;height:' + size + 'px">'
         + '<img src="/static/images/bank-icons-logos-svg/' + esc(inst.svg) + '" alt="" style="width:65%;height:65%;object-fit:contain"></div>';
     }
-    var bg = (inst && inst.cor) || '#6c757d';
+    var bg = (inst && inst.cor) || '#64748b';
     var fg = (inst && inst.corLetra) || '#fff';
-    var letra = (inst && inst.letra) || 'O';
+    var iconSize = Math.round(size * 0.5) + 'px';
+    if (inst && inst.icone) {
+      return '<div class="conta-logo" style="background:' + bg + ';color:' + fg + ';width:' + size + 'px;height:' + size + 'px">'
+        + '<i class="bi ' + inst.icone + '" style="font-size:' + iconSize + '"></i></div>';
+    }
+    var letra = (inst && inst.letra) || '?';
     return '<div class="conta-logo" style="background:' + bg + ';color:' + fg + ';width:' + size + 'px;height:' + size + 'px">' + letra + '</div>';
   }
 
@@ -241,11 +248,17 @@
         var fatAtual = parseFloat(c.fatura_atual || 0);
         if (limDisp > 0) totalDisp += limDisp;
         var b = BANDEIRAS[c.bandeira] || BANDEIRAS.outro;
-        var logoHtml = buildBandeiraLogo(b, 36);
+        var bandeiraHtml = buildBandeiraLogo(b, 30);
+        var contaInst = c.conta_instituicao ? c.conta_instituicao.toLowerCase() : null;
+        var contaBanco = contaInst && INSTITUICOES[contaInst] ? INSTITUICOES[contaInst] : (contaInst ? INSTITUICOES.outro : null);
+        var contaLogoHtml = contaBanco ? buildLogoHtml(contaBanco, 30) : '';
         var fechaInfo = 'Fecha dia ' + c.dia_fechamento + ' · Vence dia ' + c.dia_vencimento;
         return '<div class="cartao-card" data-id="' + c.id + '" data-mes="' + mes + '" data-ano="' + year + '">'
           + '<div class="cartao-card-header">'
-          +   logoHtml
+          +   '<div class="cartao-logos">'
+          +     (contaLogoHtml ? contaLogoHtml : '')
+          +     bandeiraHtml
+          +   '</div>'
           +   '<div class="cartao-card-nome">' + esc(c.nome) + '</div>'
           +   '<i class="bi bi-chevron-right cartao-card-chevron"></i>'
           + '</div>'
@@ -590,6 +603,45 @@
     });
   }
 
+  async function loadDebitos() {
+    var body    = document.getElementById('debitosBody');
+    var totalEl = document.getElementById('totalDebitos');
+    if (!body) return;
+    try {
+      var r = await fetch('/api/resumo/debitos-vencidos');
+      var data = await r.json();
+      if (!Array.isArray(data) || !data.length) {
+        body.innerHTML = '<div class="text-center py-3 text-muted small">'
+          + '<i class="bi bi-check-circle d-block mb-1" style="font-size:1.8rem;opacity:.3;color:#198754"></i>'
+          + 'Nenhum débito vencido</div>';
+        if (totalEl) totalEl.textContent = 'R$ 0,00';
+        return;
+      }
+      var total = data.reduce(function(acc, d) { return acc + d.valor; }, 0);
+      if (totalEl) totalEl.textContent = formatMoney(total);
+      var html = data.map(function(d) {
+        var atraso = d.dias_atraso > 0
+          ? '<span class="debito-atraso">' + d.dias_atraso + 'd atraso</span>'
+          : '<span class="debito-atraso debito-atraso--hoje">hoje</span>';
+        var dataFmt = d.data_vencimento
+          ? (function(s) { var p = s.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; })(d.data_vencimento)
+          : '';
+        return '<div class="debito-item">'
+          + '<div class="debito-desc">' + esc(d.descricao || 'Sem descrição') + '</div>'
+          + '<div class="debito-meta">'
+          +   '<span class="debito-conta">' + esc(d.conta_nome) + '</span>'
+          +   '<span class="debito-data">' + dataFmt + '</span>'
+          +   atraso
+          + '</div>'
+          + '<div class="debito-valor">' + formatMoney(d.valor) + '</div>'
+          + '</div>';
+      }).join('');
+      body.innerHTML = html;
+    } catch (e) {
+      body.innerHTML = '<div class="text-center py-2 text-muted small">Erro ao carregar débitos.</div>';
+    }
+  }
+
   async function loadDespesasPorConta() {
     var body  = document.getElementById('despesasContaBody');
     var total = document.getElementById('totalDespesasConta');
@@ -793,12 +845,13 @@
   var CARD_META = {
     'contas':         { nome: 'Contas',                icone: 'bi-wallet2',        cor: '#0d6efd' },
     'visao':          { nome: 'Visão Geral',            icone: 'bi-bar-chart-line', cor: '#0d6efd' },
-    'cartoes':        { nome: 'Cartão de Crédito',      icone: 'bi-credit-card',    cor: '#0d6efd' },
+    'cartoes':        { nome: 'Cartões de Crédito',     icone: 'bi-credit-card',    cor: '#0d6efd' },
     'projecao':       { nome: 'Projeção de Saldo',      icone: 'bi-graph-up-arrow', cor: '#0d6efd' },
     'despesas-conta': { nome: 'Despesas por Conta',     icone: 'bi-pie-chart',      cor: '#dc3545' },
     'despesas-cat':   { nome: 'Despesas por Categoria', icone: 'bi-tags',           cor: '#f59e0b' },
     'debitos':        { nome: 'Débitos',                icone: 'bi-calendar-x',     cor: '#dc3545' },
     'assistente':     { nome: 'Assistente Flux',        icone: 'bi-stars',          cor: '#6366f1' },
+    'debitos':        { nome: 'Débitos Vencidos',       icone: 'bi-exclamation-circle', cor: '#dc3545' },
   };
 
   function initGerenciar() {
@@ -1084,6 +1137,7 @@
   loadCartoes();
   loadVisaoGeral();
   loadProjecao();
+  loadDebitos();
   loadDespesasPorConta();
   loadDespesasPorCategoria();
   loadDebitos();

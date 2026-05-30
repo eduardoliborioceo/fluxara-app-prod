@@ -70,18 +70,7 @@
           <i class="bi bi-chevron-right settings-chevron"></i>
         </li>
 
-        <li class="settings-item" data-panel="usuario">
-          <span class="menu-icon" style="background:#f0fdf4;color:#16a34a">
-            <i class="bi bi-person-circle"></i>
-          </span>
-          <div class="settings-info">
-            <span class="settings-label">Área do Usuário</span>
-            <span class="settings-value">Notificações push</span>
-          </div>
-          <i class="bi bi-chevron-right settings-chevron"></i>
-        </li>
-
-        {% if current_user.is_authenticated and (current_user.is_admin or current_user.is_owner) %}
+{% if current_user.is_authenticated and (current_user.is_admin or current_user.is_owner) %}
         <li class="settings-item" data-panel="admin">
           <span class="menu-icon" style="background:#fef2f2;color:#dc2626">
             <i class="bi bi-shield-lock"></i>
@@ -191,21 +180,7 @@
     </div>
   </div>
 
-  <!-- ====== PAINEL ÁREA DO USUÁRIO ====== -->
-  <div id="viewUsuario" class="settings-panel d-none">
-    <button class="btn-back" id="btnBackUsuario">
-      <i class="bi bi-chevron-left"></i> Configurações
-    </button>
-    <div class="settings-card mt-3">
-      <div class="settings-card-title">Área do Usuário</div>
-      <div class="admin-grid p-3">
-        <a href="{{ url_for('pages.usuario_debug_push') }}" class="admin-grid-card">
-          <i class="bi bi-bell-fill"></i>
-          <span>Debug Push</span>
-        </a>
-      </div>
-    </div>
-  </div>
+
 
   <!-- ====== PAINEL ÁREA DO ADMINISTRADOR ====== -->
   {% if current_user.is_authenticated and (current_user.is_admin or current_user.is_owner) %}
@@ -257,10 +232,28 @@
           <label class="form-label fw-semibold">Nome</label>
           <input type="text" id="catNome" class="form-control" placeholder="Ex: Alimentação" maxlength="100">
         </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Cor de fundo</label>
+          <div class="cat-cor-row">
+            <div class="cat-cor-swatches" id="catCorSwatches"></div>
+            <div class="cat-cor-custom">
+              <label class="cat-cor-custom-label" title="Cor personalizada">
+                <input type="color" id="catCorCustomInput" value="#3b82f6">
+                <i class="bi bi-eyedropper"></i>
+              </label>
+            </div>
+            <button type="button" class="cat-cor-clear" id="btnClearCor" title="Sem cor">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+          <input type="hidden" id="catCorFundo" value="">
+        </div>
         <div class="mb-2">
           <label class="form-label fw-semibold">Ícone</label>
           <div class="d-flex align-items-center gap-2 mb-2">
-            <i id="catIconePreview" class="bi bi-tag fs-4"></i>
+            <span id="catIconePreviewWrap" class="cat-icone-preview-wrap">
+              <i id="catIconePreview" class="bi bi-tag fs-4"></i>
+            </span>
             <span class="text-muted small" id="catIconeNome">bi-tag</span>
           </div>
           <div class="icone-picker" id="iconePicker"></div>

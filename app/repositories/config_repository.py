@@ -60,26 +60,26 @@ def get_categorias(user_id: int, tipo: str) -> list:
             return cur.fetchall()
 
 
-def create_categoria(user_id: int, tipo: str, nome: str, icone: str, ordem: int = 0):
+def create_categoria(user_id: int, tipo: str, nome: str, icone: str, ordem: int = 0, cor_fundo: str | None = None):
     with get_db() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("""
-                INSERT INTO categorias (user_id, tipo, nome, icone, ordem)
-                VALUES (%s, %s, %s, %s, %s)
+                INSERT INTO categorias (user_id, tipo, nome, icone, ordem, cor_fundo)
+                VALUES (%s, %s, %s, %s, %s, %s)
                 RETURNING *
-            """, (user_id, tipo, nome, icone, ordem))
+            """, (user_id, tipo, nome, icone, ordem, cor_fundo))
             row = cur.fetchone()
             conn.commit()
             return row
 
 
-def update_categoria(categoria_id: int, user_id: int, nome: str, icone: str):
+def update_categoria(categoria_id: int, user_id: int, nome: str, icone: str, cor_fundo: str | None = None):
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute("""
-                UPDATE categorias SET nome = %s, icone = %s
+                UPDATE categorias SET nome = %s, icone = %s, cor_fundo = %s
                 WHERE id = %s AND user_id = %s
-            """, (nome, icone, categoria_id, user_id))
+            """, (nome, icone, cor_fundo, categoria_id, user_id))
         conn.commit()
 
 

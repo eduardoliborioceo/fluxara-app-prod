@@ -48,6 +48,7 @@ def config_add_categoria():
             data.get("tipo", ""),
             data.get("nome", ""),
             data.get("icone", "bi-tag"),
+            cor_fundo=data.get("cor_fundo"),
         )
         return jsonify(dict(cat))
     except ValueError as e:
@@ -64,6 +65,7 @@ def config_edit_categoria(cat_id):
             current_user.id,
             data.get("nome", ""),
             data.get("icone", "bi-tag"),
+            cor_fundo=data.get("cor_fundo"),
         )
         return jsonify({"ok": True})
     except ValueError as e:
@@ -469,6 +471,18 @@ def resumo_projecao_saldo():
     eventos = lancamentos_service.get_future_events(current_user.id, dias=60)
     data = lancamentos_service.build_projecao(saldo_total, eventos)
     return jsonify(data)
+
+
+@bp.route("/resumo/debitos-vencidos", methods=["GET"])
+@login_required
+def resumo_debitos_vencidos():
+    from app.services import lancamentos_service
+    try:
+        items = lancamentos_service.get_debitos_vencidos(current_user.id)
+        return jsonify(items)
+    except Exception as exc:
+        logger.exception("resumo_debitos_vencidos error: %s", exc)
+        return jsonify({"error": "Erro interno"}), 500
 
 
 @bp.route("/resumo/visao-geral", methods=["GET"])
@@ -1179,73 +1193,6 @@ def api_set_lancamento_tags(lancamento_id):
     except Exception as e:
         logger.error("set_lancamento_tags error lancamento=%s: %s", lancamento_id, e)
         return jsonify({"error": str(e)}), 400
-
-
-# =============================================================
-# APOSTAS — SOFASCORE
-# =============================================================
-
-@bp.route("/apostas/partidas", methods=["GET"])
-@login_required
-def apostas_partidas():
-    from app.services import apostas_service
-    from datetime import date
-
-    date_str = request.args.get("date", "").strip()
-    if not date_str:
-        date_str = date.today().isoformat()
-
-    try:
-        min_diff = int(request.args.get("min_diff", 5))
-        min_diff = max(1, min(30, min_diff))
-    except (ValueError, TypeError):
-        min_diff = 5
-
-    try:
-        matches, with_standings = apostas_service.get_mismatch_matches(date_str, min_diff)
-        return jsonify({
-            "matches": matches,
-            "total": len(matches),
-            "with_standings": with_standings,
-            "date": date_str,
-            "min_diff": min_diff,
-        })
-    except Exception as exc:
-        logger.exception("apostas_partidas error: %s", exc)
-        return jsonify({"error": "Erro ao buscar partidas"}), 500
-
-
-@bp.route("/apostas/tournaments", methods=["GET"])
-@login_required
-def apostas_tournaments():
-    from app.services import apostas_service
-    return jsonify(apostas_service.get_tournaments_list())
-
-
-@bp.route("/apostas/standings/<int:tournament_id>", methods=["GET"])
-@login_required
-def apostas_standings(tournament_id):
-    from app.services import apostas_service
-    if tournament_id not in apostas_service._KNOWN_TOURNAMENT_IDS:
-        return jsonify({"error": "Campeonato não suportado"}), 400
-    try:
-        data = apostas_service.get_tournament_standings(tournament_id)
-        return jsonify(data)
-    except Exception as exc:
-        logger.exception("apostas_standings error t=%s: %s", tournament_id, exc)
-        return jsonify({"error": "Erro ao buscar tabela"}), 500
-
-
-@bp.route("/apostas/odds/<int:event_id>", methods=["GET"])
-@login_required
-def apostas_odds(event_id):
-    from app.services import apostas_service
-    try:
-        odds = apostas_service.get_event_odds(event_id)
-        return jsonify(odds)
-    except Exception as exc:
-        logger.exception("apostas_odds error event=%s: %s", event_id, exc)
-        return jsonify({"error": "Erro ao buscar odds"}), 500
 
 
 # =============================================================

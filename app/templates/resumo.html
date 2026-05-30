@@ -49,25 +49,28 @@
     <div class="card-body">
       <div class="visao-row">
         <div class="visao-item visao-receita">
+          <div class="visao-icon"><i class="bi bi-arrow-down-circle-fill"></i></div>
           <div class="visao-label">Receitas</div>
           <div class="visao-valor" id="totalReceitas">R$ 0,00</div>
         </div>
         <div class="visao-item visao-despesa">
+          <div class="visao-icon"><i class="bi bi-arrow-up-circle-fill"></i></div>
           <div class="visao-label">Despesas</div>
           <div class="visao-valor" id="totalDespesas">R$ 0,00</div>
         </div>
         <div class="visao-item visao-resultado">
-          <div class="visao-label">Resultado</div>
+          <div class="visao-icon"><i class="bi bi-wallet2"></i></div>
+          <div class="visao-label">Saldo</div>
           <div class="visao-valor" id="totalResultado">R$ 0,00</div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ====== CARD CARTÃO DE CRÉDITO ====== -->
+  <!-- ====== CARD CARTÕES DE CRÉDITO ====== -->
   <div class="resumo-card card" data-card-id="cartoes">
     <div class="card-header-custom">
-      <i class="bi bi-credit-card text-primary"></i> Cartão de Crédito
+      <i class="bi bi-credit-card text-primary"></i> Cartões de Crédito
       <span class="ms-auto text-muted fw-normal" style="font-size:.8rem">Limite disponível</span>
       <span class="ms-2 fw-bold" id="totalCartoes" style="white-space:nowrap">R$ 0,00</span>
     </div>
@@ -80,6 +83,21 @@
   </div>
 
   </div><!-- /.resumo-right-col -->
+
+  <!-- ====== CARD DÉBITOS VENCIDOS ====== -->
+  <div class="resumo-card card" data-card-id="debitos">
+    <div class="card-header-custom">
+      <i class="bi bi-exclamation-circle text-danger"></i> Débitos Vencidos
+      <span class="ms-auto text-muted fw-normal" style="font-size:.8rem">Não pagos</span>
+      <span class="ms-2 fw-bold text-danger" id="totalDebitos" style="white-space:nowrap">R$ 0,00</span>
+    </div>
+    <div class="card-body" id="debitosBody">
+      <div class="text-center py-3 text-muted small">
+        <i class="bi bi-check-circle d-block mb-1" style="font-size:1.8rem;opacity:.3;color:#198754"></i>
+        Nenhum débito vencido
+      </div>
+    </div>
+  </div>
 
   <!-- ====== CARD PROJEÇÃO DE SALDO ====== -->
   <div class="resumo-card card" data-card-id="projecao">

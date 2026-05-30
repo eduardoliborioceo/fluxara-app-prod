@@ -227,13 +227,16 @@ Acesse: `http://127.0.0.1:5000`
 ## 🔁 Principais Funcionalidades
 
 ### Resumo
-- Saldo total das contas
-- Visão geral mensal (receitas, despesas, resultado)
+- Saldo total das contas com ícones coloridos por tipo (receitas, despesas, saldo, projeção)
+- Visão geral mensal (receitas, despesas, saldo)
+- Débitos vencidos — card dedicado mostrando apenas despesas não pagas com atraso em dias
 - Projeção de saldo — linha do tempo dos próximos 90 dias
-- Fatura atual dos cartões
+- Cartões de crédito com logo da conta vinculada + bandeira
+- Visibilidade de cards configurável por usuário
 
 ### Extrato por Conta
 - Histórico mensal com filtro de mês
+- Filtros de status e tags como selects (interface limpa, sem pills)
 - Edição e exclusão de lançamentos
 - Suporte a receitas, despesas e transferências
 - Parcelas futuras sempre criadas como pendentes (efetivado apenas na parcela inicial)
@@ -241,6 +244,23 @@ Acesse: `http://127.0.0.1:5000`
 ### Extrato por Cartão
 - Histórico por fatura (mês/ano)
 - Edição e exclusão de despesas do cartão
+
+### Apostas
+- Integração com ESPN (notícias esportivas)
+- Integração com API-Football (dados de partidas e odds)
+- Cards de odds por partida
+
+### Categorias
+- Categorias e subcategorias personalizadas por usuário
+- Cor de fundo personalizável por categoria (paleta de cores + seletor livre)
+- Banco de ícones expandido (+100 ícones Bootstrap Icons organizados por tema)
+
+### Configurações
+- Tema claro/escuro por usuário
+- Gerenciamento de cartões de crédito
+- Gastos Developer — tipos de custo personalizados por grupo (infra, domínio, CDN, email, etc.)
+- Avatar do header mobile como link direto para Meu Perfil
+- Menu inferior mobile: Assinaturas substituiu Perfil
 
 ### Backup
 - Interface admin em `/admin/backups`
@@ -292,6 +312,7 @@ Acesse: `http://127.0.0.1:5000`
 - `GET /api/cartoes`
 - `GET /api/resumo/visao-geral`
 - `GET /api/resumo/projecao-saldo`
+- `GET /api/resumo/debitos-vencidos`
 - `GET /api/contas/<id>/lancamentos`
 - `GET /api/cartoes/<id>/lancamentos`
 - `POST /api/lancamentos`
