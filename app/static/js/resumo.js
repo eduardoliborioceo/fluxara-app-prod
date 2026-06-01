@@ -793,48 +793,37 @@
       if (totalEl) totalEl.textContent = formatMoney(data.total_pendente || 0);
 
       var vencidos = data.vencidos || [];
-      var hoje     = data.hoje     || [];
-      var breve    = data.breve    || [];
-      var pagos    = data.pagos_recentes || [];
 
-      if (!vencidos.length && !hoje.length && !breve.length && !pagos.length) {
+      if (!vencidos.length) {
         body.innerHTML = '<div class="debito-vazio">'
           + '<i class="bi bi-check-circle text-success" style="font-size:1.8rem;opacity:.6;display:block;margin-bottom:8px"></i>'
-          + '<span>Nenhum débito pendente</span>'
+          + '<span>Nenhum débito vencido</span>'
           + '</div>';
+        if (totalEl) totalEl.textContent = formatMoney(0);
         return;
       }
 
-      function buildGroup(titulo, items, classe) {
-        if (!items.length) return '';
-        var rows = items.map(function (it) {
-          var dt = it.vencimento
-            ? new Date(it.vencimento + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
-            : '—';
-          return '<div class="debito-row">'
-            + '<div class="debito-row-info">'
-            +   '<span class="debito-row-desc">' + esc(it.descricao) + '</span>'
-            +   '<span class="debito-row-cat">' + esc(it.categoria) + '</span>'
-            + '</div>'
-            + '<div class="debito-row-right">'
-            +   '<span class="debito-row-valor">' + formatMoney(it.valor) + '</span>'
-            +   '<span class="debito-row-data">' + dt + '</span>'
-            + '</div>'
-            + '</div>';
-        }).join('');
-        return '<div class="debito-group debito-group--' + classe + '">'
-          + '<div class="debito-group-title">' + titulo
-          + ' <span class="debito-group-badge">' + items.length + '</span>'
-          + '</div>'
-          + rows
-          + '</div>';
-      }
+      var totalVencidos = vencidos.reduce(function(s, it) { return s + parseFloat(it.valor || 0); }, 0);
+      if (totalEl) totalEl.textContent = formatMoney(totalVencidos);
 
-      body.innerHTML =
-        buildGroup('Vencidos', vencidos, 'vencido')
-        + buildGroup('Vence hoje', hoje, 'hoje')
-        + buildGroup('Próximos 7 dias', breve, 'breve')
-        + buildGroup('Pagos recentes', pagos, 'pago');
+      var rows = vencidos.map(function (it) {
+        var dt = it.vencimento
+          ? new Date(it.vencimento + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+          : '—';
+        var diasAtraso = it.dias_atraso ? ' <span class="debito-row-atraso">+' + it.dias_atraso + 'd</span>' : '';
+        return '<div class="debito-row">'
+          + '<div class="debito-row-info">'
+          +   '<span class="debito-row-desc">' + esc(it.descricao) + '</span>'
+          +   '<span class="debito-row-cat">' + esc(it.categoria) + '</span>'
+          + '</div>'
+          + '<div class="debito-row-right">'
+          +   '<span class="debito-row-valor">' + formatMoney(it.valor) + '</span>'
+          +   '<span class="debito-row-data">' + dt + diasAtraso + '</span>'
+          + '</div>'
+          + '</div>';
+      }).join('');
+
+      body.innerHTML = rows;
 
     } catch (e) {
       body.innerHTML = '<div class="text-center py-2 text-muted small">Erro ao carregar débitos.</div>';
