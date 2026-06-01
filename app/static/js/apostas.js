@@ -390,8 +390,40 @@ function renderTipsStats(stats) {
   document.getElementById("statPending").textContent = stats.pendente;
 }
 
+let _previewMode = false;
+
+function togglePreviewMode() {
+  _previewMode = !_previewMode;
+  const toolbar  = document.getElementById("tipsAdminToolbar");
+  const banner   = document.getElementById("tipsPreviewBanner");
+  const icon     = document.getElementById("previewIcon");
+  const label    = document.getElementById("previewLabel");
+  if (!toolbar) return;
+
+  if (_previewMode) {
+    toolbar.style.opacity   = "0.4";
+    toolbar.style.pointerEvents = "none";
+    if (banner) banner.style.display = "flex";
+    if (icon)   icon.className = "bi bi-eye-slash";
+    if (label)  label.textContent = "Sair do preview";
+  } else {
+    toolbar.style.opacity   = "";
+    toolbar.style.pointerEvents = "";
+    if (banner) banner.style.display = "none";
+    if (icon)   icon.className = "bi bi-eye";
+    if (label)  label.textContent = "Ver como usuário";
+  }
+
+  const tipsList = document.getElementById("tipsList");
+  if (tipsList && tipsList.style.display !== "none") {
+    const tips = window._cachedTips || [];
+    tipsList.innerHTML = tips.map(t => buildTipCard(t, _previewMode ? false : window.APOSTAS_IS_ADMIN === true)).join("");
+  }
+}
+
 function renderTipsList(tips) {
-  const isAdmin = window.APOSTAS_IS_ADMIN === true;
+  window._cachedTips = tips;
+  const isAdmin = _previewMode ? false : window.APOSTAS_IS_ADMIN === true;
   document.getElementById("tipsList").innerHTML = tips.map(t => buildTipCard(t, isAdmin)).join("");
 }
 
