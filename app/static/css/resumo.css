@@ -479,14 +479,20 @@
 }
 
 .visao-item .visao-icon {
-  font-size: 1.5rem;
-  margin-bottom: 6px;
-  line-height: 1;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  margin: 0 auto 10px;
+  color: #fff;
 }
 
-.visao-receita  .visao-icon { color: #198754; }
-.visao-despesa  .visao-icon { color: #dc3545; }
-.visao-resultado .visao-icon { color: #0d6efd; }
+.visao-receita  .visao-icon { background: #198754; }
+.visao-despesa  .visao-icon { background: #dc3545; }
+.visao-resultado .visao-icon { background: #0d6efd; }
 
 .visao-item .visao-label {
   font-size: .75rem;
