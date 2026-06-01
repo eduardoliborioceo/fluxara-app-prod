@@ -432,10 +432,34 @@ function buildTipCard(tip, isAdmin) {
   const adminActions = isAdmin ? buildTipAdminActions(tip) : "";
   const hasMultipla  = Array.isArray(tip.jogos) && tip.jogos.length > 0;
 
-  const body = hasMultipla ? buildMultiplaBody(tip) : buildLegacyMeta(tip);
-  const link = tip.link_aposta
-    ? `<a href="${escHtml(tip.link_aposta)}" target="_blank" rel="noopener" class="tips-link-btn"><i class="bi bi-link-45deg"></i> Ver aposta</a>`
+  const oddHtml = tip.odd != null
+    ? `<span class="tips-odd-display"><i class="bi bi-calculator"></i>Odd total: <strong>${tip.odd.toFixed(2)}</strong></span>`
     : "";
+
+  let linkHtml = "";
+  if (tip.link_aposta) {
+    linkHtml = `
+      <div class="tips-link-group">
+        <a href="${escHtml(tip.link_aposta)}" target="_blank" rel="noopener" class="tips-link-btn">
+          <i class="bi bi-link-45deg"></i> Ver aposta
+        </a>
+        <button class="tips-copy-btn" data-link="${escHtml(tip.link_aposta)}" onclick="copyTipLink(this)" title="Copiar link">
+          <i class="bi bi-clipboard"></i>
+        </button>
+      </div>`;
+  }
+
+  const detailsHtml = hasMultipla ? buildMultiplaDetails(tip) : buildLegacyDetails(tip);
+  const jogoCount   = hasMultipla ? tip.jogos.length : 0;
+  const detailLabel = jogoCount > 1 ? `${jogoCount} jogos` : "resumo";
+
+  const toggleSection = detailsHtml ? `
+    <button class="tips-toggle-btn" onclick="toggleTipDetails(${tip.id})">
+      <i class="bi bi-chevron-down tips-toggle-icon"></i> Ver ${detailLabel}
+    </button>
+    <div class="tips-details" id="tip-details-${tip.id}" style="display:none">
+      ${detailsHtml}
+    </div>` : "";
 
   return `
     <div class="tips-card" id="tip-${tip.id}" data-status="${escHtml(tip.status)}">
@@ -443,58 +467,74 @@ function buildTipCard(tip, isAdmin) {
         ${statusBadge}
         <span class="tips-card-title">${escHtml(tip.titulo)}</span>
       </div>
-      ${body}
-      ${link}
+      ${(oddHtml || linkHtml) ? `<div class="tips-card-row2">${oddHtml}${linkHtml}</div>` : ""}
+      ${toggleSection}
       ${adminActions}
     </div>
   `;
 }
 
-function buildMultiplaBody(tip) {
-  const jogosHtml = tip.jogos.map(j => {
-    const data = j.data_partida ? `<span class="tips-jogo-data">${formatDate(j.data_partida)}</span>` : "";
-    const camp = j.campeonato ? `<span class="tips-jogo-camp">${escHtml(j.campeonato)}</span>` : "";
+function buildMultiplaDetails(tip) {
+  return tip.jogos.map((j, idx) => {
+    const campHtml = j.campeonato
+      ? `<span class="tips-detail-camp">${escHtml(j.campeonato)}</span>` : "";
+    const dataHtml = j.data_partida
+      ? `<span>${formatDate(j.data_partida)}</span>` : "";
     return `
-      <div class="tips-multipla-jogo">
-        <div class="tips-jogo-partida">${escHtml(j.partida)} ${camp} ${data}</div>
-        <div class="tips-jogo-mercado">
-          <i class="bi bi-tag-fill"></i>
-          ${escHtml(j.mercado)}
-          <span class="tips-jogo-odd">@ ${j.odd.toFixed(2)}</span>
+      <div class="tips-detail-jogo${idx > 0 ? " tips-detail-jogo--sep" : ""}">
+        <div class="tips-detail-tipo"><i class="bi bi-tag-fill"></i>${escHtml(j.mercado)}</div>
+        <div class="tips-detail-partida">${escHtml(j.partida)}${campHtml}</div>
+        <div class="tips-detail-meta">
+          ${dataHtml}
+          ${j.odd != null ? `<span class="tips-detail-odd">@ ${j.odd.toFixed(2)}</span>` : ""}
         </div>
-      </div>
-    `;
+      </div>`;
   }).join("");
-
-  const footer = [];
-  if (tip.odd != null) footer.push(`<span><i class="bi bi-calculator"></i>Odd total: <strong>${tip.odd.toFixed(2)}</strong></span>`);
-  if (tip.stake)       footer.push(`<span><i class="bi bi-coin"></i>${escHtml(tip.stake)}</span>`);
-
-  return `
-    <div class="tips-multipla-jogos">${jogosHtml}</div>
-    ${footer.length ? `<div class="tips-card-meta tips-card-footer">${footer.join("")}</div>` : ""}
-  `;
 }
 
-function buildLegacyMeta(tip) {
-  const parts = [];
-  if (tip.partida)      parts.push(`<span><i class="bi bi-shield-fill"></i>${escHtml(tip.partida)}</span>`);
-  if (tip.campeonato)   parts.push(`<span><i class="bi bi-trophy-fill"></i>${escHtml(tip.campeonato)}</span>`);
-  if (tip.odd != null)  parts.push(`<span><i class="bi bi-tag-fill"></i>Odd ${tip.odd.toFixed(2)}</span>`);
-  if (tip.stake)        parts.push(`<span><i class="bi bi-coin"></i>${escHtml(tip.stake)}</span>`);
-  if (tip.data_partida) parts.push(`<span><i class="bi bi-calendar3"></i>${formatDate(tip.data_partida)}</span>`);
-  return parts.length ? `<div class="tips-card-meta">${parts.join("")}</div>` : "";
+function buildLegacyDetails(tip) {
+  const rows = [];
+  if (tip.partida)      rows.push(`<div class="tips-detail-partida">${escHtml(tip.partida)}</div>`);
+  if (tip.campeonato)   rows.push(`<span class="tips-detail-camp">${escHtml(tip.campeonato)}</span>`);
+  if (tip.data_partida) rows.push(`<div class="tips-detail-meta"><span>${formatDate(tip.data_partida)}</span></div>`);
+  if (tip.stake)        rows.push(`<div class="tips-detail-meta"><span>Stake: ${escHtml(tip.stake)}</span></div>`);
+  return rows.length ? `<div class="tips-detail-jogo">${rows.join("")}</div>` : "";
 }
 
 function buildStatusBadge(status) {
   const map = {
     green:    { cls: "tips-badge--green",   icon: "bi-check-circle-fill", label: "Green" },
     red:      { cls: "tips-badge--red",     icon: "bi-x-circle-fill",     label: "Red" },
-    pendente: { cls: "tips-badge--pending", icon: "bi-clock-fill",        label: "Pendente" },
+    pendente: { cls: "tips-badge--pending", icon: "bi-clock-fill",        label: "Em Aberto" },
     void:     { cls: "tips-badge--void",    icon: "bi-dash-circle",       label: "Void" },
   };
   const s = map[status] || map.pendente;
   return `<span class="tips-badge ${s.cls}"><i class="bi ${s.icon}"></i>${s.label}</span>`;
+}
+
+function toggleTipDetails(tipId) {
+  const details = document.getElementById(`tip-details-${tipId}`);
+  const btn     = document.querySelector(`#tip-${tipId} .tips-toggle-btn`);
+  if (!details) return;
+  const isOpen = details.style.display !== "none";
+  details.style.display = isOpen ? "none" : "block";
+  if (btn) {
+    const icon = btn.querySelector(".tips-toggle-icon");
+    if (icon) icon.style.transform = isOpen ? "" : "rotate(180deg)";
+  }
+}
+
+async function copyTipLink(btn) {
+  const link = btn.dataset.link;
+  if (!link) return;
+  try {
+    await navigator.clipboard.writeText(link);
+    const icon = btn.querySelector("i");
+    if (icon) {
+      icon.className = "bi bi-clipboard-check";
+      setTimeout(() => { icon.className = "bi bi-clipboard"; }, 2000);
+    }
+  } catch { /* clipboard api indisponível */ }
 }
 
 function formatDate(iso) {
