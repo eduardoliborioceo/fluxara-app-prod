@@ -1,46 +1,18 @@
 
-# Fluxara — Controle Financeiro Pessoal
+# Fluxara — Gestão Financeira e Apostas
 
-Aplicação **Fullstack Flask** (MVC) para **gestão financeira pessoal**, com:
-
-- **Contas bancárias** com saldo real e projeção de saldo
-- **Cartões de crédito** com controle de fatura por mês
-- **Lançamentos** (receitas, despesas, parcelamentos, recorrências)
-- **Transferências** entre contas
-- **Projeção de saldo** — visualização do saldo futuro por linha do tempo
-- **Categorias e subcategorias** personalizadas
-- **Planejamento** mensal por categorias
-- **Backup automático** do banco com agendamento, criptografia AES-256 e logs
-- **PWA** (offline + manifest + service worker)
-- **Autenticação local + OAuth** (Google / GitHub) com botões circulares, show/hide senha
-- **Cadastro com aprovação automática** — novos usuários ficam ativos imediatamente
-- **Exclusão de conta** pelo próprio usuário com confirmação
-- **Notificações push** via VAPID
+Aplicação **Fullstack Flask** (MVC) para **controle financeiro pessoal e gestão de apostas esportivas**, com módulos de saúde, ferramentas de análise e painel administrativo.
 
 > 🇧🇷 Este README é a referência principal.
-> 🇺🇸 For the English version, see `README.EN.md`.
 
 ---
 
 ## ☁️ Infraestrutura (Railway)
 
-Este projeto roda em **Railway + PostgreSQL** e possui **dois ambientes** separados por branch:
-
-### ✅ Produção
-- **Service:** `fluxara-app-prod`
-- **Branch:** `main`
-- **DB:** `banco_prod`
-- **Domínio:** `fluxara.app`
-
-### ✅ Desenvolvimento
-- **Service:** `fluxara-app-develop`
-- **Branch:** `develop`
-- **DB:** `banco_test`
-
-### Deploy seguro (fluxo recomendado)
-1. Trabalhar e validar na branch `develop`
-2. Abrir Pull Request para `main` via GitHub
-3. Produção nunca quebra durante uso
+| Ambiente | Branch | Banco | Domínio |
+|---|---|---|---|
+| Produção | `main` | `banco_prod` | `fluxara.app` |
+| Desenvolvimento | `develop` | `banco_test` | — |
 
 ---
 
@@ -61,56 +33,99 @@ Este projeto roda em **Railway + PostgreSQL** e possui **dois ambientes** separa
 
 ```
 ├─ app/
-│   ├─ __init__.py              # create_app()
-│   ├─ config.py                # Configurações / env
-│   ├─ extensions.py            # DB (psycopg)
+│   ├─ __init__.py
+│   ├─ config.py
+│   ├─ extensions.py
+│   ├─ health.py
 │   │
 │   ├─ auth/
 │   │   ├─ models.py
 │   │   ├─ repository.py
+│   │   ├─ profile_repository.py
 │   │   ├─ routes.py
-│   │   └─ service.py
+│   │   ├─ service.py
+│   │   └─ decorators.py
 │   │
 │   ├─ repositories/
+│   │   ├─ apostas_tips_repository.py
+│   │   ├─ assinaturas_repository.py
 │   │   ├─ backup_repository.py
 │   │   ├─ cartoes_repository.py
 │   │   ├─ config_repository.py
 │   │   ├─ contas_repository.py
+│   │   ├─ dev_repository.py
 │   │   ├─ lancamentos_repository.py
+│   │   ├─ notificacoes_orcamento_repository.py
+│   │   ├─ orcamentos_repository.py
 │   │   ├─ push_repository.py
+│   │   ├─ saude_repository.py
+│   │   ├─ surebet_repository.py
+│   │   ├─ suporte_repository.py
+│   │   ├─ tags_repository.py
 │   │   └─ transferencias_repository.py
 │   │
 │   ├─ routes/
-│   │   ├─ admin.py             # Rotas administrativas
-│   │   ├─ api.py               # API REST (JSON)
-│   │   └─ pages.py             # Rotas HTML
+│   │   ├─ admin.py
+│   │   ├─ api.py
+│   │   ├─ dev.py
+│   │   └─ pages.py
 │   │
 │   ├─ services/
+│   │   ├─ apostas_apifootball_service.py
+│   │   ├─ apostas_espn_service.py
+│   │   ├─ apostas_tips_service.py
+│   │   ├─ assistente_service.py
+│   │   ├─ assinaturas_service.py
 │   │   ├─ backup_service.py
+│   │   ├─ cartao_notification_service.py
 │   │   ├─ cartoes_service.py
 │   │   ├─ config_service.py
 │   │   ├─ contas_service.py
+│   │   ├─ dev_service.py
 │   │   ├─ email_service.py
 │   │   ├─ lancamentos_service.py
+│   │   ├─ orcamentos_service.py
 │   │   ├─ push_service.py
+│   │   ├─ saude_notification_service.py
+│   │   ├─ saude_service.py
+│   │   ├─ surebet_service.py
+│   │   ├─ suporte_service.py
+│   │   ├─ tags_service.py
 │   │   └─ transferencias_service.py
 │   │
 │   ├─ templates/
 │   │   ├─ admin/
-│   │   │   └─ backups.html
+│   │   │   ├─ backups.html
+│   │   │   └─ suporte.html
 │   │   ├─ auth/
+│   │   │   ├─ assinaturas.html
+│   │   │   ├─ login.html
+│   │   │   ├─ myperfil.html
+│   │   │   ├─ register.html
+│   │   │   ├─ reset_password.html
+│   │   │   ├─ forgot_password.html
+│   │   │   ├─ users_admin.html
+│   │   │   └─ mobile/
+│   │   ├─ dev/
+│   │   │   ├─ painel.html
+│   │   │   └─ novo_projeto.html
+│   │   ├─ errors/
 │   │   ├─ layouts/
-│   │   │   └─ app.html
+│   │   │   ├─ app.html
+│   │   │   └─ auth.html
 │   │   ├─ legal/
+│   │   ├─ apostas.html
 │   │   ├─ configuracoes.html
 │   │   ├─ contas.html
-│   │   ├─ dashboard.html
 │   │   ├─ extrato_cartao.html
 │   │   ├─ extrato_conta.html
+│   │   ├─ mais.html
+│   │   ├─ minha_saude.html
 │   │   ├─ nova_transferencia.html
 │   │   ├─ novo_lancamento.html
 │   │   ├─ planejamento.html
-│   │   └─ resumo.html
+│   │   ├─ resumo.html
+│   │   └─ surebet.html
 │   │
 │   └─ static/
 │       ├─ css/
@@ -120,7 +135,6 @@ Este projeto roda em **Railway + PostgreSQL** e possui **dois ambientes** separa
 │       └─ sw.js
 │
 ├─ migrations/
-├─ tests/
 ├─ .gitignore
 ├─ LICENSE
 ├─ Procfile
@@ -133,24 +147,24 @@ Este projeto roda em **Railway + PostgreSQL** e possui **dois ambientes** separa
 
 ## ⚙️ Tecnologias
 
-- **Python 3.12**
-- **Flask 3**
-- **Jinja2**
-- **PostgreSQL** (psycopg)
-- **Bootstrap 5**
+- **Python 3.12** / **Flask 3**
+- **Jinja2** / **Bootstrap 5**
+- **PostgreSQL** via psycopg
 - **JavaScript Vanilla**
-- **APScheduler** (backup agendado)
+- **APScheduler** (backup agendado, notificações)
 - **cryptography** (AES-256 para backup)
 - **PWA** (Service Worker + Manifest)
 - **SendGrid** (email)
-- **Cloudinary** (imagens)
+- **Cloudinary** (upload de imagens)
 - **pywebpush** (notificações push VAPID)
+- **ESPN API** (dados esportivos — sem chave)
+- **API-Football** (dados europeus/globais — chave necessária)
 
 ---
 
 ## 🔐 Variáveis de Ambiente
 
-Configure no Railway (não use `.env` em produção):
+Configure no Railway:
 
 ```env
 # App
@@ -185,8 +199,14 @@ VAPID_PUBLIC_KEY=
 VAPID_PRIVATE_KEY=
 VAPID_CLAIMS_SUB=mailto:admin@fluxara.app
 
-# Backup (opcional — ativa criptografia AES-256)
+# Backup (ativa criptografia AES-256)
 BACKUP_ENCRYPTION_KEY=
+
+# Apostas
+API_FOOTBALL_KEY=
+
+# IA / Assistente
+ANTHROPIC_API_KEY=
 ```
 
 ---
@@ -194,21 +214,11 @@ BACKUP_ENCRYPTION_KEY=
 ## ▶️ Rodando Localmente
 
 ```bash
-# 1. Clonar
-git clone https://github.com/eduardoliboriox/fluxara-app-prod.git
+git clone https://github.com/eduardoliborioceo/fluxara-app-prod.git
 cd fluxara-app-prod
-
-# 2. Ambiente virtual
 python -m venv venv
-# Windows:
-venv\Scripts\activate
-# Linux/Mac:
-source venv/bin/activate
-
-# 3. Dependências
+venv\Scripts\activate        # Windows
 pip install -r requirements.txt
-
-# 4. Executar
 python run.py
 ```
 
@@ -216,7 +226,7 @@ Acesse: `http://127.0.0.1:5000`
 
 ---
 
-## 🗃 Banco de Dados (Railway — via psql no Windows)
+## 🗃 Banco de Dados (Railway)
 
 ```bash
 "C:\Program Files\PostgreSQL\18\bin\psql.exe" "%DATABASE_URL%"
@@ -224,59 +234,97 @@ Acesse: `http://127.0.0.1:5000`
 
 ---
 
-## 🔁 Principais Funcionalidades
+## 🔁 Funcionalidades
 
 ### Resumo
-- Saldo total das contas com ícones coloridos por tipo (receitas, despesas, saldo, projeção)
-- Visão geral mensal (receitas, despesas, saldo)
-- Débitos vencidos — card dedicado mostrando apenas despesas não pagas com atraso em dias
-- Projeção de saldo — linha do tempo dos próximos 90 dias
-- Cartões de crédito com logo da conta vinculada + bandeira
+- Visão geral mensal: receitas, despesas e saldo com ícones coloridos
+- Saldo total das contas e projeção dos próximos 90 dias
+- Cartões de crédito com logo da conta vinculada + bandeira (Visa, Mastercard, Elo, Amex)
+- Débitos vencidos com atraso em dias
+- Despesas por conta e por categoria (gráficos)
 - Visibilidade de cards configurável por usuário
 
+### Contas
+- Cadastro de contas bancárias por tipo (conta corrente, poupança, investimento, etc.)
+- Saldo real atualizado automaticamente a cada lançamento
+- Acesso direto ao extrato de cada conta pelo card de contas no Resumo
+
 ### Extrato por Conta
-- Histórico mensal com filtro de mês
-- Filtros de status e tags como selects (interface limpa, sem pills)
-- Edição e exclusão de lançamentos
-- Suporte a receitas, despesas e transferências
-- Parcelas futuras sempre criadas como pendentes (efetivado apenas na parcela inicial)
+- Histórico mensal de lançamentos
+- Filtro de status (Todas / Efetivadas / Pendentes) via select
+- Filtro por tag via select (com exclusão de tag)
+- Filtro por intervalo de datas
+- Modo de seleção múltipla para ações em lote
+- Edição e exclusão de lançamentos via bottom sheet
 
 ### Extrato por Cartão
 - Histórico por fatura (mês/ano)
-- Edição e exclusão de despesas do cartão
+- Edição e exclusão de despesas
+- Indicador de fatura aberta/fechada
+
+### Lançamentos
+- Receitas, despesas, parcelamentos e recorrências
+- Suporte a transferências entre contas
+- Parcelas futuras criadas como pendentes
+- Tags personalizadas por lançamento
+
+### Planejamento
+- Orçamento mensal por categoria
+- Assistente de planejamento via IA (Anthropic Claude)
+- Notificações quando orçamento é excedido
 
 ### Apostas
-- Integração com ESPN (notícias esportivas)
-- Integração com API-Football (dados de partidas e odds)
-- Cards de odds por partida
+- Registro e acompanhamento de apostas esportivas
+- Integração com ESPN (notícias, tabelas e partidas — 50+ ligas)
+- Integração com API-Football (ligas europeias e globais, odds)
+- Tips de apostas por partida
+- Dashboard de resultados e ROI
+
+### Surebet
+- Calculadora de arbitragem (surebet) entre casas de apostas
+- Histórico de operações
 
 ### Categorias
 - Categorias e subcategorias personalizadas por usuário
-- Cor de fundo personalizável por categoria (paleta de cores + seletor livre)
-- Banco de ícones expandido (+100 ícones Bootstrap Icons organizados por tema)
+- Cor de fundo personalizável (paleta + seletor livre)
+- Banco de ícones com 100+ Bootstrap Icons organizados por tema
+
+### Minha Saúde
+- Registro e acompanhamento de métricas de saúde
+- Notificações e histórico
 
 ### Configurações
 - Tema claro/escuro por usuário
-- Gerenciamento de cartões de crédito
-- Gastos Developer — tipos de custo personalizados por grupo (infra, domínio, CDN, email, etc.)
-- Avatar do header mobile como link direto para Meu Perfil
-- Menu inferior mobile: Assinaturas substituiu Perfil
+- Gerenciamento de cartões de crédito (bandeira, limite, conta vinculada)
+- **Gastos Developer** — tipos de custo agrupados por categoria (infra, domínio, CDN, e-mail, API, etc.)
+- Configuração de notificações push
 
 ### Backup
 - Interface admin em `/admin/backups`
 - Execução via `pg_dump` com compressão `.sql.gz`
 - Criptografia AES-256 opcional
-- Checksum SHA-256 por backup
-- Agendamento automático (diário/semanal/mensal)
-- Download de backups pelo histórico
+- Checksum SHA-256 por arquivo
+- Agendamento automático (diário, semanal, mensal)
+- Download de backups pelo histórico de execuções
 
 ### Auth / Perfil
 - Login desktop com split-card (painel azul + formulário)
-- Show/hide senha no login (desktop e mobile)
-- OAuth Google e GitHub com botões circulares lado a lado
-- Cadastro com aprovação automática (sem necessidade de admin aprovar)
+- Show/hide senha (desktop e mobile)
+- OAuth Google e GitHub com botões circulares
+- Cadastro com aprovação automática
 - Exclusão de conta pelo usuário com modal de confirmação
-- Política de privacidade e cookies com design e conteúdo atualizados
+- Política de rotação de senha a cada 180 dias
+- Avatar no header mobile como link direto para Meu Perfil
+- Menu inferior mobile: Resumo, Planejamento, Assinaturas, Mais
+
+### Admin
+- Gerenciamento de usuários (`/admin/users`)
+- Suporte e chamados (`/admin/suporte`)
+- Backups (`/admin/backups`)
+
+### Dev
+- Painel de projetos e custos de desenvolvimento (`/dev/painel`)
+- Registro de novos projetos
 
 ---
 
@@ -301,11 +349,15 @@ Acesse: `http://127.0.0.1:5000`
 - `GET /contas`
 - `GET /planejamento`
 - `GET /configuracoes`
+- `GET /apostas`
+- `GET /surebet`
+- `GET /minha-saude`
 - `GET /conta/<id>/extrato`
 - `GET /cartao/<id>/extrato`
 - `GET /novo-lancamento`
 - `GET /nova-transferencia`
 - `GET /admin/backups`
+- `GET /dev/painel`
 
 ### API (JSON)
 - `GET /api/contas`
@@ -320,21 +372,24 @@ Acesse: `http://127.0.0.1:5000`
 - `DELETE /api/lancamentos/<id>`
 - `POST /api/transferencias`
 - `DELETE /api/transferencias/<id>`
+- `GET /api/apostas/partidas`
+- `GET /api/apostas/tabela/<liga>`
 
 ---
 
 ## 📱 PWA
 
+- Suporte offline via Service Worker
+- Instalação em dispositivos móveis (Android/iOS)
 - `app/static/manifest.webmanifest`
 - `app/static/sw.js`
-- Suporte offline, instalação em dispositivos móveis
 
 ---
 
 ## 👨‍💻 Autor
 
 **Eduardo Libório**
-📧 `eduardosoleno@protonmail.com`
+📧 `eduardosolenomorizliborio@gmail.com`
 
 ---
 
