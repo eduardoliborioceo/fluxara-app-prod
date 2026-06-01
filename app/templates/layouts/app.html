@@ -35,7 +35,11 @@
 <header class="mobile-header d-md-none">
   <div class="mobile-left">
     <a href="{{ url_for('auth.my_profile') }}" class="avatar" title="Meu perfil">
-      <img src="{{ url_for('static', filename='images/logos/pwa-512.png') }}?v={{ static_v }}">
+      {% if current_user.is_authenticated and current_user.profile_image %}
+        <img src="{{ current_user.profile_image }}" alt="Perfil">
+      {% else %}
+        <img src="{{ url_for('static', filename='images/logos/pwa-512.png') }}?v={{ static_v }}" alt="Fluxara">
+      {% endif %}
     </a>
 
     {% set page_titles = {
