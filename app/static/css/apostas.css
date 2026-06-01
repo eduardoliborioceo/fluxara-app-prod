@@ -127,8 +127,11 @@
 ======================== */
 .tips-admin-toolbar {
   display: flex;
+  align-items: center;
+  gap: 8px;
   justify-content: flex-end;
   margin-bottom: 12px;
+  transition: opacity .2s;
 }
 
 .tips-btn-nova {
@@ -147,6 +150,55 @@
 }
 
 .tips-btn-nova:hover { background: #0b5ed7; }
+
+.tips-btn-preview {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+  background: rgba(15,23,42,.05);
+  border: 1px solid var(--border, rgba(15,23,42,.09));
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+
+.tips-btn-preview:hover {
+  background: rgba(15,23,42,.09);
+  color: var(--text, #1e293b);
+}
+
+.tips-preview-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  background: rgba(234,179,8,.10);
+  border: 1px solid rgba(234,179,8,.30);
+  border-radius: 10px;
+  font-size: .82rem;
+  font-weight: 600;
+  color: #92400e;
+}
+
+.tips-preview-exit {
+  margin-left: auto;
+  padding: 4px 12px;
+  font-size: .78rem;
+  font-weight: 700;
+  color: #92400e;
+  background: rgba(234,179,8,.18);
+  border: 1px solid rgba(234,179,8,.35);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background .12s;
+}
+
+.tips-preview-exit:hover { background: rgba(234,179,8,.30); }
 
 /* ========================
    TIP CARD

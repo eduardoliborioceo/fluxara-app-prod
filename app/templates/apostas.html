@@ -64,11 +64,20 @@
     </div>
 
     {% if current_user.is_admin %}
-    <div class="tips-admin-toolbar">
+    <div class="tips-admin-toolbar" id="tipsAdminToolbar">
       <button class="tips-btn-nova" onclick="openTipModal()">
         <i class="bi bi-plus-lg"></i>
         Nova recomendação
       </button>
+      <button class="tips-btn-preview" id="btnPreviewUser" onclick="togglePreviewMode()">
+        <i class="bi bi-eye" id="previewIcon"></i>
+        <span id="previewLabel">Ver como usuário</span>
+      </button>
+    </div>
+    <div class="tips-preview-banner" id="tipsPreviewBanner" style="display:none">
+      <i class="bi bi-eye-fill"></i>
+      Modo preview — você está vendo como os usuários veem esta página
+      <button onclick="togglePreviewMode()" class="tips-preview-exit">Sair</button>
     </div>
     {% endif %}
 
