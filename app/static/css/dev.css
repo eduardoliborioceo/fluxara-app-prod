@@ -746,3 +746,58 @@
   background: #1e293b;
   border-color: rgba(255,255,255,0.08);
 }
+
+/* ---- Seletor de moeda (USD/BRL) ---- */
+.dev-custo-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.dev-custo-label-row .dev-label { margin-bottom: 0; }
+
+.dev-currency-toggle {
+  display: inline-flex;
+  gap: 2px;
+  background: var(--bg, #f1f5f9);
+  border: 1px solid var(--border, rgba(15,23,42,0.09));
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.dev-cur-btn {
+  border: none;
+  background: none;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted, #64748b);
+  cursor: pointer;
+  transition: background .1s, color .1s;
+  line-height: 1.4;
+}
+
+.dev-cur-btn--active {
+  background: var(--card, #fff);
+  color: var(--primary, #0d6efd);
+  box-shadow: 0 1px 3px rgba(15,23,42,0.08);
+}
+
+.dev-custo-usd-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 5px;
+  font-size: 0.75rem;
+}
+
+.dev-usd-converted {
+  font-weight: 700;
+  color: #198754;
+}
+
+.dev-usd-rate-label {
+  color: var(--text-muted, #64748b);
+}

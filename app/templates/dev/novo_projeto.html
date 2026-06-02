@@ -186,9 +186,21 @@
       </div>
 
       <div class="dev-form-group">
-        <label class="dev-label">Valor (R$)</label>
-        <input type="text" name="custo_valor[]" class="dev-input dev-custo-valor"
+        <div class="dev-custo-label-row">
+          <label class="dev-label">Valor</label>
+          <div class="dev-currency-toggle" title="Selecione a moeda">
+            <button type="button" class="dev-cur-btn dev-cur-btn--active" data-cur="BRL">R$</button>
+            <button type="button" class="dev-cur-btn" data-cur="USD">US$</button>
+          </div>
+        </div>
+        <input type="text" name="custo_valor[]" class="dev-input dev-custo-valor dev-custo-valor-brl"
                placeholder="0,00" inputmode="decimal">
+        <input type="text" class="dev-input dev-custo-valor-usd" style="display:none"
+               placeholder="0.00" inputmode="decimal" autocomplete="off">
+        <div class="dev-custo-usd-info" style="display:none">
+          <span class="dev-usd-converted">= R$ 0,00</span>
+          <span class="dev-usd-rate-label">–</span>
+        </div>
       </div>
 
       <div class="dev-form-group">

@@ -9,6 +9,71 @@
     return val.toFixed(2).replace('.', ',');
   }
 
+  // ---- Cotação USD ----
+  var _usdRate     = null;
+  var _usdRateTime = 0;
+  var _USD_CACHE_MS = 30 * 60 * 1000;
+
+  var _BRL_TIPOS     = ['outro'];
+  var _BRL_SPECIFIC  = ['dominio|Registro.br', 'dominio|Hostinger'];
+
+  function isBrlService(value, tipo) {
+    if (_BRL_TIPOS.indexOf(tipo) !== -1) return true;
+    if (_BRL_SPECIFIC.indexOf(value) !== -1) return true;
+    return false;
+  }
+
+  function getExchangeRate(cb) {
+    var now = Date.now();
+    if (_usdRate && (now - _usdRateTime) < _USD_CACHE_MS) { cb(_usdRate); return; }
+    fetch('https://economia.awesomeapi.com.br/json/last/USD-BRL')
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var rate = parseFloat(data.USDBRL && data.USDBRL.bid);
+        if (rate > 0) { _usdRate = rate; _usdRateTime = Date.now(); }
+        cb(_usdRate || 5.70);
+      })
+      .catch(function () { cb(_usdRate || 5.70); });
+  }
+
+  function setCurrency(row, currency) {
+    var brlInput = row.querySelector('.dev-custo-valor-brl');
+    var usdInput = row.querySelector('.dev-custo-valor-usd');
+    var usdInfo  = row.querySelector('.dev-custo-usd-info');
+    row.querySelectorAll('.dev-cur-btn').forEach(function (btn) {
+      btn.classList.toggle('dev-cur-btn--active', btn.dataset.cur === currency);
+    });
+    if (currency === 'USD') {
+      if (brlInput) brlInput.style.display = 'none';
+      if (usdInput) { usdInput.style.display = ''; usdInput.focus(); }
+      if (usdInfo)  usdInfo.style.display  = '';
+      row.dataset.currency = 'USD';
+      updateUsdConversion(row);
+    } else {
+      if (brlInput) brlInput.style.display = '';
+      if (usdInput) usdInput.style.display = 'none';
+      if (usdInfo)  usdInfo.style.display  = 'none';
+      row.dataset.currency = 'BRL';
+      updateTotals();
+    }
+  }
+
+  function updateUsdConversion(row) {
+    var usdInput    = row.querySelector('.dev-custo-valor-usd');
+    var brlInput    = row.querySelector('.dev-custo-valor-brl');
+    var convertedEl = row.querySelector('.dev-usd-converted');
+    var rateEl      = row.querySelector('.dev-usd-rate-label');
+    if (!usdInput || !brlInput) return;
+    var usdVal = parseFloat((usdInput.value || '0').replace(',', '.')) || 0;
+    getExchangeRate(function (rate) {
+      var brl = usdVal * rate;
+      brlInput.value = formatBRL(brl);
+      if (convertedEl) convertedEl.textContent = '= R$ ' + formatBRL(brl);
+      if (rateEl)      rateEl.textContent      = '1 US$ = R$ ' + formatBRL(rate);
+      updateTotals();
+    });
+  }
+
   function calcMonthlyValue(valor, recorrencia, compartilhado) {
     var base = recorrencia === 'anual' ? valor / 12
              : recorrencia === 'unico' ? 0
@@ -93,12 +158,22 @@
         if (tipoHidden) tipoHidden.value = tipo;
         if (servicoKeyHidden) servicoKeyHidden.value = servicoSelect.value;
         if (nomeInput && nome) nomeInput.value = nome;
+        setCurrency(row, isBrlService(servicoSelect.value, tipo) ? 'BRL' : 'USD');
       });
       var parts = (servicoSelect.value || '|').split('|');
       if (tipoHidden) tipoHidden.value = parts[0] || 'outro';
       if (nomeInput && parts[1] && !nomeInput.value) nomeInput.value = parts[1];
       if (servicoKeyHidden) servicoKeyHidden.value = servicoSelect.value;
     }
+
+    // Currency toggle buttons
+    row.querySelectorAll('.dev-cur-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () { setCurrency(row, btn.dataset.cur); });
+    });
+
+    // USD input → convert in real-time
+    var usdInput = row.querySelector('.dev-custo-valor-usd');
+    if (usdInput) usdInput.addEventListener('input', function () { updateUsdConversion(row); });
 
     if (valorInput) valorInput.addEventListener('input', updateTotals);
     if (recorrenciaSelect) recorrenciaSelect.addEventListener('change', updateTotals);
