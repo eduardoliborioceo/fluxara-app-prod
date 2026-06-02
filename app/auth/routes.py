@@ -401,6 +401,7 @@ def register_form():
 @bp.route("/assinaturas")
 @login_required
 def assinaturas():
+    import os
     from app.services import assinaturas_service
     dados = assinaturas_service.get_dados_pagina(current_user.id)
     return render_template(
@@ -409,6 +410,7 @@ def assinaturas():
         dados=dados,
         is_admin=current_user.is_admin,
         is_owner=current_user.is_owner,
+        mp_public_key=os.environ.get("MERCADOPAGO_PUBLIC_KEY", ""),
     )
 
 
