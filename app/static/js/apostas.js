@@ -553,7 +553,8 @@ function buildTipAdminActions(tip) {
       ${tip.status !== "red"      ? `<button class="tips-action-btn tips-action-btn--red"     onclick="setTipStatus(${id},'red')"      title="Red"><i class="bi bi-x-lg"></i></button>` : ""}
       ${tip.status !== "pendente" ? `<button class="tips-action-btn tips-action-btn--pending" onclick="setTipStatus(${id},'pendente')" title="Em Aberto"><i class="bi bi-clock"></i></button>` : ""}
       ${tip.status !== "void"     ? `<button class="tips-action-btn tips-action-btn--void"    onclick="setTipStatus(${id},'void')"     title="Anular"><i class="bi bi-dash-lg"></i></button>` : ""}
-      <button class="tips-action-btn tips-action-btn--delete" onclick="deleteTip(${id})" title="Excluir"><i class="bi bi-trash3"></i></button>
+      <button class="tips-action-btn tips-action-btn--edit"   onclick="openEditModal(${id})"  title="Editar"><i class="bi bi-pencil"></i></button>
+      <button class="tips-action-btn tips-action-btn--delete" onclick="deleteTip(${id})"   title="Excluir"><i class="bi bi-trash3"></i></button>
     </div>
   `;
 }
@@ -957,6 +958,190 @@ function _selectPickerMatch(el) {
   if (dataEl && date) dataEl.value = date;
 
   closeMatchPicker();
+}
+
+// ============================================================
+//  AUTO GERAR
+// ============================================================
+
+let _autoLeaguesLoaded = false;
+
+async function openAutoModal() {
+  document.getElementById("autoFormError").style.display = "none";
+  document.getElementById("autoModalOverlay").style.display = "flex";
+  if (!_autoLeaguesLoaded) {
+    await _loadAutoLeagues();
+    _autoLeaguesLoaded = true;
+  }
+}
+
+function closeAutoModal() {
+  document.getElementById("autoModalOverlay").style.display = "none";
+}
+
+function closeAutoModalOverlay(e) {
+  if (e.target === document.getElementById("autoModalOverlay")) closeAutoModal();
+}
+
+async function _loadAutoLeagues() {
+  const container = document.getElementById("autoLeagueCheckboxes");
+  if (!container) return;
+  try {
+    const resp = await fetch("/api/apostas/apifootball/leagues");
+    const list = resp.ok ? await resp.json() : [];
+    container.innerHTML = list.map(lg => `
+      <label class="auto-league-check">
+        <input type="checkbox" value="${lg.id}" class="auto-league-input">
+        ${escHtml(lg.name)}
+      </label>
+    `).join("");
+  } catch {
+    container.innerHTML = '<span style="color:var(--text-muted);font-size:.8rem">Erro ao carregar campeonatos</span>';
+  }
+}
+
+function _showAutoFormError(msg) {
+  const el = document.getElementById("autoFormError");
+  el.textContent = msg;
+  el.style.display = "block";
+}
+
+async function submitAutoRecommend() {
+  document.getElementById("autoFormError").style.display = "none";
+
+  const minDiff   = parseInt(document.getElementById("autoDiff").value) || 10;
+  const targetOdd = parseFloat(document.getElementById("autoTargetOdd").value) || 3.00;
+  const daysAhead = parseInt(document.getElementById("autoDays").value) || 14;
+  const maxGames  = parseInt(document.getElementById("autoMaxGames").value) || 5;
+  const stake     = document.getElementById("autoStake").value.trim();
+  const titulo    = document.getElementById("autoTitulo").value.trim();
+
+  const leagueIds = Array.from(
+    document.querySelectorAll(".auto-league-input:checked")
+  ).map(cb => parseInt(cb.value));
+
+  const btn = document.getElementById("autoSubmitBtn");
+  btn.disabled = true;
+  btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Buscando...';
+
+  try {
+    const resp = await fetch("/api/apostas/auto-recommend", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        min_diff:   minDiff,
+        target_odd: targetOdd,
+        days_ahead: daysAhead,
+        max_games:  maxGames,
+        league_ids: leagueIds,
+        stake,
+        titulo,
+      }),
+    });
+    const json = await resp.json();
+    if (!resp.ok) { _showAutoFormError(json.error || "Erro ao gerar"); return; }
+
+    closeAutoModal();
+    await loadTips();
+
+    const info = json.info;
+    const estNote = info.has_estimates ? " · ★ odds estimadas — edite para atualizar" : "";
+    _showAutoToast(
+      `Recomendação criada: ${info.selected} jogo(s) · @${info.odd_total}${estNote}`
+    );
+  } catch {
+    _showAutoFormError("Erro de conexão");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-stars"></i> Gerar';
+  }
+}
+
+function _showAutoToast(msg) {
+  let toast = document.getElementById("autoToast");
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.id = "autoToast";
+    toast.className = "auto-toast";
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.classList.add("auto-toast--visible");
+  clearTimeout(toast._hideTimer);
+  toast._hideTimer = setTimeout(() => toast.classList.remove("auto-toast--visible"), 5000);
+}
+
+// ============================================================
+//  EDITAR RECOMENDAÇÃO
+// ============================================================
+
+function openEditModal(tipId) {
+  const tips = window._cachedTips || [];
+  const tip  = tips.find(t => t.id === tipId);
+  if (!tip) { alert("Recomendação não encontrada"); return; }
+
+  document.getElementById("editTipId").value        = tipId;
+  document.getElementById("editTitulo").value       = tip.titulo || "";
+  document.getElementById("editStake").value        = tip.stake  || "";
+  document.getElementById("editLinkAposta").value   = tip.link_aposta || "";
+  document.getElementById("editFormError").style.display = "none";
+  document.getElementById("editModalOverlay").style.display = "flex";
+}
+
+function closeEditModal() {
+  document.getElementById("editModalOverlay").style.display = "none";
+}
+
+function closeEditModalOverlay(e) {
+  if (e.target === document.getElementById("editModalOverlay")) closeEditModal();
+}
+
+async function pasteEditLink() {
+  const input = document.getElementById("editLinkAposta");
+  try {
+    const text = await navigator.clipboard.readText();
+    input.value = text.trim();
+    input.focus();
+  } catch {
+    input.focus();
+    document.execCommand("paste");
+  }
+}
+
+function _showEditFormError(msg) {
+  const el = document.getElementById("editFormError");
+  el.textContent = msg;
+  el.style.display = "block";
+}
+
+async function submitEditTip() {
+  document.getElementById("editFormError").style.display = "none";
+
+  const tipId    = parseInt(document.getElementById("editTipId").value);
+  const titulo   = document.getElementById("editTitulo").value.trim();
+  const stake    = document.getElementById("editStake").value.trim();
+  const linkAposta = document.getElementById("editLinkAposta").value.trim();
+
+  if (!titulo) { _showEditFormError("Título é obrigatório"); return; }
+
+  const btn = document.getElementById("editSubmitBtn");
+  btn.disabled = true;
+
+  try {
+    const resp = await fetch(`/api/apostas/tips/${tipId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ titulo, stake, link_aposta: linkAposta }),
+    });
+    const json = await resp.json();
+    if (!resp.ok) { _showEditFormError(json.error || "Erro ao salvar"); return; }
+    closeEditModal();
+    await loadTips();
+  } catch {
+    _showEditFormError("Erro de conexão");
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 // ============================================================

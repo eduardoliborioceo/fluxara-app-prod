@@ -34,6 +34,8 @@ _LEAGUE_MAP = {lg["id"]: lg for lg in _LEAGUES}
 
 _standings_cache: dict = {}
 _fixtures_cache: dict = {}
+_odds_cache: dict = {}
+_ODDS_TTL = 1800  # 30 minutes
 
 _daily_budget: dict = {"date": None, "count": 0}
 
@@ -90,6 +92,20 @@ def get_upcoming_fixtures(league_id: int, days: int = 14) -> dict:
         "to": end.isoformat(),
     }
     _fixtures_cache[cache_key] = {"data": data, "expires": now + _FIXTURES_TTL}
+    return data
+
+
+def get_fixture_odds(fixture_id: str) -> dict | None:
+    now = time.monotonic()
+    cached = _odds_cache.get(fixture_id)
+    if cached and cached["expires"] > now:
+        return cached["data"]
+
+    if not _budget_available():
+        return _odds_cache.get(fixture_id, {}).get("data")
+
+    data = _fetch_odds(fixture_id)
+    _odds_cache[fixture_id] = {"data": data, "expires": now + _ODDS_TTL}
     return data
 
 
@@ -280,6 +296,42 @@ def _parse_fixture(fixture: dict, standings_map: dict[str, int]) -> dict:
         "venue":      venue.get("name") or "",
         "city":       venue.get("city") or "",
     }
+
+
+# ============================================================
+# Internal — odds
+# ============================================================
+
+def _fetch_odds(fixture_id: str) -> dict | None:
+    url = f"{_BASE_URL}/odds"
+    params = {"fixture": fixture_id}
+    try:
+        resp = _get(url, params)
+        if resp is None:
+            return None
+        return _parse_odds(resp)
+    except Exception as exc:
+        logger.warning("api-football odds failed fixture=%s: %s", fixture_id, exc)
+        return None
+
+
+def _parse_odds(payload: dict) -> dict | None:
+    for item in (payload.get("response") or []):
+        for bookmaker in (item.get("bookmakers") or []):
+            for bet in (bookmaker.get("bets") or []):
+                if bet.get("id") == 1 or bet.get("name") == "Match Winner":
+                    values = {
+                        v["value"]: float(v["odd"])
+                        for v in (bet.get("values") or [])
+                        if v.get("value") and v.get("odd")
+                    }
+                    if values.get("Home") and values.get("Draw") and values.get("Away"):
+                        return {
+                            "home": values["Home"],
+                            "draw": values["Draw"],
+                            "away": values["Away"],
+                        }
+    return None
 
 
 # ============================================================

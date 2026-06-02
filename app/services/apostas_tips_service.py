@@ -85,6 +85,18 @@ def create_tip(titulo: str, stake: str, link_aposta: str,
     ))
 
 
+def update_tip(tip_id: int, titulo: str, stake: str, link_aposta: str) -> dict:
+    titulo = (titulo or "").strip()
+    if not titulo:
+        raise ValueError("Título é obrigatório")
+    if len(titulo) > 200:
+        raise ValueError("Título muito longo (máx 200 caracteres)")
+    row = repo.update_tip(tip_id, titulo, stake or None, link_aposta or None)
+    if not row:
+        raise ValueError("Recomendação não encontrada")
+    return _serialize(row)
+
+
 def update_status(tip_id: int, status: str) -> dict:
     if status not in _VALID_STATUSES:
         raise ValueError(f"Status inválido: {status}")
