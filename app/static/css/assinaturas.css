@@ -540,6 +540,72 @@
   }
 }
 
+@media (max-width: 480px) {
+  .assin-hero {
+    padding: 22px 18px;
+    border-radius: 12px;
+  }
+
+  .assin-hero-title {
+    font-size: 1.25rem;
+  }
+
+  .assin-hero-sub {
+    font-size: 0.82rem;
+  }
+
+  .assin-plan-card {
+    padding: 18px 14px;
+  }
+
+  .assin-price-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .assin-price-period {
+    margin-left: 0;
+  }
+
+  .assin-price-brl {
+    font-size: 1.7rem;
+  }
+
+  .assin-ativa-card {
+    padding: 14px 16px;
+    gap: 12px;
+  }
+
+  .assin-historico-card {
+    padding: 16px;
+  }
+
+  .assin-pix-chave-wrap {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .assin-pix-copy-btn {
+    margin-left: 0;
+    align-self: flex-end;
+  }
+
+  .assin-pix-step {
+    font-size: 0.79rem;
+  }
+
+  .assin-tabs {
+    font-size: 0.78rem;
+  }
+
+  .assin-tab-btn {
+    padding: 7px 10px;
+    font-size: 0.78rem;
+  }
+}
+
 .assin-stat-card {
   background: var(--card);
   border: 1.5px solid var(--border);
