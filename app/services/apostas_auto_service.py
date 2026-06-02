@@ -1,4 +1,5 @@
 import logging
+import re
 
 from app.services import apostas_apifootball_service
 from app.services import apostas_espn_service
@@ -15,6 +16,7 @@ def auto_recommend(config: dict, user_id: int) -> dict:
     stake      = (config.get("stake") or "").strip()
     titulo     = (config.get("titulo") or "").strip()
     max_games  = max(2, min(8, int(config.get("max_games") or 5)))
+    max_recs   = max(1, min(5, int(config.get("max_recommendations") or 1)))
 
     afl_ids, espn_slugs = _split_leagues(leagues)
 
@@ -35,57 +37,115 @@ def auto_recommend(config: dict, user_id: int) -> dict:
         match["home_odd"]   = _estimate_odd(match.get("pos_diff") or 10)
         match["odd_source"] = "est"
 
-    selected = _build_multipla(qualifying, target_odd, max_games)
-    if not selected:
+    afl_names  = {lg["id"]:   lg["name"] for lg in apostas_apifootball_service.get_leagues()}
+    espn_names = {lg["slug"]: lg["name"] for lg in apostas_espn_service.get_leagues()}
+
+    pool = [m for m in qualifying if (m.get("home_odd") or 0) > 1.0]
+    tips_created = []
+
+    for _ in range(max_recs):
+        if not pool:
+            break
+
+        selected = _build_multipla(pool, target_odd, max_games)
+        if not selected:
+            break
+
+        odd_total  = round(_running_odd(selected), 2)
+        tip_titulo = titulo if (titulo and max_recs == 1) else _build_title(selected, afl_names, espn_names)
+        has_est    = any(m["odd_source"] == "est" for m in selected)
+
+        jogos = []
+        for m in selected:
+            suffix = " ★" if m["odd_source"] == "est" else ""
+            camp   = afl_names.get(m.get("league_id")) or espn_names.get(m.get("league_slug"), "")
+            jogos.append({
+                "partida":      f"{m['home_name']} x {m['away_name']}",
+                "campeonato":   camp,
+                "mercado":      f"Vitória Casa (1){suffix}",
+                "odd":          m["home_odd"],
+                "data_partida": m["date_brt"][:10] if m.get("date_brt") else None,
+            })
+
+        tip = apostas_tips_service.create_tip(
+            titulo=tip_titulo,
+            stake=stake,
+            link_aposta="",
+            jogos=jogos,
+            user_id=user_id,
+        )
+        tips_created.append({"tip": tip, "odd_total": odd_total, "has_estimates": has_est})
+
+        used = {m["event_id"] for m in selected}
+        pool = [m for m in pool if m["event_id"] not in used]
+
+    if not tips_created:
         raise ValueError(
-            "Não foi possível montar a múltipla. "
+            "Não foi possível montar nenhuma múltipla. "
             "Tente ajustar a odd alvo ou aumentar o número máximo de jogos."
         )
 
-    odd_total = round(_running_odd(selected), 2)
-
-    if not titulo:
-        titulo = f"Auto · {len(selected)} jogos · @{odd_total:.2f}"
-
-    afl_names  = {lg["id"]: lg["name"]   for lg in apostas_apifootball_service.get_leagues()}
-    espn_names = {lg["slug"]: lg["name"] for lg in apostas_espn_service.get_leagues()}
-
-    jogos = []
-    for m in selected:
-        suffix = " ★" if m["odd_source"] == "est" else ""
-        camp = afl_names.get(m.get("league_id")) or espn_names.get(m.get("league_slug"), "")
-        jogos.append({
-            "partida":      f"{m['home_name']} x {m['away_name']}",
-            "campeonato":   camp,
-            "mercado":      f"Vitória Casa (1){suffix}",
-            "odd":          m["home_odd"],
-            "data_partida": m["date_brt"][:10] if m.get("date_brt") else None,
-        })
-
-    tip = apostas_tips_service.create_tip(
-        titulo=titulo,
-        stake=stake,
-        link_aposta="",
-        jogos=jogos,
-        user_id=user_id,
-    )
-
-    has_estimates = any(m["odd_source"] == "est" for m in selected)
-
     return {
-        "tip": tip,
+        "tips": [t["tip"] for t in tips_created],
         "info": {
-            "qualifying": len(qualifying),
-            "selected":   len(selected),
-            "odd_total":  odd_total,
-            "has_estimates": has_estimates,
+            "qualifying":       len(qualifying),
+            "recommendations":  len(tips_created),
+            "has_estimates":    any(t["has_estimates"] for t in tips_created),
         },
     }
 
 
+# ============================================================
+# Title builder
+# ============================================================
+
+def _build_title(selected: list, afl_names: dict, espn_names: dict) -> str:
+    dates = [
+        m["date_brt"][:10]
+        for m in selected
+        if m.get("date_brt") and len(m.get("date_brt", "")) >= 10
+    ]
+    last_date = max(dates) if dates else ""
+
+    if last_date:
+        y, mo, d = last_date.split("-")
+        date_label = f"{d}.{mo}.{y}"
+    else:
+        date_label = ""
+
+    league_set = set()
+    for m in selected:
+        name = (
+            afl_names.get(m.get("league_id")) or
+            espn_names.get(m.get("league_slug")) or ""
+        )
+        if name:
+            league_set.add(name)
+
+    if len(league_set) == 1:
+        short = _short_league_name(next(iter(league_set)))
+        label = f"Múltipla {short}"
+    else:
+        label = "Múltipla"
+
+    return f"{date_label} - {label}" if date_label else label
+
+
+def _short_league_name(name: str) -> str:
+    m = re.search(r'\(([^)]+)\)$', name)
+    if m:
+        return m.group(1)
+    for prefix in ("Brasileirão ", "Liga "):
+        if name.startswith(prefix):
+            return name[len(prefix):].strip()
+    return name
+
+
+# ============================================================
+# League splitting
+# ============================================================
+
 def _split_leagues(leagues: list) -> tuple[list[int], list[str]]:
-    """Split unified list into API-Football IDs and ESPN slugs.
-    Empty list → return all from both sources."""
     if not leagues:
         afl_ids    = [lg["id"]   for lg in apostas_apifootball_service.get_leagues()]
         espn_slugs = [lg["slug"] for lg in apostas_espn_service.get_leagues()]
@@ -109,6 +169,10 @@ def _split_leagues(leagues: list) -> tuple[list[int], list[str]]:
                 espn_slugs.append(item)
     return afl_ids, espn_slugs
 
+
+# ============================================================
+# Qualifying matches
+# ============================================================
 
 def _find_qualifying(afl_ids: list, espn_slugs: list, min_diff: int, days_ahead: int) -> list[dict]:
     result = []
@@ -151,10 +215,14 @@ def _find_qualifying(afl_ids: list, espn_slugs: list, min_diff: int, days_ahead:
     return result
 
 
-def _build_multipla(matches: list, target_odd: float, max_games: int) -> list[dict]:
+# ============================================================
+# Multipla builder
+# ============================================================
+
+def _build_multipla(pool: list, target_odd: float, max_games: int) -> list[dict]:
     selected = []
     running  = 1.0
-    for m in matches:
+    for m in pool:
         if len(selected) >= max_games:
             break
         odd = m.get("home_odd") or 0.0
