@@ -1843,6 +1843,16 @@
 }
 .auto-league-check input { width: 13px; height: 13px; accent-color: #7c3aed; }
 
+.auto-league-category {
+  width: 100%;
+  font-size: .7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: var(--text-muted);
+  margin: 8px 0 2px;
+}
+
 .tips-form-hint-inline {
   font-size: .75rem;
   font-weight: 500;
