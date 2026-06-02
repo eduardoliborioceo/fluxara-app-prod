@@ -363,6 +363,7 @@ def cartoes_create():
             data.get("conta_id"),
             data.get("dia_fechamento", 1),
             data.get("dia_vencimento", 10),
+            data.get("tipo", "credito"),
         )
         return jsonify(cartao), 201
     except ValueError as e:
@@ -383,6 +384,7 @@ def cartoes_update(cartao_id):
             data.get("conta_id"),
             data.get("dia_fechamento", 1),
             data.get("dia_vencimento", 10),
+            data.get("tipo", "credito"),
         )
         return jsonify({"ok": True})
     except ValueError as e:

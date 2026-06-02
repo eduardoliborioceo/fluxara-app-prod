@@ -639,58 +639,93 @@
 ======================== */
 .cartao-visual {
   position: relative;
-  border-radius: 14px;
-  padding: 18px 20px 14px;
+  border-radius: 16px;
+  padding: 16px 18px 14px;
   margin-bottom: 12px;
   color: #fff;
   overflow: hidden;
-  min-height: 130px;
+  min-height: 140px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.22);
 }
 
 .cartao-visual::before {
   content: '';
   position: absolute;
-  top: -30px;
-  right: -30px;
-  width: 130px;
-  height: 130px;
+  top: -40px;
+  right: -40px;
+  width: 150px;
+  height: 150px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.07);
+  pointer-events: none;
 }
 
 .cartao-visual::after {
   content: '';
   position: absolute;
-  bottom: -40px;
-  right: 20px;
-  width: 90px;
-  height: 90px;
+  bottom: -50px;
+  left: -20px;
+  width: 110px;
+  height: 110px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.05);
+  background: rgba(255,255,255,0.04);
+  pointer-events: none;
 }
 
 .cartao-visual-top {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
+  gap: 10px;
   position: relative;
   z-index: 1;
+}
+
+.cartao-visual-top-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.cartao-visual-conta-logo {
+  flex-shrink: 0;
+}
+
+.cartao-visual-header-text {
+  min-width: 0;
 }
 
 .cartao-visual-nome {
   font-weight: 700;
   font-size: 0.95rem;
-  letter-spacing: 0.3px;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.cartao-visual-bandeira {
-  font-size: 1.4rem;
-  opacity: 0.9;
+.cartao-visual-tipo-badge {
+  display: inline-block;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  background: rgba(255,255,255,0.18);
+  border-radius: 4px;
+  padding: 1px 6px;
+  margin-top: 3px;
+  opacity: 0.92;
+}
+
+.cartao-visual-bandeira-logo {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .cartao-visual-bottom {
@@ -699,25 +734,27 @@
   justify-content: space-between;
   position: relative;
   z-index: 1;
+  margin-top: 14px;
 }
 
 .cartao-visual-limite {
-  font-size: 0.78rem;
-  opacity: 0.85;
+  font-size: 0.75rem;
+  opacity: 0.88;
   line-height: 1.4;
 }
 
 .cartao-visual-limite strong {
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 700;
   display: block;
+  margin-top: 2px;
 }
 
 .cartao-visual-datas {
   text-align: right;
   font-size: 0.72rem;
-  opacity: 0.8;
-  line-height: 1.6;
+  opacity: 0.82;
+  line-height: 1.65;
 }
 
 .cartao-visual-actions {
@@ -735,5 +772,5 @@
 }
 
 [data-theme="escuro"] .cartao-visual {
-  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.45);
 }
