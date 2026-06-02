@@ -987,14 +987,36 @@ async function _loadAutoLeagues() {
   const container = document.getElementById("autoLeagueCheckboxes");
   if (!container) return;
   try {
-    const resp = await fetch("/api/apostas/apifootball/leagues");
-    const list = resp.ok ? await resp.json() : [];
-    container.innerHTML = list.map(lg => `
-      <label class="auto-league-check">
-        <input type="checkbox" value="${lg.id}" class="auto-league-input">
-        ${escHtml(lg.name)}
-      </label>
-    `).join("");
+    const [respAfl, respEspn] = await Promise.all([
+      fetch("/api/apostas/apifootball/leagues"),
+      fetch("/api/apostas/espn/leagues"),
+    ]);
+    const aflList  = respAfl.ok  ? await respAfl.json()  : [];
+    const espnList = respEspn.ok ? await respEspn.json() : [];
+
+    const byCategory = {};
+    espnList.forEach(lg => {
+      const cat = lg.category;
+      if (!byCategory[cat]) byCategory[cat] = [];
+      byCategory[cat].push({ value: `espn:${lg.slug}`, name: lg.name });
+    });
+    aflList.forEach(lg => {
+      const cat = lg.category;
+      if (!byCategory[cat]) byCategory[cat] = [];
+      byCategory[cat].push({ value: `afl:${lg.id}`, name: lg.name });
+    });
+
+    let html = "";
+    Object.entries(byCategory).forEach(([cat, items]) => {
+      html += `<div class="auto-league-category">${escHtml(cat)}</div>`;
+      html += items.map(lg => `
+        <label class="auto-league-check">
+          <input type="checkbox" value="${escHtml(lg.value)}" class="auto-league-input">
+          ${escHtml(lg.name)}
+        </label>
+      `).join("");
+    });
+    container.innerHTML = html || '<span style="color:var(--text-muted);font-size:.8rem">Nenhum campeonato disponível</span>';
   } catch {
     container.innerHTML = '<span style="color:var(--text-muted);font-size:.8rem">Erro ao carregar campeonatos</span>';
   }
@@ -1016,9 +1038,9 @@ async function submitAutoRecommend() {
   const stake     = document.getElementById("autoStake").value.trim();
   const titulo    = document.getElementById("autoTitulo").value.trim();
 
-  const leagueIds = Array.from(
+  const leagues = Array.from(
     document.querySelectorAll(".auto-league-input:checked")
-  ).map(cb => parseInt(cb.value));
+  ).map(cb => cb.value);
 
   const btn = document.getElementById("autoSubmitBtn");
   btn.disabled = true;
@@ -1033,7 +1055,7 @@ async function submitAutoRecommend() {
         target_odd: targetOdd,
         days_ahead: daysAhead,
         max_games:  maxGames,
-        league_ids: leagueIds,
+        leagues,
         stake,
         titulo,
       }),
