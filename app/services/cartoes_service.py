@@ -3,6 +3,7 @@ from app.repositories import cartoes_repository as repo
 from app.repositories import lancamentos_repository as lanc_repo
 
 _BANDEIRAS_VALIDAS = {"visa", "mastercard", "elo", "amex", "hipercard", "outro"}
+_TIPOS_VALIDOS = {"credito", "debito", "credito_debito"}
 
 
 def list_cartoes(user_id: int, mes: int = 0, ano: int = 0) -> list:
@@ -10,33 +11,39 @@ def list_cartoes(user_id: int, mes: int = 0, ano: int = 0) -> list:
     return [dict(r) for r in rows]
 
 
-def add_cartao(user_id: int, nome: str, limite, bandeira: str, conta_id, dia_fechamento: int, dia_vencimento: int) -> dict:
+def add_cartao(user_id: int, nome: str, limite, bandeira: str, conta_id, dia_fechamento: int, dia_vencimento: int, tipo: str = 'credito') -> dict:
     nome = nome.strip()[:100]
     if not nome:
         raise ValueError("Nome obrigatório")
     bandeira = bandeira.strip().lower() if bandeira else "outro"
     if bandeira not in _BANDEIRAS_VALIDAS:
         bandeira = "outro"
+    tipo = tipo.strip().lower() if tipo else "credito"
+    if tipo not in _TIPOS_VALIDOS:
+        tipo = "credito"
     lim = _parse_money(limite)
     cid = int(conta_id) if conta_id else None
     dia_f = _parse_dia(dia_fechamento)
     dia_v = _parse_dia(dia_vencimento)
-    row = repo.create_cartao(user_id, nome, lim, bandeira, cid, dia_f, dia_v)
+    row = repo.create_cartao(user_id, nome, lim, bandeira, cid, dia_f, dia_v, tipo)
     return dict(row)
 
 
-def edit_cartao(cartao_id: int, user_id: int, nome: str, limite, bandeira: str, conta_id, dia_fechamento: int, dia_vencimento: int):
+def edit_cartao(cartao_id: int, user_id: int, nome: str, limite, bandeira: str, conta_id, dia_fechamento: int, dia_vencimento: int, tipo: str = 'credito'):
     nome = nome.strip()[:100]
     if not nome:
         raise ValueError("Nome obrigatório")
     bandeira = bandeira.strip().lower() if bandeira else "outro"
     if bandeira not in _BANDEIRAS_VALIDAS:
         bandeira = "outro"
+    tipo = tipo.strip().lower() if tipo else "credito"
+    if tipo not in _TIPOS_VALIDOS:
+        tipo = "credito"
     lim = _parse_money(limite)
     cid = int(conta_id) if conta_id else None
     dia_f = _parse_dia(dia_fechamento)
     dia_v = _parse_dia(dia_vencimento)
-    repo.update_cartao(cartao_id, user_id, nome, lim, bandeira, cid, dia_f, dia_v)
+    repo.update_cartao(cartao_id, user_id, nome, lim, bandeira, cid, dia_f, dia_v, tipo)
 
 
 def remove_cartao(cartao_id: int, user_id: int):

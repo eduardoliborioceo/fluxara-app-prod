@@ -27,28 +27,28 @@ def list_cartoes(user_id: int, mes: int = 0, ano: int = 0) -> list:
             return cur.fetchall()
 
 
-def create_cartao(user_id: int, nome: str, limite: float, bandeira: str, conta_id: int | None, dia_fechamento: int, dia_vencimento: int):
+def create_cartao(user_id: int, nome: str, limite: float, bandeira: str, conta_id: int | None, dia_fechamento: int, dia_vencimento: int, tipo: str = 'credito'):
     with get_db() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("""
-                INSERT INTO cartoes_credito (user_id, nome, limite, bandeira, conta_id, dia_fechamento, dia_vencimento)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                INSERT INTO cartoes_credito (user_id, nome, limite, bandeira, conta_id, dia_fechamento, dia_vencimento, tipo)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING *
-            """, (user_id, nome, limite, bandeira, conta_id, dia_fechamento, dia_vencimento))
+            """, (user_id, nome, limite, bandeira, conta_id, dia_fechamento, dia_vencimento, tipo))
             row = cur.fetchone()
             conn.commit()
             return row
 
 
-def update_cartao(cartao_id: int, user_id: int, nome: str, limite: float, bandeira: str, conta_id: int | None, dia_fechamento: int, dia_vencimento: int):
+def update_cartao(cartao_id: int, user_id: int, nome: str, limite: float, bandeira: str, conta_id: int | None, dia_fechamento: int, dia_vencimento: int, tipo: str = 'credito'):
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute("""
                 UPDATE cartoes_credito
                 SET nome = %s, limite = %s, bandeira = %s, conta_id = %s,
-                    dia_fechamento = %s, dia_vencimento = %s
+                    dia_fechamento = %s, dia_vencimento = %s, tipo = %s
                 WHERE id = %s AND user_id = %s AND ativo = TRUE
-            """, (nome, limite, bandeira, conta_id, dia_fechamento, dia_vencimento, cartao_id, user_id))
+            """, (nome, limite, bandeira, conta_id, dia_fechamento, dia_vencimento, tipo, cartao_id, user_id))
         conn.commit()
 
 

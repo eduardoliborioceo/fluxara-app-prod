@@ -447,13 +447,75 @@
 
   // ── CARTÕES ──────────────────────────────────────────
   const BANDEIRAS = {
-    visa:       { nome: 'Visa',             cor: '#1A1F71' },
-    mastercard: { nome: 'Mastercard',       cor: '#EB001B' },
-    elo:        { nome: 'Elo',              cor: '#FFD700', corLetra: '#000' },
-    amex:       { nome: 'American Express', cor: '#2E77BC' },
-    hipercard:  { nome: 'Hipercard',        cor: '#B22222' },
-    outro:      { nome: 'Outro',            cor: '#6c757d' },
+    visa:       { nome: 'Visa',             svg: 'visa.svg' },
+    mastercard: { nome: 'Mastercard',       svg: 'mastercard.svg' },
+    elo:        { nome: 'Elo' },
+    amex:       { nome: 'Amex',             svg: 'amex.svg' },
+    hipercard:  { nome: 'Hipercard',        svg: 'hipercard.svg' },
+    outro:      { nome: 'Outro' },
   };
+
+  const TIPOS_LABEL = {
+    credito:        'Crédito',
+    debito:         'Débito',
+    credito_debito: 'Crédito e Débito',
+  };
+
+  function buildBandeiraLogo(bandeira, isDark) {
+    isDark = isDark !== false;
+    const b = BANDEIRAS[bandeira] || BANDEIRAS.outro;
+    const filterVal = isDark ? 'brightness(0) invert(1)' : 'brightness(0)';
+    if (b.svg) {
+      return '<img src="/static/images/bank-icons-logos-svg/' + esc(b.svg) + '" alt="' + esc(b.nome) + '"'
+        + ' style="height:28px;width:auto;object-fit:contain;filter:' + filterVal + ';opacity:0.88;">';
+    }
+    return '<span style="font-size:0.75rem;font-weight:700;opacity:0.88;">' + esc(b.nome) + '</span>';
+  }
+
+  function buildContaLogoCard(inst, size, isDark) {
+    size = size || 32;
+    isDark = isDark !== false;
+    const overlayBg = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)';
+    const filterVal = isDark ? 'brightness(0) invert(1)' : 'none';
+    if (inst && inst.svg) {
+      return '<div style="width:' + size + 'px;height:' + size + 'px;border-radius:8px;background:' + overlayBg + ';display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
+        + '<img src="/static/images/bank-icons-logos-svg/' + esc(inst.svg) + '" alt="" style="width:70%;height:70%;object-fit:contain;filter:' + filterVal + ';opacity:0.9;"></div>';
+    }
+    if (inst) {
+      const letra = inst.letra || '?';
+      const letterColor = isDark ? '#fff' : '#1e293b';
+      return '<div style="width:' + size + 'px;height:' + size + 'px;border-radius:8px;background:' + overlayBg + ';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;color:' + letterColor + ';flex-shrink:0;">' + esc(letra) + '</div>';
+    }
+    const iconColor = isDark ? '#fff' : '#1e293b';
+    return '<div style="width:' + size + 'px;height:' + size + 'px;border-radius:8px;background:' + overlayBg + ';display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="bi bi-credit-card" style="font-size:1.1rem;opacity:0.7;color:' + iconColor + ';"></i></div>';
+  }
+
+  function cardBackground(contaInstituicao) {
+    if (contaInstituicao && INSTITUICOES[contaInstituicao]) {
+      const inst = INSTITUICOES[contaInstituicao];
+      const base = inst.cor;
+      return 'linear-gradient(135deg, ' + base + ', ' + darkenHex(base, 28) + ')';
+    }
+    return 'linear-gradient(135deg, #334155, #0f172a)';
+  }
+
+  function cardTextColor(contaInstituicao) {
+    if (contaInstituicao && INSTITUICOES[contaInstituicao]) {
+      return INSTITUICOES[contaInstituicao].corLetra || '#fff';
+    }
+    return '#fff';
+  }
+
+  function darkenHex(hex, amount) {
+    const c = hex.replace('#', '');
+    const num = parseInt(c.length === 3
+      ? c.split('').map(x => x + x).join('')
+      : c, 16);
+    const r = Math.max(0, (num >> 16) - amount);
+    const g = Math.max(0, ((num >> 8) & 0xff) - amount);
+    const b = Math.max(0, (num & 0xff) - amount);
+    return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+  }
 
   const modalCartaoEl = document.getElementById('modalCartao');
   const modalCartao = modalCartaoEl ? new bootstrap.Modal(modalCartaoEl) : null;
@@ -478,23 +540,27 @@
       return;
     }
     el.innerHTML = cartoes.map(c => {
-      const b = BANDEIRAS[c.bandeira] || BANDEIRAS.outro;
-      const gradients = {
-        visa:       'linear-gradient(135deg, #1A1F71, #3b4bc8)',
-        mastercard: 'linear-gradient(135deg, #EB001B, #FF5F00)',
-        elo:        'linear-gradient(135deg, #FFD700, #c8a700)',
-        amex:       'linear-gradient(135deg, #2E77BC, #1a4f8a)',
-        hipercard:  'linear-gradient(135deg, #B22222, #8b0000)',
-        outro:      'linear-gradient(135deg, #475569, #1e293b)',
-      };
-      const grad = gradients[c.bandeira] || gradients.outro;
+      const instKey = c.conta_instituicao || '';
+      const inst = instKey ? (INSTITUICOES[instKey] || null) : null;
+      const grad = cardBackground(instKey);
+      const textColor = cardTextColor(instKey);
+      const isDark = textColor === '#fff';
+      const contaLogo = buildContaLogoCard(inst, 32, isDark);
+      const bandeiraLogo = buildBandeiraLogo(c.bandeira, isDark);
+      const tipoLabel = TIPOS_LABEL[c.tipo] || 'Crédito';
+      const badgeBg = isDark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.08)';
       const limit = parseFloat(c.limite || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-      const textColor = c.bandeira === 'elo' ? '#1e293b' : '#fff';
       return `<div class="px-3 pb-2">
         <div class="cartao-visual" style="background:${grad};color:${textColor}">
           <div class="cartao-visual-top">
-            <span class="cartao-visual-nome">${esc(c.nome)}</span>
-            <span class="cartao-visual-bandeira"><i class="bi bi-credit-card-fill"></i></span>
+            <div class="cartao-visual-top-left">
+              <div class="cartao-visual-conta-logo">${contaLogo}</div>
+              <div class="cartao-visual-header-text">
+                <div class="cartao-visual-nome">${esc(c.nome)}</div>
+                <span class="cartao-visual-tipo-badge" style="background:${badgeBg};">${esc(tipoLabel)}</span>
+              </div>
+            </div>
+            <div class="cartao-visual-bandeira-logo">${bandeiraLogo}</div>
           </div>
           <div class="cartao-visual-bottom">
             <div class="cartao-visual-limite">
@@ -593,6 +659,7 @@
     document.getElementById('cartaoNome').value = '';
     document.getElementById('cartaoLimite').value = '';
     document.getElementById('cartaoBandeira').value = 'visa';
+    document.getElementById('cartaoTipo').value = 'credito';
     document.getElementById('cartaoDiaFechamento').value = '';
     document.getElementById('cartaoDiaVencimento').value = '';
     document.getElementById('modalCartaoTitle').textContent = 'Novo Cartão';
@@ -609,6 +676,7 @@
       document.getElementById('cartaoNome').value = c.nome;
       document.getElementById('cartaoLimite').value = parseFloat(c.limite||0).toLocaleString('pt-BR',{minimumFractionDigits:2});
       document.getElementById('cartaoBandeira').value = c.bandeira || 'outro';
+      document.getElementById('cartaoTipo').value = c.tipo || 'credito';
       document.getElementById('cartaoDiaFechamento').value = c.dia_fechamento;
       document.getElementById('cartaoDiaVencimento').value = c.dia_vencimento;
       document.getElementById('modalCartaoTitle').textContent = 'Editar Cartão';
@@ -631,6 +699,7 @@
         nome,
         limite: document.getElementById('cartaoLimite').value,
         bandeira: document.getElementById('cartaoBandeira').value,
+        tipo: document.getElementById('cartaoTipo').value,
         conta_id: document.getElementById('cartaoConta').value || null,
         dia_fechamento: parseInt(document.getElementById('cartaoDiaFechamento').value) || 1,
         dia_vencimento: parseInt(document.getElementById('cartaoDiaVencimento').value) || 10,
