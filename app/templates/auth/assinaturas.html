@@ -162,12 +162,11 @@
 
       <!-- Detalhe Cartão -->
       <div class="assin-payment-detail" id="detalheCartao">
-        <div class="assin-gateway-notice">
-          <i class="bi bi-info-circle-fill"></i>
+        <div class="assin-gateway-notice" style="background:rgba(13,110,253,.05);border-color:rgba(13,110,253,.25);">
+          <i class="bi bi-shield-lock-fill" style="color:var(--primary);"></i>
           <span>
-            O pagamento por cartão está sendo configurado. Em breve você poderá pagar
-            com crédito ou débito via gateway de pagamento seguro.
-            Por enquanto, utilize o <strong>PIX</strong> para ativar sua assinatura.
+            Você será redirecionado para o <strong>Mercado Pago</strong> para concluir o pagamento com segurança.
+            Aceito: crédito, débito e PIX.
           </span>
         </div>
       </div>
@@ -294,8 +293,8 @@
         btnAssinar.disabled = false;
         btnTexto.textContent = 'Confirmar pagamento via PIX';
       } else if (metodo === 'cartao') {
-        btnAssinar.disabled = true;
-        btnTexto.textContent = 'Cartão em breve';
+        btnAssinar.disabled = false;
+        btnTexto.textContent = 'Pagar com Cartão via Mercado Pago';
       }
     }
   };
@@ -322,24 +321,56 @@
     var btn = document.getElementById('btnAssinar');
     btn.disabled = true;
 
-    fetch('/api/assinaturas/iniciar', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plano: 'apostas', metodo_pagamento: _metodoAtual }),
-    })
-      .then(function (r) { return r.json(); })
-      .then(function (data) {
-        if (data.error) { alert(data.error); btn.disabled = false; return; }
-        var planCard = document.getElementById('planCard');
-        var successBanner = document.getElementById('successBanner');
-        if (planCard) planCard.style.display = 'none';
-        if (successBanner) successBanner.classList.add('visible');
+    if (_metodoAtual === 'pix') {
+      fetch('/api/assinaturas/iniciar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plano: 'apostas', metodo_pagamento: 'pix' }),
       })
-      .catch(function () {
-        btn.disabled = false;
-        alert('Erro ao processar. Tente novamente.');
-      });
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (data.error) { alert(data.error); btn.disabled = false; return; }
+          var planCard = document.getElementById('planCard');
+          var successBanner = document.getElementById('successBanner');
+          if (planCard) planCard.style.display = 'none';
+          if (successBanner) successBanner.classList.add('visible');
+        })
+        .catch(function () { btn.disabled = false; alert('Erro ao processar. Tente novamente.'); });
+
+    } else if (_metodoAtual === 'cartao') {
+      btn.innerHTML = '<i class="bi bi-hourglass-split"></i> <span>Redirecionando...</span>';
+      fetch('/api/assinaturas/checkout-mp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (data.error) { alert(data.error); btn.disabled = false; btn.innerHTML = '<i class="bi bi-credit-card"></i> <span id="btnAssinarTexto">Pagar com Cartão via Mercado Pago</span>'; return; }
+          window.location.href = data.checkout_url;
+        })
+        .catch(function () { btn.disabled = false; alert('Erro ao iniciar pagamento. Tente novamente.'); });
+    }
   };
+
+  (function () {
+    var params = new URLSearchParams(window.location.search);
+    var pagamento = params.get('pagamento');
+    if (!pagamento) return;
+    var msgs = {
+      aprovado: { cls: 'assin-mp-banner--ok',  icon: 'bi-check-circle-fill', text: 'Pagamento aprovado! Sua assinatura está sendo ativada.' },
+      pendente: { cls: 'assin-mp-banner--warn', icon: 'bi-clock-fill',        text: 'Pagamento pendente. Você será notificado quando confirmado.' },
+      falhou:   { cls: 'assin-mp-banner--err',  icon: 'bi-x-circle-fill',     text: 'Pagamento não aprovado. Tente novamente.' },
+    };
+    var m = msgs[pagamento];
+    if (!m) return;
+    var banner = document.createElement('div');
+    banner.className = 'assin-mp-banner ' + m.cls;
+    banner.innerHTML = '<i class="bi ' + m.icon + '"></i> ' + m.text;
+    var wrapper = document.querySelector('.assin-wrapper');
+    if (wrapper) wrapper.insertBefore(banner, wrapper.firstChild);
+    window.history.replaceState({}, '', window.location.pathname);
+  })();
+
 
   function carregarAdmin() {
     fetch('/api/assinaturas/admin')
