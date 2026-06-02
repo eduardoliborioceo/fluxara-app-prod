@@ -58,7 +58,7 @@
   }
 
   .resumo-desktop-wrapper .mes-filtro {
-    max-width: 360px;
+    width: 100%;
   }
 
   #cardsContainer {
