@@ -10,6 +10,7 @@ def list_orcamentos_com_gasto(user_id: int, mes: int, ano: int) -> list:
                     c.id AS categoria_id,
                     c.nome AS categoria_nome,
                     c.icone AS categoria_icone,
+                    c.cor_fundo AS categoria_cor,
                     c.tipo,
                     o.id AS orcamento_id,
                     COALESCE(o.valor, 0) AS orcamento_valor,

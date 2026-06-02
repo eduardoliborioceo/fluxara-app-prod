@@ -90,12 +90,24 @@
     finally { this.disabled = false; }
   });
 
+  function hexToRgba(hex, alpha) {
+    if (!hex || hex[0] !== '#') return null;
+    var r = parseInt(hex.slice(1, 3), 16);
+    var g = parseInt(hex.slice(3, 5), 16);
+    var b = parseInt(hex.slice(5, 7), 16);
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+  }
+
   function renderCatItem(item) {
     var gasto = parseFloat(item.gasto_real || 0);
     var orc   = parseFloat(item.orcamento_valor || 0);
     var isDespesa = item.tipo === 'despesa';
     var iconCls = isDespesa ? 'plan-cat-icon--despesa' : 'plan-cat-icon--receita';
     var gastoCls = isDespesa ? 'plan-cat-gasto--despesa' : 'plan-cat-gasto--receita';
+    var cor = item.categoria_cor || null;
+    var iconStyle = cor
+      ? ' style="background:' + hexToRgba(cor, 0.13) + ';color:' + cor + ';"'
+      : '';
     var pct = orc > 0 ? Math.min(gasto / orc * 100, 999) : 0;
     var barCls, pctCls;
     if (isDespesa) {
@@ -119,7 +131,7 @@
       + ' data-orc-id="' + (item.orcamento_id || '') + '"'
       + ' data-orc-valor="' + orc + '"'
       + ' data-cat-nome="' + esc(item.categoria_nome) + '">'
-      + '<div class="plan-cat-icon ' + iconCls + '"><i class="bi ' + esc(item.categoria_icone || 'bi-tag') + '"></i></div>'
+      + '<div class="plan-cat-icon ' + iconCls + '"' + iconStyle + '><i class="bi ' + esc(item.categoria_icone || 'bi-tag') + '"></i></div>'
       + '<div class="plan-cat-body">'
       +   '<div class="plan-cat-name">' + esc(item.categoria_nome) + '</div>'
       +   '<div class="plan-cat-values">'
