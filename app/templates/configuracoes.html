@@ -366,6 +366,47 @@
   </div>
 </div>
 
+<!-- MODAL transferir limite -->
+<div class="modal fade" id="modalTransferirLimite" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Transferir Limite</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">De</label>
+          <select id="transfOrigem" class="form-select"></select>
+          <div class="form-text text-muted" id="transfOrigemLimite"></div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Para</label>
+          <select id="transfDestino" class="form-select"></select>
+          <div class="form-text text-muted" id="transfDestinoLimite"></div>
+        </div>
+
+        <div class="mb-1">
+          <label class="form-label fw-semibold">Valor a transferir</label>
+          <div class="input-group">
+            <span class="input-group-text">R$</span>
+            <input type="text" id="transfValor" class="form-control" placeholder="0,00" inputmode="decimal">
+          </div>
+        </div>
+
+        <div id="transfErro" class="alert alert-danger mt-3 d-none py-2 small mb-0"></div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="btnConfirmarTransferir">Transferir</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
