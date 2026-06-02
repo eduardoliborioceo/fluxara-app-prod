@@ -287,9 +287,11 @@
     var isFuture = tx.data_vencimento && parseDate(tx.data_vencimento) > now;
 
     var catIcon = m.icon;
+    var catCorStyle = '';
     if (tx.categoria_id && categoriasMapa[tx.categoria_id]) {
       var cat = categoriasMapa[tx.categoria_id];
       if (cat.icone) catIcon = cat.icone.replace(/^bi-/, '');
+      if (cat.cor_fundo) catCorStyle = 'background:' + cat.cor_fundo + ';color:#fff;';
     }
 
     var isSelected = selectedIds.has(tx.id);
@@ -322,7 +324,7 @@
 
     return '<div class="extrato-tx-item' + selectedCls + '" data-id="' + tx.id + '" data-tipo="' + esc(tx.tipo) + '" data-valor="' + parseFloat(tx.valor || 0) + '" data-prefix="' + m.prefix + '">'
       + checkHtml
-      + '<div class="extrato-tx-icon ' + m.cls + '"><i class="bi bi-' + catIcon + '"></i></div>'
+      + '<div class="extrato-tx-icon ' + m.cls + '"' + (catCorStyle ? ' style="' + catCorStyle + '"' : '') + '><i class="bi bi-' + catIcon + '"></i></div>'
       + '<div class="extrato-tx-info">'
       +   '<div class="extrato-tx-desc">' + esc(tx.descricao || 'Sem descrição') + '</div>'
       +   '<div class="extrato-tx-meta">' + metaHtml + '</div>'
