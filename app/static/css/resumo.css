@@ -44,14 +44,12 @@
 /* ========================
    DESKTOP LAYOUT
 ======================== */
-/* Mobile: wrapper transparente ao layout */
-@media (max-width: 991px) {
-  .resumo-right-col {
-    display: contents;
-  }
+/* Wrapper semântico apenas — nunca ocupa espaço no layout */
+.resumo-right-col {
+  display: contents;
 }
 
-/* Desktop: grid 2 colunas com coluna direita independente */
+/* Desktop: grid 2 colunas com placement explícito */
 @media (min-width: 992px) {
   .resumo-desktop-wrapper {
     max-width: none !important;
@@ -70,17 +68,26 @@
     align-items: start;
   }
 
-  /* Coluna direita: flex independente da altura de Contas */
-  .resumo-right-col {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    min-width: 0;
+  /* Placement explícito — imune à reordenação do DOM pelo drag-and-drop */
+  #cardsContainer [data-card-id="contas"] {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    align-self: start;
   }
 
-  /* Cards que devem ocupar largura total (sem par na coluna oposta) */
-  #cardsContainer [data-card-id="projecao"],
+  #cardsContainer [data-card-id="visao"] {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  #cardsContainer [data-card-id="cartoes"] {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  /* Demais cards ocupam largura total a partir da linha 3 */
   #cardsContainer [data-card-id="debitos"],
+  #cardsContainer [data-card-id="projecao"],
   #cardsContainer [data-card-id="despesas-conta"],
   #cardsContainer [data-card-id="despesas-cat"],
   #cardsContainer [data-card-id="assistente"] {
