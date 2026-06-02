@@ -11,6 +11,17 @@
     max-width: none;
     padding: 24px 28px;
   }
+
+  /* Cartões: cap de largura + 2 por linha */
+  #viewCartoes .settings-card {
+    max-width: 920px;
+  }
+
+  #cartoesList {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
 }
 
 /* ========================
