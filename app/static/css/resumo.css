@@ -78,8 +78,12 @@
     min-width: 0;
   }
 
-  /* Projeção de saldo ocupa a largura total */
-  #cardsContainer [data-card-id="projecao"] {
+  /* Cards que devem ocupar largura total (sem par na coluna oposta) */
+  #cardsContainer [data-card-id="projecao"],
+  #cardsContainer [data-card-id="debitos"],
+  #cardsContainer [data-card-id="despesas-conta"],
+  #cardsContainer [data-card-id="despesas-cat"],
+  #cardsContainer [data-card-id="assistente"] {
     grid-column: 1 / -1;
   }
 
