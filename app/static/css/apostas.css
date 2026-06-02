@@ -1778,6 +1778,125 @@
 }
 
 /* ========================
+   AUTO GERAR
+======================== */
+.tips-btn-auto {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: none;
+  border-radius: 8px;
+  background: #7c3aed;
+  color: #fff;
+  font-size: .82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .12s ease;
+}
+.tips-btn-auto:hover { background: #6d28d9; }
+
+.tips-btn-auto-submit {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 20px;
+  border: none;
+  border-radius: 8px;
+  background: #7c3aed;
+  color: #fff;
+  font-size: .875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .12s ease;
+}
+.tips-btn-auto-submit:hover:not(:disabled) { background: #6d28d9; }
+.tips-btn-auto-submit:disabled { opacity: .6; cursor: not-allowed; }
+
+.tips-modal--wide { max-width: 560px; }
+
+.auto-leagues-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.auto-league-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: .78rem;
+  font-weight: 500;
+  cursor: pointer;
+  background: var(--card);
+  transition: background .1s, border-color .1s;
+}
+.auto-league-check:has(input:checked) {
+  background: rgba(124, 58, 237, .08);
+  border-color: #7c3aed;
+  color: #7c3aed;
+  font-weight: 600;
+}
+.auto-league-check input { width: 13px; height: 13px; accent-color: #7c3aed; }
+
+.tips-form-hint-inline {
+  font-size: .75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-left: 4px;
+}
+
+.auto-info-note {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(124, 58, 237, .06);
+  border: 1px solid rgba(124, 58, 237, .15);
+  font-size: .78rem;
+  color: #5b21b6;
+  line-height: 1.5;
+  margin: 8px 0 4px;
+}
+.auto-info-note i { margin-top: 2px; flex-shrink: 0; }
+
+/* Toast */
+.auto-toast {
+  position: fixed;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #1e293b;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: .83rem;
+  font-weight: 500;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s ease, transform .25s ease;
+  z-index: 9999;
+  max-width: 90vw;
+  text-align: center;
+}
+.auto-toast--visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Botão editar no card */
+.tips-action-btn--edit {
+  background: rgba(59, 130, 246, .10);
+  color: #2563eb;
+}
+.tips-action-btn--edit:hover { background: rgba(59, 130, 246, .18); }
+
+/* ========================
    RESPONSIVE
 ======================== */
 @media (max-width: 480px) {

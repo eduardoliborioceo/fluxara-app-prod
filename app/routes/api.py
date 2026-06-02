@@ -1343,6 +1343,28 @@ def apostas_tips_update_status(tip_id):
         return jsonify({"error": "Erro ao atualizar status"}), 500
 
 
+@bp.route("/apostas/tips/<int:tip_id>", methods=["PATCH"])
+@login_required
+def apostas_tips_update(tip_id):
+    if not current_user.is_admin:
+        return jsonify({"error": "Sem permissão"}), 403
+    from app.services import apostas_tips_service
+    data = request.get_json() or {}
+    try:
+        tip = apostas_tips_service.update_tip(
+            tip_id=tip_id,
+            titulo=data.get("titulo", ""),
+            stake=data.get("stake", ""),
+            link_aposta=data.get("link_aposta", ""),
+        )
+        return jsonify(tip)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as exc:
+        logger.exception("apostas_tips_update error tip=%s: %s", tip_id, exc)
+        return jsonify({"error": "Erro ao editar recomendação"}), 500
+
+
 @bp.route("/apostas/tips/<int:tip_id>", methods=["DELETE"])
 @login_required
 def apostas_tips_delete(tip_id):
@@ -1355,6 +1377,23 @@ def apostas_tips_delete(tip_id):
     except Exception as exc:
         logger.exception("apostas_tips_delete error tip=%s: %s", tip_id, exc)
         return jsonify({"error": "Erro ao excluir recomendação"}), 500
+
+
+@bp.route("/apostas/auto-recommend", methods=["POST"])
+@login_required
+def apostas_auto_recommend():
+    if not current_user.is_admin:
+        return jsonify({"error": "Sem permissão"}), 403
+    from app.services import apostas_auto_service
+    config = request.get_json() or {}
+    try:
+        result = apostas_auto_service.auto_recommend(config, current_user.id)
+        return jsonify(result), 201
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as exc:
+        logger.exception("apostas_auto_recommend error: %s", exc)
+        return jsonify({"error": "Erro ao gerar recomendação automática"}), 500
 
 
 @bp.route("/assinaturas/iniciar", methods=["POST"])

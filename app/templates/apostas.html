@@ -69,6 +69,10 @@
         <i class="bi bi-plus-lg"></i>
         Nova recomendação
       </button>
+      <button class="tips-btn-auto" onclick="openAutoModal()">
+        <i class="bi bi-stars"></i>
+        Auto Gerar
+      </button>
       <button class="tips-btn-preview" id="btnPreviewUser" onclick="togglePreviewMode()">
         <i class="bi bi-eye" id="previewIcon"></i>
         <span id="previewLabel">Ver como usuário</span>
@@ -261,6 +265,125 @@
     </div>
   </div>
 </div>
+<!-- Modal Auto Gerar -->
+<div id="autoModalOverlay" class="tips-modal-overlay" style="display:none" onclick="closeAutoModalOverlay(event)">
+  <div class="tips-modal tips-modal--wide">
+    <div class="tips-modal-header">
+      <span><i class="bi bi-stars" style="margin-right:6px;color:#7c3aed"></i>Auto Gerar Recomendação</span>
+      <button class="tips-modal-close" onclick="closeAutoModal()" title="Fechar">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <div class="tips-modal-body">
+      <div id="autoFormError" class="tips-form-error" style="display:none"></div>
+
+      <div class="tips-form-row">
+        <div class="tips-form-group">
+          <label class="tips-form-label">Diferença mínima de posição</label>
+          <input type="number" id="autoDiff" class="tips-form-input" value="10" min="1" max="30">
+        </div>
+        <div class="tips-form-group">
+          <label class="tips-form-label">Odd total alvo</label>
+          <input type="number" id="autoTargetOdd" class="tips-form-input" value="3.00" step="0.10" min="1.10">
+        </div>
+      </div>
+
+      <div class="tips-form-row">
+        <div class="tips-form-group">
+          <label class="tips-form-label">Próximos dias</label>
+          <select id="autoDays" class="tips-form-input">
+            <option value="7">7 dias</option>
+            <option value="14" selected>14 dias</option>
+            <option value="21">21 dias</option>
+            <option value="30">30 dias</option>
+          </select>
+        </div>
+        <div class="tips-form-group">
+          <label class="tips-form-label">Máx. jogos na múltipla</label>
+          <select id="autoMaxGames" class="tips-form-input">
+            <option value="3">3 jogos</option>
+            <option value="4">4 jogos</option>
+            <option value="5" selected>5 jogos</option>
+            <option value="6">6 jogos</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="tips-form-group">
+        <label class="tips-form-label">Campeonatos <span class="tips-form-hint-inline">(nenhum = todos)</span></label>
+        <div id="autoLeagueCheckboxes" class="auto-leagues-grid"></div>
+      </div>
+
+      <div class="tips-form-row">
+        <div class="tips-form-group">
+          <label class="tips-form-label">Stake (opcional)</label>
+          <input type="text" id="autoStake" class="tips-form-input" placeholder="Ex: 2 unidades" maxlength="50">
+        </div>
+        <div class="tips-form-group">
+          <label class="tips-form-label">Título (opcional)</label>
+          <input type="text" id="autoTitulo" class="tips-form-input" placeholder="Gerado automaticamente" maxlength="200">
+        </div>
+      </div>
+
+      <div class="auto-info-note">
+        <i class="bi bi-info-circle"></i>
+        O sistema busca partidas onde o mandante tem vantagem na tabela (≥ diferença configurada) e monta uma múltipla de Vitória Casa para atingir a odd alvo.
+        Odds marcadas com ★ são estimativas — edite a recomendação para colocar as odds reais e o link Betano.
+      </div>
+
+      <div class="tips-modal-actions">
+        <button class="tips-btn-cancel" onclick="closeAutoModal()">Cancelar</button>
+        <button class="tips-btn-auto-submit" id="autoSubmitBtn" onclick="submitAutoRecommend()">
+          <i class="bi bi-stars"></i> Gerar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Editar Recomendação -->
+<div id="editModalOverlay" class="tips-modal-overlay" style="display:none" onclick="closeEditModalOverlay(event)">
+  <div class="tips-modal">
+    <div class="tips-modal-header">
+      <span><i class="bi bi-pencil" style="margin-right:6px"></i>Editar Recomendação</span>
+      <button class="tips-modal-close" onclick="closeEditModal()" title="Fechar">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <div class="tips-modal-body">
+      <div id="editFormError" class="tips-form-error" style="display:none"></div>
+      <input type="hidden" id="editTipId">
+
+      <div class="tips-form-group">
+        <label class="tips-form-label">Título <span class="tips-required">*</span></label>
+        <input type="text" id="editTitulo" class="tips-form-input" maxlength="200">
+      </div>
+
+      <div class="tips-form-group">
+        <label class="tips-form-label">Stake</label>
+        <input type="text" id="editStake" class="tips-form-input" maxlength="50">
+      </div>
+
+      <div class="tips-form-group">
+        <label class="tips-form-label">Link Betano</label>
+        <div class="link-aposta-wrap">
+          <input type="text" id="editLinkAposta" class="tips-form-input" placeholder="https://..." autocomplete="off" autocorrect="off" spellcheck="false">
+          <button type="button" class="link-paste-btn" onclick="pasteEditLink()" title="Colar link">
+            <i class="bi bi-clipboard"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="tips-modal-actions">
+        <button class="tips-btn-cancel" onclick="closeEditModal()">Cancelar</button>
+        <button class="tips-btn-submit" id="editSubmitBtn" onclick="submitEditTip()">
+          <i class="bi bi-check-lg"></i> Salvar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endif %}
 
 {% endblock %}
