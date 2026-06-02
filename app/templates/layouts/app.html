@@ -42,25 +42,6 @@
         <img src="{{ url_for('static', filename='images/logos/pwa-512.png') }}?v={{ static_v }}" alt="Fluxara">
       {% endif %}
     </a>
-
-    {% set page_titles = {
-      "resumo":        "Resumo",
-      "contas":        "Contas",
-      "planejamento":  "Planejamento",
-      "configuracoes": "Configurações",
-      "suporte":       "Suporte",
-      "perfil":        "Meu perfil",
-      "mais":          "Mais",
-      "dev_painel":    "Painel Dev",
-      "dev_novo":      "Novo Projeto",
-      "minha_saude":   "Minha Saúde",
-      "surebet":       "Surebet",
-      "apostas":       "Apostas"
-    } %}
-
-    <span class="username fw-bold">
-      {{ page_titles.get(active_menu, "Fluxara") }}
-    </span>
   </div>
 
   {% if current_user.is_authenticated %}
