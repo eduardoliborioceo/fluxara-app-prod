@@ -21,6 +21,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v={{ static_v }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/powerbi.css') }}?v={{ static_v }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/legal.css') }}?v={{ static_v }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/calculator.css') }}?v={{ static_v }}">
   {% block styles %}{% endblock %}
 </head>
 
@@ -289,6 +290,7 @@
 <script src="{{ url_for('static', filename='js/cookie-consent.js') }}?v={{ static_v }}"></script>
 <script src="{{ url_for('static', filename='js/pwa.js') }}?v={{ static_v }}"></script>
 <script src="{{ url_for('static', filename='js/push-notifications.js') }}?v={{ static_v }}"></script>
+<script src="{{ url_for('static', filename='js/calculator.js') }}?v={{ static_v }}"></script>
 
 {% block scripts %}{% endblock %}
 
