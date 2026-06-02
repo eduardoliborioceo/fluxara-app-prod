@@ -398,6 +398,22 @@ def cartoes_delete(cartao_id):
     return jsonify({"ok": True})
 
 
+@bp.route("/cartoes/transferir-limite", methods=["POST"])
+@login_required
+def cartoes_transferir_limite():
+    data = request.get_json() or {}
+    try:
+        cartoes_service.transferir_limite(
+            int(data.get("cartao_origem_id")),
+            int(data.get("cartao_destino_id")),
+            current_user.id,
+            data.get("valor", 0),
+        )
+        return jsonify({"ok": True})
+    except (ValueError, TypeError) as e:
+        return jsonify({"error": str(e)}), 400
+
+
 @bp.route("/contas/<int:conta_id>/lancamentos", methods=["GET"])
 @login_required
 def conta_lancamentos(conta_id):

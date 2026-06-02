@@ -149,6 +149,24 @@ def get_faturas_pendentes(user_id: int) -> list:
             return cur.fetchall()
 
 
+def transfer_limite(cartao_origem_id: int, cartao_destino_id: int, user_id: int, valor: float):
+    with get_db() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("""
+                UPDATE cartoes_credito SET limite = limite - %s
+                WHERE id = %s AND user_id = %s AND ativo = TRUE AND limite >= %s
+            """, (valor, cartao_origem_id, user_id, valor))
+            if cur.rowcount == 0:
+                raise ValueError("Limite insuficiente ou cartão de origem inválido")
+            cur.execute("""
+                UPDATE cartoes_credito SET limite = limite + %s
+                WHERE id = %s AND user_id = %s AND ativo = TRUE
+            """, (valor, cartao_destino_id, user_id))
+            if cur.rowcount == 0:
+                raise ValueError("Cartão de destino inválido")
+        conn.commit()
+
+
 def delete_cartao(cartao_id: int, user_id: int):
     with get_db() as conn:
         with conn.cursor() as cur:

@@ -518,7 +518,10 @@
     }
   }
 
+  let _cartoesCache = [];
+
   function renderCartoes(cartoes) {
+    _cartoesCache = cartoes;
     const el = document.getElementById('cartoesList');
     if (!cartoes.length) {
       el.innerHTML = '<p class="text-muted text-center py-3 mb-0">Nenhum cartão cadastrado.</p>';
@@ -563,6 +566,10 @@
           <button class="btn btn-outline-secondary btn-sm"
             onclick="abrirEditarCartao(${c.id})">
             <i class="bi bi-pencil me-1"></i>Editar
+          </button>
+          <button class="btn btn-outline-primary btn-sm"
+            onclick="abrirTransferirLimite(${c.id})">
+            <i class="bi bi-arrow-left-right me-1"></i>Transferir
           </button>
           <button class="btn btn-outline-danger btn-sm"
             onclick="deletarCartaoConfig(${c.id})">
@@ -706,6 +713,97 @@
     await fetch(`/api/cartoes/${id}`, { method: 'DELETE' });
     loadCartoes();
   };
+
+  // ── TRANSFERIR LIMITE ─────────────────────────────
+  const modalTransfEl = document.getElementById('modalTransferirLimite');
+  const modalTransf = modalTransfEl ? new bootstrap.Modal(modalTransfEl) : null;
+
+  function formatLimite(v) {
+    return 'R$ ' + parseFloat(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+  }
+
+  function populateTransfSelects(origemId) {
+    const origem = document.getElementById('transfOrigem');
+    const destino = document.getElementById('transfDestino');
+    origem.innerHTML = _cartoesCache.map(c =>
+      `<option value="${c.id}" ${c.id === origemId ? 'selected' : ''}>${esc(c.nome)}</option>`
+    ).join('');
+    destino.innerHTML = _cartoesCache
+      .filter(c => c.id !== origemId)
+      .map(c => `<option value="${c.id}">${esc(c.nome)}</option>`)
+      .join('');
+    updateTransfLimiteLabels();
+  }
+
+  function updateTransfLimiteLabels() {
+    const origemId = parseInt(document.getElementById('transfOrigem').value);
+    const destinoId = parseInt(document.getElementById('transfDestino').value);
+    const co = _cartoesCache.find(c => c.id === origemId);
+    const cd = _cartoesCache.find(c => c.id === destinoId);
+    const elO = document.getElementById('transfOrigemLimite');
+    const elD = document.getElementById('transfDestinoLimite');
+    if (elO) elO.textContent = co ? 'Limite atual: ' + formatLimite(co.limite) : '';
+    if (elD) elD.textContent = cd ? 'Limite atual: ' + formatLimite(cd.limite) : '';
+  }
+
+  function syncDestinoOptions() {
+    const origemId = parseInt(document.getElementById('transfOrigem').value);
+    const destino = document.getElementById('transfDestino');
+    const prevVal = parseInt(destino.value);
+    destino.innerHTML = _cartoesCache
+      .filter(c => c.id !== origemId)
+      .map(c => `<option value="${c.id}" ${c.id === prevVal ? 'selected' : ''}>${esc(c.nome)}</option>`)
+      .join('');
+    updateTransfLimiteLabels();
+  }
+
+  window.abrirTransferirLimite = function (id) {
+    if (_cartoesCache.length < 2) {
+      alert('É necessário ter pelo menos dois cartões para transferir limite.');
+      return;
+    }
+    document.getElementById('transfValor').value = '';
+    document.getElementById('transfErro').classList.add('d-none');
+    populateTransfSelects(id);
+    document.getElementById('transfOrigem').addEventListener('change', syncDestinoOptions);
+    document.getElementById('transfDestino').addEventListener('change', updateTransfLimiteLabels);
+    modalTransf.show();
+  };
+
+  document.getElementById('btnConfirmarTransferir')?.addEventListener('click', async () => {
+    const origemId = parseInt(document.getElementById('transfOrigem').value);
+    const destinoId = parseInt(document.getElementById('transfDestino').value);
+    const valorRaw = document.getElementById('transfValor').value.replace(',', '.');
+    const valor = parseFloat(valorRaw);
+    const erroEl = document.getElementById('transfErro');
+
+    erroEl.classList.add('d-none');
+
+    if (!valor || valor <= 0) {
+      erroEl.textContent = 'Informe um valor válido.';
+      erroEl.classList.remove('d-none');
+      return;
+    }
+    if (origemId === destinoId) {
+      erroEl.textContent = 'Origem e destino não podem ser o mesmo cartão.';
+      erroEl.classList.remove('d-none');
+      return;
+    }
+
+    const r = await fetch('/api/cartoes/transferir-limite', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cartao_origem_id: origemId, cartao_destino_id: destinoId, valor }),
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      erroEl.textContent = data.error || 'Erro ao transferir.';
+      erroEl.classList.remove('d-none');
+      return;
+    }
+    modalTransf.hide();
+    loadCartoes();
+  });
 
   // ── GASTOS DEVELOPER ─────────────────────────────────
   const GDEV_GROUPS = [
