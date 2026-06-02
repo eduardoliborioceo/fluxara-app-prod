@@ -461,33 +461,18 @@
     credito_debito: 'Crédito e Débito',
   };
 
-  function buildBandeiraLogo(bandeira, isDark) {
-    isDark = isDark !== false;
+  function buildBandeiraLogo(bandeira) {
     const b = BANDEIRAS[bandeira] || BANDEIRAS.outro;
-    const filterVal = isDark ? 'brightness(0) invert(1)' : 'brightness(0)';
     if (b.svg) {
-      return '<img src="/static/images/bank-icons-logos-svg/' + esc(b.svg) + '" alt="' + esc(b.nome) + '"'
-        + ' style="height:28px;width:auto;object-fit:contain;filter:' + filterVal + ';opacity:0.88;">';
+      return '<div style="background:rgba(255,255,255,0.92);width:46px;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
+        + '<img src="/static/images/bank-icons-logos-svg/' + esc(b.svg) + '" alt="' + esc(b.nome) + '" style="max-width:80%;max-height:80%;object-fit:contain;"></div>';
     }
-    return '<span style="font-size:0.75rem;font-weight:700;opacity:0.88;">' + esc(b.nome) + '</span>';
+    return '<span style="font-size:0.72rem;font-weight:700;opacity:0.85;">' + esc(b.nome) + '</span>';
   }
 
-  function buildContaLogoCard(inst, size, isDark) {
+  function buildContaLogoCard(inst, size) {
     size = size || 32;
-    isDark = isDark !== false;
-    const overlayBg = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)';
-    const filterVal = isDark ? 'brightness(0) invert(1)' : 'none';
-    if (inst && inst.svg) {
-      return '<div style="width:' + size + 'px;height:' + size + 'px;border-radius:8px;background:' + overlayBg + ';display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
-        + '<img src="/static/images/bank-icons-logos-svg/' + esc(inst.svg) + '" alt="" style="width:70%;height:70%;object-fit:contain;filter:' + filterVal + ';opacity:0.9;"></div>';
-    }
-    if (inst) {
-      const letra = inst.letra || '?';
-      const letterColor = isDark ? '#fff' : '#1e293b';
-      return '<div style="width:' + size + 'px;height:' + size + 'px;border-radius:8px;background:' + overlayBg + ';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;color:' + letterColor + ';flex-shrink:0;">' + esc(letra) + '</div>';
-    }
-    const iconColor = isDark ? '#fff' : '#1e293b';
-    return '<div style="width:' + size + 'px;height:' + size + 'px;border-radius:8px;background:' + overlayBg + ';display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="bi bi-credit-card" style="font-size:1.1rem;opacity:0.7;color:' + iconColor + ';"></i></div>';
+    return buildLogoHtml(inst, size);
   }
 
   function cardBackground(contaInstituicao) {
@@ -545,8 +530,8 @@
       const grad = cardBackground(instKey);
       const textColor = cardTextColor(instKey);
       const isDark = textColor === '#fff';
-      const contaLogo = buildContaLogoCard(inst, 32, isDark);
-      const bandeiraLogo = buildBandeiraLogo(c.bandeira, isDark);
+      const contaLogo = buildContaLogoCard(inst, 32);
+      const bandeiraLogo = buildBandeiraLogo(c.bandeira);
       const tipoLabel = TIPOS_LABEL[c.tipo] || 'Crédito';
       const badgeBg = isDark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.08)';
       const limit = parseFloat(c.limite || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
