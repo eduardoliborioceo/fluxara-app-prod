@@ -57,7 +57,7 @@
     { slug: 'binance',      nome: 'Binance',             cor: '#F3BA2F', letra: 'B', corLetra: '#000', svg: 'binance.svg' },
     { slug: 'metamask',     nome: 'MetaMask',            cor: '#E2761B', letra: 'M', svg: 'metamask.svg' },
     { slug: 'bitybank',     nome: 'Bitybank',            cor: '#0066FF', letra: 'B', svg: 'bitybank.svg' },
-    { slug: 'outro',        nome: 'Outro',               cor: '#6c757d', letra: 'O' },
+    { slug: 'outro',        nome: 'Outro',               cor: '#64748b', icone: 'bi-wallet2', corLetra: '#fff' },
   ];
 
   const instMap = {};
@@ -109,7 +109,9 @@
       const saldo = formatMoney(parseFloat(c.saldo_inicial) || 0);
       const logoHtml = inst.svg
         ? `<div class="conta-logo-circle" style="background:#f8fafc"><img src="/static/images/bank-icons-logos-svg/${inst.svg}" alt="${esc(inst.nome)}" style="width:65%;height:65%;object-fit:contain"></div>`
-        : `<div class="conta-logo-circle" style="background:${inst.cor};color:${inst.corLetra || '#fff'}">${inst.letra}</div>`;
+        : inst.icone
+          ? `<div class="conta-logo-circle" style="background:${inst.cor};color:${inst.corLetra || '#fff'}"><i class="bi ${inst.icone}" style="font-size:1.1rem"></i></div>`
+          : `<div class="conta-logo-circle" style="background:${inst.cor};color:${inst.corLetra || '#fff'}">${inst.letra}</div>`;
       return `<div class="conta-row" onclick="abrirEditarConta(${c.id})">
         ${logoHtml}
         <div class="conta-info">
@@ -125,6 +127,9 @@
   function instLogoHtml(inst, cls) {
     if (inst && inst.svg) {
       return `<div class="${cls}" style="background:#f8fafc"><img src="/static/images/bank-icons-logos-svg/${esc(inst.svg)}" alt="${esc(inst.nome)}" style="width:70%;height:70%;object-fit:contain"></div>`;
+    }
+    if (inst && inst.icone) {
+      return `<div class="${cls}" style="background:${inst.cor};color:${inst.corLetra || '#fff'}"><i class="bi ${inst.icone}" style="font-size:1rem"></i></div>`;
     }
     return `<div class="${cls}" style="background:${inst.cor};color:${inst.corLetra || '#fff'}">${inst.letra}</div>`;
   }
@@ -151,10 +156,14 @@
       logoEl.style.background = '#f8fafc';
       logoEl.style.color = '';
       logoEl.innerHTML = `<img src="/static/images/bank-icons-logos-svg/${esc(inst.svg)}" alt="${esc(inst.nome)}" style="width:70%;height:70%;object-fit:contain">`;
+    } else if (inst && inst.icone) {
+      logoEl.style.background = inst.cor;
+      logoEl.style.color = inst.corLetra || '#fff';
+      logoEl.innerHTML = `<i class="bi ${inst.icone}" style="font-size:1rem"></i>`;
     } else {
-      logoEl.style.background = inst ? inst.cor : '#6c757d';
+      logoEl.style.background = inst ? inst.cor : '#64748b';
       logoEl.style.color = (inst && inst.corLetra) || '#fff';
-      logoEl.textContent = inst ? inst.letra : 'O';
+      logoEl.textContent = inst ? inst.letra : '?';
     }
   }
 

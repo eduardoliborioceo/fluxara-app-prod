@@ -60,7 +60,7 @@
     binance:     { cor: '#F3BA2F', letra: 'B', corLetra: '#000', svg: 'binance.svg' },
     metamask:    { cor: '#E2761B', letra: 'M', svg: 'metamask.svg' },
     bitybank:    { cor: '#0066FF', letra: 'B', svg: 'bitybank.svg' },
-    outro:       { cor: '#6c757d', letra: 'O' },
+    outro:       { cor: '#64748b', icone: 'bi-wallet2', corLetra: '#fff' },
   };
 
   var cfg = document.getElementById('extratoConfig');
@@ -153,9 +153,14 @@
       return '<div class="extrato-header-logo" style="background:#f8fafc;width:' + size + 'px;height:' + size + 'px">'
         + '<img src="/static/images/bank-icons-logos-svg/' + esc(inst.svg) + '" style="width:65%;height:65%;object-fit:contain"></div>';
     }
-    var bg = (inst && inst.cor) || '#6c757d';
+    var bg = (inst && inst.cor) || '#64748b';
     var fg = (inst && inst.corLetra) || '#fff';
-    var letra = (inst && inst.letra) || 'O';
+    var iconSize = Math.round(size * 0.5) + 'px';
+    if (inst && inst.icone) {
+      return '<div class="extrato-header-logo" style="background:' + bg + ';color:' + fg + ';width:' + size + 'px;height:' + size + 'px">'
+        + '<i class="bi ' + inst.icone + '" style="font-size:' + iconSize + '"></i></div>';
+    }
+    var letra = (inst && inst.letra) || '?';
     return '<div class="extrato-header-logo" style="background:' + bg + ';color:' + fg + ';width:' + size + 'px;height:' + size + 'px">' + letra + '</div>';
   }
 
