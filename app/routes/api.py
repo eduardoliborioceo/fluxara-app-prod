@@ -1450,6 +1450,56 @@ def assinaturas_admin():
     return jsonify(assinaturas_service.get_dados_admin())
 
 
+@bp.route("/assinaturas/pagar-cartao", methods=["POST"])
+@login_required
+def assinatura_pagar_cartao():
+    from app.services import assinaturas_service, mercadopago_service
+    data = request.get_json() or {}
+    assinatura = None
+    try:
+        assinatura = assinaturas_service.iniciar_assinatura(
+            current_user.id, "apostas", "cartao"
+        )
+        base_url = _mp_base_url(request)
+        payer = data.get("payer") or {}
+        payment = mercadopago_service.processar_pagamento(
+            token=data.get("token", ""),
+            transaction_amount=assinatura["valor_brl"],
+            payment_method_id=data.get("payment_method_id", ""),
+            issuer_id=data.get("issuer_id"),
+            installments=data.get("installments", 1),
+            payer_email=current_user.email,
+            payer_identification=payer.get("identification", {}),
+            external_reference=str(assinatura["id"]),
+            base_url=base_url,
+        )
+        status = payment.get("status")
+        payment_id = str(payment.get("id", ""))
+
+        if status == "approved":
+            assinaturas_service.ativar_assinatura(assinatura["id"], f"mp-{payment_id}", 1)
+            return jsonify({"status": "approved"})
+
+        if status == "in_process":
+            return jsonify({"status": "in_process"})
+
+        assinaturas_service.cancelar_assinatura(assinatura["id"], current_user.id)
+        detail = payment.get("status_detail", "recusado")
+        return jsonify({"error": f"Pagamento não aprovado ({detail}). Verifique os dados e tente novamente."}), 422
+
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as exc:
+        logger.exception("assinatura_pagar_cartao error: %s", exc)
+        if assinatura:
+            try:
+                assinaturas_service.cancelar_assinatura(assinatura["id"], current_user.id)
+            except Exception:
+                pass
+        return jsonify({"error": "Erro ao processar pagamento. Tente novamente."}), 500
+
+
+# Checkout Pro — rota mantida inativa (não chamada pelo frontend atual)
 @bp.route("/assinaturas/checkout-mp", methods=["POST"])
 @login_required
 def assinatura_checkout_mp():
