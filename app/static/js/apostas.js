@@ -1035,6 +1035,7 @@ async function submitAutoRecommend() {
   const targetOdd = parseFloat(document.getElementById("autoTargetOdd").value) || 3.00;
   const daysAhead = parseInt(document.getElementById("autoDays").value) || 14;
   const maxGames  = parseInt(document.getElementById("autoMaxGames").value) || 5;
+  const maxRecs   = parseInt(document.getElementById("autoMaxRecs").value) || 1;
   const stake     = document.getElementById("autoStake").value.trim();
   const titulo    = document.getElementById("autoTitulo").value.trim();
 
@@ -1051,10 +1052,11 @@ async function submitAutoRecommend() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        min_diff:   minDiff,
-        target_odd: targetOdd,
-        days_ahead: daysAhead,
-        max_games:  maxGames,
+        min_diff:            minDiff,
+        target_odd:          targetOdd,
+        days_ahead:          daysAhead,
+        max_games:           maxGames,
+        max_recommendations: maxRecs,
         leagues,
         stake,
         titulo,
@@ -1066,11 +1068,11 @@ async function submitAutoRecommend() {
     closeAutoModal();
     await loadTips();
 
-    const info = json.info;
-    const estNote = info.has_estimates ? " · ★ odds estimadas — edite para atualizar" : "";
-    _showAutoToast(
-      `Recomendação criada: ${info.selected} jogo(s) · @${info.odd_total}${estNote}`
-    );
+    const info  = json.info;
+    const count = info.recommendations || 1;
+    const estNote = info.has_estimates ? " · ★ odds estimadas" : "";
+    const label = count === 1 ? "Recomendação criada" : `${count} recomendações criadas`;
+    _showAutoToast(`${label}!${estNote}`);
   } catch {
     _showAutoFormError("Erro de conexão");
   } finally {
