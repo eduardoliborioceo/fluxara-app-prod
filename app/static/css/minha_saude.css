@@ -10,8 +10,32 @@
 
 @media (min-width: 992px) {
   .saude-wrapper {
-    max-width: 860px;
-    padding: 0 28px 60px;
+    max-width: 1200px;
+    padding: 0 32px 60px;
+  }
+
+  /* 2-column grid para a aba Hoje */
+  #tab-hoje {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    gap: 20px;
+    align-items: start;
+  }
+
+  /* Stats e tabs ocupam largura total */
+  #tab-hoje .saude-stats-row {
+    grid-column: 1 / -1;
+  }
+
+  /* Remove margin-bottom dos cards (o gap do grid cuida do espaçamento) */
+  #tab-hoje .saude-card {
+    margin-bottom: 0;
+  }
+
+  /* Tabs e outras abas ficam em coluna única */
+  #tab-perfil,
+  #tab-produtos {
+    max-width: 760px;
   }
 }
 
