@@ -436,12 +436,14 @@ function buildTipCard(tip, isAdmin) {
     ? `<span class="tips-odd-display"><i class="bi bi-calculator"></i>Odd total: <strong>${tip.odd.toFixed(2)}</strong></span>`
     : "";
 
+  const idHtml = `<span class="tips-id-display"><i class="bi bi-hash"></i>ID: <strong>#${tip.id}</strong></span>`;
+
   let linkHtml = "";
   if (tip.link_aposta) {
     linkHtml = `
       <div class="tips-link-group">
         <a href="${escHtml(tip.link_aposta)}" target="_blank" rel="noopener" class="tips-link-btn">
-          <i class="bi bi-link-45deg"></i> Ver aposta
+          <i class="bi bi-link-45deg"></i> Link Betano
         </a>
         <button class="tips-copy-btn" data-link="${escHtml(tip.link_aposta)}" onclick="copyTipLink(this)" title="Copiar link">
           <i class="bi bi-clipboard"></i>
@@ -467,7 +469,7 @@ function buildTipCard(tip, isAdmin) {
         ${statusBadge}
         <span class="tips-card-title">${escHtml(tip.titulo)}</span>
       </div>
-      ${(oddHtml || linkHtml) ? `<div class="tips-card-row2">${oddHtml}${linkHtml}</div>` : ""}
+      ${(oddHtml || idHtml || linkHtml) ? `<div class="tips-card-row2">${oddHtml}${idHtml}${linkHtml}</div>` : ""}
       ${toggleSection}
       ${adminActions}
     </div>
@@ -549,7 +551,7 @@ function buildTipAdminActions(tip) {
     <div class="tips-admin-actions">
       ${tip.status !== "green"    ? `<button class="tips-action-btn tips-action-btn--green"   onclick="setTipStatus(${id},'green')"    title="Green"><i class="bi bi-check-lg"></i></button>` : ""}
       ${tip.status !== "red"      ? `<button class="tips-action-btn tips-action-btn--red"     onclick="setTipStatus(${id},'red')"      title="Red"><i class="bi bi-x-lg"></i></button>` : ""}
-      ${tip.status !== "pendente" ? `<button class="tips-action-btn tips-action-btn--pending" onclick="setTipStatus(${id},'pendente')" title="Pendente"><i class="bi bi-clock"></i></button>` : ""}
+      ${tip.status !== "pendente" ? `<button class="tips-action-btn tips-action-btn--pending" onclick="setTipStatus(${id},'pendente')" title="Em Aberto"><i class="bi bi-clock"></i></button>` : ""}
       ${tip.status !== "void"     ? `<button class="tips-action-btn tips-action-btn--void"    onclick="setTipStatus(${id},'void')"     title="Anular"><i class="bi bi-dash-lg"></i></button>` : ""}
       <button class="tips-action-btn tips-action-btn--delete" onclick="deleteTip(${id})" title="Excluir"><i class="bi bi-trash3"></i></button>
     </div>
