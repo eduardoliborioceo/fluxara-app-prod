@@ -6,8 +6,32 @@
 
 @media (min-width: 992px) {
   .surebet-wrapper {
-    max-width: 820px;
-    padding: 0 28px 60px;
+    max-width: 1200px;
+    padding: 0 32px 60px;
+  }
+
+  /* Grade 2 colunas: inputs à esquerda, resultado à direita */
+  .surebet-calc-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+
+  .surebet-calc-left,
+  .surebet-calc-right {
+    min-width: 0;
+  }
+
+  /* Resultado fica visível enquanto o usuário preenche as odds */
+  .surebet-calc-right .surebet-result-card {
+    position: sticky;
+    top: 76px;
+  }
+
+  /* Remove margin-bottom no interior das colunas */
+  .surebet-calc-left .surebet-card:last-child {
+    margin-bottom: 0;
   }
 }
 
