@@ -751,3 +751,33 @@
   font-size: 0.82rem;
   color: var(--text-muted);
 }
+
+/* ---- Banner retorno Mercado Pago ---- */
+.assin-mp-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 20px;
+}
+
+.assin-mp-banner--ok {
+  background: rgba(25,135,84,.09);
+  border: 1px solid rgba(25,135,84,.3);
+  color: #198754;
+}
+
+.assin-mp-banner--warn {
+  background: rgba(245,158,11,.08);
+  border: 1px solid rgba(245,158,11,.3);
+  color: #b45309;
+}
+
+.assin-mp-banner--err {
+  background: rgba(220,53,69,.08);
+  border: 1px solid rgba(220,53,69,.25);
+  color: #dc3545;
+}

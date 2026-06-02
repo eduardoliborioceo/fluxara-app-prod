@@ -1448,3 +1448,79 @@ def assinaturas_admin():
         return jsonify({"error": "Sem permissão"}), 403
     from app.services import assinaturas_service
     return jsonify(assinaturas_service.get_dados_admin())
+
+
+@bp.route("/assinaturas/checkout-mp", methods=["POST"])
+@login_required
+def assinatura_checkout_mp():
+    import os
+    from app.services import assinaturas_service, mercadopago_service
+    try:
+        assinatura = assinaturas_service.iniciar_assinatura(
+            current_user.id, "apostas", "cartao"
+        )
+        base_url = _mp_base_url(request)
+        checkout_url = mercadopago_service.criar_preferencia(
+            assinatura_id=assinatura["id"],
+            valor_brl=assinatura["valor_brl"],
+            plano_nome="Apostas Premium",
+            payer_email=current_user.email,
+            base_url=base_url,
+        )
+        return jsonify({"checkout_url": checkout_url})
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as exc:
+        logger.exception("assinatura_checkout_mp error: %s", exc)
+        return jsonify({"error": "Erro ao iniciar pagamento. Tente novamente."}), 500
+
+
+@bp.route("/webhooks/mercadopago", methods=["POST"])
+def webhook_mercadopago():
+    from app.services import assinaturas_service, mercadopago_service
+    try:
+        data = request.get_json(silent=True) or {}
+
+        payment_id = None
+        if data.get("type") == "payment":
+            payment_id = str(data.get("data", {}).get("id", ""))
+        elif data.get("topic") == "payment":
+            payment_id = str(data.get("id", ""))
+
+        if not payment_id or payment_id == "None":
+            return jsonify({"ok": True})
+
+        payment = mercadopago_service.buscar_pagamento(payment_id)
+
+        if payment.get("status") != "approved":
+            return jsonify({"ok": True})
+
+        external_ref = payment.get("external_reference", "")
+        if not external_ref:
+            return jsonify({"ok": True})
+
+        assinatura_id = int(external_ref)
+        assinaturas_service.ativar_assinatura(
+            assinatura_id=assinatura_id,
+            referencia=f"mp-{payment_id}",
+            meses=1,
+        )
+        logger.info("assinatura %s ativada via MP pagamento %s", assinatura_id, payment_id)
+        return jsonify({"ok": True})
+    except Exception as exc:
+        logger.exception("webhook_mercadopago error: %s", exc)
+        return jsonify({"ok": True}), 200
+
+
+def _mp_base_url(req) -> str:
+    import os
+    explicit = os.environ.get("APP_BASE_URL", "").rstrip("/")
+    if explicit:
+        return explicit
+    railway = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "")
+    if railway:
+        return f"https://{railway}"
+    url = req.url_root.rstrip("/")
+    if url.startswith("http://") and "localhost" not in url:
+        url = "https://" + url[7:]
+    return url
