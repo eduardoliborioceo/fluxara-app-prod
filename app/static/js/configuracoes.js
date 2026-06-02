@@ -57,7 +57,7 @@
     binance:     { cor: '#F3BA2F', letra: 'B', corLetra: '#000', svg: 'binance.svg' },
     metamask:    { cor: '#E2761B', letra: 'M', svg: 'metamask.svg' },
     bitybank:    { cor: '#0066FF', letra: 'B', svg: 'bitybank.svg' },
-    outro:       { cor: '#6c757d', letra: 'O' },
+    outro:       { cor: '#64748b', icone: 'bi-wallet2', corLetra: '#fff' },
   };
 
   function buildLogoHtml(inst, size) {
@@ -66,9 +66,14 @@
       return '<div style="background:#f8fafc;width:' + size + 'px;height:' + size + 'px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
         + '<img src="/static/images/bank-icons-logos-svg/' + esc(inst.svg) + '" alt="" style="width:65%;height:65%;object-fit:contain"></div>';
     }
-    var bg = (inst && inst.cor) || '#6c757d';
+    var bg = (inst && inst.cor) || '#64748b';
     var fg = (inst && inst.corLetra) || '#fff';
-    var letra = (inst && inst.letra) || 'O';
+    var iconSize = Math.round(size * 0.55) + 'px';
+    if (inst && inst.icone) {
+      return '<div style="background:' + bg + ';color:' + fg + ';width:' + size + 'px;height:' + size + 'px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
+        + '<i class="bi ' + inst.icone + '" style="font-size:' + iconSize + '"></i></div>';
+    }
+    var letra = (inst && inst.letra) || '?';
     return '<div style="background:' + bg + ';color:' + fg + ';width:' + size + 'px;height:' + size + 'px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.75rem;flex-shrink:0;">' + esc(letra) + '</div>';
   }
 
