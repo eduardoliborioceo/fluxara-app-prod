@@ -86,6 +86,27 @@ def mark_saude_push_sent(user_id: int, tipo: str, referencia: str):
         conn.commit()
 
 
+def is_lancamento_push_sent(user_id: int, lancamento_id: int, tipo: str) -> bool:
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT 1 FROM lancamentos_push_sent
+                WHERE user_id=%s AND lancamento_id=%s AND tipo=%s
+            """, (user_id, lancamento_id, tipo))
+            return cur.fetchone() is not None
+
+
+def mark_lancamento_push_sent(user_id: int, lancamento_id: int, tipo: str):
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO lancamentos_push_sent (user_id, lancamento_id, tipo)
+                VALUES (%s, %s, %s)
+                ON CONFLICT DO NOTHING
+            """, (user_id, lancamento_id, tipo))
+        conn.commit()
+
+
 def get_distinct_subscribed_users() -> list:
     with get_db() as conn:
         with conn.cursor(row_factory=dict_row) as cur:

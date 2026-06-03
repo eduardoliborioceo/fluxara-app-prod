@@ -136,6 +136,9 @@ def create_app():
     from app.services import cartao_notification_service
     cartao_notification_service.init_notifications(app)
 
+    from app.services import debitos_notification_service
+    debitos_notification_service.init_notifications(app)
+
     from app.services import saude_notification_service
     saude_notification_service.init_saude_notifications(app)
 
