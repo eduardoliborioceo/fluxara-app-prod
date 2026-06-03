@@ -284,6 +284,29 @@ def get_pending_pagamento_faturas(user_id: int, dias: int) -> list:
             return cur.fetchall()
 
 
+def get_lancamentos_vencendo_em(user_id: int, dias: int) -> list:
+    with get_db() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("""
+                SELECT
+                    l.id,
+                    l.data_vencimento::date AS data_vencimento,
+                    l.descricao,
+                    l.valor,
+                    l.tipo,
+                    COALESCE(cb.nome, '') AS conta_nome
+                FROM lancamentos l
+                LEFT JOIN contas_bancarias cb ON cb.id = l.conta_id
+                WHERE l.user_id = %s
+                  AND l.ativo = TRUE
+                  AND l.tipo IN ('despesa', 'pagamento_fatura')
+                  AND l.efetivado = FALSE
+                  AND l.data_vencimento::date = CURRENT_DATE + (%s * INTERVAL '1 day')
+                ORDER BY l.valor DESC
+            """, (user_id, dias))
+            return cur.fetchall()
+
+
 def get_debitos_vencidos(user_id: int) -> list:
     with get_db() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
