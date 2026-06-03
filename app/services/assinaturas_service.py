@@ -45,7 +45,19 @@ def ativar_assinatura(assinatura_id: int, referencia: str, meses: int = 1) -> di
     row = repo.ativar_assinatura(assinatura_id, referencia, meses)
     if not row:
         raise ValueError('Assinatura não encontrada')
-    return dict(row)
+    assinatura = dict(row)
+    try:
+        from app.services.push_service import send_to_user
+        plano_info = PLANOS.get(assinatura.get('plano', ''), {})
+        nome_plano = plano_info.get('nome', 'Premium')
+        send_to_user(
+            assinatura['user_id'],
+            f"🎉 Bem-vindo ao {nome_plano}!",
+            "Seu pagamento foi confirmado. Aproveite todos os recursos exclusivos.",
+        )
+    except Exception:
+        pass
+    return assinatura
 
 
 def cancelar_assinatura(assinatura_id: int, user_id: int) -> dict:
