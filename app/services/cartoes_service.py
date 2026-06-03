@@ -97,6 +97,18 @@ def gerar_lancamento_fatura(cartao_id: int, user_id: int, mes: int, ano: int,
         fatura_mes=mes,
         fatura_ano=ano,
     )
+
+    try:
+        from app.services.push_service import send_to_user
+        valor_fmt = f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        send_to_user(
+            user_id,
+            f"✅ Fatura paga — {cartao['nome']}",
+            f"Pagamento de {valor_fmt} registrado. Fatura {nome_mes}/{ano}.",
+        )
+    except Exception:
+        pass
+
     return dict(row)
 
 
