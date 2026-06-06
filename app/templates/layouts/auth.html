@@ -6,6 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
   <link rel="preload" as="image"
+        href="{{ url_for('static', filename='images/banners/bg-login-desktop.webp') }}?v={{ static_v }}">
+  <link rel="preload" as="image"
         href="{{ url_for('static', filename='images/banners/bg-cad-log.webp') }}?v={{ static_v }}">
   <link rel="preload" as="image"
         href="{{ url_for('static', filename='images/banners/bg-log-pass.webp') }}?v={{ static_v }}">
@@ -29,7 +31,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/legal.css') }}?v={{ static_v }}">
 </head>
 
-<body class="{% block body_class %}auth-body{% endblock %}">
+<body class="{% block body_class %}auth-body{% endblock %}" style="background-image: url('{{ url_for('static', filename='images/banners/bg-login-desktop.webp') }}?v={{ static_v }}')">
   {% block content %}{% endblock %}
 
   <div class="modal fade" id="pwaInstallHelpModal" tabindex="-1" aria-hidden="true">
