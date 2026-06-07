@@ -1007,6 +1007,62 @@
   color: var(--text);
 }
 
+.cfg-about-dev-role {
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: .3px;
+  margin-top: 2px;
+}
+
+.cfg-about-dev-company {
+  font-size: .75rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-top: 6px;
+  max-width: 220px;
+}
+
+.cfg-about-dev-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 14px;
+}
+
+.cfg-about-dev-link-circle {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 2px solid var(--border);
+  background: var(--card);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  text-decoration: none;
+}
+
+.cfg-about-dev-link-circle:hover {
+  transform: scale(1.08);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.12);
+}
+
+.cfg-about-dev-link-circle img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cfg-about-dev-link-instagram {
+  background: linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  border-color: transparent;
+  color: #fff;
+  font-size: 1.35rem;
+}
+
 .cfg-notif-toggle-desc {
   font-size: .76rem;
   color: var(--text-muted);
