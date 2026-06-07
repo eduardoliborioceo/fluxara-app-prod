@@ -70,6 +70,17 @@
           <i class="bi bi-chevron-right settings-chevron"></i>
         </li>
 
+        <li class="settings-item" data-panel="notificacoes">
+          <span class="menu-icon" style="background:#fefce8;color:#ca8a04">
+            <i class="bi bi-bell"></i>
+          </span>
+          <div class="settings-info">
+            <span class="settings-label">Notificações</span>
+            <span class="settings-value" id="notifStatusLabel">Carregando...</span>
+          </div>
+          <i class="bi bi-chevron-right settings-chevron"></i>
+        </li>
+
 {% if current_user.is_authenticated and (current_user.is_admin or current_user.is_owner) %}
         <li class="settings-item" data-panel="admin">
           <span class="menu-icon" style="background:#fef2f2;color:#dc2626">
@@ -181,6 +192,59 @@
   </div>
 
 
+
+  <!-- ====== PAINEL NOTIFICAÇÕES ====== -->
+  <div id="viewNotificacoes" class="settings-panel d-none">
+    <button class="btn-back" id="btnBackNotificacoes">
+      <i class="bi bi-chevron-left"></i> Configurações
+    </button>
+    <div class="settings-card mt-3">
+      <div class="settings-card-title">Notificações Push</div>
+      <div class="px-3 py-3">
+        <div id="notifUnsupported" class="d-none">
+          <div class="cfg-notif-info cfg-notif-info--warn">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            Seu navegador não suporta notificações push. Use o app instalado (PWA) para receber notificações.
+          </div>
+        </div>
+        <div id="notifSupported">
+          <div class="cfg-notif-status" id="notifStatusCard">
+            <div class="cfg-notif-icon" id="notifStatusIcon">
+              <i class="bi bi-bell-slash"></i>
+            </div>
+            <div class="cfg-notif-status-info">
+              <div class="cfg-notif-status-title" id="notifStatusTitle">Verificando...</div>
+              <div class="cfg-notif-status-desc" id="notifStatusDesc"></div>
+            </div>
+          </div>
+
+          <div class="cfg-notif-toggle-row mt-3" id="notifToggleRow">
+            <div class="cfg-notif-toggle-info">
+              <div class="cfg-notif-toggle-label">Receber notificações</div>
+              <div class="cfg-notif-toggle-desc">Alertas de vencimentos, faturas e saúde</div>
+            </div>
+            <button class="cfg-notif-toggle-btn" id="btnToggleNotif" data-state="off">
+              <span class="cfg-notif-toggle-track">
+                <span class="cfg-notif-toggle-thumb"></span>
+              </span>
+            </button>
+          </div>
+
+          <div class="cfg-notif-test-wrap mt-3 d-none" id="notifTestWrap">
+            <button class="cfg-ie-action-btn" id="btnTestNotif" style="background:#64748b">
+              <i class="bi bi-bell-fill"></i> Testar notificação
+            </button>
+            <div id="notifTestMsg" class="d-none" style="font-size:.78rem;margin-top:8px"></div>
+          </div>
+
+          <div class="cfg-notif-info mt-3" id="notifPermDenied" style="display:none">
+            <i class="bi bi-info-circle-fill"></i>
+            Permissão negada pelo navegador. Para reativar, acesse as configurações do site no seu navegador.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- ====== PAINEL ÁREA DO ADMINISTRADOR ====== -->
   {% if current_user.is_authenticated and (current_user.is_admin or current_user.is_owner) %}
