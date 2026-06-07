@@ -899,3 +899,124 @@
   align-items: flex-start;
   gap: 6px;
 }
+
+/* ── DANGER ZONE (reset dados) ─────────────────── */
+.cfg-danger-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  padding: 8px 0 4px;
+}
+
+.cfg-danger-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #fef2f2;
+  color: #dc2626;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+}
+
+.cfg-danger-title {
+  font-size: .95rem;
+  font-weight: 700;
+  color: #dc2626;
+}
+
+.cfg-danger-desc {
+  font-size: .82rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+  max-width: 380px;
+}
+
+.cfg-danger-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  max-width: 320px;
+  text-align: left;
+}
+
+.cfg-danger-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: .82rem;
+  font-weight: 500;
+}
+
+.cfg-danger-check--red { color: #dc2626; }
+.cfg-danger-check--green { color: #16a34a; }
+
+.cfg-danger-confirm-wrap {
+  width: 100%;
+  max-width: 320px;
+  text-align: left;
+}
+
+.cfg-danger-label {
+  display: block;
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.cfg-danger-input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-size: .88rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+
+.cfg-danger-input:focus {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220,38,38,.12);
+}
+
+.cfg-danger-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  border-radius: 8px;
+  border: none;
+  background: #dc2626;
+  color: #fff;
+  font-size: .88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, opacity .15s;
+  font-family: inherit;
+}
+
+.cfg-danger-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.cfg-danger-btn:not(:disabled):hover {
+  background: #b91c1c;
+}
+
+.cfg-danger-msg {
+  font-size: .82rem;
+  font-weight: 500;
+  padding: 8px 14px;
+  border-radius: 8px;
+  max-width: 340px;
+}
+
+.cfg-danger-msg--ok  { background: #f0fdf4; color: #16a34a; }
+.cfg-danger-msg--err { background: #fef2f2; color: #dc2626; }
