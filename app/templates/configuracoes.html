@@ -103,6 +103,17 @@
           <i class="bi bi-chevron-right settings-chevron"></i>
         </li>
 
+        <li class="settings-item" data-panel="sobre">
+          <span class="menu-icon" style="background:#f8fafc;color:#64748b">
+            <i class="bi bi-info-circle"></i>
+          </span>
+          <div class="settings-info">
+            <span class="settings-label">Sobre</span>
+            <span class="settings-value">Versão, Termos, Convite</span>
+          </div>
+          <i class="bi bi-chevron-right settings-chevron"></i>
+        </li>
+
 {% if current_user.is_authenticated and (current_user.is_admin or current_user.is_owner) %}
         <li class="settings-item" data-panel="admin">
           <span class="menu-icon" style="background:#fef2f2;color:#dc2626">
@@ -342,6 +353,149 @@
       </div>
     </div>
   </div>
+
+  <!-- ====== PAINEL SOBRE (sub-menu) ====== -->
+  <div id="viewSobre" class="settings-panel d-none">
+    <button class="btn-back" id="btnBackSobre">
+      <i class="bi bi-chevron-left"></i> Configurações
+    </button>
+    <div class="settings-card mt-3">
+      <ul class="settings-menu">
+
+        <li class="settings-item" data-subpanel="termos">
+          <span class="menu-icon" style="background:#eff6ff;color:#2563eb">
+            <i class="bi bi-file-earmark-text"></i>
+          </span>
+          <div class="settings-info">
+            <span class="settings-label">Termos de Uso</span>
+            <span class="settings-value">Privacidade e Cookies</span>
+          </div>
+          <i class="bi bi-chevron-right settings-chevron"></i>
+        </li>
+
+        <li class="settings-item" data-subpanel="convite">
+          <span class="menu-icon" style="background:#f0fdf4;color:#16a34a">
+            <i class="bi bi-person-plus"></i>
+          </span>
+          <div class="settings-info">
+            <span class="settings-label">Convide seus amigos</span>
+            <span class="settings-value">Compartilhe o Fluxara</span>
+          </div>
+          <i class="bi bi-chevron-right settings-chevron"></i>
+        </li>
+
+        <li class="settings-item" data-subpanel="sobreApp">
+          <span class="menu-icon" style="background:#f8fafc;color:#64748b">
+            <i class="bi bi-info-circle"></i>
+          </span>
+          <div class="settings-info">
+            <span class="settings-label">Sobre o Fluxara</span>
+            <span class="settings-value">Versão {{ app_version }}</span>
+          </div>
+          <i class="bi bi-chevron-right settings-chevron"></i>
+        </li>
+
+      </ul>
+    </div>
+  </div>
+
+  <!-- ====== PAINEL TERMOS DE USO ====== -->
+  <div id="viewTermos" class="settings-panel d-none">
+    <button class="btn-back" id="btnBackTermos">
+      <i class="bi bi-chevron-left"></i> Sobre
+    </button>
+    <div class="settings-card mt-3">
+      <div class="settings-card-title">Termos de Uso</div>
+      <ul class="settings-menu">
+        <li class="settings-item" onclick="window.open('{{ url_for('pages.privacy_policy') }}', '_blank')">
+          <span class="menu-icon" style="background:#eff6ff;color:#2563eb">
+            <i class="bi bi-shield-check"></i>
+          </span>
+          <div class="settings-info">
+            <span class="settings-label">Política de Privacidade</span>
+            <span class="settings-value">Como seus dados são usados</span>
+          </div>
+          <i class="bi bi-box-arrow-up-right settings-chevron" style="font-size:.75rem"></i>
+        </li>
+        <li class="settings-item" onclick="window.open('{{ url_for('pages.cookie_policy') }}', '_blank')">
+          <span class="menu-icon" style="background:#fff7ed;color:#ea580c">
+            <i class="bi bi-cookie"></i>
+          </span>
+          <div class="settings-info">
+            <span class="settings-label">Política de Cookies</span>
+            <span class="settings-value">Uso de cookies no sistema</span>
+          </div>
+          <i class="bi bi-box-arrow-up-right settings-chevron" style="font-size:.75rem"></i>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ====== PAINEL CONVIDE AMIGOS ====== -->
+  <div id="viewConvite" class="settings-panel d-none">
+    <button class="btn-back" id="btnBackConvite">
+      <i class="bi bi-chevron-left"></i> Sobre
+    </button>
+    <div class="settings-card mt-3">
+      <div class="settings-card-title">Convide seus amigos</div>
+      <div class="px-3 py-3">
+        <div class="cfg-convite-wrap">
+          <div class="cfg-convite-icon"><i class="bi bi-heart-fill"></i></div>
+          <div class="cfg-convite-title">Compartilhe o Fluxara</div>
+          <div class="cfg-convite-desc">
+            Indique o Fluxara para amigos e ajude mais pessoas a organizarem suas finanças.
+          </div>
+          <div class="cfg-convite-link-wrap">
+            <input type="text" id="conviteLink" class="cfg-convite-link-input" readonly
+                   value="{{ request.host_url }}">
+          </div>
+          <button class="cfg-convite-btn" id="btnCopiarConvite">
+            <i class="bi bi-clipboard"></i> Copiar link
+          </button>
+          <div class="cfg-convite-share">
+            <a class="cfg-share-btn cfg-share-btn--whatsapp"
+               id="btnShareWhatsapp" href="#" target="_blank" rel="noopener">
+              <i class="bi bi-whatsapp"></i> WhatsApp
+            </a>
+          </div>
+          <div id="conviteCopyMsg" class="d-none" style="font-size:.78rem;color:#16a34a;font-weight:600">
+            <i class="bi bi-check-circle-fill"></i> Link copiado!
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== PAINEL SOBRE O APP ====== -->
+  <div id="viewSobreApp" class="settings-panel d-none">
+    <button class="btn-back" id="btnBackSobreApp">
+      <i class="bi bi-chevron-left"></i> Sobre
+    </button>
+    <div class="settings-card mt-3">
+      <div class="settings-card-title">Sobre o Fluxara</div>
+      <div class="px-3 py-3">
+        <div class="cfg-about-wrap">
+          <img src="{{ url_for('static', filename='images/logos/app_icon.svg') }}?v={{ static_v }}"
+               alt="Fluxara" class="cfg-about-logo">
+          <div class="cfg-about-name">Fluxara</div>
+          <div class="cfg-about-version">Versão {{ app_version }}</div>
+          <div class="cfg-about-desc">
+            Controle financeiro pessoal inteligente.<br>
+            Gerencie sua vida financeira com clareza e segurança.
+          </div>
+          <div class="cfg-about-devs">
+            <div class="cfg-about-devs-title">Desenvolvedores</div>
+            <div class="cfg-about-dev-item">
+              <i class="bi bi-person-fill-gear"></i>
+              Eduardo Libório
+            </div>
+          </div>
+          <div class="cfg-about-copy">© 2025 Fluxara. Todos os direitos reservados.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 
   <!-- ====== PAINEL ÁREA DO ADMINISTRADOR ====== -->
   {% if current_user.is_authenticated and (current_user.is_admin or current_user.is_owner) %}

@@ -137,6 +137,10 @@
       viewNotificacoes: 'Notificações',
       viewResetDados: 'Resetar Dados',
       viewImportExport: 'Importar / Exportar',
+      viewSobre: 'Sobre',
+      viewTermos: 'Termos de Uso',
+      viewConvite: 'Convide seus amigos',
+      viewSobreApp: 'Sobre o Fluxara',
     };
     const h = document.getElementById('pageHeaderTitle');
     if (h) h.textContent = titles[id] || 'Configurações';
@@ -170,6 +174,17 @@
   document.getElementById('btnBackNotificacoes')?.addEventListener('click', showMenu);
   document.getElementById('btnBackResetDados')?.addEventListener('click', showMenu);
   document.getElementById('btnBackImportExport')?.addEventListener('click', showMenu);
+  document.getElementById('btnBackSobre')?.addEventListener('click', showMenu);
+  document.getElementById('btnBackTermos')?.addEventListener('click', () => showPanel('viewSobre'));
+  document.getElementById('btnBackConvite')?.addEventListener('click', () => showPanel('viewSobre'));
+  document.getElementById('btnBackSobreApp')?.addEventListener('click', () => showPanel('viewSobre'));
+
+  document.querySelectorAll('.settings-item[data-subpanel]').forEach(item => {
+    item.addEventListener('click', () => {
+      const sub = item.dataset.subpanel;
+      showPanel('view' + sub.charAt(0).toUpperCase() + sub.slice(1));
+    });
+  });
 
   const urlPanel = new URLSearchParams(window.location.search).get('panel');
   if (urlPanel) {
@@ -1164,5 +1179,23 @@
     document.body.appendChild(anchor);
     anchor.click();
     document.body.removeChild(anchor);
+  });
+
+  // ── CONVITE ───────────────────────────────────────────
+  const conviteLink = document.getElementById('conviteLink');
+  const whatsappBtn = document.getElementById('btnShareWhatsapp');
+  if (conviteLink && whatsappBtn) {
+    const url = conviteLink.value;
+    const msg = encodeURIComponent('Ei! Estou usando o Fluxara para organizar minhas finanças. Experimente: ' + url);
+    whatsappBtn.href = 'https://wa.me/?text=' + msg;
+  }
+
+  document.getElementById('btnCopiarConvite')?.addEventListener('click', () => {
+    const input = document.getElementById('conviteLink');
+    if (!input) return;
+    navigator.clipboard.writeText(input.value).then(() => {
+      const msg = document.getElementById('conviteCopyMsg');
+      if (msg) { msg.classList.remove('d-none'); setTimeout(() => msg.classList.add('d-none'), 3000); }
+    });
   });
 })();

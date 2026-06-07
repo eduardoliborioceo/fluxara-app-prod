@@ -25,7 +25,9 @@ def planejamento():
 @bp.route("/configuracoes")
 @login_required
 def configuracoes():
-    return render_template("configuracoes.html", active_menu="configuracoes")
+    import os
+    app_version = os.getenv("APP_VERSION", "1.0.0")
+    return render_template("configuracoes.html", active_menu="configuracoes", app_version=app_version)
 
 
 @bp.route("/suporte")
