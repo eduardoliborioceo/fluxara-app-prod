@@ -825,6 +825,33 @@
   color: var(--text);
 }
 
+/* ── CONVITE ────────────────────────────────────── */
+.cfg-convite-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+}
+
+.cfg-convite-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #fef2f2;
+  color: #e11d48;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+}
+
+.cfg-convite-title {
+  font-size: .95rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
 .cfg-notif-status-desc {
   font-size: .78rem;
   color: var(--text-muted);
@@ -844,6 +871,138 @@
 
 .cfg-notif-toggle-label {
   font-size: .9rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.cfg-convite-desc {
+  font-size: .82rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+  max-width: 320px;
+}
+
+.cfg-convite-link-wrap {
+  width: 100%;
+  max-width: 340px;
+}
+
+.cfg-convite-link-input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: .82rem;
+  background: var(--bg);
+  color: var(--text-muted);
+  font-family: inherit;
+  text-align: center;
+}
+
+.cfg-convite-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 20px;
+  border-radius: 8px;
+  border: none;
+  background: var(--primary);
+  color: #fff;
+  font-size: .85rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background .15s;
+}
+
+.cfg-convite-btn:hover { background: #0b5ed7; }
+
+.cfg-convite-share {
+  display: flex;
+  gap: 10px;
+}
+
+.cfg-share-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: .82rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity .15s;
+}
+
+.cfg-share-btn:hover { opacity: .85; }
+
+.cfg-share-btn--whatsapp {
+  background: #25d366;
+  color: #fff;
+}
+
+/* ── SOBRE APP ─────────────────────────────────── */
+.cfg-about-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+}
+
+.cfg-about-logo {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+}
+
+.cfg-about-name {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.cfg-about-version {
+  font-size: .78rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  padding: 3px 12px;
+}
+
+.cfg-about-desc {
+  font-size: .82rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  max-width: 300px;
+  margin: 4px 0;
+}
+
+.cfg-about-devs {
+  width: 100%;
+  max-width: 280px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+  margin-top: 4px;
+}
+
+.cfg-about-devs-title {
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.cfg-about-dev-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: .85rem;
   font-weight: 600;
   color: var(--text);
 }
@@ -1093,3 +1252,9 @@
 }
 
 .cfg-ie-action-btn:hover { background: #0b5ed7; }
+
+.cfg-about-copy {
+  font-size: .72rem;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
