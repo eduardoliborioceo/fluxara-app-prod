@@ -42,6 +42,74 @@ TIPOS_EXERCICIO = {
 }
 _INTENSIDADES_VALIDAS = {'leve', 'moderado', 'intenso'}
 
+_EXERCICIOS_CATALOGO_PADRAO = [
+    # Cardio
+    {"nome": "Corrida",          "tipo": "cardio",        "grupo": "Cardio",        "duracao": 30, "kcal": 300},
+    {"nome": "Caminhada",        "tipo": "cardio",        "grupo": "Cardio",        "duracao": 40, "kcal": 150},
+    {"nome": "Ciclismo",         "tipo": "cardio",        "grupo": "Cardio",        "duracao": 45, "kcal": 350},
+    {"nome": "Natação",          "tipo": "cardio",        "grupo": "Cardio",        "duracao": 30, "kcal": 280},
+    {"nome": "Pular corda",      "tipo": "cardio",        "grupo": "Cardio",        "duracao": 20, "kcal": 200},
+    {"nome": "Elíptico",         "tipo": "cardio",        "grupo": "Cardio",        "duracao": 30, "kcal": 250},
+    {"nome": "HIIT",             "tipo": "cardio",        "grupo": "Cardio",        "duracao": 20, "kcal": 280},
+    {"nome": "Remo (ergômetro)", "tipo": "cardio",        "grupo": "Cardio",        "duracao": 20, "kcal": 220},
+    # Peito
+    {"nome": "Supino plano",     "tipo": "musculacao",    "grupo": "Peito",         "duracao": None, "kcal": None},
+    {"nome": "Supino inclinado", "tipo": "musculacao",    "grupo": "Peito",         "duracao": None, "kcal": None},
+    {"nome": "Supino declinado", "tipo": "musculacao",    "grupo": "Peito",         "duracao": None, "kcal": None},
+    {"nome": "Crucifixo",        "tipo": "musculacao",    "grupo": "Peito",         "duracao": None, "kcal": None},
+    {"nome": "Flexão de braços", "tipo": "musculacao",    "grupo": "Peito",         "duracao": None, "kcal": None},
+    {"nome": "Pullover",         "tipo": "musculacao",    "grupo": "Peito",         "duracao": None, "kcal": None},
+    # Costas
+    {"nome": "Puxada frontal",        "tipo": "musculacao", "grupo": "Costas",      "duracao": None, "kcal": None},
+    {"nome": "Puxada pela nuca",      "tipo": "musculacao", "grupo": "Costas",      "duracao": None, "kcal": None},
+    {"nome": "Remada curvada",        "tipo": "musculacao", "grupo": "Costas",      "duracao": None, "kcal": None},
+    {"nome": "Remada cavalinho",      "tipo": "musculacao", "grupo": "Costas",      "duracao": None, "kcal": None},
+    {"nome": "Levantamento terra",    "tipo": "musculacao", "grupo": "Costas",      "duracao": None, "kcal": None},
+    {"nome": "Serrote",               "tipo": "musculacao", "grupo": "Costas",      "duracao": None, "kcal": None},
+    {"nome": "Hiperextensão",         "tipo": "musculacao", "grupo": "Costas",      "duracao": None, "kcal": None},
+    # Ombros
+    {"nome": "Desenvolvimento com halteres", "tipo": "musculacao", "grupo": "Ombros", "duracao": None, "kcal": None},
+    {"nome": "Desenvolvimento na barra",     "tipo": "musculacao", "grupo": "Ombros", "duracao": None, "kcal": None},
+    {"nome": "Elevação lateral",             "tipo": "musculacao", "grupo": "Ombros", "duracao": None, "kcal": None},
+    {"nome": "Elevação frontal",             "tipo": "musculacao", "grupo": "Ombros", "duracao": None, "kcal": None},
+    {"nome": "Encolhimento",                 "tipo": "musculacao", "grupo": "Ombros", "duracao": None, "kcal": None},
+    # Bíceps
+    {"nome": "Rosca direta",       "tipo": "musculacao", "grupo": "Bíceps",         "duracao": None, "kcal": None},
+    {"nome": "Rosca alternada",    "tipo": "musculacao", "grupo": "Bíceps",         "duracao": None, "kcal": None},
+    {"nome": "Rosca martelo",      "tipo": "musculacao", "grupo": "Bíceps",         "duracao": None, "kcal": None},
+    {"nome": "Rosca concentrada",  "tipo": "musculacao", "grupo": "Bíceps",         "duracao": None, "kcal": None},
+    # Tríceps
+    {"nome": "Tríceps pulley",     "tipo": "musculacao", "grupo": "Tríceps",        "duracao": None, "kcal": None},
+    {"nome": "Tríceps testa",      "tipo": "musculacao", "grupo": "Tríceps",        "duracao": None, "kcal": None},
+    {"nome": "Tríceps corda",      "tipo": "musculacao", "grupo": "Tríceps",        "duracao": None, "kcal": None},
+    {"nome": "Mergulho",           "tipo": "musculacao", "grupo": "Tríceps",        "duracao": None, "kcal": None},
+    # Pernas
+    {"nome": "Agachamento livre",  "tipo": "musculacao", "grupo": "Pernas",         "duracao": None, "kcal": None},
+    {"nome": "Agachamento hack",   "tipo": "musculacao", "grupo": "Pernas",         "duracao": None, "kcal": None},
+    {"nome": "Leg press",          "tipo": "musculacao", "grupo": "Pernas",         "duracao": None, "kcal": None},
+    {"nome": "Afundo",             "tipo": "musculacao", "grupo": "Pernas",         "duracao": None, "kcal": None},
+    {"nome": "Stiff",              "tipo": "musculacao", "grupo": "Pernas",         "duracao": None, "kcal": None},
+    {"nome": "Cadeira extensora",  "tipo": "musculacao", "grupo": "Pernas",         "duracao": None, "kcal": None},
+    {"nome": "Cadeira flexora",    "tipo": "musculacao", "grupo": "Pernas",         "duracao": None, "kcal": None},
+    {"nome": "Panturrilha em pé",  "tipo": "musculacao", "grupo": "Pernas",         "duracao": None, "kcal": None},
+    # Core
+    {"nome": "Abdominal",          "tipo": "musculacao", "grupo": "Core",           "duracao": None, "kcal": None},
+    {"nome": "Prancha",            "tipo": "musculacao", "grupo": "Core",           "duracao": None, "kcal": None},
+    {"nome": "Russian twist",      "tipo": "musculacao", "grupo": "Core",           "duracao": None, "kcal": None},
+    {"nome": "Elevação de pernas", "tipo": "musculacao", "grupo": "Core",           "duracao": None, "kcal": None},
+    {"nome": "Abdominal oblíquo",  "tipo": "musculacao", "grupo": "Core",           "duracao": None, "kcal": None},
+    # Flexibilidade
+    {"nome": "Yoga",               "tipo": "flexibilidade", "grupo": "Flexibilidade", "duracao": 45, "kcal": 120},
+    {"nome": "Alongamento",        "tipo": "flexibilidade", "grupo": "Flexibilidade", "duracao": 15, "kcal": 40},
+    {"nome": "Pilates",            "tipo": "flexibilidade", "grupo": "Flexibilidade", "duracao": 50, "kcal": 160},
+    # Esportes
+    {"nome": "Futebol",            "tipo": "esporte", "grupo": "Esporte",            "duracao": 60, "kcal": 450},
+    {"nome": "Basquete",           "tipo": "esporte", "grupo": "Esporte",            "duracao": 60, "kcal": 480},
+    {"nome": "Tênis",              "tipo": "esporte", "grupo": "Esporte",            "duracao": 60, "kcal": 400},
+    {"nome": "Vôlei",              "tipo": "esporte", "grupo": "Esporte",            "duracao": 60, "kcal": 350},
+    {"nome": "Artes marciais",     "tipo": "esporte", "grupo": "Esporte",            "duracao": 60, "kcal": 430},
+]
+
 
 def _calcular_imc(altura_cm, peso_kg):
     if not altura_cm or not peso_kg:
@@ -219,6 +287,50 @@ def registrar_agua(user_id: int, quantidade_ml: int) -> dict:
 
 def delete_agua(user_id: int, registro_id: int):
     repo.delete_agua(user_id, registro_id)
+
+
+def search_exercicios_catalogo(user_id: int, query: str) -> list:
+    if not query or len(query.strip()) < 2:
+        return []
+    return [dict(r) for r in repo.search_exercicios_catalogo(user_id, query.strip())]
+
+
+def get_exercicios_catalogo(user_id: int) -> list:
+    return [dict(r) for r in repo.get_exercicios_catalogo(user_id)]
+
+
+def save_exercicio_catalogo(user_id: int, nome: str, tipo: str,
+                            grupo_muscular=None, duracao_padrao=None, calorias_est=None) -> dict:
+    if tipo not in TIPOS_EXERCICIO:
+        raise ValueError("Tipo inválido")
+    nome = nome.strip()[:100]
+    if not nome:
+        raise ValueError("Nome obrigatório")
+    grupo_muscular = (grupo_muscular or "").strip()[:50] or None
+    duracao_padrao = int(duracao_padrao) if duracao_padrao else None
+    calorias_est = int(calorias_est) if calorias_est else None
+    return dict(repo.save_exercicio_catalogo(user_id, nome, tipo, grupo_muscular, duracao_padrao, calorias_est))
+
+
+def delete_exercicio_catalogo(user_id: int, ex_id: int):
+    repo.delete_exercicio_catalogo(user_id, ex_id)
+
+
+def seed_exercicios_catalogo(user_id: int) -> int:
+    existing = {e['nome'].lower() for e in repo.get_exercicios_catalogo(user_id, limit=9999)}
+    inseridos = 0
+    for ex in _EXERCICIOS_CATALOGO_PADRAO:
+        if ex['nome'].lower() not in existing:
+            repo.save_exercicio_catalogo(
+                user_id,
+                nome=ex['nome'],
+                tipo=ex['tipo'],
+                grupo_muscular=ex['grupo'],
+                duracao_padrao=ex['duracao'],
+                calorias_est=ex['kcal'],
+            )
+            inseridos += 1
+    return inseridos
 
 
 def get_exercicios_hoje(user_id: int, timezone: str = 'America/Sao_Paulo') -> list:

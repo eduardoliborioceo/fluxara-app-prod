@@ -37,6 +37,9 @@
     <button class="saude-tab-btn" data-tab="produtos" role="tab">
       <i class="bi bi-box-seam"></i> Produtos
     </button>
+    <button class="saude-tab-btn" data-tab="exercicios" role="tab">
+      <i class="bi bi-activity"></i> Exercícios
+    </button>
   </div>
 
   <!-- ===================== TAB: HOJE ===================== -->
@@ -416,6 +419,81 @@
 
   </div><!-- /tab-produtos -->
 
+  <!-- ===================== TAB: EXERCÍCIOS ===================== -->
+  <div id="tab-exercicios" style="display:none">
+
+    <div class="saude-card">
+      <div class="saude-card-header-row">
+        <div class="saude-card-label" style="margin-bottom:0">Catálogo de exercícios</div>
+        <div style="display:flex;gap:8px">
+          <button class="saude-produto-novo-btn"
+                  style="background:var(--bg);color:var(--text-muted);border:1px solid var(--border)"
+                  onclick="importarExerciciosPadrao(this)" title="Importar exercícios pré-cadastrados">
+            <i class="bi bi-cloud-download"></i> Importar padrão
+          </button>
+          <button class="saude-produto-novo-btn" onclick="abrirModalNovoExCatalogo()">
+            <i class="bi bi-plus-lg"></i> Novo
+          </button>
+        </div>
+      </div>
+
+      <div class="saude-produto-search-tab-wrap" style="margin:14px 0 10px">
+        <input type="text" id="filtroExercicios" placeholder="Filtrar exercícios..."
+               oninput="filtrarExerciciosTab(this.value)">
+      </div>
+
+      <div class="saude-produto-lista" id="exercicioLista">
+        <div class="saude-produto-lista-vazio">
+          <i class="bi bi-activity" style="font-size:1.6rem;color:var(--text-muted)"></i>
+          <div>Nenhum exercício no catálogo</div>
+          <div style="font-size:.78rem">Importe os padrões ou adicione exercícios personalizados</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /tab-exercicios -->
+
+</div>
+
+<!-- ========================== MODAL NOVO EXERCÍCIO CATÁLOGO ========================== -->
+<div class="saude-modal-overlay" id="modalNovoExCatalogo" style="display:none" onclick="fecharModalNovoExCatalogo(event)">
+  <div class="saude-modal" onclick="event.stopPropagation()">
+    <button class="saude-modal-close" onclick="fecharModalNovoExCatalogo()">&times;</button>
+    <div class="saude-modal-title">Adicionar ao catálogo</div>
+
+    <div class="saude-modal-field">
+      <label>Nome <span style="color:#dc3545">*</span></label>
+      <input type="text" id="catExNome" placeholder="Ex: Agachamento búlgaro">
+    </div>
+    <div class="saude-modal-field">
+      <label>Tipo</label>
+      <select id="catExTipo">
+        <option value="cardio">Cardio</option>
+        <option value="musculacao">Musculação</option>
+        <option value="flexibilidade">Flexibilidade</option>
+        <option value="esporte">Esporte</option>
+        <option value="outro">Outro</option>
+      </select>
+    </div>
+    <div class="saude-modal-field">
+      <label>Grupo muscular</label>
+      <input type="text" id="catExGrupo" placeholder="Ex: Pernas, Peito, Core...">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="saude-modal-field">
+        <label>Duração típica (min)</label>
+        <input type="number" id="catExDuracao" placeholder="Opcional" min="1">
+      </div>
+      <div class="saude-modal-field">
+        <label>Calorias estimadas</label>
+        <input type="number" id="catExCalorias" placeholder="Opcional" min="0">
+      </div>
+    </div>
+
+    <button class="saude-btn-submit" id="btnSalvarExCatalogo" onclick="salvarNovoExCatalogo()">
+      Salvar no catálogo
+    </button>
+  </div>
 </div>
 
 <!-- ========================== MODAL REFEIÇÃO ========================== -->
@@ -548,6 +626,15 @@
   <div class="saude-modal" onclick="event.stopPropagation()">
     <button class="saude-modal-close" onclick="fecharModalExercicio()">&times;</button>
     <div class="saude-modal-title">Registrar exercício</div>
+
+    <div class="saude-modal-field">
+      <label>Buscar no catálogo</label>
+      <div class="saude-produto-search-wrap">
+        <input type="text" id="buscaExercicio" placeholder="Digite para buscar..."
+               autocomplete="off" oninput="buscarExerciciosCatalogo(this.value)">
+        <div class="saude-produto-dropdown" id="exercicioDropdown" style="display:none"></div>
+      </div>
+    </div>
 
     <div class="saude-modal-field">
       <label>Tipo</label>

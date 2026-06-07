@@ -239,6 +239,62 @@ def delete_produto(user_id: int, produto_id: int):
             conn.commit()
 
 
+# ── Catálogo de exercícios ───────────────────────────────────────────────────
+
+def search_exercicios_catalogo(user_id: int, query: str, limit: int = 20):
+    with get_db() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("""
+                SELECT id, nome, tipo, grupo_muscular, duracao_padrao, calorias_est
+                FROM saude_exercicios_catalogo
+                WHERE user_id = %s AND (
+                    translate(lower(nome), 'áàãâäéèêëíìîïóòôõöúùûüç', 'aaaaaeeeeiiiioooooouuuuc')
+                        ILIKE translate(lower(%s), 'áàãâäéèêëíìîïóòôõöúùûüç', 'aaaaaeeeeiiiioooooouuuuc')
+                )
+                ORDER BY nome
+                LIMIT %s
+            """, (user_id, f"%{query}%", limit))
+            return cur.fetchall()
+
+
+def get_exercicios_catalogo(user_id: int, limit: int = 300):
+    with get_db() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("""
+                SELECT id, nome, tipo, grupo_muscular, duracao_padrao, calorias_est
+                FROM saude_exercicios_catalogo
+                WHERE user_id = %s
+                ORDER BY tipo ASC, grupo_muscular ASC, nome ASC
+                LIMIT %s
+            """, (user_id, limit))
+            return cur.fetchall()
+
+
+def save_exercicio_catalogo(user_id: int, nome: str, tipo: str,
+                            grupo_muscular, duracao_padrao, calorias_est):
+    with get_db() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("""
+                INSERT INTO saude_exercicios_catalogo
+                    (user_id, nome, tipo, grupo_muscular, duracao_padrao, calorias_est)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                RETURNING *
+            """, (user_id, nome, tipo, grupo_muscular, duracao_padrao, calorias_est))
+            row = cur.fetchone()
+            conn.commit()
+            return row
+
+
+def delete_exercicio_catalogo(user_id: int, ex_id: int):
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "DELETE FROM saude_exercicios_catalogo WHERE id = %s AND user_id = %s",
+                (ex_id, user_id)
+            )
+            conn.commit()
+
+
 # ── Histórico ────────────────────────────────────────────────────────────────
 
 def get_refeicoes_por_data(user_id: int, data_str: str, timezone: str = 'America/Sao_Paulo'):
