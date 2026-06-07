@@ -1,7 +1,7 @@
 import logging
 
 from flask_login import login_required, current_user
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, send_file
 from app.auth.service import confirm_employee_extra
 from app.services import config_service
 from app.services import contas_service, cartoes_service
@@ -120,6 +120,33 @@ def config_reset_dados():
         return jsonify({"error": "Confirmação inválida"}), 400
     resultado = config_service.resetar_dados_financeiros(current_user.id)
     return jsonify({"ok": True, "resultado": resultado})
+
+
+@bp.route("/config/exportar", methods=["GET"])
+@login_required
+def config_exportar():
+    from app.services import export_service
+    import io
+    tipo = request.args.get("tipo", "lancamentos")
+    formato = request.args.get("formato", "csv")
+    try:
+        if formato == "xlsx":
+            data, filename = export_service.export_xlsx(current_user.id, tipo)
+            mimetype = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        elif formato == "json":
+            data, filename = export_service.export_json(current_user.id, tipo)
+            mimetype = "application/json"
+        else:
+            data, filename = export_service.export_csv(current_user.id, tipo)
+            mimetype = "text/csv; charset=utf-8"
+        return send_file(
+            io.BytesIO(data),
+            mimetype=mimetype,
+            as_attachment=True,
+            download_name=filename,
+        )
+    except (ValueError, RuntimeError) as e:
+        return jsonify({"error": str(e)}), 400
 
 
 @bp.route("/push/vapid-key", methods=["GET"])

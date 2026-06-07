@@ -92,6 +92,17 @@
           <i class="bi bi-chevron-right settings-chevron"></i>
         </li>
 
+        <li class="settings-item" data-panel="importExport">
+          <span class="menu-icon" style="background:#f0fdf4;color:#16a34a">
+            <i class="bi bi-arrow-down-up"></i>
+          </span>
+          <div class="settings-info">
+            <span class="settings-label">Importar / Exportar</span>
+            <span class="settings-value">CSV, XLSX, JSON</span>
+          </div>
+          <i class="bi bi-chevron-right settings-chevron"></i>
+        </li>
+
 {% if current_user.is_authenticated and (current_user.is_admin or current_user.is_owner) %}
         <li class="settings-item" data-panel="admin">
           <span class="menu-icon" style="background:#fef2f2;color:#dc2626">
@@ -289,6 +300,45 @@
           </button>
           <div id="resetMsg" class="cfg-danger-msg d-none"></div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== PAINEL IMPORTAR / EXPORTAR ====== -->
+  <div id="viewImportExport" class="settings-panel d-none">
+    <button class="btn-back" id="btnBackImportExport">
+      <i class="bi bi-chevron-left"></i> Configurações
+    </button>
+
+    <!-- EXPORTAR -->
+    <div class="settings-card mt-3">
+      <div class="settings-card-title">Exportar Dados</div>
+      <div class="px-3 py-3">
+        <div class="cfg-ie-row">
+          <label class="cfg-ie-label">Dados</label>
+          <select id="exportTipo" class="cfg-ie-select">
+            <option value="lancamentos">Lançamentos</option>
+            <option value="contas">Contas Bancárias</option>
+            <option value="categorias">Categorias</option>
+          </select>
+        </div>
+        <div class="cfg-ie-row mt-2">
+          <label class="cfg-ie-label">Formato</label>
+          <div class="cfg-ie-formats">
+            <button class="cfg-format-btn active" data-fmt="csv">
+              <i class="bi bi-filetype-csv"></i> CSV
+            </button>
+            <button class="cfg-format-btn" data-fmt="xlsx">
+              <i class="bi bi-file-earmark-spreadsheet"></i> XLSX
+            </button>
+            <button class="cfg-format-btn" data-fmt="json">
+              <i class="bi bi-filetype-json"></i> JSON
+            </button>
+          </div>
+        </div>
+        <button class="cfg-ie-action-btn mt-3" id="btnExportar">
+          <i class="bi bi-download"></i> Baixar arquivo
+        </button>
       </div>
     </div>
   </div>
