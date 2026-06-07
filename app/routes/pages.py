@@ -26,8 +26,10 @@ def planejamento():
 @login_required
 def configuracoes():
     import os
+    from datetime import datetime
     app_version = os.getenv("APP_VERSION", "1.0.0")
-    return render_template("configuracoes.html", active_menu="configuracoes", app_version=app_version)
+    current_year = datetime.now().year
+    return render_template("configuracoes.html", active_menu="configuracoes", app_version=app_version, current_year=current_year)
 
 
 @bp.route("/suporte")
