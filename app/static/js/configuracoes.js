@@ -135,6 +135,7 @@
       viewUsuario: 'Área do Usuário',
       viewAdmin: 'Área do Administrador',
       viewNotificacoes: 'Notificações',
+      viewResetDados: 'Resetar Dados',
     };
     const h = document.getElementById('pageHeaderTitle');
     if (h) h.textContent = titles[id] || 'Configurações';
@@ -166,6 +167,7 @@
   document.getElementById('btnBackUsuario')?.addEventListener('click', showMenu);
   document.getElementById('btnBackAdmin')?.addEventListener('click', showMenu);
   document.getElementById('btnBackNotificacoes')?.addEventListener('click', showMenu);
+  document.getElementById('btnBackResetDados')?.addEventListener('click', showMenu);
 
   const urlPanel = new URLSearchParams(window.location.search).get('panel');
   if (urlPanel) {
@@ -1104,4 +1106,39 @@
     if (data.subscriptions_saved > 0) setNotifLabel('Ativas');
     else setNotifLabel('Desativadas');
   }).catch(() => setNotifLabel('—'));
+
+  // ── RESETAR DADOS ─────────────────────────────────────
+  const resetInput = document.getElementById('resetConfirmInput');
+  const resetBtn   = document.getElementById('btnResetarDados');
+  const resetMsg   = document.getElementById('resetMsg');
+
+  resetInput?.addEventListener('input', () => {
+    resetBtn.disabled = resetInput.value.trim() !== 'RESETAR';
+  });
+
+  resetBtn?.addEventListener('click', async () => {
+    if (resetInput.value.trim() !== 'RESETAR') return;
+    resetBtn.disabled = true;
+    resetBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Resetando...';
+    resetMsg.className = 'cfg-danger-msg d-none';
+
+    const r = await fetch('/api/config/reset-dados', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ confirmar: 'RESETAR' }),
+    });
+    const data = await r.json();
+
+    resetBtn.innerHTML = '<i class="bi bi-trash3-fill"></i> Resetar dados financeiros';
+    if (data.ok) {
+      resetInput.value = '';
+      resetMsg.className = 'cfg-danger-msg cfg-danger-msg--ok';
+      const res = data.resultado;
+      resetMsg.textContent = `Dados removidos: ${res.lancamentos} lançamentos, ${res.cartoes} cartões, ${res.contas} contas, ${res.orcamentos} orçamentos.`;
+    } else {
+      resetMsg.className = 'cfg-danger-msg cfg-danger-msg--err';
+      resetMsg.textContent = data.error || 'Erro ao resetar dados.';
+      resetBtn.disabled = false;
+    }
+  });
 })();

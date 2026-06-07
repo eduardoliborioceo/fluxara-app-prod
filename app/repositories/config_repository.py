@@ -129,3 +129,18 @@ def delete_subcategoria(sub_id: int, user_id: int):
                 WHERE s.id = %s AND s.categoria_id = c.id AND c.user_id = %s
             """, (sub_id, user_id))
         conn.commit()
+
+
+def reset_dados_financeiros(user_id: int) -> dict:
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE lancamentos SET ativo = FALSE WHERE user_id = %s AND ativo = TRUE", (user_id,))
+            lancamentos = cur.rowcount
+            cur.execute("UPDATE cartoes_credito SET ativo = FALSE WHERE user_id = %s AND ativo = TRUE", (user_id,))
+            cartoes = cur.rowcount
+            cur.execute("UPDATE contas_bancarias SET ativo = FALSE WHERE user_id = %s AND ativo = TRUE", (user_id,))
+            contas = cur.rowcount
+            cur.execute("DELETE FROM orcamentos WHERE user_id = %s", (user_id,))
+            orcamentos = cur.rowcount
+        conn.commit()
+    return {"lancamentos": lancamentos, "cartoes": cartoes, "contas": contas, "orcamentos": orcamentos}

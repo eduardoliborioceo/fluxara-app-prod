@@ -112,6 +112,16 @@ def config_delete_subcategoria(sub_id):
     return jsonify({"ok": True})
 
 
+@bp.route("/config/reset-dados", methods=["POST"])
+@login_required
+def config_reset_dados():
+    data = request.get_json() or {}
+    if data.get("confirmar") != "RESETAR":
+        return jsonify({"error": "Confirmação inválida"}), 400
+    resultado = config_service.resetar_dados_financeiros(current_user.id)
+    return jsonify({"ok": True, "resultado": resultado})
+
+
 @bp.route("/push/vapid-key", methods=["GET"])
 def push_vapid_key():
     from flask import current_app

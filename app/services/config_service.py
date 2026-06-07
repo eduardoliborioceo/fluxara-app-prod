@@ -107,3 +107,7 @@ def edit_subcategoria(sub_id: int, user_id: int, nome: str):
 
 def remove_subcategoria(sub_id: int, user_id: int):
     repo.delete_subcategoria(sub_id, user_id)
+
+
+def resetar_dados_financeiros(user_id: int) -> dict:
+    return repo.reset_dados_financeiros(user_id)
