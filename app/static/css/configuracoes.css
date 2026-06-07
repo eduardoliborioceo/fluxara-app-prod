@@ -1020,3 +1020,76 @@
 
 .cfg-danger-msg--ok  { background: #f0fdf4; color: #16a34a; }
 .cfg-danger-msg--err { background: #fef2f2; color: #dc2626; }
+
+/* ── IMPORTAR / EXPORTAR ───────────────────────── */
+.cfg-ie-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cfg-ie-label {
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  min-width: 52px;
+}
+
+.cfg-ie-select {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: .88rem;
+  font-family: inherit;
+  background: var(--card);
+  color: var(--text);
+  outline: none;
+}
+
+.cfg-ie-formats {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.cfg-format-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all .15s;
+  font-family: inherit;
+}
+
+.cfg-format-btn.active,
+.cfg-format-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(13,110,253,.06);
+}
+
+.cfg-ie-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  background: var(--primary);
+  color: #fff;
+  font-size: .88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s;
+  font-family: inherit;
+}
+
+.cfg-ie-action-btn:hover { background: #0b5ed7; }

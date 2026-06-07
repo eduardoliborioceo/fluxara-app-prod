@@ -136,6 +136,7 @@
       viewAdmin: 'Área do Administrador',
       viewNotificacoes: 'Notificações',
       viewResetDados: 'Resetar Dados',
+      viewImportExport: 'Importar / Exportar',
     };
     const h = document.getElementById('pageHeaderTitle');
     if (h) h.textContent = titles[id] || 'Configurações';
@@ -168,6 +169,7 @@
   document.getElementById('btnBackAdmin')?.addEventListener('click', showMenu);
   document.getElementById('btnBackNotificacoes')?.addEventListener('click', showMenu);
   document.getElementById('btnBackResetDados')?.addEventListener('click', showMenu);
+  document.getElementById('btnBackImportExport')?.addEventListener('click', showMenu);
 
   const urlPanel = new URLSearchParams(window.location.search).get('panel');
   if (urlPanel) {
@@ -1140,5 +1142,27 @@
       resetMsg.textContent = data.error || 'Erro ao resetar dados.';
       resetBtn.disabled = false;
     }
+  });
+
+  // ── IMPORTAR / EXPORTAR ───────────────────────────────
+  let exportFormato = 'csv';
+
+  document.querySelectorAll('.cfg-format-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.cfg-format-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      exportFormato = btn.dataset.fmt;
+    });
+  });
+
+  document.getElementById('btnExportar')?.addEventListener('click', () => {
+    const tipo   = document.getElementById('exportTipo')?.value || 'lancamentos';
+    const url    = `/api/config/exportar?tipo=${encodeURIComponent(tipo)}&formato=${encodeURIComponent(exportFormato)}`;
+    const anchor = document.createElement('a');
+    anchor.href  = url;
+    anchor.style.display = 'none';
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
   });
 })();
