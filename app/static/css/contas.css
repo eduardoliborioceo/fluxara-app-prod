@@ -26,6 +26,18 @@
 }
 
 /* ========================
+   CARD TITLE
+======================== */
+.contas-card-title {
+  font-weight: 700;
+  font-size: .8rem;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: #6c757d;
+  padding: 14px 20px 8px;
+}
+
+/* ========================
    WRAPPER
 ======================== */
 .contas-wrapper {
