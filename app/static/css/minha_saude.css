@@ -78,6 +78,25 @@
   color: var(--primary, #0d6efd);
 }
 
+@media (max-width: 575px) {
+  .saude-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+  }
+
+  .saude-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .saude-tab-btn {
+    flex: 0 0 auto;
+    padding: 8px 11px;
+    font-size: .78rem;
+  }
+}
+
 /* ========================
    STAT CARDS ROW
 ======================== */
