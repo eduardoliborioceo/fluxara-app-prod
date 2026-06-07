@@ -134,6 +134,7 @@
       viewGastosDev: 'Gastos Developer',
       viewUsuario: 'Área do Usuário',
       viewAdmin: 'Área do Administrador',
+      viewNotificacoes: 'Notificações',
     };
     const h = document.getElementById('pageHeaderTitle');
     if (h) h.textContent = titles[id] || 'Configurações';
@@ -149,9 +150,11 @@
   document.querySelectorAll('.settings-item').forEach(item => {
     item.addEventListener('click', () => {
       const panel = item.dataset.panel;
+      if (!panel) return;
       if (panel === 'categorias') loadCategorias();
       if (panel === 'cartoes') loadCartoes();
       if (panel === 'gastosDev') loadGastosDev();
+      if (panel === 'notificacoes') initNotifPanel();
       showPanel('view' + panel.charAt(0).toUpperCase() + panel.slice(1));
     });
   });
@@ -162,6 +165,7 @@
   document.getElementById('btnBackGastosDev')?.addEventListener('click', showMenu);
   document.getElementById('btnBackUsuario')?.addEventListener('click', showMenu);
   document.getElementById('btnBackAdmin')?.addEventListener('click', showMenu);
+  document.getElementById('btnBackNotificacoes')?.addEventListener('click', showMenu);
 
   const urlPanel = new URLSearchParams(window.location.search).get('panel');
   if (urlPanel) {
@@ -966,4 +970,138 @@
     const tipo = input.id.replace('gdevInput_', '');
     window.gdevSave(tipo);
   });
+
+  // ── NOTIFICAÇÕES PUSH ─────────────────────────────────
+  let _vapidKey = null;
+  let _swReg    = null;
+  let _notifInitialized = false;
+
+  function setNotifLabel(text) {
+    const el = document.getElementById('notifStatusLabel');
+    if (el) el.textContent = text;
+  }
+
+  function setNotifUI(subscribed) {
+    const icon  = document.getElementById('notifStatusIcon');
+    const title = document.getElementById('notifStatusTitle');
+    const desc  = document.getElementById('notifStatusDesc');
+    const btn   = document.getElementById('btnToggleNotif');
+    const test  = document.getElementById('notifTestWrap');
+
+    if (subscribed) {
+      if (icon)  { icon.innerHTML = '<i class="bi bi-bell-fill" style="color:#16a34a"></i>'; icon.style.background = '#f0fdf4'; }
+      if (title) title.textContent = 'Notificações ativas';
+      if (desc)  desc.textContent  = 'Você está recebendo alertas deste dispositivo.';
+      if (btn)   btn.dataset.state = 'on';
+      if (test)  test.classList.remove('d-none');
+      setNotifLabel('Ativas');
+    } else {
+      if (icon)  { icon.innerHTML = '<i class="bi bi-bell-slash" style="color:#64748b"></i>'; icon.style.background = '#f1f5f9'; }
+      if (title) title.textContent = 'Notificações desativadas';
+      if (desc)  desc.textContent  = 'Ative para receber alertas sobre vencimentos e faturas.';
+      if (btn)   btn.dataset.state = 'off';
+      if (test)  test.classList.add('d-none');
+      setNotifLabel('Desativadas');
+    }
+  }
+
+  async function initNotifPanel() {
+    if (_notifInitialized) return;
+    _notifInitialized = true;
+
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      document.getElementById('notifUnsupported')?.classList.remove('d-none');
+      document.getElementById('notifSupported')?.classList.add('d-none');
+      setNotifLabel('Não suportado');
+      return;
+    }
+
+    const permDenied = document.getElementById('notifPermDenied');
+    if (Notification.permission === 'denied') {
+      permDenied && (permDenied.style.display = '');
+      setNotifLabel('Bloqueadas');
+      return;
+    }
+
+    try {
+      const keyResp = await fetch('/api/push/vapid-key');
+      const keyData = await keyResp.json();
+      _vapidKey = keyData.key;
+
+      _swReg = await navigator.serviceWorker.ready;
+      const existing = await _swReg.pushManager.getSubscription();
+      setNotifUI(!!existing);
+    } catch (e) {
+      setNotifLabel('Erro');
+    }
+  }
+
+  function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+    const b64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const raw = atob(b64);
+    return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+  }
+
+  document.getElementById('btnToggleNotif')?.addEventListener('click', async () => {
+    const btn   = document.getElementById('btnToggleNotif');
+    const state = btn.dataset.state;
+    btn.disabled = true;
+
+    try {
+      if (state === 'on') {
+        const sub = await _swReg.pushManager.getSubscription();
+        if (sub) {
+          await sub.unsubscribe();
+          await fetch('/api/push/unsubscribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ endpoint: sub.endpoint }),
+          });
+        }
+        setNotifUI(false);
+      } else {
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+          document.getElementById('notifPermDenied').style.display = '';
+          btn.disabled = false;
+          return;
+        }
+        const sub = await _swReg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(_vapidKey),
+        });
+        const json = sub.toJSON();
+        await fetch('/api/push/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys }),
+        });
+        setNotifUI(true);
+      }
+    } catch (err) {
+      console.error('Push toggle error:', err);
+    }
+    btn.disabled = false;
+  });
+
+  document.getElementById('btnTestNotif')?.addEventListener('click', async () => {
+    const btn = document.getElementById('btnTestNotif');
+    const msg = document.getElementById('notifTestMsg');
+    btn.disabled = true;
+    const r = await fetch('/api/push/test', { method: 'POST' });
+    const data = await r.json();
+    btn.disabled = false;
+    if (msg) {
+      msg.className = '';
+      msg.style.color = data.ok ? '#16a34a' : '#dc2626';
+      msg.textContent = data.ok ? 'Notificação enviada! Verifique seu dispositivo.' : 'Erro ao enviar. Tente novamente.';
+      msg.classList.remove('d-none');
+    }
+  });
+
+  fetch('/api/push/status').then(r => r.json()).then(data => {
+    if (data.subscriptions_saved > 0) setNotifLabel('Ativas');
+    else setNotifLabel('Desativadas');
+  }).catch(() => setNotifLabel('—'));
 })();
