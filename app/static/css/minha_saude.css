@@ -1310,3 +1310,128 @@
 [data-theme="escuro"] .saude-dia-refeicao-item span:first-child {
   color: #e2e8f0;
 }
+
+/* ===== EXERCÍCIOS ===== */
+
+.saude-exercicio-header {
+  margin-bottom: 10px;
+}
+
+.saude-exercicio-resumo {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.saude-exercicio-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.saude-exercicio-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+
+.saude-exercicio-icon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+
+.saude-exercicio-icon--cardio        { background: rgba(239, 68,  68,  0.10); color: #ef4444; }
+.saude-exercicio-icon--musculacao    { background: rgba(249, 115,  22, 0.10); color: #f97316; }
+.saude-exercicio-icon--flexibilidade { background: rgba(139,  92, 246, 0.10); color: #8b5cf6; }
+.saude-exercicio-icon--esporte       { background: rgba( 16, 185, 129, 0.10); color: #10b981; }
+.saude-exercicio-icon--outro         { background: rgba( 15,  23,  42, 0.07); color: var(--text-muted); }
+
+.saude-exercicio-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.saude-exercicio-nome {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.saude-exercicio-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.saude-exercicio-del {
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  line-height: 1;
+  font-size: 0.875rem;
+  transition: all 0.12s;
+}
+
+.saude-exercicio-del:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.09);
+}
+
+.saude-exercicio-empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 0;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.saude-exercicio-empty i {
+  font-size: 1.2rem;
+  opacity: 0.4;
+}
+
+.saude-exercicio-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 9px;
+  border: 1.5px dashed var(--border);
+  border-radius: 10px;
+  background: transparent;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.saude-exercicio-add-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(13, 110, 253, 0.04);
+}
+
+[data-theme="escuro"] .saude-exercicio-item {
+  border-color: var(--border);
+}
+

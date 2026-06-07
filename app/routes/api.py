@@ -1108,6 +1108,34 @@ def saude_historico_calendario():
     return jsonify(dados)
 
 
+@bp.route("/saude/exercicio", methods=["POST"])
+@login_required
+def saude_add_exercicio():
+    from app.services import saude_service
+    data = request.get_json() or {}
+    try:
+        ex = saude_service.registrar_exercicio(
+            current_user.id,
+            data.get("tipo", "outro"),
+            data.get("nome", ""),
+            data.get("duracao_min"),
+            data.get("calorias_gasto"),
+            data.get("intensidade"),
+            data.get("observacao"),
+        )
+        return jsonify(ex)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@bp.route("/saude/exercicio/<int:exercicio_id>", methods=["DELETE"])
+@login_required
+def saude_delete_exercicio(exercicio_id):
+    from app.services import saude_service
+    saude_service.delete_exercicio(current_user.id, exercicio_id)
+    return jsonify({"ok": True})
+
+
 # =============================================================
 # SUREBET — ALAVANCAGEM
 # =============================================================
