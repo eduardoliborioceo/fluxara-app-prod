@@ -34,7 +34,8 @@
 
   /* Tabs e outras abas ficam em coluna única */
   #tab-perfil,
-  #tab-produtos {
+  #tab-produtos,
+  #tab-historico {
     max-width: 760px;
   }
 }
@@ -1043,6 +1044,188 @@
 }
 
 /* ========================
+   CALENDÁRIO
+======================== */
+.saude-cal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.saude-cal-nav-btn {
+  width: 32px;
+  height: 32px;
+  border: 1.5px solid var(--border, rgba(15,23,42,.09));
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted, #64748b);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .85rem;
+  transition: background .15s, border-color .15s, color .15s;
+  font-family: inherit;
+}
+
+.saude-cal-nav-btn:hover {
+  background: rgba(13,110,253,.07);
+  border-color: var(--primary, #0d6efd);
+  color: var(--primary, #0d6efd);
+}
+
+.saude-cal-titulo {
+  font-size: .9rem;
+  font-weight: 700;
+  color: var(--text, #1e293b);
+  text-transform: capitalize;
+}
+
+.saude-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.saude-cal-header {
+  text-align: center;
+  font-size: .62rem;
+  font-weight: 700;
+  color: var(--text-muted, #64748b);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  padding: 4px 0 8px;
+}
+
+.saude-cal-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 5px 2px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background .12s;
+  min-height: 42px;
+}
+
+.saude-cal-day:hover {
+  background: rgba(13,110,253,.07);
+}
+
+.saude-cal-day--empty {
+  cursor: default;
+  pointer-events: none;
+}
+
+.saude-cal-num {
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--text, #1e293b);
+  line-height: 1;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.saude-cal-day--hoje .saude-cal-num {
+  background: var(--primary, #0d6efd);
+  color: #fff;
+}
+
+.saude-cal-day--selecionado {
+  background: rgba(13,110,253,.1);
+}
+
+.saude-cal-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.saude-cal-dot--refeicao { background: #16a34a; }
+.saude-cal-dot--agua     { background: #3b82f6; }
+
+/* Detalhe do dia */
+.saude-dia-refeicao-group {
+  margin-bottom: 12px;
+}
+
+.saude-dia-refeicao-tipo {
+  font-size: .7rem;
+  font-weight: 700;
+  color: var(--text-muted, #64748b);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-bottom: 5px;
+}
+
+.saude-dia-refeicao-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: .82rem;
+  padding: 6px 10px;
+  background: #f8fafc;
+  border-radius: 6px;
+  margin-bottom: 3px;
+  gap: 10px;
+}
+
+.saude-dia-refeicao-item span:first-child {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text, #1e293b);
+}
+
+.saude-dia-macros-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border, rgba(15,23,42,.07));
+}
+
+.saude-dia-macro {
+  flex: 1;
+  text-align: center;
+  padding: 8px 4px;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.saude-dia-macro-val {
+  font-size: .88rem;
+  font-weight: 800;
+  color: var(--text, #1e293b);
+  line-height: 1;
+}
+
+.saude-dia-macro-label {
+  font-size: .62rem;
+  color: var(--text-muted, #64748b);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  margin-top: 3px;
+}
+
+.saude-dia-empty {
+  text-align: center;
+  color: var(--text-muted, #64748b);
+  font-size: .83rem;
+  padding: 20px 0;
+}
+
+/* ========================
    DARK THEME
 ======================== */
 [data-theme="escuro"] .saude-card,
@@ -1108,5 +1291,22 @@
 [data-theme="escuro"] .saude-produto-search-tab-wrap input {
   background: #0f172a;
   border-color: rgba(255,255,255,.12);
+  color: #e2e8f0;
+}
+
+[data-theme="escuro"] .saude-cal-num {
+  color: #e2e8f0;
+}
+
+[data-theme="escuro"] .saude-cal-day--selecionado {
+  background: rgba(59,130,246,.12);
+}
+
+[data-theme="escuro"] .saude-dia-refeicao-item,
+[data-theme="escuro"] .saude-dia-macro {
+  background: rgba(255,255,255,.04);
+}
+
+[data-theme="escuro"] .saude-dia-refeicao-item span:first-child {
   color: #e2e8f0;
 }

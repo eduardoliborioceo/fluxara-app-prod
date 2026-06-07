@@ -1080,6 +1080,34 @@ def saude_seed_produtos_padrao():
     return jsonify({"inseridos": inseridos})
 
 
+@bp.route("/saude/historico/dia", methods=["GET"])
+@login_required
+def saude_historico_dia():
+    from app.services import saude_service
+    data_str = request.args.get("data", "")
+    tz = request.cookies.get('user_tz', 'America/Sao_Paulo')
+    dados = saude_service.get_dados_por_data(current_user.id, data_str, tz)
+    return jsonify(dados)
+
+
+@bp.route("/saude/historico/calendario", methods=["GET"])
+@login_required
+def saude_historico_calendario():
+    from app.services import saude_service
+    from datetime import date
+    today = date.today()
+    try:
+        ano = int(request.args.get("ano", today.year))
+        mes = int(request.args.get("mes", today.month))
+        if not (2020 <= ano <= 2035) or not (1 <= mes <= 12):
+            ano, mes = today.year, today.month
+    except (ValueError, TypeError):
+        ano, mes = today.year, today.month
+    tz = request.cookies.get('user_tz', 'America/Sao_Paulo')
+    dados = saude_service.get_calendario_mes(current_user.id, ano, mes, tz)
+    return jsonify(dados)
+
+
 # =============================================================
 # SUREBET — ALAVANCAGEM
 # =============================================================

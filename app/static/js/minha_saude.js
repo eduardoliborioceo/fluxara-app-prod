@@ -13,6 +13,7 @@
 
   /* ========== TABS ========== */
   var _produtosCarregados = false;
+  var _calCarregado = false;
 
   document.querySelectorAll('.saude-tab-btn').forEach(function (btn) {
     btn.addEventListener('click', function () {
@@ -21,11 +22,15 @@
       });
       btn.classList.add('active');
       var tab = btn.dataset.tab;
-      document.getElementById('tab-hoje').style.display = tab === 'hoje' ? '' : 'none';
-      document.getElementById('tab-perfil').style.display = tab === 'perfil' ? '' : 'none';
-      document.getElementById('tab-produtos').style.display = tab === 'produtos' ? '' : 'none';
+      document.getElementById('tab-hoje').style.display     = tab === 'hoje'      ? '' : 'none';
+      document.getElementById('tab-historico').style.display = tab === 'historico' ? '' : 'none';
+      document.getElementById('tab-perfil').style.display   = tab === 'perfil'    ? '' : 'none';
+      document.getElementById('tab-produtos').style.display  = tab === 'produtos'  ? '' : 'none';
       if (tab === 'produtos' && !_produtosCarregados) {
         carregarProdutos();
+      }
+      if (tab === 'historico' && !_calCarregado) {
+        carregarCalendario(_calAno, _calMes);
       }
     });
   });
@@ -453,9 +458,9 @@
             var diff = mc.modo === 'perda' ? (mc.manutencao_kcal - mc.meta_kcal)
                      : mc.modo === 'ganho' ? (mc.meta_kcal - mc.manutencao_kcal)
                      : 0;
-            var semanas = mc.semanas_estimadas ? ' · ~' + mc.semanas_estimadas + ' semanas' : '';
-            var texto = mc.modo === 'perda' ? 'Déficit de ' + diff + ' kcal para perda de peso' + semanas
-                      : mc.modo === 'ganho' ? 'Superávit de ' + diff + ' kcal para ganho de peso' + semanas
+            var diasEst = mc.dias_estimados ? ' · ~' + mc.dias_estimados + ' dias' : '';
+            var texto = mc.modo === 'perda' ? 'Déficit de ' + diff + ' kcal para perda de peso' + diasEst
+                      : mc.modo === 'ganho' ? 'Superávit de ' + diff + ' kcal para ganho de peso' + diasEst
                       : 'Manutenção do peso atual';
             modoEl.innerHTML = '<i class="bi ' + icone + '"></i> ' + texto;
             modoEl.style.display = '';
@@ -647,5 +652,174 @@
         alert('Erro ao importar. Tente novamente.');
       });
   };
+
+  /* ========== CALENDÁRIO ========== */
+  var _calAno = new Date().getFullYear();
+  var _calMes = new Date().getMonth() + 1;
+  var _calDiaSelecionado = null;
+
+  var _mesesPt = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+                  'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  var _diasSemana = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  var _mesesNomes = ['janeiro','fevereiro','março','abril','maio','junho',
+                     'julho','agosto','setembro','outubro','novembro','dezembro'];
+
+  function carregarCalendario(ano, mes) {
+    _calAno = ano;
+    _calMes = mes;
+    var titulo = document.getElementById('calTitulo');
+    if (titulo) titulo.textContent = _mesesPt[mes - 1] + ' ' + ano;
+    var grid = document.getElementById('calendarioGrid');
+    if (grid) grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--text-muted);font-size:.82rem">Carregando...</div>';
+    var detalhe = document.getElementById('calDiaDetalhe');
+    if (detalhe) detalhe.style.display = 'none';
+
+    fetch('/api/saude/historico/calendario?ano=' + ano + '&mes=' + mes)
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        renderizarCalendarioGrid(data);
+        _calCarregado = true;
+      })
+      .catch(function () {
+        if (grid) grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--text-muted)">Erro ao carregar</div>';
+      });
+  }
+
+  function renderizarCalendarioGrid(data) {
+    var hoje = new Date();
+    var hojeStr = hoje.getFullYear() + '-' +
+                  String(hoje.getMonth() + 1).padStart(2, '0') + '-' +
+                  String(hoje.getDate()).padStart(2, '0');
+
+    var lookup = {};
+    data.dias.forEach(function (d) { lookup[d.data] = d; });
+
+    var headers = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
+    var html = headers.map(function (h) {
+      return '<div class="saude-cal-header">' + h + '</div>';
+    }).join('');
+
+    var offset = data.dias.length > 0 ? (data.dias[0].dia_semana - 1) : 0;
+    for (var i = 0; i < offset; i++) {
+      html += '<div class="saude-cal-day saude-cal-day--empty"></div>';
+    }
+
+    data.dias.forEach(function (d) {
+      var isHoje = d.data === hojeStr;
+      var isSel  = d.data === _calDiaSelecionado;
+      var classes = 'saude-cal-day';
+      if (isHoje) classes += ' saude-cal-day--hoje';
+      if (isSel)  classes += ' saude-cal-day--selecionado';
+
+      var dot = '';
+      if (d.tem_refeicao) {
+        dot = '<div class="saude-cal-dot saude-cal-dot--refeicao"></div>';
+      } else if (d.agua_total_ml > 0) {
+        dot = '<div class="saude-cal-dot saude-cal-dot--agua"></div>';
+      }
+
+      html += '<div class="' + classes + '" data-data="' + d.data + '" onclick="selecionarDia(\'' + d.data + '\')">' +
+              '<span class="saude-cal-num">' + d.dia + '</span>' +
+              dot + '</div>';
+    });
+
+    var grid = document.getElementById('calendarioGrid');
+    if (grid) grid.innerHTML = html;
+  }
+
+  window.calMesAnterior = function () {
+    var mes = _calMes - 1;
+    var ano = _calAno;
+    if (mes < 1) { mes = 12; ano--; }
+    if (ano < 2020) return;
+    carregarCalendario(ano, mes);
+  };
+
+  window.calMesProximo = function () {
+    var hoje = new Date();
+    if (_calAno > hoje.getFullYear() ||
+        (_calAno === hoje.getFullYear() && _calMes >= hoje.getMonth() + 1)) return;
+    var mes = _calMes + 1;
+    var ano = _calAno;
+    if (mes > 12) { mes = 1; ano++; }
+    carregarCalendario(ano, mes);
+  };
+
+  window.selecionarDia = function (dataStr) {
+    _calDiaSelecionado = dataStr;
+
+    document.querySelectorAll('.saude-cal-day').forEach(function (el) {
+      el.classList.remove('saude-cal-day--selecionado');
+      if (el.dataset.data === dataStr) el.classList.add('saude-cal-day--selecionado');
+    });
+
+    var detalhe  = document.getElementById('calDiaDetalhe');
+    var conteudo = document.getElementById('calDiaDetalheConteudo');
+    var label    = document.getElementById('calDiaDetalheLabel');
+    if (!detalhe) return;
+    detalhe.style.display = '';
+    conteudo.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:.82rem">Carregando...</div>';
+
+    var partes = dataStr.split('-');
+    var dt = new Date(parseInt(partes[0], 10), parseInt(partes[1], 10) - 1, parseInt(partes[2], 10));
+    label.textContent = _diasSemana[dt.getDay()] + ', ' + dt.getDate() + ' de ' +
+                        _mesesNomes[dt.getMonth()] + ' de ' + dt.getFullYear();
+
+    fetch('/api/saude/historico/dia?data=' + dataStr)
+      .then(function (r) { return r.json(); })
+      .then(function (data) { renderizarDiaDetalhe(data); })
+      .catch(function () {
+        conteudo.innerHTML = '<div class="saude-dia-empty">Erro ao carregar dados</div>';
+      });
+  };
+
+  function renderizarDiaDetalhe(data) {
+    var html = '';
+
+    if (!data.refeicoes_agrupadas || !data.refeicoes_agrupadas.length) {
+      html += '<div class="saude-dia-empty">' +
+              '<i class="bi bi-calendar-x" style="font-size:1.4rem;display:block;margin-bottom:6px;opacity:.4"></i>' +
+              'Nenhuma refeição registrada neste dia</div>';
+    } else {
+      data.refeicoes_agrupadas.forEach(function (grupo) {
+        html += '<div class="saude-dia-refeicao-group">';
+        html += '<div class="saude-dia-refeicao-tipo">' + escapeHtml(grupo.label) +
+                (grupo.calorias_total ? ' · ' + grupo.calorias_total + ' kcal' : '') + '</div>';
+        grupo.registros.forEach(function (r) {
+          html += '<div class="saude-dia-refeicao-item">' +
+                  '<span>' + escapeHtml(r.descricao || 'Refeição') + '</span>' +
+                  '<span style="font-weight:700;color:#16a34a;white-space:nowrap;flex-shrink:0">' +
+                  (r.calorias ? r.calorias + ' kcal' : '') + '</span></div>';
+        });
+        html += '</div>';
+      });
+
+      html += '<div style="font-size:.85rem;font-weight:800;color:var(--text);margin-top:4px">Total: ' + data.calorias_dia + ' kcal</div>';
+
+      var m = data.macros;
+      if (m && (m.proteinas_g || m.carboidratos_g || m.gorduras_g)) {
+        html += '<div class="saude-dia-macros-row">' +
+                '<div class="saude-dia-macro"><div class="saude-dia-macro-val">' + (m.proteinas_g || 0) + 'g</div><div class="saude-dia-macro-label">Proteínas</div></div>' +
+                '<div class="saude-dia-macro"><div class="saude-dia-macro-val">' + (m.carboidratos_g || 0) + 'g</div><div class="saude-dia-macro-label">Carbos</div></div>' +
+                '<div class="saude-dia-macro"><div class="saude-dia-macro-val">' + (m.gorduras_g || 0) + 'g</div><div class="saude-dia-macro-label">Gorduras</div></div>' +
+                '</div>';
+      }
+    }
+
+    html += '<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">' +
+            '<div style="font-size:.7rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Água</div>';
+    if (data.agua && data.agua.total_ml > 0) {
+      var aguaLabel = data.agua.total_ml >= 1000
+        ? (data.agua.total_ml / 1000).toFixed(1) + ' L'
+        : data.agua.total_ml + ' ml';
+      html += '<div style="font-size:1rem;font-weight:800;color:#2563eb">' + aguaLabel + '</div>';
+    } else {
+      html += '<div style="color:var(--text-muted);font-size:.82rem">Não registrado</div>';
+    }
+    html += '</div>';
+
+    var conteudo = document.getElementById('calDiaDetalheConteudo');
+    if (conteudo) conteudo.innerHTML = html;
+  }
 
 })();
