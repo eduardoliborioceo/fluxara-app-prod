@@ -32,18 +32,20 @@ def _notificar_refeicao(app, tipo: str, label: str, horario: str):
             from datetime import date
 
             hoje = str(date.today())
+            from app.repositories.push_prefs_repository import is_enabled
             for user_id in get_distinct_subscribed_users():
                 if is_saude_push_sent(user_id, tipo, hoje):
                     continue
                 registros = repo.get_refeicoes_hoje(user_id)
                 ja_registrou = any(r["tipo_refeicao"] == tipo for r in registros)
                 if not ja_registrou:
-                    send_to_user(
-                        user_id,
-                        f"🍽️ Em 30 min: {label}",
-                        f"Horário: {horario}. Prepare-se para a refeição!",
-                        "/minha-saude",
-                    )
+                    if is_enabled(user_id, "saude_refeicoes"):
+                        send_to_user(
+                            user_id,
+                            f"🍽️ Em 30 min: {label}",
+                            f"Horário: {horario}. Prepare-se para a refeição!",
+                            "/minha-saude",
+                        )
                     mark_saude_push_sent(user_id, tipo, hoje)
         except Exception as e:
             app.logger.error("saude_notif refeicao=%s error: %s", tipo, e)
@@ -60,6 +62,7 @@ def _notificar_resumo_calorias(app):
             hoje = str(date.today())
             tipo = "resumo_calorias"
 
+            from app.repositories.push_prefs_repository import is_enabled
             for user_id in get_distinct_subscribed_users():
                 if is_saude_push_sent(user_id, tipo, hoje):
                     continue
@@ -82,12 +85,13 @@ def _notificar_resumo_calorias(app):
                 else:
                     body = f"Você consumiu {total_kcal} kcal hoje."
 
-                send_to_user(
-                    user_id,
-                    "📊 Resumo calórico do dia",
-                    body,
-                    "/minha-saude",
-                )
+                if is_enabled(user_id, "saude_resumo"):
+                    send_to_user(
+                        user_id,
+                        "📊 Resumo calórico do dia",
+                        body,
+                        "/minha-saude",
+                    )
                 mark_saude_push_sent(user_id, tipo, hoje)
         except Exception as e:
             app.logger.error("saude_notif resumo_calorias error: %s", e)

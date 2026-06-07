@@ -226,6 +226,27 @@ def push_status():
     })
 
 
+@bp.route("/push/prefs", methods=["GET"])
+@login_required
+def push_get_prefs():
+    from app.repositories import push_prefs_repository
+    return jsonify(push_prefs_repository.get_prefs(current_user.id))
+
+
+@bp.route("/push/prefs", methods=["PATCH"])
+@login_required
+def push_set_pref():
+    from app.repositories import push_prefs_repository
+    data = request.get_json() or {}
+    category = str(data.get("category", "")).strip()
+    enabled = bool(data.get("enabled", True))
+    try:
+        push_prefs_repository.set_pref(current_user.id, category, enabled)
+        return jsonify({"ok": True})
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+
 @bp.route("/push/debug", methods=["GET"])
 @login_required
 def push_debug():

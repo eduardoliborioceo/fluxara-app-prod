@@ -1001,11 +1001,12 @@
   }
 
   function setNotifUI(subscribed) {
-    const icon  = document.getElementById('notifStatusIcon');
-    const title = document.getElementById('notifStatusTitle');
-    const desc  = document.getElementById('notifStatusDesc');
-    const btn   = document.getElementById('btnToggleNotif');
-    const test  = document.getElementById('notifTestWrap');
+    const icon    = document.getElementById('notifStatusIcon');
+    const title   = document.getElementById('notifStatusTitle');
+    const desc    = document.getElementById('notifStatusDesc');
+    const btn     = document.getElementById('btnToggleNotif');
+    const test    = document.getElementById('notifTestWrap');
+    const prefs   = document.getElementById('notifPrefsSection');
 
     if (subscribed) {
       if (icon)  { icon.innerHTML = '<i class="bi bi-bell-fill" style="color:#16a34a"></i>'; icon.style.background = '#f0fdf4'; }
@@ -1013,16 +1014,49 @@
       if (desc)  desc.textContent  = 'Você está recebendo alertas deste dispositivo.';
       if (btn)   btn.dataset.state = 'on';
       if (test)  test.classList.remove('d-none');
+      if (prefs) prefs.classList.remove('d-none');
       setNotifLabel('Ativas');
+      loadNotifPrefs();
     } else {
       if (icon)  { icon.innerHTML = '<i class="bi bi-bell-slash" style="color:#64748b"></i>'; icon.style.background = '#f1f5f9'; }
       if (title) title.textContent = 'Notificações desativadas';
       if (desc)  desc.textContent  = 'Ative para receber alertas sobre vencimentos e faturas.';
       if (btn)   btn.dataset.state = 'off';
       if (test)  test.classList.add('d-none');
+      if (prefs) prefs.classList.add('d-none');
       setNotifLabel('Desativadas');
     }
   }
+
+  async function loadNotifPrefs() {
+    try {
+      const r = await fetch('/api/push/prefs');
+      const prefs = await r.json();
+      document.querySelectorAll('.cfg-notif-pref-btn').forEach(btn => {
+        const cat = btn.dataset.category;
+        if (cat in prefs) {
+          btn.dataset.state = prefs[cat] ? 'on' : 'off';
+        }
+      });
+    } catch (_) {}
+  }
+
+  document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.cfg-notif-pref-btn');
+    if (!btn) return;
+    const category = btn.dataset.category;
+    const newState = btn.dataset.state === 'on' ? 'off' : 'on';
+    btn.dataset.state = newState;
+    try {
+      await fetch('/api/push/prefs', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ category, enabled: newState === 'on' }),
+      });
+    } catch (_) {
+      btn.dataset.state = newState === 'on' ? 'off' : 'on';
+    }
+  });
 
   async function initNotifPanel() {
     if (_notifInitialized) return;

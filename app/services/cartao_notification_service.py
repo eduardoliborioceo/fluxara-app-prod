@@ -10,6 +10,7 @@ from app.repositories.cartoes_repository import (
     get_cartoes_usage_for_user,
     get_fatura_total,
 )
+from app.repositories.push_prefs_repository import is_enabled
 from app.services.push_service import send_to_user
 
 _MESES_PT = [
@@ -54,22 +55,24 @@ def _check_limit(user_id: int, cartao: dict, mes: int, ano: int):
     nome = cartao["nome"]
 
     if uso >= 1.0 and not is_push_sent(user_id, cartao_id, "100pct", ref):
-        send_to_user(
-            user_id,
-            f"⚠️ Limite atingido — {nome}",
-            f"Você usou 100% do limite do cartão {nome}. Disponível: R$ 0,00.",
-            "/",
-        )
+        if is_enabled(user_id, "limite_cartao"):
+            send_to_user(
+                user_id,
+                f"⚠️ Limite atingido — {nome}",
+                f"Você usou 100% do limite do cartão {nome}. Disponível: R$ 0,00.",
+                "/",
+            )
         mark_push_sent(user_id, cartao_id, "100pct", ref)
 
     elif 0.8 <= uso < 1.0 and not is_push_sent(user_id, cartao_id, "80pct", ref):
-        disponivel = limite - fatura
-        send_to_user(
-            user_id,
-            f"💳 Limite 80% usado — {nome}",
-            f"Você já usou {uso*100:.0f}% do limite do {nome}. Restam R$ {disponivel:,.2f}.",
-            "/",
-        )
+        if is_enabled(user_id, "limite_cartao"):
+            disponivel = limite - fatura
+            send_to_user(
+                user_id,
+                f"💳 Limite 80% usado — {nome}",
+                f"Você já usou {uso*100:.0f}% do limite do {nome}. Restam R$ {disponivel:,.2f}.",
+                "/",
+            )
         mark_push_sent(user_id, cartao_id, "80pct", ref)
 
 
@@ -106,12 +109,13 @@ def _check_fatura_fechamento(user_id: int, cartao: dict, today: date):
 
     mes_nome = _MESES_PT[fatura_mes - 1]
 
-    send_to_user(
-        user_id,
-        f"📄 Fatura {nome} — {mes_nome}/{fatura_ano}",
-        f"Sua fatura fechou em R$ {total:,.2f}. Vencimento: {venc_str}.",
-        "/",
-    )
+    if is_enabled(user_id, "faturas"):
+        send_to_user(
+            user_id,
+            f"📄 Fatura {nome} — {mes_nome}/{fatura_ano}",
+            f"Sua fatura fechou em R$ {total:,.2f}. Vencimento: {venc_str}.",
+            "/",
+        )
     mark_push_sent(user_id, cartao_id, "fatura", ref)
 
 
