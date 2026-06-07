@@ -237,3 +237,73 @@ def delete_produto(user_id: int, produto_id: int):
                 (produto_id, user_id)
             )
             conn.commit()
+
+
+# ── Histórico ────────────────────────────────────────────────────────────────
+
+def get_refeicoes_por_data(user_id: int, data_str: str, timezone: str = 'America/Sao_Paulo'):
+    with get_db() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("""
+                SELECT id, tipo_refeicao, descricao, calorias,
+                       proteinas_g, carboidratos_g, gorduras_g,
+                       fonte, registrado_em
+                FROM saude_refeicoes
+                WHERE user_id = %s
+                  AND DATE(registrado_em AT TIME ZONE %s) = %s::date
+                ORDER BY registrado_em
+            """, (user_id, timezone, data_str))
+            return cur.fetchall()
+
+
+def get_agua_por_data(user_id: int, data_str: str, timezone: str = 'America/Sao_Paulo'):
+    with get_db() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("""
+                SELECT id, quantidade_ml, registrado_em
+                FROM saude_agua
+                WHERE user_id = %s
+                  AND DATE(registrado_em AT TIME ZONE %s) = %s::date
+                ORDER BY registrado_em DESC
+            """, (user_id, timezone, data_str))
+            return cur.fetchall()
+
+
+def get_resumo_mes(user_id: int, timezone: str, ano: int, mes: int):
+    with get_db() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("""
+                WITH ref AS (
+                    SELECT
+                        DATE(registrado_em AT TIME ZONE %s) AS dia,
+                        COALESCE(SUM(calorias), 0)          AS calorias_total,
+                        COUNT(*)                            AS refeicoes_count
+                    FROM saude_refeicoes
+                    WHERE user_id = %s
+                      AND EXTRACT(YEAR  FROM registrado_em AT TIME ZONE %s) = %s
+                      AND EXTRACT(MONTH FROM registrado_em AT TIME ZONE %s) = %s
+                    GROUP BY 1
+                ),
+                agua AS (
+                    SELECT
+                        DATE(registrado_em AT TIME ZONE %s) AS dia,
+                        COALESCE(SUM(quantidade_ml), 0)     AS total_ml
+                    FROM saude_agua
+                    WHERE user_id = %s
+                      AND EXTRACT(YEAR  FROM registrado_em AT TIME ZONE %s) = %s
+                      AND EXTRACT(MONTH FROM registrado_em AT TIME ZONE %s) = %s
+                    GROUP BY 1
+                )
+                SELECT
+                    COALESCE(r.dia, a.dia)        AS dia,
+                    COALESCE(r.calorias_total, 0) AS calorias_total,
+                    COALESCE(r.refeicoes_count, 0)AS refeicoes_count,
+                    COALESCE(a.total_ml, 0)        AS agua_total_ml
+                FROM ref r
+                FULL OUTER JOIN agua a ON r.dia = a.dia
+                ORDER BY dia
+            """, (
+                timezone, user_id, timezone, ano, timezone, mes,
+                timezone, user_id, timezone, ano, timezone, mes,
+            ))
+            return cur.fetchall()

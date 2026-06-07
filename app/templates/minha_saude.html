@@ -7,17 +7,19 @@
     <span class="page-header-section">Ferramentas</span>
     <h1 class="page-header-name">Minha Saúde</h1>
   </div>
+  <div class="page-header-actions">
+    <a href="javascript:history.back()" class="btn-header-icon" title="Voltar">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+    <button class="btn-header-icon" onclick="toggleFullscreen()" title="Tela cheia">
+      <i class="bi bi-arrows-fullscreen"></i>
+    </button>
+  </div>
 </div>
 {% endblock %}
 
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/minha_saude.css') }}?v={{ static_v }}">
-
-<div class="page-back-bar">
-  <a href="javascript:history.back()" class="page-back-btn" title="Voltar">
-    <i class="bi bi-arrow-left"></i>
-  </a>
-</div>
 
 <div class="saude-wrapper">
 
@@ -25,6 +27,9 @@
   <div class="saude-tabs" role="tablist">
     <button class="saude-tab-btn active" data-tab="hoje" role="tab">
       <i class="bi bi-calendar-check"></i> Hoje
+    </button>
+    <button class="saude-tab-btn" data-tab="historico" role="tab">
+      <i class="bi bi-calendar3"></i> Histórico
     </button>
     <button class="saude-tab-btn" data-tab="perfil" role="tab">
       <i class="bi bi-person-vcard"></i> Perfil
@@ -94,11 +99,11 @@
         {% if mc.modo == 'perda' %}
           <i class="bi bi-arrow-down-circle text-warning"></i>
           Déficit de {{ mc.manutencao_kcal - mc.meta_kcal }} kcal para perda de peso
-          {% if mc.semanas_estimadas %} · ~{{ mc.semanas_estimadas }} semanas{% endif %}
+          {% if mc.dias_estimados %} · ~{{ mc.dias_estimados }} dias{% endif %}
         {% elif mc.modo == 'ganho' %}
           <i class="bi bi-arrow-up-circle text-success"></i>
           Superávit de {{ mc.meta_kcal - mc.manutencao_kcal }} kcal para ganho de peso
-          {% if mc.semanas_estimadas %} · ~{{ mc.semanas_estimadas }} semanas{% endif %}
+          {% if mc.dias_estimados %} · ~{{ mc.dias_estimados }} dias{% endif %}
         {% else %}
           <i class="bi bi-check-circle text-success"></i>
           Manutenção do peso atual
@@ -228,6 +233,36 @@
     </div>
 
   </div><!-- /tab-hoje -->
+
+  <!-- ===================== TAB: HISTÓRICO ===================== -->
+  <div id="tab-historico" style="display:none">
+
+    <div class="saude-card">
+      <div class="saude-card-label">Histórico de alimentação e hidratação</div>
+
+      <div class="saude-cal-nav">
+        <button class="saude-cal-nav-btn" onclick="calMesAnterior()" title="Mês anterior">
+          <i class="bi bi-chevron-left"></i>
+        </button>
+        <span class="saude-cal-titulo" id="calTitulo"></span>
+        <button class="saude-cal-nav-btn" onclick="calMesProximo()" title="Próximo mês">
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
+
+      <div class="saude-cal-grid" id="calendarioGrid">
+        <div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--text-muted);font-size:.82rem">
+          Toque em "Histórico" para carregar
+        </div>
+      </div>
+    </div>
+
+    <div class="saude-card" id="calDiaDetalhe" style="display:none">
+      <div class="saude-card-label" id="calDiaDetalheLabel"></div>
+      <div id="calDiaDetalheConteudo"></div>
+    </div>
+
+  </div><!-- /tab-historico -->
 
   <!-- ===================== TAB: PERFIL ===================== -->
   <div id="tab-perfil" style="display:none">

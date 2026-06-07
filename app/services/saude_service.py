@@ -4,13 +4,22 @@ import re
 from datetime import datetime
 from app.repositories import saude_repository as repo
 
-_TZ_PATTERN = re.compile(r'^[A-Za-z]+(/[A-Za-z_]+){0,2}$')
+_TZ_PATTERN  = re.compile(r'^[A-Za-z]+(/[A-Za-z_]+){0,2}$')
+_DATE_PATTERN = re.compile(r'^\d{4}-\d{2}-\d{2}$')
 
 
 def _safe_timezone(tz: str) -> str:
     if tz and _TZ_PATTERN.match(tz):
         return tz
     return 'America/Sao_Paulo'
+
+
+def _safe_date(date_str: str) -> str:
+    from datetime import date
+    if date_str and _DATE_PATTERN.match(date_str):
+        return date_str
+    return date.today().isoformat()
+
 
 REFEICOES = [
     ("cafe_manha",    "07:00", "08:00", "Café da manhã"),
@@ -21,7 +30,8 @@ REFEICOES = [
     ("ceia",          "21:00", "22:00", "Ceia"),
 ]
 
-_TIPOS_VALIDOS = {r[0] for r in REFEICOES}
+_TIPOS_VALIDOS  = {r[0] for r in REFEICOES}
+_LABEL_REFEICAO = {r[0]: r[3] for r in REFEICOES}
 
 
 def _calcular_imc(altura_cm, peso_kg):
@@ -56,34 +66,35 @@ def _calcular_meta_calorias(peso_atual_kg, peso_meta_kg, imc_valor) -> dict | No
     peso = float(peso_atual_kg)
     manutencao = int(peso * 30)
 
+    semanas = None
+    dias_estimados = None
+
     if peso_meta_kg:
         meta = float(peso_meta_kg)
         if meta < peso - 0.5:
             alvo = max(1200, manutencao - 400)
             modo = "perda"
             semanas = round((peso - meta) / 0.5)
+            dias_estimados = semanas * 7
         elif meta > peso + 0.5:
             alvo = manutencao + 300
             modo = "ganho"
             semanas = round((meta - peso) / 0.3)
+            dias_estimados = semanas * 7
         else:
             alvo = manutencao
             modo = "manutencao"
-            semanas = None
     elif imc_valor:
         imc = float(imc_valor)
         if imc >= 25:
             alvo = max(1200, manutencao - 400)
             modo = "perda"
-            semanas = None
         elif imc < 18.5:
             alvo = manutencao + 300
             modo = "ganho"
-            semanas = None
         else:
             alvo = manutencao
             modo = "manutencao"
-            semanas = None
     else:
         return None
 
@@ -92,6 +103,7 @@ def _calcular_meta_calorias(peso_atual_kg, peso_meta_kg, imc_valor) -> dict | No
         "manutencao_kcal": manutencao,
         "modo": modo,
         "semanas_estimadas": semanas,
+        "dias_estimados": dias_estimados,
     }
 
 
@@ -246,6 +258,77 @@ def get_dados_hoje(user_id: int, timezone: str = 'America/Sao_Paulo') -> dict:
         "acordei": acordei,
         "calorias_dia": calorias_dia,
     }
+
+
+def get_dados_por_data(user_id: int, data_str: str, timezone: str = 'America/Sao_Paulo') -> dict:
+    tz = _safe_timezone(timezone)
+    data_str = _safe_date(data_str)
+
+    refeicoes = [dict(r) for r in repo.get_refeicoes_por_data(user_id, data_str, tz)]
+    agua_registros = [dict(r) for r in repo.get_agua_por_data(user_id, data_str, tz)]
+
+    agua_total = sum(r.get('quantidade_ml', 0) for r in agua_registros)
+    calorias_dia = sum((r.get('calorias') or 0) for r in refeicoes)
+    proteinas = sum((float(r.get('proteinas_g') or 0)) for r in refeicoes)
+    carboidratos = sum((float(r.get('carboidratos_g') or 0)) for r in refeicoes)
+    gorduras = sum((float(r.get('gorduras_g') or 0)) for r in refeicoes)
+
+    agrupadas: dict = {}
+    for r in refeicoes:
+        tipo = r['tipo_refeicao']
+        if tipo not in agrupadas:
+            agrupadas[tipo] = {
+                'label': _LABEL_REFEICAO.get(tipo, tipo),
+                'registros': [],
+                'calorias_total': 0,
+            }
+        agrupadas[tipo]['registros'].append(r)
+        agrupadas[tipo]['calorias_total'] += (r.get('calorias') or 0)
+
+    return {
+        'data': data_str,
+        'refeicoes_agrupadas': list(agrupadas.values()),
+        'agua': {
+            'total_ml': agua_total,
+            'registros': agua_registros,
+        },
+        'calorias_dia': calorias_dia,
+        'macros': {
+            'proteinas_g': round(proteinas, 1),
+            'carboidratos_g': round(carboidratos, 1),
+            'gorduras_g': round(gorduras, 1),
+        },
+    }
+
+
+def get_calendario_mes(user_id: int, ano: int, mes: int, timezone: str = 'America/Sao_Paulo') -> dict:
+    from datetime import date, timedelta
+    tz = _safe_timezone(timezone)
+
+    resumo = repo.get_resumo_mes(user_id, tz, ano, mes)
+    lookup = {str(r['dia']): dict(r) for r in resumo}
+
+    first_day = date(ano, mes, 1)
+    last_day = date(ano + 1, 1, 1) - timedelta(days=1) if mes == 12 else date(ano, mes + 1, 1) - timedelta(days=1)
+    today = date.today()
+
+    dias = []
+    current = first_day
+    while current <= last_day:
+        data_str = current.isoformat()
+        info = lookup.get(data_str, {})
+        dias.append({
+            'data': data_str,
+            'dia': current.day,
+            'dia_semana': current.isoweekday(),
+            'tem_refeicao': int(info.get('refeicoes_count', 0)) > 0,
+            'calorias_total': int(info.get('calorias_total', 0)),
+            'agua_total_ml': int(info.get('agua_total_ml', 0)),
+            'is_today': current == today,
+        })
+        current += timedelta(days=1)
+
+    return {'ano': ano, 'mes': mes, 'dias': dias}
 
 
 def analisar_foto_embalagem(image_bytes: bytes, mime_type: str = "image/jpeg") -> dict:
