@@ -227,6 +227,52 @@
 
     </div>
 
+    <!-- Exercícios do dia -->
+    {% set tipo_labels = {'cardio': 'Cardio', 'musculacao': 'Musculação', 'flexibilidade': 'Flexibilidade', 'esporte': 'Esporte', 'outro': 'Outro'} %}
+    {% set int_labels = {'leve': 'Leve', 'moderado': 'Moderado', 'intenso': 'Intenso'} %}
+    {% set ex_icons = {'cardio': 'bi-person-running', 'musculacao': 'bi-trophy', 'flexibilidade': 'bi-flower1', 'esporte': 'bi-dribbble', 'outro': 'bi-activity'} %}
+    <div class="saude-card">
+      <div class="saude-exercicio-header">
+        <div class="saude-card-label" style="margin-bottom:0">Exercícios do dia</div>
+        <div class="saude-exercicio-resumo" id="exercicioResumo">
+          {% if dados.exercicios %}
+            {{ dados.exercicios|length }} exercício{% if dados.exercicios|length > 1 %}s{% endif %}
+            {% if dados.total_min_exercicio %} · {{ dados.total_min_exercicio }} min{% endif %}
+            {% if dados.total_kcal_exercicio %} · {{ dados.total_kcal_exercicio }} kcal{% endif %}
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="saude-exercicio-list" id="exercicioList">
+        {% if dados.exercicios %}
+          {% for ex in dados.exercicios %}
+          <div class="saude-exercicio-item" id="ex-{{ ex.id }}"
+               data-duracao="{{ ex.duracao_min or 0 }}"
+               data-calorias="{{ ex.calorias_gasto or 0 }}">
+            <div class="saude-exercicio-icon saude-exercicio-icon--{{ ex.tipo }}">
+              <i class="bi {{ ex_icons.get(ex.tipo, 'bi-activity') }}"></i>
+            </div>
+            <div class="saude-exercicio-info">
+              <div class="saude-exercicio-nome">{{ ex.nome }}</div>
+              <div class="saude-exercicio-meta">
+                {{ tipo_labels.get(ex.tipo, ex.tipo) }}{% if ex.intensidade %} · {{ int_labels.get(ex.intensidade, ex.intensidade) }}{% endif %}{% if ex.duracao_min %} · {{ ex.duracao_min }} min{% endif %}{% if ex.calorias_gasto %} · {{ ex.calorias_gasto }} kcal{% endif %}
+              </div>
+            </div>
+            <button class="saude-exercicio-del" onclick="deletarExercicio({{ ex.id }})" title="Remover">
+              <i class="bi bi-x"></i>
+            </button>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="saude-exercicio-empty" id="exercicioEmpty">Nenhum exercício registrado hoje</div>
+        {% endif %}
+      </div>
+
+      <button class="saude-exercicio-add-btn" onclick="abrirModalExercicio()">
+        <i class="bi bi-plus-lg"></i> Registrar exercício
+      </button>
+    </div>
+
   </div><!-- /tab-hoje -->
 
   <!-- ===================== TAB: PERFIL ===================== -->
@@ -453,6 +499,55 @@
   </div>
 </div>
 
+<!-- ========================== MODAL EXERCÍCIO ========================== -->
+<div class="saude-modal-overlay" id="modalExercicio" style="display:none" onclick="fecharModalExercicio(event)">
+  <div class="saude-modal" onclick="event.stopPropagation()">
+    <button class="saude-modal-close" onclick="fecharModalExercicio()">&times;</button>
+    <div class="saude-modal-title">Registrar exercício</div>
+
+    <div class="saude-modal-field">
+      <label>Tipo</label>
+      <select id="exTipo">
+        <option value="cardio">Cardio</option>
+        <option value="musculacao">Musculação</option>
+        <option value="flexibilidade">Flexibilidade / Yoga</option>
+        <option value="esporte">Esporte</option>
+        <option value="outro">Outro</option>
+      </select>
+    </div>
+    <div class="saude-modal-field">
+      <label>Nome do exercício <span style="color:#dc3545">*</span></label>
+      <input type="text" id="exNome" placeholder="Ex: Corrida, Supino, Yoga...">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="saude-modal-field">
+        <label>Duração (min)</label>
+        <input type="number" id="exDuracao" placeholder="Ex: 45" min="1" max="600">
+      </div>
+      <div class="saude-modal-field">
+        <label>Intensidade</label>
+        <select id="exIntensidade">
+          <option value="moderado">Moderado</option>
+          <option value="leve">Leve</option>
+          <option value="intenso">Intenso</option>
+        </select>
+      </div>
+    </div>
+    <div class="saude-modal-field">
+      <label>Calorias queimadas (kcal)</label>
+      <input type="number" id="exCalorias" placeholder="Opcional" min="0">
+    </div>
+    <div class="saude-modal-field">
+      <label>Observações</label>
+      <textarea id="exObs" placeholder="Opcional..."></textarea>
+    </div>
+
+    <button class="saude-btn-submit" id="btnSalvarExercicio" onclick="salvarExercicio()">
+      Salvar exercício
+    </button>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
@@ -461,6 +556,9 @@
   var _AGUA_TOTAL_ML = {{ dados.agua.total_ml }};
   var _KCAL_META     = {{ dados.perfil.meta_kcal or 'null' }};
   var _KCAL_HOJE     = {{ dados.calorias_dia }};
+  var _EX_COUNT      = {{ dados.exercicios | length }};
+  var _EX_MIN_TOTAL  = {{ dados.total_min_exercicio }};
+  var _EX_KCAL_TOTAL = {{ dados.total_kcal_exercicio }};
 </script>
 <script src="{{ url_for('static', filename='js/minha_saude.js') }}?v={{ static_v }}"></script>
 {% endblock %}

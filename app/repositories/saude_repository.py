@@ -237,3 +237,45 @@ def delete_produto(user_id: int, produto_id: int):
                 (produto_id, user_id)
             )
             conn.commit()
+
+
+# ── Exercícios ───────────────────────────────────────────────────────────────
+
+def get_exercicios_hoje(user_id: int, timezone: str = 'America/Sao_Paulo'):
+    with get_db() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("""
+                SELECT id, tipo, nome, duracao_min, calorias_gasto,
+                       intensidade, observacao, registrado_em
+                FROM saude_exercicios
+                WHERE user_id = %s
+                  AND DATE(registrado_em AT TIME ZONE %s) = DATE(NOW() AT TIME ZONE %s)
+                ORDER BY registrado_em
+            """, (user_id, timezone, timezone))
+            return cur.fetchall()
+
+
+def registrar_exercicio(user_id: int, tipo: str, nome: str,
+                        duracao_min, calorias_gasto, intensidade: str, observacao):
+    with get_db() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("""
+                INSERT INTO saude_exercicios
+                    (user_id, tipo, nome, duracao_min, calorias_gasto,
+                     intensidade, observacao, registrado_em)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())
+                RETURNING *
+            """, (user_id, tipo, nome, duracao_min, calorias_gasto, intensidade, observacao))
+            row = cur.fetchone()
+            conn.commit()
+            return row
+
+
+def delete_exercicio(user_id: int, exercicio_id: int):
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "DELETE FROM saude_exercicios WHERE id = %s AND user_id = %s",
+                (exercicio_id, user_id)
+            )
+            conn.commit()

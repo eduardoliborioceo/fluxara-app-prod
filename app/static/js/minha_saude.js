@@ -648,4 +648,139 @@
       });
   };
 
+  /* ========== EXERCÍCIOS ========== */
+  var _exTipoIcons = {
+    cardio: 'bi-person-running',
+    musculacao: 'bi-trophy',
+    flexibilidade: 'bi-flower1',
+    esporte: 'bi-dribbble',
+    outro: 'bi-activity',
+  };
+  var _exTipoLabels = {
+    cardio: 'Cardio',
+    musculacao: 'Musculação',
+    flexibilidade: 'Flexibilidade',
+    esporte: 'Esporte',
+    outro: 'Outro',
+  };
+  var _exIntLabels = { leve: 'Leve', moderado: 'Moderado', intenso: 'Intenso' };
+
+  window.abrirModalExercicio = function () {
+    document.getElementById('exTipo').value = 'cardio';
+    document.getElementById('exNome').value = '';
+    document.getElementById('exDuracao').value = '';
+    document.getElementById('exIntensidade').value = 'moderado';
+    document.getElementById('exCalorias').value = '';
+    document.getElementById('exObs').value = '';
+    document.getElementById('modalExercicio').style.display = 'flex';
+    setTimeout(function () { document.getElementById('exNome').focus(); }, 100);
+  };
+
+  window.fecharModalExercicio = function (evt) {
+    if (!evt || evt.target === document.getElementById('modalExercicio')) {
+      document.getElementById('modalExercicio').style.display = 'none';
+    }
+  };
+
+  window.salvarExercicio = function () {
+    var nome = (document.getElementById('exNome').value || '').trim();
+    if (!nome) { alert('Nome do exercício é obrigatório'); return; }
+
+    var payload = {
+      tipo: document.getElementById('exTipo').value,
+      nome: nome,
+      duracao_min: parseInt(document.getElementById('exDuracao').value, 10) || null,
+      intensidade: document.getElementById('exIntensidade').value,
+      calorias_gasto: parseInt(document.getElementById('exCalorias').value, 10) || null,
+      observacao: (document.getElementById('exObs').value || '').trim() || null,
+    };
+
+    var btn = document.getElementById('btnSalvarExercicio');
+    btn.disabled = true;
+
+    fetch('/api/saude/exercicio', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        btn.disabled = false;
+        if (data.error) { alert(data.error); return; }
+        document.getElementById('modalExercicio').style.display = 'none';
+        adicionarExercicioUI(data);
+      })
+      .catch(function () {
+        btn.disabled = false;
+        alert('Erro ao salvar. Tente novamente.');
+      });
+  };
+
+  function adicionarExercicioUI(ex) {
+    var lista = document.getElementById('exercicioList');
+    var empty = document.getElementById('exercicioEmpty');
+    if (empty) empty.remove();
+
+    var icon = _exTipoIcons[ex.tipo] || 'bi-activity';
+    var metaParts = [_exTipoLabels[ex.tipo] || ex.tipo];
+    if (ex.intensidade) metaParts.push(_exIntLabels[ex.intensidade] || ex.intensidade);
+    if (ex.duracao_min) metaParts.push(ex.duracao_min + ' min');
+    if (ex.calorias_gasto) metaParts.push(ex.calorias_gasto + ' kcal');
+
+    var item = document.createElement('div');
+    item.className = 'saude-exercicio-item';
+    item.id = 'ex-' + ex.id;
+    item.dataset.duracao  = ex.duracao_min || 0;
+    item.dataset.calorias = ex.calorias_gasto || 0;
+    item.innerHTML =
+      '<div class="saude-exercicio-icon saude-exercicio-icon--' + ex.tipo + '">' +
+      '<i class="bi ' + icon + '"></i></div>' +
+      '<div class="saude-exercicio-info">' +
+      '<div class="saude-exercicio-nome">' + escapeHtml(ex.nome) + '</div>' +
+      '<div class="saude-exercicio-meta">' + escapeHtml(metaParts.join(' · ')) + '</div>' +
+      '</div>' +
+      '<button class="saude-exercicio-del" onclick="deletarExercicio(' + ex.id + ')" title="Remover">' +
+      '<i class="bi bi-x"></i></button>';
+    lista.insertBefore(item, lista.firstChild);
+
+    _EX_COUNT++;
+    if (ex.duracao_min)    _EX_MIN_TOTAL  += ex.duracao_min;
+    if (ex.calorias_gasto) _EX_KCAL_TOTAL += ex.calorias_gasto;
+    atualizarResumoExercicio();
+  }
+
+  window.deletarExercicio = function (id) {
+    fetch('/api/saude/exercicio/' + id, { method: 'DELETE' })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.error) { alert(data.error); return; }
+        var el = document.getElementById('ex-' + id);
+        if (el) {
+          _EX_MIN_TOTAL  = Math.max(0, _EX_MIN_TOTAL  - parseInt(el.dataset.duracao  || 0, 10));
+          _EX_KCAL_TOTAL = Math.max(0, _EX_KCAL_TOTAL - parseInt(el.dataset.calorias || 0, 10));
+          _EX_COUNT = Math.max(0, _EX_COUNT - 1);
+          el.remove();
+        }
+        if (!document.querySelectorAll('.saude-exercicio-item').length) {
+          var lista = document.getElementById('exercicioList');
+          var empty = document.createElement('div');
+          empty.className = 'saude-exercicio-empty';
+          empty.id = 'exercicioEmpty';
+          empty.textContent = 'Nenhum exercício registrado hoje';
+          lista.appendChild(empty);
+        }
+        atualizarResumoExercicio();
+      });
+  };
+
+  function atualizarResumoExercicio() {
+    var el = document.getElementById('exercicioResumo');
+    if (!el) return;
+    if (_EX_COUNT === 0) { el.textContent = ''; return; }
+    var parts = [_EX_COUNT + ' exercício' + (_EX_COUNT > 1 ? 's' : '')];
+    if (_EX_MIN_TOTAL  > 0) parts.push(_EX_MIN_TOTAL  + ' min');
+    if (_EX_KCAL_TOTAL > 0) parts.push(_EX_KCAL_TOTAL + ' kcal');
+    el.textContent = parts.join(' · ');
+  }
+
 })();

@@ -23,6 +23,16 @@ REFEICOES = [
 
 _TIPOS_VALIDOS = {r[0] for r in REFEICOES}
 
+TIPOS_EXERCICIO = {
+    'cardio': 'Cardio',
+    'musculacao': 'Musculação',
+    'flexibilidade': 'Flexibilidade',
+    'esporte': 'Esporte',
+    'outro': 'Outro',
+}
+
+_INTENSIDADES_VALIDAS = {'leve', 'moderado', 'intenso'}
+
 
 def _calcular_imc(altura_cm, peso_kg):
     if not altura_cm or not peso_kg:
@@ -200,12 +210,40 @@ def delete_agua(user_id: int, registro_id: int):
     repo.delete_agua(user_id, registro_id)
 
 
+def get_exercicios_hoje(user_id: int, timezone: str = 'America/Sao_Paulo') -> list:
+    return [dict(r) for r in repo.get_exercicios_hoje(user_id, _safe_timezone(timezone))]
+
+
+def registrar_exercicio(user_id: int, tipo: str, nome: str,
+                        duracao_min=None, calorias_gasto=None,
+                        intensidade: str = 'moderado', observacao=None) -> dict:
+    if tipo not in TIPOS_EXERCICIO:
+        raise ValueError("Tipo de exercício inválido")
+    nome = nome.strip()
+    if not nome:
+        raise ValueError("Nome do exercício é obrigatório")
+    if intensidade not in _INTENSIDADES_VALIDAS:
+        intensidade = 'moderado'
+    duracao_min = int(duracao_min) if duracao_min else None
+    calorias_gasto = int(calorias_gasto) if calorias_gasto else None
+    if duracao_min is not None and not (1 <= duracao_min <= 600):
+        raise ValueError("Duração deve ser entre 1 e 600 minutos")
+    return dict(repo.registrar_exercicio(
+        user_id, tipo, nome, duracao_min, calorias_gasto, intensidade, observacao
+    ))
+
+
+def delete_exercicio(user_id: int, exercicio_id: int):
+    repo.delete_exercicio(user_id, exercicio_id)
+
+
 def get_dados_hoje(user_id: int, timezone: str = 'America/Sao_Paulo') -> dict:
     tz = _safe_timezone(timezone)
     perfil = get_perfil(user_id)
     refeicoes_hoje = get_refeicoes_hoje(user_id, tz)
     agua_hoje = get_agua_hoje(user_id, tz)
     acordei = get_acordei_hoje(user_id, tz)
+    exercicios = get_exercicios_hoje(user_id, tz)
 
     tipos_registrados = {r["tipo_refeicao"] for r in refeicoes_hoje}
     agora = datetime.now().time()
@@ -238,6 +276,8 @@ def get_dados_hoje(user_id: int, timezone: str = 'America/Sao_Paulo') -> dict:
         })
 
     calorias_dia = sum((r.get("calorias") or 0) for r in refeicoes_hoje)
+    total_min_exercicio = sum((e.get("duracao_min") or 0) for e in exercicios)
+    total_kcal_exercicio = sum((e.get("calorias_gasto") or 0) for e in exercicios)
 
     return {
         "perfil": perfil,
@@ -245,6 +285,9 @@ def get_dados_hoje(user_id: int, timezone: str = 'America/Sao_Paulo') -> dict:
         "agua": agua_hoje,
         "acordei": acordei,
         "calorias_dia": calorias_dia,
+        "exercicios": exercicios,
+        "total_min_exercicio": total_min_exercicio,
+        "total_kcal_exercicio": total_kcal_exercicio,
     }
 
 

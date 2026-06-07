@@ -1080,6 +1080,34 @@ def saude_seed_produtos_padrao():
     return jsonify({"inseridos": inseridos})
 
 
+@bp.route("/saude/exercicio", methods=["POST"])
+@login_required
+def saude_add_exercicio():
+    from app.services import saude_service
+    data = request.get_json() or {}
+    try:
+        exercicio = saude_service.registrar_exercicio(
+            current_user.id,
+            tipo=data.get("tipo", "outro"),
+            nome=data.get("nome", ""),
+            duracao_min=data.get("duracao_min"),
+            calorias_gasto=data.get("calorias_gasto"),
+            intensidade=data.get("intensidade", "moderado"),
+            observacao=data.get("observacao"),
+        )
+        return jsonify(exercicio), 201
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@bp.route("/saude/exercicio/<int:exercicio_id>", methods=["DELETE"])
+@login_required
+def saude_delete_exercicio(exercicio_id):
+    from app.services import saude_service
+    saude_service.delete_exercicio(current_user.id, exercicio_id)
+    return jsonify({"ok": True})
+
+
 # =============================================================
 # SUREBET — ALAVANCAGEM
 # =============================================================
