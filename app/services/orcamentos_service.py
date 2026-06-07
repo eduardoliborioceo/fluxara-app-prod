@@ -38,6 +38,7 @@ def check_and_notify_thresholds(user_id: int, mes: int, ano: int) -> None:
     from flask import current_app
     try:
         from app.services.push_service import send_to_user
+        from app.repositories.push_prefs_repository import is_enabled
         rows = repo.list_orcamentos_com_gasto(user_id, mes, ano)
         for row in rows:
             if row['tipo'] != 'despesa':
@@ -51,21 +52,23 @@ def check_and_notify_thresholds(user_id: int, mes: int, ano: int) -> None:
             cat_nome = row['categoria_nome']
 
             if pct >= 100 and not notif_repo.already_sent(user_id, cat_id, mes, ano, 100):
-                send_to_user(
-                    user_id,
-                    title='Orçamento atingido: ' + cat_nome,
-                    body='Você atingiu 100% do orçamento de ' + cat_nome + ' este mês.',
-                    url='/planejamento',
-                )
+                if is_enabled(user_id, "orcamentos"):
+                    send_to_user(
+                        user_id,
+                        title='Orçamento atingido: ' + cat_nome,
+                        body='Você atingiu 100% do orçamento de ' + cat_nome + ' este mês.',
+                        url='/planejamento',
+                    )
                 notif_repo.mark_sent(user_id, cat_id, mes, ano, 100)
 
             elif pct >= 80 and not notif_repo.already_sent(user_id, cat_id, mes, ano, 80):
-                send_to_user(
-                    user_id,
-                    title='Alerta de orçamento: ' + cat_nome,
-                    body='Você usou ' + str(round(pct)) + '% do orçamento de ' + cat_nome + ' este mês.',
-                    url='/planejamento',
-                )
+                if is_enabled(user_id, "orcamentos"):
+                    send_to_user(
+                        user_id,
+                        title='Alerta de orçamento: ' + cat_nome,
+                        body='Você usou ' + str(round(pct)) + '% do orçamento de ' + cat_nome + ' este mês.',
+                        url='/planejamento',
+                    )
                 notif_repo.mark_sent(user_id, cat_id, mes, ano, 80)
     except Exception as e:
         try:

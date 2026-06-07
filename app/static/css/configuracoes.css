@@ -1059,6 +1059,59 @@
   gap: 6px;
 }
 
+/* ── NOTIF PREFS (individual toggles) ─────────── */
+.cfg-notif-prefs-title {
+  font-size: .72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--text-muted);
+  padding: 16px 0 8px;
+}
+
+.cfg-notif-pref-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+}
+
+.cfg-notif-pref-row--last {
+  padding-bottom: 4px;
+}
+
+.cfg-notif-pref-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.cfg-notif-pref-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  color: var(--text-muted);
+  width: 20px;
+  text-align: center;
+}
+
+.cfg-notif-pref-label {
+  font-size: .875rem;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.3;
+}
+
+.cfg-notif-pref-desc {
+  font-size: .78rem;
+  color: var(--text-muted);
+  line-height: 1.3;
+  margin-top: 2px;
+}
+
 /* ── DANGER ZONE (reset dados) ─────────────────── */
 .cfg-danger-zone {
   display: flex;

@@ -9,6 +9,7 @@ from app.repositories.lancamentos_repository import (
     get_lancamentos_vencendo_em,
     get_debitos_vencidos,
 )
+from app.repositories.push_prefs_repository import is_enabled
 from app.services.push_service import send_to_user
 
 
@@ -55,7 +56,8 @@ def _check_vencendo_em(user_id: int, dias: int, tipo: str):
             title = f"📅 Vence em {dias} dias"
             body = f"{descricao} — {_fmt_money(valor)}. Vencimento: {data_str}"
 
-        send_to_user(user_id, title, body, "/")
+        if is_enabled(user_id, "vencimentos"):
+            send_to_user(user_id, title, body, "/")
         mark_lancamento_push_sent(user_id, lid, tipo)
 
 
@@ -71,12 +73,13 @@ def _check_vencidos(user_id: int):
         dias_atraso = int(l["dias_atraso"] or 1)
         sufixo = "dia" if dias_atraso == 1 else "dias"
 
-        send_to_user(
-            user_id,
-            "⚠️ Pagamento em atraso",
-            f"{descricao} — venceu há {dias_atraso} {sufixo}. {_fmt_money(valor)}",
-            "/",
-        )
+        if is_enabled(user_id, "atrasos"):
+            send_to_user(
+                user_id,
+                "⚠️ Pagamento em atraso",
+                f"{descricao} — venceu há {dias_atraso} {sufixo}. {_fmt_money(valor)}",
+                "/",
+            )
         mark_lancamento_push_sent(user_id, lid, "vencido")
 
 

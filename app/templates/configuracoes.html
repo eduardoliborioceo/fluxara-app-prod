@@ -254,13 +254,102 @@
           <div class="cfg-notif-toggle-row mt-3" id="notifToggleRow">
             <div class="cfg-notif-toggle-info">
               <div class="cfg-notif-toggle-label">Receber notificações</div>
-              <div class="cfg-notif-toggle-desc">Alertas de vencimentos, faturas e saúde</div>
+              <div class="cfg-notif-toggle-desc">Ativa ou desativa todos os alertas</div>
             </div>
             <button class="cfg-notif-toggle-btn" id="btnToggleNotif" data-state="off">
               <span class="cfg-notif-toggle-track">
                 <span class="cfg-notif-toggle-thumb"></span>
               </span>
             </button>
+          </div>
+
+          <!-- Individual category toggles (visible only when subscribed) -->
+          <div id="notifPrefsSection" class="d-none">
+            <div class="cfg-notif-prefs-title">Tipos de notificação</div>
+            <div class="cfg-notif-pref-row" data-category="vencimentos">
+              <div class="cfg-notif-pref-info">
+                <i class="bi bi-calendar-check cfg-notif-pref-icon"></i>
+                <div>
+                  <div class="cfg-notif-pref-label">Vencimentos</div>
+                  <div class="cfg-notif-pref-desc">Avisos de pagamentos próximos do vencimento</div>
+                </div>
+              </div>
+              <button class="cfg-notif-toggle-btn cfg-notif-pref-btn" data-category="vencimentos" data-state="on">
+                <span class="cfg-notif-toggle-track"><span class="cfg-notif-toggle-thumb"></span></span>
+              </button>
+            </div>
+            <div class="cfg-notif-pref-row" data-category="atrasos">
+              <div class="cfg-notif-pref-info">
+                <i class="bi bi-exclamation-circle cfg-notif-pref-icon" style="color:#dc2626"></i>
+                <div>
+                  <div class="cfg-notif-pref-label">Pagamentos em atraso</div>
+                  <div class="cfg-notif-pref-desc">Alertas de lançamentos vencidos</div>
+                </div>
+              </div>
+              <button class="cfg-notif-toggle-btn cfg-notif-pref-btn" data-category="atrasos" data-state="on">
+                <span class="cfg-notif-toggle-track"><span class="cfg-notif-toggle-thumb"></span></span>
+              </button>
+            </div>
+            <div class="cfg-notif-pref-row" data-category="faturas">
+              <div class="cfg-notif-pref-info">
+                <i class="bi bi-file-text cfg-notif-pref-icon" style="color:#0d6efd"></i>
+                <div>
+                  <div class="cfg-notif-pref-label">Faturas de cartão</div>
+                  <div class="cfg-notif-pref-desc">Aviso quando a fatura fechar</div>
+                </div>
+              </div>
+              <button class="cfg-notif-toggle-btn cfg-notif-pref-btn" data-category="faturas" data-state="on">
+                <span class="cfg-notif-toggle-track"><span class="cfg-notif-toggle-thumb"></span></span>
+              </button>
+            </div>
+            <div class="cfg-notif-pref-row" data-category="limite_cartao">
+              <div class="cfg-notif-pref-info">
+                <i class="bi bi-credit-card cfg-notif-pref-icon" style="color:#7c3aed"></i>
+                <div>
+                  <div class="cfg-notif-pref-label">Limite do cartão</div>
+                  <div class="cfg-notif-pref-desc">Alertas de uso de 80% e 100% do limite</div>
+                </div>
+              </div>
+              <button class="cfg-notif-toggle-btn cfg-notif-pref-btn" data-category="limite_cartao" data-state="on">
+                <span class="cfg-notif-toggle-track"><span class="cfg-notif-toggle-thumb"></span></span>
+              </button>
+            </div>
+            <div class="cfg-notif-pref-row" data-category="orcamentos">
+              <div class="cfg-notif-pref-info">
+                <i class="bi bi-pie-chart cfg-notif-pref-icon" style="color:#d97706"></i>
+                <div>
+                  <div class="cfg-notif-pref-label">Orçamentos</div>
+                  <div class="cfg-notif-pref-desc">Alertas de 80% e 100% do orçamento mensal</div>
+                </div>
+              </div>
+              <button class="cfg-notif-toggle-btn cfg-notif-pref-btn" data-category="orcamentos" data-state="on">
+                <span class="cfg-notif-toggle-track"><span class="cfg-notif-toggle-thumb"></span></span>
+              </button>
+            </div>
+            <div class="cfg-notif-pref-row" data-category="saude_refeicoes">
+              <div class="cfg-notif-pref-info">
+                <i class="bi bi-egg-fried cfg-notif-pref-icon" style="color:#16a34a"></i>
+                <div>
+                  <div class="cfg-notif-pref-label">Lembretes de refeições</div>
+                  <div class="cfg-notif-pref-desc">Avisos de café, almoço, jantar e mais</div>
+                </div>
+              </div>
+              <button class="cfg-notif-toggle-btn cfg-notif-pref-btn" data-category="saude_refeicoes" data-state="on">
+                <span class="cfg-notif-toggle-track"><span class="cfg-notif-toggle-thumb"></span></span>
+              </button>
+            </div>
+            <div class="cfg-notif-pref-row cfg-notif-pref-row--last" data-category="saude_resumo">
+              <div class="cfg-notif-pref-info">
+                <i class="bi bi-bar-chart cfg-notif-pref-icon" style="color:#0891b2"></i>
+                <div>
+                  <div class="cfg-notif-pref-label">Resumo calórico diário</div>
+                  <div class="cfg-notif-pref-desc">Relatório de calorias ao fim do dia</div>
+                </div>
+              </div>
+              <button class="cfg-notif-toggle-btn cfg-notif-pref-btn" data-category="saude_resumo" data-state="on">
+                <span class="cfg-notif-toggle-track"><span class="cfg-notif-toggle-thumb"></span></span>
+              </button>
+            </div>
           </div>
 
           <div class="cfg-notif-test-wrap mt-3 d-none" id="notifTestWrap">
