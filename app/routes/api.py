@@ -1580,6 +1580,62 @@ def webhook_mercadopago():
         return jsonify({"ok": True}), 200
 
 
+@bp.route("/treino/hoje", methods=["GET"])
+@login_required
+def treino_hoje():
+    from app.services import treino_service
+    tz = request.cookies.get('user_tz', 'America/Sao_Paulo')
+    data = treino_service.get_treino_hoje(current_user.id, tz)
+    return jsonify(data)
+
+
+@bp.route("/treino/item", methods=["POST"])
+@login_required
+def treino_add_item():
+    from app.services import treino_service
+    body = request.get_json() or {}
+    try:
+        item = treino_service.registrar_item(
+            current_user.id,
+            body.get('data', ''),
+            body.get('grupo', ''),
+            body.get('exercicio', ''),
+            body.get('reps'),
+            body.get('peso_kg'),
+            body.get('duracao_seg'),
+            body.get('observacao'),
+        )
+        return jsonify(item)
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+
+
+@bp.route("/treino/item/<int:item_id>", methods=["DELETE"])
+@login_required
+def treino_delete_item(item_id):
+    from app.services import treino_service
+    treino_service.delete_item(current_user.id, item_id)
+    return jsonify({'ok': True})
+
+
+@bp.route("/treino/historico", methods=["GET"])
+@login_required
+def treino_historico():
+    from app.services import treino_service
+    limit = min(int(request.args.get('limit', 30)), 90)
+    data = treino_service.get_historico(current_user.id, limit)
+    return jsonify(data)
+
+
+@bp.route("/treino/dia", methods=["GET"])
+@login_required
+def treino_dia():
+    from app.services import treino_service
+    data_str = request.args.get('data', '')
+    result = treino_service.get_treino_por_data(current_user.id, data_str)
+    return jsonify(result)
+
+
 def _mp_base_url(req) -> str:
     import os
     explicit = os.environ.get("APP_BASE_URL", "").rstrip("/")

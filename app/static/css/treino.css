@@ -1,0 +1,441 @@
+/* ===== WRAP ===== */
+.treino-wrap {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 0 16px 40px;
+}
+
+/* ===== TABS ===== */
+.treino-tabs {
+  display: flex;
+  gap: 4px;
+  background: rgba(15, 23, 42, 0.06);
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 20px;
+}
+
+.treino-tab-btn {
+  flex: 1;
+  padding: 8px 0;
+  border: none;
+  background: transparent;
+  border-radius: 7px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.treino-tab-btn.active {
+  background: var(--card);
+  color: var(--text);
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+}
+
+/* ===== STATS ===== */
+.treino-stats {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.treino-stat {
+  flex: 1;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 10px;
+  text-align: center;
+}
+
+.treino-stat-value {
+  display: block;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.treino-stat-label {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+/* ===== EXERCISE CARD ===== */
+.treino-exercicio-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+
+.treino-exercicio-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.treino-exercicio-nome {
+  display: block;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.3;
+}
+
+.treino-exercicio-grupo {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--primary);
+  background: rgba(13, 110, 253, 0.09);
+  border-radius: 6px;
+  padding: 1px 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-top: 3px;
+}
+
+.treino-add-serie-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.12s;
+}
+
+.treino-add-serie-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(13, 110, 253, 0.06);
+}
+
+/* ===== SERIES ===== */
+.treino-serie-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+  border-top: 1px solid var(--border);
+}
+
+.treino-serie-num {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--bg);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.treino-serie-desc {
+  flex: 1;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.treino-serie-obs {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.treino-serie-del {
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 3px 5px;
+  border-radius: 6px;
+  line-height: 1;
+  font-size: 0.875rem;
+  transition: all 0.12s;
+}
+
+.treino-serie-del:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.09);
+}
+
+/* ===== ADD BUTTON ===== */
+.treino-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 13px;
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  background: transparent;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.12s;
+  margin-top: 4px;
+}
+
+.treino-add-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(13, 110, 253, 0.04);
+}
+
+/* ===== EMPTY ===== */
+.treino-empty {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--text-muted);
+}
+
+.treino-empty i {
+  font-size: 2.5rem;
+  margin-bottom: 12px;
+  display: block;
+  opacity: 0.35;
+}
+
+.treino-empty p {
+  font-size: 0.875rem;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* ===== LOADING ===== */
+.treino-loading {
+  text-align: center;
+  padding: 40px 24px;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+/* ===== HISTORY LIST ===== */
+.treino-hist-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+
+.treino-hist-item:hover {
+  border-color: rgba(13, 110, 253, 0.3);
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
+}
+
+.treino-hist-data {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  min-width: 125px;
+}
+
+.treino-hist-stats {
+  flex: 1;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.treino-hist-stats span {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.treino-hist-chevron {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+/* ===== HISTORY DETAIL ===== */
+.treino-hist-detalhe-grupo {
+  margin-bottom: 18px;
+}
+
+.treino-hist-detalhe-nome {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.treino-hist-detalhe-serie {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 0;
+  font-size: 0.875rem;
+  color: var(--text);
+  border-top: 1px solid var(--border);
+}
+
+/* ===== MODAL ===== */
+.treino-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 1050;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+@media (min-width: 576px) {
+  .treino-modal-overlay {
+    align-items: center;
+    padding: 24px;
+    padding-bottom: 24px;
+  }
+}
+
+.treino-modal {
+  background: var(--card);
+  border-radius: 20px 20px 0 0;
+  width: 100%;
+  max-width: 500px;
+  max-height: 92vh;
+  overflow-y: auto;
+}
+
+@media (min-width: 576px) {
+  .treino-modal {
+    border-radius: 16px;
+  }
+  .treino-modal--wide {
+    max-width: 600px;
+  }
+}
+
+.treino-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 0;
+  position: sticky;
+  top: 0;
+  background: var(--card);
+  z-index: 1;
+  padding-bottom: 4px;
+}
+
+.treino-modal-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.treino-modal-close {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  line-height: 1;
+}
+
+.treino-modal-close:hover {
+  color: var(--text);
+  background: var(--bg);
+}
+
+.treino-modal-body {
+  padding: 12px 20px 4px;
+}
+
+.treino-modal-footer {
+  padding: 4px 20px 20px;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  position: sticky;
+  bottom: 0;
+  background: var(--card);
+}
+
+/* ===== FORM ===== */
+.treino-modal .form-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.treino-modal .form-control,
+.treino-modal .form-select {
+  border-radius: 8px;
+  font-size: 0.875rem;
+  border-color: rgba(15, 23, 42, 0.15);
+}
+
+.treino-modal .form-control:focus,
+.treino-modal .form-select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.12);
+}
+
+/* ===== DARK THEME ===== */
+[data-theme="dark"] .treino-tabs {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .treino-tab-btn.active {
+  background: var(--card);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .treino-modal {
+  background: var(--card);
+}
+
+[data-theme="dark"] .treino-modal-header,
+[data-theme="dark"] .treino-modal-footer {
+  background: var(--card);
+}
+
+[data-theme="dark"] .treino-modal .form-control,
+[data-theme="dark"] .treino-modal .form-select {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--text);
+}

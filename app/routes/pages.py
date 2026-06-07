@@ -67,6 +67,26 @@ def minha_saude():
     )
 
 
+@bp.route("/treino")
+@login_required
+def treino():
+    from app.services import treino_service
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    tz_str = request.cookies.get('user_tz', 'America/Sao_Paulo')
+    try:
+        data_hoje = datetime.now(ZoneInfo(tz_str)).strftime('%Y-%m-%d')
+    except Exception:
+        data_hoje = datetime.now().strftime('%Y-%m-%d')
+    return render_template(
+        "treino.html",
+        active_menu="treino",
+        grupos=treino_service.GRUPOS,
+        exercicios_padrao=treino_service.EXERCICIOS_PADRAO,
+        data_hoje=data_hoje,
+    )
+
+
 @bp.route("/nova-transferencia")
 @login_required
 def nova_transferencia():

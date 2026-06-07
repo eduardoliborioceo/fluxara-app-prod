@@ -1,0 +1,143 @@
+{% extends "layouts/app.html" %}
+
+{% block title %}Treino | Fluxara{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/treino.css') }}?v={{ static_v }}">
+{% endblock %}
+
+{% block page_title %}
+<div class="page-header">
+  <div class="page-header-title">
+    <span class="page-header-section">Ferramentas</span>
+    <h1 class="page-header-name">Treino</h1>
+  </div>
+  <div class="page-header-actions">
+    <a href="{{ url_for('pages.minha_saude') }}" class="btn-header-icon" title="Minha Saúde">
+      <i class="bi bi-heart-pulse"></i>
+    </a>
+    <button class="btn-header-icon" onclick="toggleFullscreen()" title="Tela cheia">
+      <i class="bi bi-arrows-fullscreen"></i>
+    </button>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="treino-wrap">
+
+  <div class="treino-tabs">
+    <button class="treino-tab-btn active" data-tab="hoje">Hoje</button>
+    <button class="treino-tab-btn" data-tab="historico">Histórico</button>
+  </div>
+
+  <!-- Tab Hoje -->
+  <div id="tab-treino-hoje">
+    <div class="treino-stats">
+      <div class="treino-stat">
+        <span class="treino-stat-value" id="statExercicios">–</span>
+        <span class="treino-stat-label">exercícios</span>
+      </div>
+      <div class="treino-stat">
+        <span class="treino-stat-value" id="statSeries">–</span>
+        <span class="treino-stat-label">séries</span>
+      </div>
+      <div class="treino-stat">
+        <span class="treino-stat-value" id="statVolume">–</span>
+        <span class="treino-stat-label">volume</span>
+      </div>
+    </div>
+
+    <div id="treinoExercicios">
+      <div class="treino-empty" id="treinoVazio" style="display:none">
+        <i class="bi bi-activity"></i>
+        <p>Nenhum exercício registrado hoje.<br>Comece adicionando um exercício abaixo.</p>
+      </div>
+    </div>
+
+    <button class="treino-add-btn" onclick="abrirModalExercicio()">
+      <i class="bi bi-plus-lg"></i> Adicionar exercício
+    </button>
+  </div>
+
+  <!-- Tab Histórico -->
+  <div id="tab-treino-historico" style="display:none">
+    <div id="historicoLista">
+      <div class="treino-loading">Carregando...</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal Exercício / Série -->
+<div class="treino-modal-overlay" id="modalTreino" style="display:none" onclick="fecharModalTreino(event)">
+  <div class="treino-modal">
+    <div class="treino-modal-header">
+      <h3 class="treino-modal-title" id="modalTreinoTitulo">Adicionar exercício</h3>
+      <button class="treino-modal-close" onclick="fecharModalTreino()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <div class="treino-modal-body">
+      <div class="mb-3">
+        <label class="form-label">Grupo muscular *</label>
+        <select class="form-select" id="modalGrupo" onchange="atualizarSugestoes()">
+          {% for g in grupos %}
+          <option value="{{ g }}">{{ g }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Exercício *</label>
+        <input type="text" class="form-control" id="modalExercicio"
+               placeholder="Nome do exercício" list="exerciciosSugestoes" autocomplete="off">
+        <datalist id="exerciciosSugestoes"></datalist>
+      </div>
+      <div class="row g-2 mb-3">
+        <div class="col">
+          <label class="form-label">Repetições</label>
+          <input type="number" class="form-control" id="modalReps" min="1" max="999" placeholder="–">
+        </div>
+        <div class="col">
+          <label class="form-label">Peso (kg)</label>
+          <input type="number" class="form-control" id="modalPeso" min="0" max="9999" step="0.5" placeholder="–">
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Duração <span class="text-muted">(seg, para cardio)</span></label>
+        <input type="number" class="form-control" id="modalDuracao" min="1" placeholder="–">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Observação</label>
+        <input type="text" class="form-control" id="modalObs" placeholder="Opcional" maxlength="200">
+      </div>
+    </div>
+    <div class="treino-modal-footer">
+      <button class="btn btn-outline-secondary btn-sm" onclick="fecharModalTreino()">Cancelar</button>
+      <button class="btn btn-primary btn-sm" onclick="salvarItem()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Detalhe Histórico -->
+<div class="treino-modal-overlay" id="modalHistoricoDetalhe" style="display:none" onclick="fecharModalHistorico(event)">
+  <div class="treino-modal treino-modal--wide">
+    <div class="treino-modal-header">
+      <h3 class="treino-modal-title" id="modalHistoricoTitulo">–</h3>
+      <button class="treino-modal-close" onclick="fecharModalHistorico()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <div class="treino-modal-body" id="modalHistoricoConteudo"></div>
+  </div>
+</div>
+
+<script>
+var _EXERCICIOS_PADRAO = {{ exercicios_padrao | tojson }};
+var _DATA_HOJE = '{{ data_hoje }}';
+</script>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/treino.js') }}?v={{ static_v }}"></script>
+{% endblock %}
