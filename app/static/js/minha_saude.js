@@ -14,6 +14,7 @@
   /* ========== TABS ========== */
   var _produtosCarregados = false;
   var _calCarregado = false;
+  var _exerciciosCatCarregados = false;
 
   document.querySelectorAll('.saude-tab-btn').forEach(function (btn) {
     btn.addEventListener('click', function () {
@@ -22,15 +23,19 @@
       });
       btn.classList.add('active');
       var tab = btn.dataset.tab;
-      document.getElementById('tab-hoje').style.display     = tab === 'hoje'      ? '' : 'none';
-      document.getElementById('tab-historico').style.display = tab === 'historico' ? '' : 'none';
-      document.getElementById('tab-perfil').style.display   = tab === 'perfil'    ? '' : 'none';
-      document.getElementById('tab-produtos').style.display  = tab === 'produtos'  ? '' : 'none';
+      document.getElementById('tab-hoje').style.display       = tab === 'hoje'       ? '' : 'none';
+      document.getElementById('tab-historico').style.display  = tab === 'historico'  ? '' : 'none';
+      document.getElementById('tab-perfil').style.display     = tab === 'perfil'     ? '' : 'none';
+      document.getElementById('tab-produtos').style.display   = tab === 'produtos'   ? '' : 'none';
+      document.getElementById('tab-exercicios').style.display = tab === 'exercicios' ? '' : 'none';
       if (tab === 'produtos' && !_produtosCarregados) {
         carregarProdutos();
       }
       if (tab === 'historico' && !_calCarregado) {
         carregarCalendario(_calAno, _calMes);
+      }
+      if (tab === 'exercicios' && !_exerciciosCatCarregados) {
+        carregarExerciciosCatalogo();
       }
     });
   });
@@ -953,6 +958,194 @@
     if (_EX_MIN_TOTAL > 0) txt += ' · ' + _EX_MIN_TOTAL + 'min';
     if (_EX_KCAL_TOTAL > 0) txt += ' · ' + _EX_KCAL_TOTAL + ' kcal';
     resumo.textContent = txt;
+  }
+
+  /* ========== CATÁLOGO DE EXERCÍCIOS — BUSCA NO MODAL ========== */
+  var _buscaExTimer = null;
+
+  window.buscarExerciciosCatalogo = function (query) {
+    clearTimeout(_buscaExTimer);
+    var dropdown = document.getElementById('exercicioDropdown');
+    if (!query || query.length < 2) { dropdown.style.display = 'none'; return; }
+    _buscaExTimer = setTimeout(function () {
+      fetch('/api/saude/exercicios/catalogo/buscar?q=' + encodeURIComponent(query))
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data.length) { dropdown.style.display = 'none'; return; }
+          var html = '';
+          data.forEach(function (ex) {
+            var meta = _exTipoLabels[ex.tipo] || ex.tipo;
+            if (ex.grupo_muscular) meta += ' · ' + ex.grupo_muscular;
+            html += '<div class="saude-produto-dropdown-item" onclick="selecionarExercicioCatalogo(' + JSON.stringify(ex).replace(/"/g, '&quot;') + ')">' +
+              '<strong>' + escHtmlEx(ex.nome) + '</strong>' +
+              '<span style="font-size:.75rem;color:var(--text-muted);margin-left:6px">' + escHtmlEx(meta) + '</span>' +
+              '</div>';
+          });
+          dropdown.innerHTML = html;
+          dropdown.style.display = '';
+        })
+        .catch(function () { dropdown.style.display = 'none'; });
+    }, 280);
+  };
+
+  window.selecionarExercicioCatalogo = function (ex) {
+    document.getElementById('exNome').value = ex.nome;
+    document.getElementById('exTipo').value = ex.tipo || 'outro';
+    if (ex.duracao_padrao) document.getElementById('exDuracao').value = ex.duracao_padrao;
+    if (ex.calorias_est)   document.getElementById('exCalorias').value = ex.calorias_est;
+    document.getElementById('buscaExercicio').value = ex.nome;
+    document.getElementById('exercicioDropdown').style.display = 'none';
+  };
+
+  document.addEventListener('click', function (e) {
+    var drop = document.getElementById('exercicioDropdown');
+    var wrap = document.querySelector('.saude-produto-search-wrap');
+    if (drop && wrap && !wrap.contains(e.target)) {
+      drop.style.display = 'none';
+    }
+  });
+
+  /* ========== CATÁLOGO DE EXERCÍCIOS — TAB ========== */
+  var _todosCatExercicios = [];
+
+  function carregarExerciciosCatalogo() {
+    fetch('/api/saude/exercicios/catalogo')
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        _exerciciosCatCarregados = true;
+        _todosCatExercicios = data;
+        renderizarCatalogoExercicios(data);
+      })
+      .catch(function () {});
+  }
+
+  function renderizarCatalogoExercicios(lista) {
+    var container = document.getElementById('exercicioLista');
+    if (!lista || lista.length === 0) {
+      container.innerHTML =
+        '<div class="saude-produto-lista-vazio">' +
+        '<i class="bi bi-activity" style="font-size:1.6rem;color:var(--text-muted)"></i>' +
+        '<div>Nenhum exercício no catálogo</div>' +
+        '<div style="font-size:.78rem">Importe os padrões ou adicione exercícios personalizados</div>' +
+        '</div>';
+      return;
+    }
+
+    var grupos = {};
+    lista.forEach(function (ex) {
+      var chave = ex.grupo_muscular || (_exTipoLabels[ex.tipo] || ex.tipo);
+      if (!grupos[chave]) grupos[chave] = [];
+      grupos[chave].push(ex);
+    });
+
+    var html = '';
+    Object.keys(grupos).sort().forEach(function (grupo) {
+      html += '<div class="saude-ex-cat-grupo"><div class="saude-ex-cat-grupo-titulo">' + escHtmlEx(grupo) + '</div>';
+      grupos[grupo].forEach(function (ex) {
+        var meta = [];
+        if (ex.duracao_padrao) meta.push(ex.duracao_padrao + 'min');
+        if (ex.calorias_est)   meta.push('~' + ex.calorias_est + ' kcal');
+        html += '<div class="saude-produto-item" id="cat-ex-' + ex.id + '">' +
+          '<div class="saude-produto-item-info">' +
+          '<div class="saude-produto-item-nome">' + escHtmlEx(ex.nome) + '</div>' +
+          '<div class="saude-produto-item-meta">' + escHtmlEx(_exTipoLabels[ex.tipo] || ex.tipo) +
+          (meta.length ? ' · ' + meta.join(' · ') : '') + '</div>' +
+          '</div>' +
+          '<button class="saude-produto-item-del" onclick="deletarExCatalogo(' + ex.id + ')" title="Remover"><i class="bi bi-trash3"></i></button>' +
+          '</div>';
+      });
+      html += '</div>';
+    });
+    container.innerHTML = html;
+  }
+
+  window.filtrarExerciciosTab = function (query) {
+    if (!query) { renderizarCatalogoExercicios(_todosCatExercicios); return; }
+    var q = query.toLowerCase();
+    var filtrado = _todosCatExercicios.filter(function (ex) {
+      return ex.nome.toLowerCase().includes(q) ||
+        (ex.grupo_muscular || '').toLowerCase().includes(q) ||
+        (_exTipoLabels[ex.tipo] || '').toLowerCase().includes(q);
+    });
+    renderizarCatalogoExercicios(filtrado);
+  };
+
+  window.importarExerciciosPadrao = function (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass"></i> Importando...';
+    fetch('/api/saude/exercicios/catalogo/importar', { method: 'POST' })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-cloud-download"></i> Importar padrão';
+        _exerciciosCatCarregados = false;
+        carregarExerciciosCatalogo();
+      })
+      .catch(function () {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-cloud-download"></i> Importar padrão';
+      });
+  };
+
+  window.deletarExCatalogo = function (id) {
+    fetch('/api/saude/exercicios/catalogo/' + id, { method: 'DELETE' })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.error) { alert(data.error); return; }
+        _todosCatExercicios = _todosCatExercicios.filter(function (e) { return e.id !== id; });
+        var el = document.getElementById('cat-ex-' + id);
+        if (el) el.remove();
+        var filtro = document.getElementById('filtroExercicios');
+        if (filtro && filtro.value) filtrarExerciciosTab(filtro.value);
+      });
+  };
+
+  /* ========== MODAL NOVO EXERCÍCIO CATÁLOGO ========== */
+  window.abrirModalNovoExCatalogo = function () {
+    document.getElementById('catExNome').value = '';
+    document.getElementById('catExTipo').value = 'musculacao';
+    document.getElementById('catExGrupo').value = '';
+    document.getElementById('catExDuracao').value = '';
+    document.getElementById('catExCalorias').value = '';
+    document.getElementById('modalNovoExCatalogo').style.display = 'flex';
+    setTimeout(function () { document.getElementById('catExNome').focus(); }, 100);
+  };
+
+  window.fecharModalNovoExCatalogo = function (evt) {
+    if (!evt || evt.target === document.getElementById('modalNovoExCatalogo')) {
+      document.getElementById('modalNovoExCatalogo').style.display = 'none';
+    }
+  };
+
+  window.salvarNovoExCatalogo = function () {
+    var nome = document.getElementById('catExNome').value.trim();
+    if (!nome) { alert('Informe o nome do exercício'); return; }
+    var btn = document.getElementById('btnSalvarExCatalogo');
+    btn.disabled = true;
+    fetch('/api/saude/exercicios/catalogo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nome: nome,
+        tipo: document.getElementById('catExTipo').value,
+        grupo_muscular: document.getElementById('catExGrupo').value.trim() || null,
+        duracao_padrao: document.getElementById('catExDuracao').value ? parseInt(document.getElementById('catExDuracao').value, 10) : null,
+        calorias_est:   document.getElementById('catExCalorias').value ? parseInt(document.getElementById('catExCalorias').value, 10) : null,
+      }),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        btn.disabled = false;
+        if (data.error) { alert(data.error); return; }
+        document.getElementById('modalNovoExCatalogo').style.display = 'none';
+        _todosCatExercicios.push(data);
+        renderizarCatalogoExercicios(_todosCatExercicios);
+      })
+      .catch(function () { btn.disabled = false; alert('Erro ao salvar'); });
+  };
+
+  function escHtmlEx(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
 })();

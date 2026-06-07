@@ -1435,3 +1435,19 @@
   border-color: var(--border);
 }
 
+/* ── Catálogo de exercícios ── */
+.saude-ex-cat-grupo {
+  margin-bottom: 8px;
+}
+
+.saude-ex-cat-grupo-titulo {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 6px 0 4px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 2px;
+}
+

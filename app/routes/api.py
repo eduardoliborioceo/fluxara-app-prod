@@ -1136,6 +1136,58 @@ def saude_delete_exercicio(exercicio_id):
     return jsonify({"ok": True})
 
 
+@bp.route("/saude/exercicios/catalogo/buscar", methods=["GET"])
+@login_required
+def saude_buscar_exercicios_catalogo():
+    from app.services import saude_service
+    q = request.args.get("q", "")
+    resultados = saude_service.search_exercicios_catalogo(current_user.id, q)
+    return jsonify(resultados)
+
+
+@bp.route("/saude/exercicios/catalogo", methods=["GET"])
+@login_required
+def saude_list_exercicios_catalogo():
+    from app.services import saude_service
+    data = saude_service.get_exercicios_catalogo(current_user.id)
+    return jsonify(data)
+
+
+@bp.route("/saude/exercicios/catalogo", methods=["POST"])
+@login_required
+def saude_add_exercicio_catalogo():
+    from app.services import saude_service
+    body = request.get_json() or {}
+    try:
+        ex = saude_service.save_exercicio_catalogo(
+            current_user.id,
+            body.get("nome", ""),
+            body.get("tipo", "outro"),
+            body.get("grupo_muscular"),
+            body.get("duracao_padrao"),
+            body.get("calorias_est"),
+        )
+        return jsonify(ex)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@bp.route("/saude/exercicios/catalogo/<int:ex_id>", methods=["DELETE"])
+@login_required
+def saude_delete_exercicio_catalogo(ex_id):
+    from app.services import saude_service
+    saude_service.delete_exercicio_catalogo(current_user.id, ex_id)
+    return jsonify({"ok": True})
+
+
+@bp.route("/saude/exercicios/catalogo/importar", methods=["POST"])
+@login_required
+def saude_importar_exercicios_catalogo():
+    from app.services import saude_service
+    inseridos = saude_service.seed_exercicios_catalogo(current_user.id)
+    return jsonify({"ok": True, "inseridos": inseridos})
+
+
 # =============================================================
 # SUREBET — ALAVANCAGEM
 # =============================================================
