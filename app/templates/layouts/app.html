@@ -153,6 +153,22 @@
              class="sidebar-subitem">
             <i class="bi bi-code-square"></i> Gastos Developer
           </a>
+          <a href="{{ url_for('pages.configuracoes') }}?panel=notificacoes"
+             class="sidebar-subitem">
+            <i class="bi bi-bell"></i> Notificações
+          </a>
+          <a href="{{ url_for('pages.configuracoes') }}?panel=importExport"
+             class="sidebar-subitem">
+            <i class="bi bi-arrow-down-up"></i> Importar / Exportar
+          </a>
+          <a href="{{ url_for('pages.configuracoes') }}?panel=resetDados"
+             class="sidebar-subitem">
+            <i class="bi bi-arrow-counterclockwise"></i> Resetar Dados
+          </a>
+          <a href="{{ url_for('pages.configuracoes') }}?panel=sobre"
+             class="sidebar-subitem">
+            <i class="bi bi-info-circle"></i> Sobre
+          </a>
 {% if current_user.is_authenticated and (current_user.is_admin or current_user.is_owner) %}
           <a href="{{ url_for('pages.configuracoes') }}?panel=admin"
              class="sidebar-subitem{% if active_menu == 'admin' %} active{% endif %}">
