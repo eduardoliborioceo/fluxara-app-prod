@@ -148,9 +148,16 @@
 
     <div class="lancamento-section">
       <div class="lancamento-field-label">Categoria</div>
-      <select id="lCategoria" class="form-select lancamento-select">
-        <option value="">Selecionar categoria...</option>
-      </select>
+      <div class="conta-picker" id="categoriaPicker">
+        <div class="conta-picker-trigger" id="categoriaPickerTrigger">
+          <div class="conta-picker-selected" id="categoriaPickerSelected">
+            <span class="text-muted">Selecionar categoria...</span>
+          </div>
+          <i class="bi bi-chevron-down conta-picker-arrow"></i>
+        </div>
+        <div class="conta-picker-dropdown" id="categoriaPickerDropdown"></div>
+        <input type="hidden" id="lCategoria">
+      </div>
     </div>
 
     <div class="lancamento-section" id="secSubcategoria" style="display:none">
