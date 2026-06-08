@@ -35,7 +35,7 @@ def get_sugestoes_descricao(user_id: int, query: str, limit: int = 6) -> list:
     with get_db() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("""
-                SELECT DISTINCT ON (unaccent(lower(trim(t.descricao))))
+                SELECT DISTINCT ON (lower(trim(t.descricao)))
                     t.descricao, t.valor, t.conta_origem_id, t.conta_destino_id,
                     co.nome AS conta_origem_nome, cd.nome AS conta_destino_nome
                 FROM transferencias t
@@ -43,8 +43,8 @@ def get_sugestoes_descricao(user_id: int, query: str, limit: int = 6) -> list:
                 LEFT JOIN contas_bancarias cd ON cd.id = t.conta_destino_id
                 WHERE t.user_id = %s AND t.ativo = true
                   AND t.descricao IS NOT NULL
-                  AND unaccent(lower(t.descricao)) LIKE unaccent(lower('%%' || %s || '%%'))
-                ORDER BY unaccent(lower(trim(t.descricao))), t.criado_em DESC
+                  AND lower(t.descricao) LIKE lower('%%' || %s || '%%')
+                ORDER BY lower(trim(t.descricao)), t.criado_em DESC
                 LIMIT %s
             """, (user_id, query, limit))
             return cur.fetchall()
