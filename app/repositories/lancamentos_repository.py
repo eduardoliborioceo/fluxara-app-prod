@@ -430,7 +430,7 @@ def get_sugestoes_descricao(user_id: int, tipo: str, query: str, limit: int = 6)
     with get_db() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("""
-                SELECT DISTINCT ON (unaccent(lower(trim(l.descricao))))
+                SELECT DISTINCT ON (lower(trim(l.descricao)))
                     l.descricao, l.valor, l.categoria_id, l.subcategoria_id,
                     l.conta_id, l.cartao_id,
                     c.nome AS categoria_nome
@@ -438,8 +438,8 @@ def get_sugestoes_descricao(user_id: int, tipo: str, query: str, limit: int = 6)
                 LEFT JOIN categorias c ON c.id = l.categoria_id
                 WHERE l.user_id = %s AND l.tipo = %s AND l.ativo = true
                   AND l.descricao IS NOT NULL
-                  AND unaccent(lower(l.descricao)) LIKE unaccent(lower('%%' || %s || '%%'))
-                ORDER BY unaccent(lower(trim(l.descricao))), l.criado_em DESC
+                  AND lower(l.descricao) LIKE lower('%%' || %s || '%%')
+                ORDER BY lower(trim(l.descricao)), l.criado_em DESC
                 LIMIT %s
             """, (user_id, tipo, query, limit))
             return cur.fetchall()
