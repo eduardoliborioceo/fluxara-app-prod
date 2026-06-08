@@ -1909,6 +1909,77 @@
 /* ========================
    RESPONSIVE
 ======================== */
+/* ========================
+   STORY IMAGE BUTTON
+======================== */
+.tips-story-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border, rgba(15,23,42,.09));
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-muted, #64748b);
+  cursor: pointer;
+  font-size: .76rem;
+  transition: background .12s, color .12s, border-color .12s;
+  margin-left: auto;
+}
+
+.tips-story-btn:hover {
+  background: rgba(59,130,246,.08);
+  color: #3b82f6;
+  border-color: rgba(59,130,246,.25);
+}
+
+/* ========================
+   STORY PREVIEW MODAL
+======================== */
+.tips-story-modal { max-width: 340px; }
+
+.tips-story-modal-body { padding: 14px 18px 18px; }
+
+.tips-story-preview-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  background: #0d1117;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.06);
+  max-height: 68vh;
+  overflow-y: auto;
+}
+
+.tips-story-preview-img {
+  width: 100%;
+  max-width: 260px;
+  height: auto;
+  display: block;
+}
+
+.tips-story-download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  font-size: .875rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #3b82f6, #818cf8);
+  border-radius: 8px;
+  text-decoration: none;
+  transition: opacity .15s;
+}
+
+.tips-story-download-btn:hover { opacity: .88; color: #fff; }
+
+/* ========================
+   RESPONSIVE
+======================== */
 @media (max-width: 480px) {
   .tips-form-row { flex-direction: column; gap: 0; }
   .tips-stats-row { gap: 6px; }

@@ -402,6 +402,29 @@
 
 {% endblock %}
 
+<!-- Modal Imagem Story (todos os usuários) -->
+<div id="storyModalOverlay" class="tips-modal-overlay" style="display:none" onclick="closeStoryModalOverlay(event)">
+  <div class="tips-modal tips-story-modal">
+    <div class="tips-modal-header">
+      <span><i class="bi bi-image-fill" style="margin-right:6px;color:#3b82f6"></i>Imagem para Story</span>
+      <button class="tips-modal-close" onclick="closeStoryModal()" title="Fechar">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <div class="tips-modal-body tips-story-modal-body">
+      <div class="tips-story-preview-wrap">
+        <img id="storyPreviewImg" class="tips-story-preview-img" src="" alt="Story preview">
+      </div>
+      <div class="tips-modal-actions" style="justify-content:center;border-top:none;margin-top:14px;padding-top:0;">
+        <a id="storyDownloadBtn" class="tips-story-download-btn" href="#" download="fluxara-tip.png">
+          <i class="bi bi-download"></i>
+          Baixar imagem
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% block scripts %}
 <script>
   window.APOSTAS_IS_ADMIN = {{ 'true' if current_user.is_admin else 'false' }};

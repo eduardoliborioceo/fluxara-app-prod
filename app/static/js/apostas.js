@@ -468,6 +468,9 @@ function buildTipCard(tip, isAdmin) {
       <div class="tips-card-header">
         ${statusBadge}
         <span class="tips-card-title">${escHtml(tip.titulo)}</span>
+        <button class="tips-story-btn" onclick="openStoryModal(${tip.id})" title="Baixar imagem para Story">
+          <i class="bi bi-download"></i>
+        </button>
       </div>
       ${(oddHtml || idHtml || linkHtml) ? `<div class="tips-card-row2">${oddHtml}${idHtml}${linkHtml}</div>` : ""}
       ${toggleSection}
@@ -1178,4 +1181,307 @@ function escHtml(str) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+// ============================================================
+//  STORY IMAGE GENERATION
+// ============================================================
+
+function _drawRoundedRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function _wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+  const words = text.split(" ");
+  let line = "";
+  let curY = y;
+  for (const word of words) {
+    const test = line ? line + " " + word : word;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      ctx.fillText(line, x, curY);
+      line = word;
+      curY += lineHeight;
+    } else {
+      line = test;
+    }
+  }
+  if (line) { ctx.fillText(line, x, curY); curY += lineHeight; }
+  return curY;
+}
+
+function generateTipStoryCanvas(tip) {
+  const W = 540, H = 960, PAD = 36;
+  const canvas = document.createElement("canvas");
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext("2d");
+  ctx.textBaseline = "top";
+
+  // Background
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, "#0d1117");
+  bg.addColorStop(1, "#0f1c2e");
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // Radial accent glow (top-right)
+  const glow = ctx.createRadialGradient(W, 0, 0, W, 0, 400);
+  glow.addColorStop(0, "rgba(59,130,246,0.09)");
+  glow.addColorStop(1, "rgba(59,130,246,0)");
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, W, H);
+
+  // Top bar
+  const barGrad = ctx.createLinearGradient(0, 0, W, 0);
+  barGrad.addColorStop(0, "#3b82f6");
+  barGrad.addColorStop(1, "#818cf8");
+  ctx.fillStyle = barGrad;
+  ctx.fillRect(0, 0, W, 5);
+
+  // === BRANDING ===
+  const cx = PAD + 22, cy = 37;
+  ctx.fillStyle = "#1d4ed8";
+  ctx.beginPath();
+  ctx.arc(cx, cy, 22, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.font = "bold 18px system-ui,-apple-system,sans-serif";
+  ctx.fillStyle = "#ffffff";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("F", cx, cy);
+  ctx.textBaseline = "top";
+  ctx.textAlign = "left";
+
+  ctx.font = "800 18px system-ui,-apple-system,sans-serif";
+  ctx.fillStyle = "#f1f5f9";
+  ctx.fillText("FLUXARA", PAD + 54, 24);
+
+  ctx.font = "500 10px system-ui,-apple-system,sans-serif";
+  ctx.fillStyle = "#475569";
+  ctx.fillText("TIPS & PREVISÕES", PAD + 54, 46);
+
+  const today = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
+  ctx.font = "500 10px system-ui,-apple-system,sans-serif";
+  ctx.fillStyle = "#334155";
+  ctx.textAlign = "right";
+  ctx.fillText(today, W - PAD, 30);
+  ctx.textAlign = "left";
+
+  // Branding divider
+  ctx.strokeStyle = "rgba(255,255,255,0.07)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(PAD, 72);
+  ctx.lineTo(W - PAD, 72);
+  ctx.stroke();
+
+  // === STATUS BADGE ===
+  const statusMap = {
+    green:    { bg: "rgba(22,163,74,0.18)",   border: "rgba(22,163,74,0.45)",   color: "#4ade80", label: "✓  GREEN" },
+    red:      { bg: "rgba(220,38,38,0.18)",   border: "rgba(220,38,38,0.45)",   color: "#f87171", label: "✗  RED" },
+    pendente: { bg: "rgba(217,119,6,0.18)",   border: "rgba(217,119,6,0.45)",   color: "#fbbf24", label: "⏱  EM ABERTO" },
+    void:     { bg: "rgba(100,116,139,0.18)", border: "rgba(100,116,139,0.45)", color: "#94a3b8", label: "—  VOID" },
+  };
+  const sc = statusMap[tip.status] || statusMap.pendente;
+  ctx.font = "bold 11px system-ui,-apple-system,sans-serif";
+  const bm = ctx.measureText(sc.label);
+  const bw = bm.width + 32, bh = 26, bx = (W - bw) / 2, by = 85;
+
+  ctx.fillStyle = sc.bg;
+  _drawRoundedRect(ctx, bx, by, bw, bh, 13);
+  ctx.fill();
+  ctx.strokeStyle = sc.border;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.fillStyle = sc.color;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(sc.label, W / 2, by + bh / 2);
+  ctx.textBaseline = "top";
+
+  // === TITLE ===
+  ctx.font = "bold 24px system-ui,-apple-system,sans-serif";
+  ctx.fillStyle = "#f8fafc";
+  ctx.textAlign = "center";
+  let curY = 128;
+  curY = _wrapText(ctx, tip.titulo || "Recomendação", W / 2, curY, W - PAD * 2 - 10, 32);
+
+  // === ODD TOTAL ===
+  if (tip.odd != null) {
+    curY += 10;
+    ctx.font = "600 10px system-ui,-apple-system,sans-serif";
+    ctx.fillStyle = "#334155";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillText("ODD TOTAL", W / 2, curY);
+    curY += 14;
+    ctx.font = "800 52px system-ui,-apple-system,sans-serif";
+    ctx.fillStyle = "#60a5fa";
+    ctx.fillText(tip.odd.toFixed(2), W / 2, curY);
+    curY += 58;
+  }
+
+  curY += 12;
+
+  // Section divider
+  ctx.strokeStyle = "rgba(255,255,255,0.07)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(PAD, curY);
+  ctx.lineTo(W - PAD, curY);
+  ctx.stroke();
+  curY += 12;
+
+  // === GAMES ===
+  const hasGames = Array.isArray(tip.jogos) && tip.jogos.length > 0;
+  if (hasGames) {
+    ctx.font = "700 9px system-ui,-apple-system,sans-serif";
+    ctx.fillStyle = "#334155";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillText("JOGOS DA MÚLTIPLA", PAD, curY);
+    curY += 16;
+
+    const maxGames = Math.min(tip.jogos.length, 6);
+    for (let i = 0; i < maxGames; i++) {
+      const j = tip.jogos[i];
+      const ROW_H = 58, rx = PAD, ry = curY, rw = W - PAD * 2;
+
+      ctx.fillStyle = "rgba(255,255,255,0.025)";
+      _drawRoundedRect(ctx, rx, ry, rw, ROW_H, 8);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(59,130,246,0.09)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.fillStyle = "#1e40af";
+      _drawRoundedRect(ctx, rx + 8, ry + 8, 16, 16, 4);
+      ctx.fill();
+      ctx.font = "bold 9px system-ui,sans-serif";
+      ctx.fillStyle = "#93c5fd";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(String(i + 1), rx + 16, ry + 16);
+      ctx.textBaseline = "top";
+      ctx.textAlign = "left";
+
+      if (j.campeonato) {
+        const c = j.campeonato.length > 32 ? j.campeonato.slice(0, 30) + "…" : j.campeonato;
+        ctx.font = "500 10px system-ui,sans-serif";
+        ctx.fillStyle = "#475569";
+        ctx.fillText(c, rx + 32, ry + 7);
+      }
+
+      const p = (j.partida || "").length > 36 ? (j.partida || "").slice(0, 34) + "…" : (j.partida || "");
+      ctx.font = "bold 14px system-ui,-apple-system,sans-serif";
+      ctx.fillStyle = "#e2e8f0";
+      ctx.fillText(p, rx + 32, ry + 20);
+
+      const m = (j.mercado || "").length > 30 ? (j.mercado || "").slice(0, 28) + "…" : (j.mercado || "");
+      ctx.font = "500 11px system-ui,sans-serif";
+      ctx.fillStyle = "#64748b";
+      ctx.fillText(m, rx + 32, ry + 38);
+
+      if (j.odd != null) {
+        ctx.font = "bold 15px system-ui,-apple-system,sans-serif";
+        ctx.fillStyle = "#60a5fa";
+        ctx.textAlign = "right";
+        ctx.textBaseline = "middle";
+        ctx.fillText("@ " + j.odd.toFixed(2), rx + rw - 10, ry + ROW_H / 2);
+        ctx.textBaseline = "top";
+        ctx.textAlign = "left";
+      }
+
+      curY += ROW_H + 6;
+    }
+  } else if (tip.partida) {
+    const ROW_H = 58, rx = PAD, ry = curY, rw = W - PAD * 2;
+    ctx.fillStyle = "rgba(255,255,255,0.025)";
+    _drawRoundedRect(ctx, rx, ry, rw, ROW_H, 8);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(59,130,246,0.09)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    if (tip.campeonato) {
+      ctx.font = "500 10px system-ui,sans-serif";
+      ctx.fillStyle = "#475569";
+      ctx.textAlign = "left";
+      ctx.fillText(tip.campeonato, rx + 12, ry + 8);
+    }
+    ctx.font = "bold 15px system-ui,-apple-system,sans-serif";
+    ctx.fillStyle = "#e2e8f0";
+    ctx.textAlign = "left";
+    ctx.fillText(tip.partida.length > 36 ? tip.partida.slice(0, 34) + "…" : tip.partida, rx + 12, ry + 24);
+    curY += ROW_H + 6;
+  }
+
+  // Stake
+  if (tip.stake) {
+    curY += 6;
+    ctx.font = "500 12px system-ui,sans-serif";
+    ctx.fillStyle = "#475569";
+    ctx.textAlign = "center";
+    ctx.fillText("Stake: " + tip.stake, W / 2, curY);
+  }
+
+  // === FOOTER ===
+  ctx.strokeStyle = "rgba(255,255,255,0.07)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(PAD, H - 88);
+  ctx.lineTo(W - PAD, H - 88);
+  ctx.stroke();
+
+  ctx.font = "400 10px system-ui,sans-serif";
+  ctx.fillStyle = "#334155";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  ctx.fillText("Aposte com responsabilidade · 18+", W / 2, H - 74);
+
+  ctx.font = "bold 18px system-ui,-apple-system,sans-serif";
+  ctx.fillStyle = barGrad;
+  ctx.fillText("fluxara.app", W / 2, H - 48);
+
+  ctx.fillStyle = barGrad;
+  ctx.fillRect(0, H - 5, W, 5);
+
+  return canvas;
+}
+
+function openStoryModal(tipId) {
+  const tips = window._cachedTips || [];
+  const tip = tips.find(t => t.id === tipId);
+  if (!tip) return;
+
+  const canvas = generateTipStoryCanvas(tip);
+  const dataUrl = canvas.toDataURL("image/png");
+
+  const overlay = document.getElementById("storyModalOverlay");
+  const img = document.getElementById("storyPreviewImg");
+  const dlBtn = document.getElementById("storyDownloadBtn");
+  if (!overlay) return;
+
+  img.src = dataUrl;
+  dlBtn.href = dataUrl;
+  dlBtn.download = "fluxara-tip-" + tipId + ".png";
+  overlay.style.display = "flex";
+}
+
+function closeStoryModal() {
+  const overlay = document.getElementById("storyModalOverlay");
+  if (overlay) overlay.style.display = "none";
+}
+
+function closeStoryModalOverlay(e) {
+  if (e.target === document.getElementById("storyModalOverlay")) closeStoryModal();
 }
