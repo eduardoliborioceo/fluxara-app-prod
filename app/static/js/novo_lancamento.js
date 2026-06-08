@@ -532,31 +532,60 @@
     } catch (e) {}
   }
 
+  function onCategoriaChange(catId) {
+    var cat = categoriasData.find(function (c) { return c.id === catId; });
+    var sec = document.getElementById('secSubcategoria');
+    var sel2 = document.getElementById('lSubcategoria');
+    if (cat && cat.subcategorias && cat.subcategorias.length) {
+      sel2.innerHTML = '<option value="">Selecionar subcategoria...</option>' +
+        cat.subcategorias.map(function (s) {
+          return '<option value="' + s.id + '">' + esc(s.nome) + '</option>';
+        }).join('');
+      sec.style.display = '';
+    } else {
+      sec.style.display = 'none';
+    }
+  }
+
+  function preselectCategoria(id) {
+    var found = categoriasData.find(function (c) { return String(c.id) === String(id); });
+    if (!found) return;
+    var color = found.cor_fundo || '#64748b';
+    var iconHtml = '<div class="conta-picker-logo" style="background:' + color + '20;color:' + color + '">'
+      + '<i class="bi ' + found.icone + '"></i></div>';
+    document.getElementById('lCategoria').value = id;
+    document.getElementById('categoriaPickerSelected').innerHTML =
+      iconHtml + '<span class="conta-picker-nome">' + esc(found.nome) + '</span>';
+    onCategoriaChange(found.id);
+  }
+
   async function loadCategorias() {
     var tipoCat = tipo === 'receita' ? 'receita' : 'despesa';
     try {
       var r = await fetch('/api/config/categorias?tipo=' + tipoCat);
       categoriasData = await r.json();
-      var sel = document.getElementById('lCategoria');
-      sel.innerHTML = '<option value="">Selecionar categoria...</option>' +
-        categoriasData.map(function (c) {
-          return '<option value="' + c.id + '">' + esc(c.nome) + '</option>';
-        }).join('');
-      sel.addEventListener('change', function () {
-        var catId = parseInt(this.value);
-        var cat = categoriasData.find(function (c) { return c.id === catId; });
-        var sec = document.getElementById('secSubcategoria');
-        var sel2 = document.getElementById('lSubcategoria');
-        if (cat && cat.subcategorias && cat.subcategorias.length) {
-          sel2.innerHTML = '<option value="">Selecionar subcategoria...</option>' +
-            cat.subcategorias.map(function (s) {
-              return '<option value="' + s.id + '">' + esc(s.nome) + '</option>';
-            }).join('');
-          sec.style.display = '';
-        } else {
-          sec.style.display = 'none';
+
+      function renderCategoria(c, compact) {
+        var color = c.cor_fundo || '#64748b';
+        var iconHtml = '<div class="conta-picker-logo" style="background:' + color + '20;color:' + color + '">'
+          + '<i class="bi ' + c.icone + '"></i></div>';
+        if (compact) {
+          return iconHtml + '<span class="conta-picker-nome">' + esc(c.nome) + '</span>';
         }
-      });
+        return '<div class="conta-picker-item" data-id="' + c.id + '">'
+          + iconHtml + '<span class="conta-picker-nome">' + esc(c.nome) + '</span></div>';
+      }
+
+      buildContaPicker(
+        'categoriaPicker',
+        document.getElementById('categoriaPickerTrigger'),
+        document.getElementById('categoriaPickerSelected'),
+        document.getElementById('categoriaPickerDropdown'),
+        document.getElementById('lCategoria'),
+        categoriasData,
+        renderCategoria,
+        function (cat) { onCategoriaChange(cat.id); }
+      );
     } catch (e) {}
   }
 
@@ -564,6 +593,7 @@
     document.getElementById('lDescricao').value = '';
     document.getElementById('lValor').value = '';
     document.getElementById('lCategoria').value = '';
+    document.getElementById('categoriaPickerSelected').innerHTML = '<span class="text-muted">Selecionar categoria...</span>';
     document.getElementById('secSubcategoria').style.display = 'none';
     recModo.value = 'nao_recorrente';
     document.getElementById('divFixaPeriodicidade').classList.add('d-none');
@@ -671,9 +701,7 @@
     document.getElementById('lDescricao').value = item.descricao;
     if (item.valor) document.getElementById('lValor').value = parseFloat(item.valor).toFixed(2);
     if (item.categoria_id) {
-      var sel = document.getElementById('lCategoria');
-      sel.value = item.categoria_id;
-      sel.dispatchEvent(new Event('change'));
+      preselectCategoria(item.categoria_id);
       if (item.subcategoria_id) {
         setTimeout(function () {
           var sel2 = document.getElementById('lSubcategoria');
