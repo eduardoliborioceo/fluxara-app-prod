@@ -1336,7 +1336,11 @@ function generateTipStoryCanvas(tip, logoImg) {
 
   ctx.font = "500 11px system-ui,-apple-system,sans-serif";
   ctx.fillStyle = "rgba(255,255,255,0.60)";
-  ctx.fillText("TIPS & APOSTAS", LOGO_X + LOGO_SIZE + 14, LOGO_Y + 35);
+  ctx.fillText("TIPS & APOSTAS", LOGO_X + LOGO_SIZE + 14, LOGO_Y + 34);
+
+  ctx.font = "400 9.5px system-ui,-apple-system,sans-serif";
+  ctx.fillStyle = "rgba(255,255,255,0.38)";
+  ctx.fillText("Controle financeiro, apostas e bem-estar.", LOGO_X + LOGO_SIZE + 14, LOGO_Y + 50);
 
   // Date (top-right)
   const today = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
@@ -1541,15 +1545,19 @@ function generateTipStoryCanvas(tip, logoImg) {
   ctx.fillStyle = fGrad;
   ctx.fillRect(0, footerY, W, 82);
 
-  ctx.font = "400 10px system-ui,sans-serif";
-  ctx.fillStyle = "rgba(255,255,255,0.48)";
+  ctx.font = "500 10.5px system-ui,sans-serif";
+  ctx.fillStyle = "rgba(255,255,255,0.70)";
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
-  ctx.fillText("⚠️  Aposte com responsabilidade · +18", W / 2, footerY + 10);
+  ctx.fillText("⚠️  Aposte com responsabilidade", W / 2, footerY + 8);
 
-  ctx.font = "800 22px system-ui,-apple-system,sans-serif";
+  ctx.font = "400 9.5px system-ui,sans-serif";
+  ctx.fillStyle = "rgba(255,255,255,0.48)";
+  ctx.fillText("Proibido para menores de 18 anos", W / 2, footerY + 24);
+
+  ctx.font = "800 20px system-ui,-apple-system,sans-serif";
   ctx.fillStyle = "#ffffff";
-  ctx.fillText("fluxara.app", W / 2, footerY + 32);
+  ctx.fillText("fluxara.app", W / 2, footerY + 44);
 
   // Bottom accent stripe
   ctx.fillStyle = accentG;
