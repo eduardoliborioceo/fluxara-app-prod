@@ -302,6 +302,27 @@
     return String(s).replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
   }
 
+  /* ===== GUIDE ===== */
+  window.toggleTreinoGuide = function () {
+    var body = document.getElementById('treinoGuideBody');
+    var icon = document.getElementById('treinoGuideIcon');
+    if (!body) return;
+    var isOpen = body.style.display !== 'none';
+    body.style.display = isOpen ? 'none' : '';
+    if (icon) icon.className = isOpen ? 'bi bi-chevron-down' : 'bi bi-chevron-up';
+    localStorage.setItem('treinoGuideOpen', isOpen ? '0' : '1');
+  };
+
+  (function initGuide() {
+    var stored = localStorage.getItem('treinoGuideOpen');
+    if (stored === '0') {
+      var body = document.getElementById('treinoGuideBody');
+      var icon = document.getElementById('treinoGuideIcon');
+      if (body) body.style.display = 'none';
+      if (icon) icon.className = 'bi bi-chevron-down';
+    }
+  })();
+
   /* ===== INIT ===== */
   carregarHoje();
 })();
