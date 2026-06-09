@@ -463,14 +463,16 @@ function buildTipCard(tip, isAdmin) {
       ${detailsHtml}
     </div>` : "";
 
+  const storyBtn = isAdmin
+    ? `<button class="tips-story-btn" onclick="openStoryModal(${tip.id})" title="Baixar imagem para Story"><i class="bi bi-download"></i></button>`
+    : "";
+
   return `
     <div class="tips-card" id="tip-${tip.id}" data-status="${escHtml(tip.status)}">
       <div class="tips-card-header">
         ${statusBadge}
         <span class="tips-card-title">${escHtml(tip.titulo)}</span>
-        <button class="tips-story-btn" onclick="openStoryModal(${tip.id})" title="Baixar imagem para Story">
-          <i class="bi bi-download"></i>
-        </button>
+        ${storyBtn}
       </div>
       ${(oddHtml || idHtml || linkHtml) ? `<div class="tips-card-row2">${oddHtml}${idHtml}${linkHtml}</div>` : ""}
       ${toggleSection}
