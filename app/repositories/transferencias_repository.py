@@ -1,6 +1,9 @@
 from app.extensions import get_db
 from psycopg.rows import dict_row
 
+_ACCF = 'àáâãäèéêëìíîïòóôõöùúûüçñýÿ'
+_ACCT = 'a' * 5 + 'e' * 4 + 'i' * 4 + 'o' * 5 + 'u' * 4 + 'cnyy'
+
 
 def create_transferencia(user_id, descricao, valor, data_vencimento, efetivado,
                          recorrente, recorrencia_tipo, conta_origem_id, conta_destino_id,
@@ -34,8 +37,8 @@ def delete_transferencia(transferencia_id: int, user_id: int):
 def get_sugestoes_descricao(user_id: int, query: str, limit: int = 6) -> list:
     with get_db() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
-            cur.execute("""
-                SELECT DISTINCT ON (lower(trim(t.descricao)))
+            cur.execute(f"""
+                SELECT DISTINCT ON (translate(lower(trim(t.descricao)), '{_ACCF}', '{_ACCT}'))
                     t.descricao, t.valor, t.conta_origem_id, t.conta_destino_id,
                     co.nome AS conta_origem_nome, cd.nome AS conta_destino_nome
                 FROM transferencias t
@@ -43,8 +46,10 @@ def get_sugestoes_descricao(user_id: int, query: str, limit: int = 6) -> list:
                 LEFT JOIN contas_bancarias cd ON cd.id = t.conta_destino_id
                 WHERE t.user_id = %s AND t.ativo = true
                   AND t.descricao IS NOT NULL
-                  AND lower(t.descricao) LIKE lower('%%' || %s || '%%')
-                ORDER BY lower(trim(t.descricao)), t.criado_em DESC
+                  AND translate(lower(t.descricao), '{_ACCF}', '{_ACCT}')
+                      LIKE translate(lower('%%' || %s || '%%'), '{_ACCF}', '{_ACCT}')
+                ORDER BY translate(lower(trim(t.descricao)), '{_ACCF}', '{_ACCT}'),
+                         t.criado_em DESC
                 LIMIT %s
             """, (user_id, query, limit))
             return cur.fetchall()

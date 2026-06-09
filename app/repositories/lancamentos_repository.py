@@ -1,6 +1,9 @@
 from app.extensions import get_db
 from psycopg.rows import dict_row
 
+_ACCF = 'àáâãäèéêëìíîïòóôõöùúûüçñýÿ'
+_ACCT = 'a' * 5 + 'e' * 4 + 'i' * 4 + 'o' * 5 + 'u' * 4 + 'cnyy'
+
 
 def create_lancamento(user_id, tipo, descricao, valor, data_vencimento, efetivado,
                       recorrente, recorrencia_tipo, categoria_id, subcategoria_id,
@@ -429,8 +432,8 @@ def get_debitos_status(user_id: int) -> list:
 def get_sugestoes_descricao(user_id: int, tipo: str, query: str, limit: int = 6) -> list:
     with get_db() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
-            cur.execute("""
-                SELECT DISTINCT ON (lower(trim(l.descricao)))
+            cur.execute(f"""
+                SELECT DISTINCT ON (translate(lower(trim(l.descricao)), '{_ACCF}', '{_ACCT}'))
                     l.descricao, l.valor, l.categoria_id, l.subcategoria_id,
                     l.conta_id, l.cartao_id,
                     c.nome AS categoria_nome
@@ -438,8 +441,10 @@ def get_sugestoes_descricao(user_id: int, tipo: str, query: str, limit: int = 6)
                 LEFT JOIN categorias c ON c.id = l.categoria_id
                 WHERE l.user_id = %s AND l.tipo = %s AND l.ativo = true
                   AND l.descricao IS NOT NULL
-                  AND lower(l.descricao) LIKE lower('%%' || %s || '%%')
-                ORDER BY lower(trim(l.descricao)), l.criado_em DESC
+                  AND translate(lower(l.descricao), '{_ACCF}', '{_ACCT}')
+                      LIKE translate(lower('%%' || %s || '%%'), '{_ACCF}', '{_ACCT}')
+                ORDER BY translate(lower(trim(l.descricao)), '{_ACCF}', '{_ACCT}'),
+                         l.criado_em DESC
                 LIMIT %s
             """, (user_id, tipo, query, limit))
             return cur.fetchall()
