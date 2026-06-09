@@ -1346,15 +1346,20 @@ function generateTipStoryCanvas(tip, logoImg) {
   ctx.fillText(today, W - PAD, LOGO_Y + 20);
   ctx.textAlign = "left";
 
-  // ── STATUS BADGE (floats on header bottom edge) ───────────
+  // ── CONTENT AREA (drawn before badge so badge renders on top) ─
+  const CARD_TOP = 192;
+  ctx.fillStyle = C.bg;
+  ctx.fillRect(0, CARD_TOP, W, H - CARD_TOP - 82);
+
+  // ── STATUS BADGE (floats over header/content boundary) ────
   ctx.font = "800 14px system-ui,-apple-system,sans-serif";
   const badgeLabel = sc.icon + "  " + sc.label;
   const badgeW = ctx.measureText(badgeLabel).width + 52;
   const badgeH = 44;
   const badgeX = (W - badgeW) / 2;
-  const badgeY = 170;
+  const badgeY = 168;
 
-  _shadow(ctx, "rgba(15,23,42,0.20)", 18, 6);
+  _shadow(ctx, "rgba(15,23,42,0.22)", 20, 6);
   ctx.fillStyle = sc.bg;
   _drawRoundedRect(ctx, badgeX, badgeY, badgeW, badgeH, badgeH / 2);
   ctx.fill();
@@ -1368,12 +1373,6 @@ function generateTipStoryCanvas(tip, logoImg) {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(badgeLabel, W / 2, badgeY + badgeH / 2);
-
-  // ── CONTENT AREA ─────────────────────────────────────────
-  // Light card behind content (overlaps header at top)
-  const CARD_TOP = 192;
-  ctx.fillStyle = C.bg;
-  ctx.fillRect(0, CARD_TOP, W, H - CARD_TOP - 82);
 
   // ── TITLE ────────────────────────────────────────────────
   let curY = badgeY + badgeH + 22;
