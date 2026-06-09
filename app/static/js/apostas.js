@@ -1190,17 +1190,32 @@ function escHtml(str) {
 // ============================================================
 
 function _drawRoundedRect(ctx, x, y, w, h, r) {
+  const rc = Math.min(r, w / 2, h / 2);
   ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y);
-  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-  ctx.lineTo(x + w, y + h - r);
-  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  ctx.lineTo(x + r, y + h);
-  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-  ctx.lineTo(x, y + r);
-  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.moveTo(x + rc, y);
+  ctx.lineTo(x + w - rc, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + rc);
+  ctx.lineTo(x + w, y + h - rc);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - rc, y + h);
+  ctx.lineTo(x + rc, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - rc);
+  ctx.lineTo(x, y + rc);
+  ctx.quadraticCurveTo(x, y, x + rc, y);
   ctx.closePath();
+}
+
+function _shadow(ctx, color, blur, oy) {
+  ctx.shadowColor = color;
+  ctx.shadowBlur = blur;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = oy;
+}
+
+function _clearShadow(ctx) {
+  ctx.shadowColor = "rgba(0,0,0,0)";
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
 }
 
 function _wrapText(ctx, text, x, y, maxWidth, lineHeight) {
@@ -1221,262 +1236,361 @@ function _wrapText(ctx, text, x, y, maxWidth, lineHeight) {
   return curY;
 }
 
-function generateTipStoryCanvas(tip) {
-  const W = 540, H = 960, PAD = 36;
+function generateTipStoryCanvas(tip, logoImg) {
+  const W = 540, H = 960, PAD = 32;
   const canvas = document.createElement("canvas");
   canvas.width = W;
   canvas.height = H;
   const ctx = canvas.getContext("2d");
-  ctx.textBaseline = "top";
 
-  // Background
-  const bg = ctx.createLinearGradient(0, 0, 0, H);
-  bg.addColorStop(0, "#0d1117");
-  bg.addColorStop(1, "#0f1c2e");
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, W, H);
+  // ── PALETTE ──────────────────────────────────────────────
+  const C = {
+    bg:          "#f1f5f9",
+    headerFrom:  "#1e3a8a",
+    headerTo:    "#2563eb",
+    white:       "#ffffff",
+    textDark:    "#0f172a",
+    textMid:     "#334155",
+    textMuted:   "#64748b",
+    border:      "#e2e8f0",
+    blue:        "#2563eb",
+    blueLight:   "#eff6ff",
+    green:       "#16a34a",
+    greenBg:     "#dcfce7",
+    greenBorder: "#86efac",
+    red:         "#dc2626",
+    redBg:       "#fee2e2",
+    redBorder:   "#fca5a5",
+    amber:       "#b45309",
+    amberBg:     "#fef9c3",
+    amberBorder: "#fde68a",
+    gray:        "#475569",
+    grayBg:      "#f1f5f9",
+    grayBorder:  "#cbd5e1",
+  };
 
-  // Radial accent glow (top-right)
-  const glow = ctx.createRadialGradient(W, 0, 0, W, 0, 400);
-  glow.addColorStop(0, "rgba(59,130,246,0.09)");
-  glow.addColorStop(1, "rgba(59,130,246,0)");
-  ctx.fillStyle = glow;
-  ctx.fillRect(0, 0, W, H);
-
-  // Top bar
-  const barGrad = ctx.createLinearGradient(0, 0, W, 0);
-  barGrad.addColorStop(0, "#3b82f6");
-  barGrad.addColorStop(1, "#818cf8");
-  ctx.fillStyle = barGrad;
-  ctx.fillRect(0, 0, W, 5);
-
-  // === BRANDING ===
-  const cx = PAD + 22, cy = 37;
-  ctx.fillStyle = "#1d4ed8";
-  ctx.beginPath();
-  ctx.arc(cx, cy, 22, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.font = "bold 18px system-ui,-apple-system,sans-serif";
-  ctx.fillStyle = "#ffffff";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText("F", cx, cy);
-  ctx.textBaseline = "top";
-  ctx.textAlign = "left";
-
-  ctx.font = "800 18px system-ui,-apple-system,sans-serif";
-  ctx.fillStyle = "#f1f5f9";
-  ctx.fillText("FLUXARA", PAD + 54, 24);
-
-  ctx.font = "500 10px system-ui,-apple-system,sans-serif";
-  ctx.fillStyle = "#475569";
-  ctx.fillText("TIPS & PREVISÕES", PAD + 54, 46);
-
-  const today = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
-  ctx.font = "500 10px system-ui,-apple-system,sans-serif";
-  ctx.fillStyle = "#334155";
-  ctx.textAlign = "right";
-  ctx.fillText(today, W - PAD, 30);
-  ctx.textAlign = "left";
-
-  // Branding divider
-  ctx.strokeStyle = "rgba(255,255,255,0.07)";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(PAD, 72);
-  ctx.lineTo(W - PAD, 72);
-  ctx.stroke();
-
-  // === STATUS BADGE ===
   const statusMap = {
-    green:    { bg: "rgba(22,163,74,0.18)",   border: "rgba(22,163,74,0.45)",   color: "#4ade80", label: "✓  GREEN" },
-    red:      { bg: "rgba(220,38,38,0.18)",   border: "rgba(220,38,38,0.45)",   color: "#f87171", label: "✗  RED" },
-    pendente: { bg: "rgba(217,119,6,0.18)",   border: "rgba(217,119,6,0.45)",   color: "#fbbf24", label: "⏱  EM ABERTO" },
-    void:     { bg: "rgba(100,116,139,0.18)", border: "rgba(100,116,139,0.45)", color: "#94a3b8", label: "—  VOID" },
+    green:    { bg: C.greenBg,  border: C.greenBorder,  color: C.green, icon: "✅", label: "GREEN" },
+    red:      { bg: C.redBg,    border: C.redBorder,    color: C.red,   icon: "❌", label: "RED" },
+    pendente: { bg: C.amberBg,  border: C.amberBorder,  color: C.amber, icon: "⏳", label: "EM ABERTO" },
+    void:     { bg: C.grayBg,   border: C.grayBorder,   color: C.gray,  icon: "⬜", label: "VOID" },
   };
   const sc = statusMap[tip.status] || statusMap.pendente;
-  ctx.font = "bold 11px system-ui,-apple-system,sans-serif";
-  const bm = ctx.measureText(sc.label);
-  const bw = bm.width + 32, bh = 26, bx = (W - bw) / 2, by = 85;
 
+  // ── BACKGROUND ───────────────────────────────────────────
+  ctx.fillStyle = C.bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // ── HEADER (0 → 192px) ───────────────────────────────────
+  const hGrad = ctx.createLinearGradient(0, 0, W, 192);
+  hGrad.addColorStop(0, C.headerFrom);
+  hGrad.addColorStop(1, C.headerTo);
+  ctx.fillStyle = hGrad;
+  ctx.fillRect(0, 0, W, 192);
+
+  // Decorative circles in header
+  ctx.fillStyle = "rgba(255,255,255,0.055)";
+  ctx.beginPath(); ctx.arc(490, -35, 155, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(-15, 200, 115, 0, Math.PI * 2); ctx.fill();
+
+  // Top accent stripe
+  const accentG = ctx.createLinearGradient(0, 0, W, 0);
+  accentG.addColorStop(0, "#93c5fd");
+  accentG.addColorStop(0.5, "#bfdbfe");
+  accentG.addColorStop(1, "#93c5fd");
+  ctx.fillStyle = accentG;
+  ctx.fillRect(0, 0, W, 5);
+
+  // ── LOGO ─────────────────────────────────────────────────
+  const LOGO_SIZE = 52, LOGO_X = PAD, LOGO_Y = 26;
+  if (logoImg) {
+    ctx.save();
+    ctx.beginPath();
+    _drawRoundedRect(ctx, LOGO_X, LOGO_Y, LOGO_SIZE, LOGO_SIZE, 14);
+    ctx.clip();
+    ctx.drawImage(logoImg, LOGO_X, LOGO_Y, LOGO_SIZE, LOGO_SIZE);
+    ctx.restore();
+    // Subtle border over logo
+    ctx.strokeStyle = "rgba(255,255,255,0.22)";
+    ctx.lineWidth = 1.5;
+    _drawRoundedRect(ctx, LOGO_X, LOGO_Y, LOGO_SIZE, LOGO_SIZE, 14);
+    ctx.stroke();
+  } else {
+    // Fallback drawn logo
+    ctx.fillStyle = "rgba(255,255,255,0.15)";
+    _drawRoundedRect(ctx, LOGO_X, LOGO_Y, LOGO_SIZE, LOGO_SIZE, 14);
+    ctx.fill();
+    ctx.font = "900 30px system-ui,-apple-system,sans-serif";
+    ctx.fillStyle = "#ffffff";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("F", LOGO_X + LOGO_SIZE / 2, LOGO_Y + LOGO_SIZE / 2);
+  }
+
+  // Brand text
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+  ctx.font = "900 22px system-ui,-apple-system,sans-serif";
+  ctx.fillStyle = "#ffffff";
+  ctx.fillText("FLUXARA", LOGO_X + LOGO_SIZE + 14, LOGO_Y + 8);
+
+  ctx.font = "500 11px system-ui,-apple-system,sans-serif";
+  ctx.fillStyle = "rgba(255,255,255,0.60)";
+  ctx.fillText("TIPS & APOSTAS", LOGO_X + LOGO_SIZE + 14, LOGO_Y + 35);
+
+  // Date (top-right)
+  const today = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
+  ctx.font = "500 10px system-ui,sans-serif";
+  ctx.fillStyle = "rgba(255,255,255,0.50)";
+  ctx.textAlign = "right";
+  ctx.fillText(today, W - PAD, LOGO_Y + 20);
+  ctx.textAlign = "left";
+
+  // ── STATUS BADGE (floats on header bottom edge) ───────────
+  ctx.font = "800 14px system-ui,-apple-system,sans-serif";
+  const badgeLabel = sc.icon + "  " + sc.label;
+  const badgeW = ctx.measureText(badgeLabel).width + 52;
+  const badgeH = 44;
+  const badgeX = (W - badgeW) / 2;
+  const badgeY = 170;
+
+  _shadow(ctx, "rgba(15,23,42,0.20)", 18, 6);
   ctx.fillStyle = sc.bg;
-  _drawRoundedRect(ctx, bx, by, bw, bh, 13);
+  _drawRoundedRect(ctx, badgeX, badgeY, badgeW, badgeH, badgeH / 2);
   ctx.fill();
+  _clearShadow(ctx);
+
   ctx.strokeStyle = sc.border;
-  ctx.lineWidth = 1;
+  ctx.lineWidth = 1.5;
   ctx.stroke();
+
   ctx.fillStyle = sc.color;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText(sc.label, W / 2, by + bh / 2);
-  ctx.textBaseline = "top";
+  ctx.fillText(badgeLabel, W / 2, badgeY + badgeH / 2);
 
-  // === TITLE ===
-  ctx.font = "bold 24px system-ui,-apple-system,sans-serif";
-  ctx.fillStyle = "#f8fafc";
+  // ── CONTENT AREA ─────────────────────────────────────────
+  // Light card behind content (overlaps header at top)
+  const CARD_TOP = 192;
+  ctx.fillStyle = C.bg;
+  ctx.fillRect(0, CARD_TOP, W, H - CARD_TOP - 82);
+
+  // ── TITLE ────────────────────────────────────────────────
+  let curY = badgeY + badgeH + 22;
+
+  ctx.font = "bold 27px system-ui,-apple-system,sans-serif";
+  ctx.fillStyle = C.textDark;
   ctx.textAlign = "center";
-  let curY = 128;
-  curY = _wrapText(ctx, tip.titulo || "Recomendação", W / 2, curY, W - PAD * 2 - 10, 32);
+  ctx.textBaseline = "top";
+  curY = _wrapText(ctx, tip.titulo || "Recomendação", W / 2, curY, W - PAD * 2 - 16, 35);
+  curY += 18;
 
-  // === ODD TOTAL ===
+  // ── ODD HERO CARD ─────────────────────────────────────────
   if (tip.odd != null) {
-    curY += 10;
-    ctx.font = "600 10px system-ui,-apple-system,sans-serif";
-    ctx.fillStyle = "#334155";
+    const oddCardH = 94;
+    _shadow(ctx, "rgba(15,23,42,0.08)", 20, 5);
+    ctx.fillStyle = C.white;
+    _drawRoundedRect(ctx, PAD, curY, W - PAD * 2, oddCardH, 16);
+    ctx.fill();
+    _clearShadow(ctx);
+
+    // Blue left accent bar
+    ctx.fillStyle = C.blue;
+    _drawRoundedRect(ctx, PAD, curY, 5, oddCardH, 3);
+    ctx.fill();
+
+    // Lightning icon
+    ctx.font = "26px serif";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillText("⚡", PAD + 16, curY + oddCardH / 2);
+
+    // Label
+    ctx.font = "600 10.5px system-ui,sans-serif";
+    ctx.fillStyle = C.textMuted;
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
-    ctx.fillText("ODD TOTAL", W / 2, curY);
-    curY += 14;
-    ctx.font = "800 52px system-ui,-apple-system,sans-serif";
-    ctx.fillStyle = "#60a5fa";
-    ctx.fillText(tip.odd.toFixed(2), W / 2, curY);
-    curY += 58;
+    ctx.fillText("ODD TOTAL", W / 2 + 18, curY + 16);
+
+    // Odd value
+    const oddGrad = ctx.createLinearGradient(0, curY + 32, 0, curY + 84);
+    oddGrad.addColorStop(0, "#1d4ed8");
+    oddGrad.addColorStop(1, "#2563eb");
+    ctx.font = "900 54px system-ui,-apple-system,sans-serif";
+    ctx.fillStyle = oddGrad;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillText(tip.odd.toFixed(2), W / 2 + 18, curY + 30);
+
+    curY += oddCardH + 18;
   }
 
-  curY += 12;
-
-  // Section divider
-  ctx.strokeStyle = "rgba(255,255,255,0.07)";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(PAD, curY);
-  ctx.lineTo(W - PAD, curY);
-  ctx.stroke();
-  curY += 12;
-
-  // === GAMES ===
+  // ── GAMES ────────────────────────────────────────────────
   const hasGames = Array.isArray(tip.jogos) && tip.jogos.length > 0;
   if (hasGames) {
-    ctx.font = "700 9px system-ui,-apple-system,sans-serif";
-    ctx.fillStyle = "#334155";
+    ctx.font = "700 10px system-ui,sans-serif";
+    ctx.fillStyle = "#94a3b8";
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
-    ctx.fillText("JOGOS DA MÚLTIPLA", PAD, curY);
-    curY += 16;
+    ctx.fillText("⚽  JOGOS DA MÚLTIPLA", PAD, curY);
+    curY += 20;
 
-    const maxGames = Math.min(tip.jogos.length, 6);
-    for (let i = 0; i < maxGames; i++) {
+    const maxG = Math.min(tip.jogos.length, 5);
+    for (let i = 0; i < maxG; i++) {
       const j = tip.jogos[i];
-      const ROW_H = 58, rx = PAD, ry = curY, rw = W - PAD * 2;
+      const ROW_H = 76, rx = PAD, ry = curY, rw = W - PAD * 2;
 
-      ctx.fillStyle = "rgba(255,255,255,0.025)";
-      _drawRoundedRect(ctx, rx, ry, rw, ROW_H, 8);
+      _shadow(ctx, "rgba(15,23,42,0.07)", 12, 3);
+      ctx.fillStyle = C.white;
+      _drawRoundedRect(ctx, rx, ry, rw, ROW_H, 12);
       ctx.fill();
-      ctx.strokeStyle = "rgba(59,130,246,0.09)";
+      _clearShadow(ctx);
+
+      ctx.strokeStyle = C.border;
       ctx.lineWidth = 1;
       ctx.stroke();
 
-      ctx.fillStyle = "#1e40af";
-      _drawRoundedRect(ctx, rx + 8, ry + 8, 16, 16, 4);
+      // Blue left accent on each card
+      ctx.fillStyle = C.blue + "33";
+      _drawRoundedRect(ctx, rx, ry, 4, ROW_H, 2);
       ctx.fill();
-      ctx.font = "bold 9px system-ui,sans-serif";
-      ctx.fillStyle = "#93c5fd";
+
+      // Number badge
+      ctx.fillStyle = C.blueLight;
+      _drawRoundedRect(ctx, rx + 12, ry + ROW_H / 2 - 14, 28, 28, 8);
+      ctx.fill();
+      ctx.font = "bold 13px system-ui,sans-serif";
+      ctx.fillStyle = C.blue;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(String(i + 1), rx + 16, ry + 16);
-      ctx.textBaseline = "top";
+      ctx.fillText(String(i + 1), rx + 26, ry + ROW_H / 2);
+
       ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+
+      const textX = rx + 50;
+      const p = (j.partida || "").length > 27 ? (j.partida || "").slice(0, 25) + "…" : (j.partida || "");
+      ctx.font = "bold 14px system-ui,-apple-system,sans-serif";
+      ctx.fillStyle = C.textDark;
+      ctx.fillText(p, textX, ry + 11);
+
+      const m = (j.mercado || "").length > 25 ? (j.mercado || "").slice(0, 23) + "…" : (j.mercado || "");
+      ctx.font = "500 12px system-ui,sans-serif";
+      ctx.fillStyle = C.blue;
+      ctx.fillText(m, textX, ry + 31);
 
       if (j.campeonato) {
-        const c = j.campeonato.length > 32 ? j.campeonato.slice(0, 30) + "…" : j.campeonato;
-        ctx.font = "500 10px system-ui,sans-serif";
-        ctx.fillStyle = "#475569";
-        ctx.fillText(c, rx + 32, ry + 7);
+        const c = j.campeonato.length > 27 ? j.campeonato.slice(0, 25) + "…" : j.campeonato;
+        ctx.font = "400 11px system-ui,sans-serif";
+        ctx.fillStyle = "#94a3b8";
+        ctx.fillText(c, textX, ry + 51);
       }
-
-      const p = (j.partida || "").length > 36 ? (j.partida || "").slice(0, 34) + "…" : (j.partida || "");
-      ctx.font = "bold 14px system-ui,-apple-system,sans-serif";
-      ctx.fillStyle = "#e2e8f0";
-      ctx.fillText(p, rx + 32, ry + 20);
-
-      const m = (j.mercado || "").length > 30 ? (j.mercado || "").slice(0, 28) + "…" : (j.mercado || "");
-      ctx.font = "500 11px system-ui,sans-serif";
-      ctx.fillStyle = "#64748b";
-      ctx.fillText(m, rx + 32, ry + 38);
 
       if (j.odd != null) {
-        ctx.font = "bold 15px system-ui,-apple-system,sans-serif";
-        ctx.fillStyle = "#60a5fa";
+        ctx.font = "bold 16px system-ui,-apple-system,sans-serif";
+        ctx.fillStyle = C.green;
         ctx.textAlign = "right";
         ctx.textBaseline = "middle";
-        ctx.fillText("@ " + j.odd.toFixed(2), rx + rw - 10, ry + ROW_H / 2);
-        ctx.textBaseline = "top";
+        ctx.fillText("@ " + j.odd.toFixed(2), rx + rw - 14, ry + ROW_H / 2);
         ctx.textAlign = "left";
+        ctx.textBaseline = "top";
       }
 
-      curY += ROW_H + 6;
+      curY += ROW_H + 8;
     }
   } else if (tip.partida) {
-    const ROW_H = 58, rx = PAD, ry = curY, rw = W - PAD * 2;
-    ctx.fillStyle = "rgba(255,255,255,0.025)";
-    _drawRoundedRect(ctx, rx, ry, rw, ROW_H, 8);
+    const ROW_H = 76;
+    _shadow(ctx, "rgba(15,23,42,0.07)", 12, 3);
+    ctx.fillStyle = C.white;
+    _drawRoundedRect(ctx, PAD, curY, W - PAD * 2, ROW_H, 12);
     ctx.fill();
-    ctx.strokeStyle = "rgba(59,130,246,0.09)";
+    _clearShadow(ctx);
+    ctx.strokeStyle = C.border;
     ctx.lineWidth = 1;
     ctx.stroke();
-    if (tip.campeonato) {
-      ctx.font = "500 10px system-ui,sans-serif";
-      ctx.fillStyle = "#475569";
-      ctx.textAlign = "left";
-      ctx.fillText(tip.campeonato, rx + 12, ry + 8);
-    }
-    ctx.font = "bold 15px system-ui,-apple-system,sans-serif";
-    ctx.fillStyle = "#e2e8f0";
     ctx.textAlign = "left";
-    ctx.fillText(tip.partida.length > 36 ? tip.partida.slice(0, 34) + "…" : tip.partida, rx + 12, ry + 24);
-    curY += ROW_H + 6;
+    ctx.textBaseline = "top";
+    if (tip.campeonato) {
+      ctx.font = "400 11px system-ui,sans-serif";
+      ctx.fillStyle = "#94a3b8";
+      ctx.fillText(tip.campeonato, PAD + 16, curY + 12);
+    }
+    ctx.font = "bold 15px system-ui,sans-serif";
+    ctx.fillStyle = C.textDark;
+    ctx.fillText(
+      tip.partida.length > 34 ? tip.partida.slice(0, 32) + "…" : tip.partida,
+      PAD + 16, curY + 34
+    );
+    curY += ROW_H + 8;
   }
 
   // Stake
   if (tip.stake) {
-    curY += 6;
+    curY += 4;
     ctx.font = "500 12px system-ui,sans-serif";
-    ctx.fillStyle = "#475569";
+    ctx.fillStyle = C.textMuted;
     ctx.textAlign = "center";
-    ctx.fillText("Stake: " + tip.stake, W / 2, curY);
+    ctx.textBaseline = "top";
+    ctx.fillText("💰  Stake: " + tip.stake, W / 2, curY);
   }
 
-  // === FOOTER ===
-  ctx.strokeStyle = "rgba(255,255,255,0.07)";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(PAD, H - 88);
-  ctx.lineTo(W - PAD, H - 88);
-  ctx.stroke();
+  // ── FOOTER BAND ───────────────────────────────────────────
+  const footerY = H - 82;
+  const fGrad = ctx.createLinearGradient(0, footerY, W, H);
+  fGrad.addColorStop(0, C.headerFrom);
+  fGrad.addColorStop(1, C.headerTo);
+  ctx.fillStyle = fGrad;
+  ctx.fillRect(0, footerY, W, 82);
 
   ctx.font = "400 10px system-ui,sans-serif";
-  ctx.fillStyle = "#334155";
+  ctx.fillStyle = "rgba(255,255,255,0.48)";
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
-  ctx.fillText("Aposte com responsabilidade · 18+", W / 2, H - 74);
+  ctx.fillText("⚠️  Aposte com responsabilidade · +18", W / 2, footerY + 10);
 
-  ctx.font = "bold 18px system-ui,-apple-system,sans-serif";
-  ctx.fillStyle = barGrad;
-  ctx.fillText("fluxara.app", W / 2, H - 48);
+  ctx.font = "800 22px system-ui,-apple-system,sans-serif";
+  ctx.fillStyle = "#ffffff";
+  ctx.fillText("fluxara.app", W / 2, footerY + 32);
 
-  ctx.fillStyle = barGrad;
-  ctx.fillRect(0, H - 5, W, 5);
+  // Bottom accent stripe
+  ctx.fillStyle = accentG;
+  ctx.fillRect(0, H - 4, W, 4);
 
   return canvas;
 }
 
-function openStoryModal(tipId) {
+async function openStoryModal(tipId) {
   const tips = window._cachedTips || [];
   const tip = tips.find(t => t.id === tipId);
   if (!tip) return;
 
-  const canvas = generateTipStoryCanvas(tip);
-  const dataUrl = canvas.toDataURL("image/png");
-
   const overlay = document.getElementById("storyModalOverlay");
-  const img = document.getElementById("storyPreviewImg");
-  const dlBtn = document.getElementById("storyDownloadBtn");
   if (!overlay) return;
 
-  img.src = dataUrl;
-  dlBtn.href = dataUrl;
-  dlBtn.download = "fluxara-tip-" + tipId + ".png";
+  const img    = document.getElementById("storyPreviewImg");
+  const dlBtn  = document.getElementById("storyDownloadBtn");
+
+  img.src = "";
   overlay.style.display = "flex";
+  if (dlBtn) { dlBtn.style.opacity = "0.4"; dlBtn.style.pointerEvents = "none"; }
+
+  const logoImg = await new Promise((resolve) => {
+    const image = new Image();
+    image.onload  = () => resolve(image);
+    image.onerror = () => resolve(null);
+    image.src = "/static/images/logos/pwa-192.png";
+  });
+
+  const canvas  = generateTipStoryCanvas(tip, logoImg);
+  const dataUrl = canvas.toDataURL("image/png");
+
+  img.src = dataUrl;
+  if (dlBtn) {
+    dlBtn.href     = dataUrl;
+    dlBtn.download = "fluxara-tip-" + tipId + ".png";
+    dlBtn.style.opacity      = "";
+    dlBtn.style.pointerEvents = "";
+  }
 }
 
 function closeStoryModal() {
