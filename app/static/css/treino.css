@@ -414,6 +414,121 @@
   box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.12);
 }
 
+/* ===== GUIDE BANNER ===== */
+.treino-guide {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--primary);
+  border-radius: 12px;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.treino-guide-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 11px 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--primary);
+  gap: 8px;
+  text-align: left;
+  transition: background 0.12s;
+}
+
+.treino-guide-toggle:hover {
+  background: rgba(13, 110, 253, 0.04);
+}
+
+.treino-guide-toggle span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.treino-guide-toggle > .bi {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  transition: transform 0.18s;
+}
+
+.treino-guide-body {
+  padding: 0 16px 14px;
+  border-top: 1px solid var(--border);
+}
+
+.treino-guide-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 12px;
+}
+
+.treino-guide-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.treino-guide-num {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(13, 110, 253, 0.12);
+  color: var(--primary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+}
+
+.treino-guide-step p {
+  margin: 0;
+  font-size: 0.825rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.treino-guide-step p strong {
+  color: var(--text);
+}
+
+.treino-guide-note {
+  margin: 12px 0 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.treino-guide-note strong {
+  color: var(--text);
+}
+
+/* ===== FIELD HINT ===== */
+.treino-field-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.treino-field-hint .bi {
+  color: #f59e0b;
+  font-size: 0.72rem;
+}
+
 /* ===== DARK THEME ===== */
 [data-theme="dark"] .treino-tabs {
   background: rgba(255, 255, 255, 0.06);

@@ -33,6 +33,35 @@
 
   <!-- Tab Hoje -->
   <div id="tab-treino-hoje">
+
+    <div class="treino-guide" id="treinoGuide">
+      <button class="treino-guide-toggle" onclick="toggleTreinoGuide()" type="button">
+        <span><i class="bi bi-info-circle-fill"></i> Como funciona</span>
+        <i class="bi bi-chevron-up" id="treinoGuideIcon"></i>
+      </button>
+      <div class="treino-guide-body" id="treinoGuideBody">
+        <div class="treino-guide-steps">
+          <div class="treino-guide-step">
+            <span class="treino-guide-num">1</span>
+            <p>Toque em <strong>Adicionar exercício</strong> para registrar um exercício no treino de hoje.</p>
+          </div>
+          <div class="treino-guide-step">
+            <span class="treino-guide-num">2</span>
+            <p>Escolha o <strong>grupo muscular</strong> — o campo de exercício exibirá sugestões automaticamente.</p>
+          </div>
+          <div class="treino-guide-step">
+            <span class="treino-guide-num">3</span>
+            <p>Informe <strong>repetições</strong> e <strong>peso</strong> para a primeira série e salve.</p>
+          </div>
+          <div class="treino-guide-step">
+            <span class="treino-guide-num">4</span>
+            <p>Para adicionar mais séries ao mesmo exercício, use o botão <strong>+ Série</strong> no card.</p>
+          </div>
+        </div>
+        <p class="treino-guide-note"><i class="bi bi-clock-history"></i> A aba <strong>Histórico</strong> exibe todos os treinos anteriores.</p>
+      </div>
+    </div>
+
     <div class="treino-stats">
       <div class="treino-stat">
         <span class="treino-stat-value" id="statExercicios">–</span>
@@ -42,9 +71,9 @@
         <span class="treino-stat-value" id="statSeries">–</span>
         <span class="treino-stat-label">séries</span>
       </div>
-      <div class="treino-stat">
+      <div class="treino-stat" title="Volume total = séries × repetições × peso">
         <span class="treino-stat-value" id="statVolume">–</span>
-        <span class="treino-stat-label">volume</span>
+        <span class="treino-stat-label">volume (kg)</span>
       </div>
     </div>
 
@@ -90,22 +119,23 @@
       <div class="mb-3">
         <label class="form-label">Exercício *</label>
         <input type="text" class="form-control" id="modalExercicio"
-               placeholder="Nome do exercício" list="exerciciosSugestoes" autocomplete="off">
+               placeholder="Ex: Supino reto" list="exerciciosSugestoes" autocomplete="off">
         <datalist id="exerciciosSugestoes"></datalist>
+        <div class="treino-field-hint"><i class="bi bi-lightbulb"></i> Selecione o grupo muscular para ver sugestões de exercícios</div>
       </div>
       <div class="row g-2 mb-3">
         <div class="col">
           <label class="form-label">Repetições</label>
-          <input type="number" class="form-control" id="modalReps" min="1" max="999" placeholder="–">
+          <input type="number" class="form-control" id="modalReps" min="1" max="999" placeholder="Ex: 12">
         </div>
         <div class="col">
           <label class="form-label">Peso (kg)</label>
-          <input type="number" class="form-control" id="modalPeso" min="0" max="9999" step="0.5" placeholder="–">
+          <input type="number" class="form-control" id="modalPeso" min="0" max="9999" step="0.5" placeholder="Ex: 60">
         </div>
       </div>
       <div class="mb-3">
         <label class="form-label">Duração <span class="text-muted">(seg, para cardio)</span></label>
-        <input type="number" class="form-control" id="modalDuracao" min="1" placeholder="–">
+        <input type="number" class="form-control" id="modalDuracao" min="1" placeholder="Ex: 45">
       </div>
       <div class="mb-3">
         <label class="form-label">Observação</label>
