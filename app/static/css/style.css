@@ -825,14 +825,26 @@ body {
     background: var(--mobile-header-bg);
   }
 
+  .main::before {
+    content: '';
+    position: fixed;
+    top: var(--header-height);
+    left: 0;
+    right: 0;
+    height: 24px;
+    background: var(--bg);
+    border-radius: 20px 20px 0 0;
+    z-index: 100;
+    pointer-events: none;
+  }
+
   .content {
     margin-top: var(--header-height);
-    padding-top: 16px;
+    padding-top: 24px;
     padding-bottom: calc(var(--bottom-nav-height) + 16px);
     padding-left: 10px;
     padding-right: 10px;
     background: var(--bg);
-    border-radius: 20px 20px 0 0;
     min-height: calc(100vh - var(--header-height));
   }
 
