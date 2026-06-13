@@ -194,8 +194,8 @@ body {
 }
 
 .sidebar .logo img {
-  width: auto;
-  max-height: 96px;
+  width: 56px;
+  height: 56px;
   display: block;
   margin: 0 auto;
   object-fit: contain;
