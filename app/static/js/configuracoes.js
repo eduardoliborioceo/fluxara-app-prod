@@ -191,6 +191,7 @@
     if (urlPanel === 'categorias') loadCategorias();
     if (urlPanel === 'cartoes') loadCartoes();
     if (urlPanel === 'gastosDev') loadGastosDev();
+    if (urlPanel === 'notificacoes') initNotifPanel();
     const panelId = 'view' + urlPanel.charAt(0).toUpperCase() + urlPanel.slice(1);
     if (document.getElementById(panelId)) showPanel(panelId);
   }
