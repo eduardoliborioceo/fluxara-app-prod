@@ -24,6 +24,12 @@
   }
 }
 
+@media (min-width: 768px) {
+  .btn-back {
+    display: none !important;
+  }
+}
+
 /* ========================
    SETTINGS CARD
 ======================== */
