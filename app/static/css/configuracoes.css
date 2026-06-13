@@ -1367,3 +1367,7 @@
   color: var(--text-muted);
   margin-top: 8px;
 }
+
+@media (min-width: 768px) {
+  .btn-back { display: none; }
+}
