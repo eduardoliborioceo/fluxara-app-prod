@@ -101,7 +101,7 @@
         <div class="assin-price-brl">
           <span>R$</span> 11,40
         </div>
-        <div class="assin-price-usd">≈ US$ 2,00 <span style="font-size:.7rem;">(câmbio ~R$ 5,70)</span></div>
+        <div class="assin-price-usd">≈ US$ <span id="assinUsdValue">2,00</span> <span style="font-size:.7rem;" id="assinCambioInfo">(câmbio ~R$ 5,70)</span></div>
         <div class="assin-price-period">por mês</div>
       </div>
 
@@ -482,4 +482,23 @@
 {% if mp_public_key %}
 <script src="https://sdk.mercadopago.com/js/v2"></script>
 {% endif %}
+
+<script>
+(function () {
+  var BRL_PRICE = 11.40;
+  fetch('https://economia.awesomeapi.com.br/json/last/USD-BRL')
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      var rate = parseFloat(data.USDBRL && data.USDBRL.bid);
+      if (!rate || isNaN(rate)) return;
+      var usd = (BRL_PRICE / rate).toFixed(2).replace('.', ',');
+      var rateStr = rate.toFixed(2).replace('.', ',');
+      var elUsd  = document.getElementById('assinUsdValue');
+      var elInfo = document.getElementById('assinCambioInfo');
+      if (elUsd)  elUsd.textContent  = usd;
+      if (elInfo) elInfo.textContent = '(câmbio atual R$ ' + rateStr + ')';
+    })
+    .catch(function () {});
+})();
+</script>
 {% endblock %}
