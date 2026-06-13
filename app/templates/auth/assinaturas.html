@@ -86,7 +86,7 @@
 
     {% else %}
     <!-- Plan card: selecionar e assinar -->
-    <div class="assin-plan-card" id="planCard">
+    <div class="assin-plan-card" id="planCard"{% if dados.assinatura_pendente %} style="display:none"{% endif %}>
       <div class="assin-plan-header">
         <div class="assin-plan-icon">
           <i class="bi bi-graph-up-arrow"></i>
@@ -179,14 +179,14 @@
     </div>
 
     <!-- Banner de sucesso -->
-    <div class="assin-success-banner" id="successBanner">
+    <div class="assin-success-banner{% if dados.assinatura_pendente %} visible{% endif %}" id="successBanner">
       <i class="bi bi-check-circle-fill"></i>
       <div class="assin-success-title">Solicitação enviada!</div>
       <div class="assin-success-sub">
         Após confirmarmos o pagamento sua assinatura será ativada em até 24h.
         Você receberá uma notificação quando o acesso for liberado.
       </div>
-      <button class="assin-cancel-attempt-btn" id="btnCancelarTentativa" onclick="cancelarTentativaAssinatura()" style="display:none">
+      <button class="assin-cancel-attempt-btn" id="btnCancelarTentativa" onclick="cancelarTentativaAssinatura()"{% if not dados.assinatura_pendente %} style="display:none"{% endif %}>
         <i class="bi bi-x-circle"></i> Não paguei — cancelar tentativa
       </button>
     </div>
@@ -269,7 +269,7 @@
 <script>
 (function () {
   var _metodoAtual = null;
-  var _assinaturaIdPendente = null;
+  var _assinaturaIdPendente = {{ dados.assinatura_pendente.id | tojson if dados.assinatura_pendente else 'null' }};
 
   window.trocarTab = function (tab, btn) {
     document.querySelectorAll('.assin-tab-btn').forEach(function (b) { b.classList.remove('active'); });

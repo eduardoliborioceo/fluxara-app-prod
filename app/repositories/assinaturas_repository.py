@@ -26,6 +26,18 @@ def get_historico_user(user_id: int):
             return cur.fetchall()
 
 
+def get_assinatura_pendente(user_id: int, plano: str = 'apostas'):
+    with get_db() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("""
+                SELECT * FROM assinaturas
+                WHERE user_id = %s AND plano = %s AND status = 'pendente'
+                ORDER BY criado_em DESC
+                LIMIT 1
+            """, (user_id, plano))
+            return cur.fetchone()
+
+
 def criar_assinatura(user_id: int, plano: str, metodo_pagamento: str,
                      valor_usd: float, valor_brl: float):
     with get_db() as conn:
