@@ -1058,6 +1058,23 @@
     }
   });
 
+  function setNotifDesktopOnly() {
+    const icon  = document.getElementById('notifStatusIcon');
+    const title = document.getElementById('notifStatusTitle');
+    const desc  = document.getElementById('notifStatusDesc');
+    const btn   = document.getElementById('btnToggleNotif');
+    const test  = document.getElementById('notifTestWrap');
+    const prefs = document.getElementById('notifPrefsSection');
+
+    if (icon)  { icon.innerHTML = '<i class="bi bi-phone" style="color:#64748b"></i>'; icon.style.background = '#f1f5f9'; }
+    if (title) title.textContent = 'Disponível apenas no app instalado';
+    if (desc)  desc.textContent  = 'Notificações push funcionam somente no Fluxara instalado como app no celular. Abra o site no navegador do seu celular e instale o app.';
+    if (btn)   btn.style.display = 'none';
+    if (test)  test.classList.add('d-none');
+    if (prefs) prefs.classList.add('d-none');
+    setNotifLabel('Apenas no app');
+  }
+
   async function initNotifPanel() {
     if (_notifInitialized) return;
     _notifInitialized = true;
@@ -1076,16 +1093,31 @@
       return;
     }
 
+    const isPwa = window.matchMedia('(display-mode: standalone)').matches ||
+                  window.navigator.standalone === true;
+
+    if (!isPwa) {
+      setNotifDesktopOnly();
+      return;
+    }
+
     try {
       const keyResp = await fetch('/api/push/vapid-key');
       const keyData = await keyResp.json();
       _vapidKey = keyData.key;
 
-      _swReg = await navigator.serviceWorker.ready;
+      const swTimeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('sw_timeout')), 6000)
+      );
+      _swReg = await Promise.race([navigator.serviceWorker.ready, swTimeout]);
       const existing = await _swReg.pushManager.getSubscription();
       setNotifUI(!!existing);
     } catch (e) {
-      setNotifLabel('Erro');
+      if (e.message === 'sw_timeout') {
+        setNotifDesktopOnly();
+      } else {
+        setNotifLabel('Erro');
+      }
     }
   }
 
