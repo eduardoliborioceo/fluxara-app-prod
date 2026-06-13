@@ -186,6 +186,9 @@
         Após confirmarmos o pagamento sua assinatura será ativada em até 24h.
         Você receberá uma notificação quando o acesso for liberado.
       </div>
+      <button class="assin-cancel-attempt-btn" id="btnCancelarTentativa" onclick="cancelarTentativaAssinatura()" style="display:none">
+        <i class="bi bi-x-circle"></i> Não paguei — cancelar tentativa
+      </button>
     </div>
 
     {% endif %}
@@ -266,6 +269,7 @@
 <script>
 (function () {
   var _metodoAtual = null;
+  var _assinaturaIdPendente = null;
 
   window.trocarTab = function (tab, btn) {
     document.querySelectorAll('.assin-tab-btn').forEach(function (b) { b.classList.remove('active'); });
@@ -394,12 +398,43 @@
       .then(function (r) { return r.json(); })
       .then(function (data) {
         if (data.error) { alert(data.error); btn.disabled = false; return; }
+        _assinaturaIdPendente = data.id;
         var planCard = document.getElementById('planCard');
         var successBanner = document.getElementById('successBanner');
+        var btnCancelar = document.getElementById('btnCancelarTentativa');
         if (planCard) planCard.style.display = 'none';
         if (successBanner) successBanner.classList.add('visible');
+        if (btnCancelar) btnCancelar.style.display = '';
       })
       .catch(function () { btn.disabled = false; alert('Erro ao processar. Tente novamente.'); });
+  };
+
+  window.cancelarTentativaAssinatura = function () {
+    if (!_assinaturaIdPendente) return;
+    var btnCancelar = document.getElementById('btnCancelarTentativa');
+    btnCancelar.disabled = true;
+    fetch('/api/assinaturas/' + _assinaturaIdPendente + '/cancelar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.error) { btnCancelar.disabled = false; alert(data.error); return; }
+        _assinaturaIdPendente = null;
+        var planCard = document.getElementById('planCard');
+        var successBanner = document.getElementById('successBanner');
+        var btnAssinar = document.getElementById('btnAssinar');
+        var detPix = document.getElementById('detalhePix');
+        if (successBanner) successBanner.classList.remove('visible');
+        if (planCard) planCard.style.display = '';
+        if (btnAssinar) btnAssinar.disabled = false;
+        if (detPix) detPix.classList.remove('visible');
+        document.getElementById('btnPix').classList.remove('selected');
+        document.getElementById('btnCartao').classList.remove('selected');
+        document.getElementById('btnAssinarTexto').textContent = 'Selecione uma forma de pagamento';
+        _metodoAtual = null;
+      })
+      .catch(function () { btnCancelar.disabled = false; alert('Erro ao cancelar. Tente novamente.'); });
   };
 
   (function () {
