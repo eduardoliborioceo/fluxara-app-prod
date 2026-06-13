@@ -1070,9 +1070,9 @@
       return;
     }
 
-    const permDenied = document.getElementById('notifPermDenied');
     if (Notification.permission === 'denied') {
-      permDenied && (permDenied.style.display = '');
+      const permDenied = document.getElementById('notifPermDenied');
+      if (permDenied) permDenied.style.display = '';
       setNotifLabel('Bloqueadas');
       return;
     }
@@ -1082,14 +1082,21 @@
       const keyData = await keyResp.json();
       _vapidKey = keyData.key;
 
-      const swTimeout = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('sw_timeout')), 6000)
-      );
-      _swReg = await Promise.race([navigator.serviceWorker.ready, swTimeout]);
+      let reg = await navigator.serviceWorker.getRegistration('/');
+      if (!reg) {
+        reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+      }
+
+      _swReg = await Promise.race([
+        navigator.serviceWorker.ready,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('sw_timeout')), 15000)),
+      ]);
+
       const existing = await _swReg.pushManager.getSubscription();
       setNotifUI(!!existing);
     } catch (e) {
-      setNotifLabel('Erro');
+      console.error('initNotifPanel error:', e);
+      setNotifUI(false);
     }
   }
 
