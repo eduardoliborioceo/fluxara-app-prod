@@ -64,11 +64,18 @@ def get_dados_admin() -> dict:
     }
 
 
+def get_assinatura_pendente(user_id: int, plano: str = 'apostas'):
+    row = repo.get_assinatura_pendente(user_id, plano)
+    return dict(row) if row else None
+
+
 def get_dados_pagina(user_id: int) -> dict:
     assinatura_ativa = get_assinatura_ativa(user_id)
+    assinatura_pendente = get_assinatura_pendente(user_id) if not assinatura_ativa else None
     historico = get_historico(user_id)
     return {
         'planos': PLANOS,
         'assinatura_ativa': assinatura_ativa,
+        'assinatura_pendente': assinatura_pendente,
         'historico': historico,
     }
