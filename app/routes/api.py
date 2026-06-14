@@ -196,16 +196,19 @@ def push_test():
     if not subs:
         return jsonify({"ok": False, "reason": "no_subscription"})
 
+    sent = 0
     errors = []
     for sub in subs:
         err = _send(sub, {"title": "Fluxara", "body": "Notificações funcionando!", "url": "/"})
         if err:
             errors.append(err)
+        else:
+            sent += 1
 
-    if errors:
-        return jsonify({"ok": False, "errors": errors})
+    if sent > 0:
+        return jsonify({"ok": True, "sent": sent, "errors": errors})
 
-    return jsonify({"ok": True})
+    return jsonify({"ok": False, "errors": errors})
 
 
 @bp.route("/push/status", methods=["GET"])
