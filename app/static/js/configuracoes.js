@@ -1203,6 +1203,9 @@
           _vapidKey = keyData.key;
         }
 
+        const stale = await _swReg.pushManager.getSubscription();
+        if (stale) await stale.unsubscribe();
+
         const sub = await _swReg.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: urlBase64ToUint8Array(_vapidKey),
