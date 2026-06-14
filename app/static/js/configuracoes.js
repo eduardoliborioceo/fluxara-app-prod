@@ -1002,12 +1002,12 @@
   }
 
   function setNotifUI(subscribed) {
-    const icon    = document.getElementById('notifStatusIcon');
-    const title   = document.getElementById('notifStatusTitle');
-    const desc    = document.getElementById('notifStatusDesc');
-    const btn     = document.getElementById('btnToggleNotif');
-    const test    = document.getElementById('notifTestWrap');
-    const prefs   = document.getElementById('notifPrefsSection');
+    const icon  = document.getElementById('notifStatusIcon');
+    const title = document.getElementById('notifStatusTitle');
+    const desc  = document.getElementById('notifStatusDesc');
+    const btn   = document.getElementById('btnToggleNotif');
+    const test  = document.getElementById('notifTestWrap');
+    const prefs = document.getElementById('notifPrefsSection');
 
     if (subscribed) {
       if (icon)  { icon.innerHTML = '<i class="bi bi-bell-fill" style="color:#16a34a"></i>'; icon.style.background = '#f0fdf4'; }
@@ -1029,15 +1029,28 @@
     }
   }
 
+  function notifSetError(msg) {
+    const box  = document.getElementById('notifErrorBox');
+    const text = document.getElementById('notifErrorText');
+    if (box && text) { text.textContent = msg; box.classList.remove('d-none'); }
+  }
+
+  function notifClearError() {
+    document.getElementById('notifErrorBox')?.classList.add('d-none');
+  }
+
+  function notifDiag(lines) {
+    const el = document.getElementById('notifDiagContent');
+    if (el) el.innerHTML = lines.join('<br>');
+  }
+
   async function loadNotifPrefs() {
     try {
       const r = await fetch('/api/push/prefs');
       const prefs = await r.json();
       document.querySelectorAll('.cfg-notif-pref-btn').forEach(btn => {
         const cat = btn.dataset.category;
-        if (cat in prefs) {
-          btn.dataset.state = prefs[cat] ? 'on' : 'off';
-        }
+        if (cat in prefs) btn.dataset.state = prefs[cat] ? 'on' : 'off';
       });
     } catch (_) {}
   }
@@ -1059,44 +1072,91 @@
     }
   });
 
+  async function _ensureSwReady() {
+    if (_swReg && _swReg.active) return _swReg;
+    let reg = await navigator.serviceWorker.getRegistration('/');
+    if (!reg) reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+    _swReg = await Promise.race([
+      navigator.serviceWorker.ready,
+      new Promise((_, reject) => setTimeout(() => reject(new Error('sw_timeout')), 20000)),
+    ]);
+    return _swReg;
+  }
+
   async function initNotifPanel() {
     if (_notifInitialized) return;
     _notifInitialized = true;
+
+    const diag = [];
 
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
       document.getElementById('notifUnsupported')?.classList.remove('d-none');
       document.getElementById('notifSupported')?.classList.add('d-none');
       setNotifLabel('Não suportado');
+      notifDiag(['❌ Service Worker ou PushManager não suportado neste navegador.']);
       return;
     }
+    diag.push('✅ Service Worker e PushManager suportados');
 
     if (Notification.permission === 'denied') {
       const permDenied = document.getElementById('notifPermDenied');
       if (permDenied) permDenied.style.display = '';
       setNotifLabel('Bloqueadas');
+      diag.push('❌ Permissão de notificação: NEGADA');
+      notifDiag(diag);
       return;
     }
+    diag.push('✅ Permissão: ' + Notification.permission);
+
+    // Mostra "desativadas" imediatamente — UI fica responsiva sem aguardar SW
+    setNotifUI(false);
 
     try {
       const keyResp = await fetch('/api/push/vapid-key');
       const keyData = await keyResp.json();
       _vapidKey = keyData.key;
+      diag.push(_vapidKey ? '✅ VAPID key recebida' : '❌ VAPID key ausente — configure VAPID_PUBLIC_KEY');
+    } catch (e) {
+      diag.push('❌ Falha ao buscar VAPID key: ' + e.message);
+      notifDiag(diag);
+      return;
+    }
 
+    // Verifica subscrição existente sem bloquear a UI
+    try {
       let reg = await navigator.serviceWorker.getRegistration('/');
       if (!reg) {
         reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+        diag.push('⚙️ Service Worker registrado agora');
+      } else {
+        diag.push('✅ Service Worker já registrado');
       }
 
-      _swReg = await Promise.race([
-        navigator.serviceWorker.ready,
-        new Promise((_, reject) => setTimeout(() => reject(new Error('sw_timeout')), 15000)),
-      ]);
-
-      const existing = await _swReg.pushManager.getSubscription();
-      setNotifUI(!!existing);
+      if (reg.active) {
+        _swReg = reg;
+        diag.push('✅ Service Worker ativo');
+        const existing = await reg.pushManager.getSubscription();
+        diag.push(existing ? '✅ Subscrição push ativa' : 'ℹ️ Sem subscrição push (desativada)');
+        notifDiag(diag);
+        if (existing) setNotifUI(true);
+      } else {
+        diag.push('⚙️ Service Worker instalando — aguardando ativação...');
+        notifDiag(diag);
+        navigator.serviceWorker.ready.then(activeReg => {
+          _swReg = activeReg;
+          return activeReg.pushManager.getSubscription();
+        }).then(existing => {
+          const d = document.getElementById('notifDiagContent');
+          if (d) d.innerHTML += '<br>✅ Service Worker ativado';
+          if (existing) setNotifUI(true);
+        }).catch(err => {
+          const d = document.getElementById('notifDiagContent');
+          if (d) d.innerHTML += '<br>❌ Erro na ativação do SW: ' + err.message;
+        });
+      }
     } catch (e) {
-      console.error('initNotifPanel error:', e);
-      setNotifUI(false);
+      diag.push('❌ Erro ao inicializar SW: ' + e.message);
+      notifDiag(diag);
     }
   }
 
@@ -1111,26 +1171,38 @@
     const btn   = document.getElementById('btnToggleNotif');
     const state = btn.dataset.state;
     btn.disabled = true;
+    notifClearError();
 
     try {
       if (state === 'on') {
-        const sub = await _swReg.pushManager.getSubscription();
-        if (sub) {
-          await sub.unsubscribe();
-          await fetch('/api/push/unsubscribe', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ endpoint: sub.endpoint }),
-          });
+        if (_swReg) {
+          const sub = await _swReg.pushManager.getSubscription();
+          if (sub) {
+            await sub.unsubscribe();
+            await fetch('/api/push/unsubscribe', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ endpoint: sub.endpoint }),
+            });
+          }
         }
         setNotifUI(false);
       } else {
         const permission = await Notification.requestPermission();
         if (permission !== 'granted') {
-          document.getElementById('notifPermDenied').style.display = '';
+          const denied = document.getElementById('notifPermDenied');
+          if (denied) denied.style.display = '';
           btn.disabled = false;
           return;
         }
+
+        await _ensureSwReady();
+
+        if (!_vapidKey) {
+          const keyData = await (await fetch('/api/push/vapid-key')).json();
+          _vapidKey = keyData.key;
+        }
+
         const sub = await _swReg.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: urlBase64ToUint8Array(_vapidKey),
@@ -1145,6 +1217,7 @@
       }
     } catch (err) {
       console.error('Push toggle error:', err);
+      notifSetError('Não foi possível configurar as notificações: ' + err.message);
     }
     btn.disabled = false;
   });
