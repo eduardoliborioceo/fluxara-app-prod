@@ -436,7 +436,11 @@ function buildTipCard(tip, isAdmin) {
     ? `<span class="tips-odd-display"><i class="bi bi-calculator"></i>Odd total: <strong>${tip.odd.toFixed(2)}</strong></span>`
     : "";
 
-  const idHtml = `<span class="tips-id-display"><i class="bi bi-hash"></i>ID: <strong>#${tip.id}</strong></span>`;
+  const idHtml = `<span class="tips-id-display">ID: <strong>${tip.id}</strong></span>`;
+
+  const storyBtnHtml = isAdmin
+    ? `<button class="tips-story-btn" onclick="openStoryModal(${tip.id})" title="Baixar imagem para Story"><i class="bi bi-download"></i></button>`
+    : "";
 
   let linkHtml = "";
   if (tip.link_aposta) {
@@ -448,6 +452,7 @@ function buildTipCard(tip, isAdmin) {
         <button class="tips-copy-btn" data-link="${escHtml(tip.link_aposta)}" onclick="copyTipLink(this)" title="Copiar link">
           <i class="bi bi-clipboard"></i>
         </button>
+        ${storyBtnHtml}
       </div>`;
   }
 
@@ -463,16 +468,14 @@ function buildTipCard(tip, isAdmin) {
       ${detailsHtml}
     </div>` : "";
 
-  const storyBtn = isAdmin
-    ? `<button class="tips-story-btn" onclick="openStoryModal(${tip.id})" title="Baixar imagem para Story"><i class="bi bi-download"></i></button>`
-    : "";
+  const storyStandalone = (isAdmin && !tip.link_aposta) ? storyBtnHtml : "";
 
   return `
     <div class="tips-card" id="tip-${tip.id}" data-status="${escHtml(tip.status)}">
       <div class="tips-card-header">
         ${statusBadge}
         <span class="tips-card-title">${escHtml(tip.titulo)}</span>
-        ${storyBtn}
+        ${storyStandalone}
       </div>
       ${(oddHtml || idHtml || linkHtml) ? `<div class="tips-card-row2">${oddHtml}${idHtml}${linkHtml}</div>` : ""}
       ${toggleSection}
