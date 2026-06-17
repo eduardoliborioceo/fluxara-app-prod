@@ -591,6 +591,14 @@
           </div>
         </div>
         <div class="cartao-visual-actions mb-2">
+          <button class="btn btn-outline-secondary btn-sm cartao-move-btn"
+            onclick="moverCartao(${c.id}, -1)" title="Mover para cima">
+            <i class="bi bi-arrow-up"></i>
+          </button>
+          <button class="btn btn-outline-secondary btn-sm cartao-move-btn"
+            onclick="moverCartao(${c.id}, 1)" title="Mover para baixo">
+            <i class="bi bi-arrow-down"></i>
+          </button>
           <button class="btn btn-outline-secondary btn-sm"
             onclick="abrirEditarCartao(${c.id})">
             <i class="bi bi-pencil me-1"></i>Editar
@@ -607,6 +615,21 @@
       </div>`;
     }).join('');
   }
+
+  window.moverCartao = async function (id, delta) {
+    const idx = _cartoesCache.findIndex(c => c.id === id);
+    if (idx < 0) return;
+    const newIdx = idx + delta;
+    if (newIdx < 0 || newIdx >= _cartoesCache.length) return;
+    const updated = [..._cartoesCache];
+    [updated[idx], updated[newIdx]] = [updated[newIdx], updated[idx]];
+    renderCartoes(updated);
+    await fetch('/api/cartoes/reorder', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: updated.map(c => c.id) }),
+    });
+  };
 
   function renderContaOption(id, nome, inst, selected) {
     const logo = buildLogoHtml(inst, 28);

@@ -468,6 +468,17 @@ def cartoes_delete(cartao_id):
     return jsonify({"ok": True})
 
 
+@bp.route("/cartoes/reorder", methods=["PUT"])
+@login_required
+def cartoes_reorder():
+    data = request.get_json() or {}
+    ids = data.get("ids", [])
+    if not isinstance(ids, list) or not all(isinstance(i, int) for i in ids):
+        return jsonify({"error": "ids inválido"}), 400
+    cartoes_service.reorder_cartoes(current_user.id, ids)
+    return jsonify({"ok": True})
+
+
 @bp.route("/cartoes/transferir-limite", methods=["POST"])
 @login_required
 def cartoes_transferir_limite():

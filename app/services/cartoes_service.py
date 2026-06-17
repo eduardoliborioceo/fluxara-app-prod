@@ -50,6 +50,12 @@ def remove_cartao(cartao_id: int, user_id: int):
     repo.delete_cartao(cartao_id, user_id)
 
 
+def reorder_cartoes(user_id: int, ordered_ids: list[int]) -> None:
+    if not ordered_ids:
+        return
+    repo.reorder_cartoes(user_id, ordered_ids)
+
+
 def transferir_limite(cartao_origem_id: int, cartao_destino_id: int, user_id: int, valor) -> None:
     if cartao_origem_id == cartao_destino_id:
         raise ValueError("Cartão de origem e destino não podem ser o mesmo")
