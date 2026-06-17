@@ -500,13 +500,13 @@
 
   <!-- ====== PAINEL TERMOS DE USO ====== -->
   <div id="viewTermos" class="settings-panel d-none">
-    <button class="btn-back" id="btnBackTermos">
+    <button class="btn-back cfg-subpanel-back" id="btnBackTermos">
       <i class="bi bi-chevron-left"></i> Sobre
     </button>
     <div class="settings-card mt-3">
       <div class="settings-card-title">Termos de Uso</div>
       <ul class="settings-menu">
-        <li class="settings-item" onclick="window.open('{{ url_for('pages.privacy_policy') }}', '_blank')">
+        <li class="settings-item" data-subpanel="privacidade">
           <span class="menu-icon" style="background:#eff6ff;color:#2563eb">
             <i class="bi bi-shield-check"></i>
           </span>
@@ -514,9 +514,9 @@
             <span class="settings-label">Política de Privacidade</span>
             <span class="settings-value">Como seus dados são usados</span>
           </div>
-          <i class="bi bi-box-arrow-up-right settings-chevron" style="font-size:.75rem"></i>
+          <i class="bi bi-chevron-right settings-chevron"></i>
         </li>
-        <li class="settings-item" onclick="window.open('{{ url_for('pages.cookie_policy') }}', '_blank')">
+        <li class="settings-item" data-subpanel="cookies">
           <span class="menu-icon" style="background:#fff7ed;color:#ea580c">
             <i class="bi bi-cookie"></i>
           </span>
@@ -524,9 +524,120 @@
             <span class="settings-label">Política de Cookies</span>
             <span class="settings-value">Uso de cookies no sistema</span>
           </div>
-          <i class="bi bi-box-arrow-up-right settings-chevron" style="font-size:.75rem"></i>
+          <i class="bi bi-chevron-right settings-chevron"></i>
         </li>
       </ul>
+    </div>
+  </div>
+
+  <!-- ====== PAINEL POLÍTICA DE PRIVACIDADE ====== -->
+  <div id="viewPrivacidade" class="settings-panel d-none">
+    <button class="btn-back cfg-subpanel-back" id="btnBackPrivacidade">
+      <i class="bi bi-chevron-left"></i> Termos de Uso
+    </button>
+    <div class="settings-card mt-3">
+      <div class="settings-card-title">Política de Privacidade</div>
+      <div class="cfg-legal-content">
+        <p class="cfg-legal-updated">Última atualização: 1º de abril de 2026</p>
+        <p>Esta Política de Privacidade descreve como o <strong>Fluxara</strong> coleta, utiliza, armazena e protege os dados pessoais dos seus usuários, em conformidade com a Lei nº 13.709/2018 (LGPD) e demais normas aplicáveis no Brasil.</p>
+        <h3>1. Sobre o Fluxara</h3>
+        <p>O Fluxara é uma plataforma de gestão financeira pessoal que permite organizar receitas, despesas, contas bancárias, cartões de crédito, planejamento orçamentário e acompanhamento do patrimônio pessoal.</p>
+        <h3>2. Dados Pessoais Coletados</h3>
+        <ul>
+          <li><strong>Dados de cadastro:</strong> nome completo, nome de usuário e e-mail</li>
+          <li><strong>Dados de contato:</strong> telefone, endereço residencial (opcional)</li>
+          <li><strong>Credenciais de acesso:</strong> senha armazenada exclusivamente em hash criptografado</li>
+          <li><strong>Dados financeiros:</strong> contas bancárias, cartões, lançamentos e planejamento orçamentário</li>
+          <li><strong>Dados de uso:</strong> logs de acesso, sessão e preferências do sistema</li>
+          <li><strong>Foto de perfil:</strong> quando enviada voluntariamente</li>
+        </ul>
+        <h3>3. Finalidade do Tratamento</h3>
+        <ul>
+          <li>Autenticação, controle de acesso e segurança da conta</li>
+          <li>Armazenamento e organização das informações financeiras inseridas pelo usuário</li>
+          <li>Geração de relatórios, projeções de saldo e resumos financeiros</li>
+          <li>Envio de comunicações operacionais, como redefinição de senha</li>
+          <li>Notificações sobre limites orçamentários e vencimentos de faturas</li>
+        </ul>
+        <h3>4. Base Legal</h3>
+        <ul>
+          <li><strong>Consentimento (art. 7º, I):</strong> ao se cadastrar, o usuário consente com o tratamento dos seus dados</li>
+          <li><strong>Execução de contrato (art. 7º, V):</strong> necessário para prestação dos serviços da plataforma</li>
+          <li><strong>Legítimo interesse (art. 7º, IX):</strong> para melhoria da segurança e funcionamento do sistema</li>
+        </ul>
+        <h3>5. Armazenamento e Segurança</h3>
+        <ul>
+          <li>Banco de dados PostgreSQL hospedado em nuvem (Railway) com backups regulares</li>
+          <li>Senhas armazenadas exclusivamente com hash seguro — nunca em texto simples</li>
+          <li>Comunicação via HTTPS com certificado SSL/TLS</li>
+          <li>Controle de acesso baseado em perfil de usuário (autenticação obrigatória)</li>
+          <li>Tokens de sessão com expiração automática</li>
+        </ul>
+        <h3>6. Compartilhamento de Dados</h3>
+        <p>O Fluxara <strong>não comercializa, vende ou compartilha dados pessoais</strong> de seus usuários com terceiros para fins comerciais ou publicitários. O compartilhamento ocorre somente por obrigação legal, determinação judicial ou com provedores essenciais à operação (Railway, Cloudinary).</p>
+        <h3>7. Retenção dos Dados</h3>
+        <p>Os dados são mantidos enquanto a conta estiver ativa. Ao solicitar exclusão da conta, todos os dados pessoais e financeiros são permanentemente removidos, exceto quando a retenção for exigida por obrigação legal.</p>
+        <h3>8. Direitos do Titular</h3>
+        <ul>
+          <li>Confirmação da existência de tratamento dos seus dados</li>
+          <li>Acesso aos dados pessoais armazenados</li>
+          <li>Correção de dados incompletos ou desatualizados</li>
+          <li>Exclusão dos dados tratados com base em consentimento</li>
+          <li>Portabilidade dos dados para outro serviço</li>
+          <li>Revogação do consentimento a qualquer momento</li>
+        </ul>
+        <h3>9. Transferência Internacional</h3>
+        <p>Os dados podem ser processados em servidores fora do Brasil (Railway — EUA). Esses serviços adotam medidas adequadas de proteção em conformidade com padrões internacionais de segurança.</p>
+        <h3>10. Atualizações</h3>
+        <p>Esta Política pode ser atualizada a qualquer momento. Alterações relevantes serão comunicadas pelo sistema. O uso continuado da plataforma após a atualização implica aceite das novas condições.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== PAINEL POLÍTICA DE COOKIES ====== -->
+  <div id="viewCookies" class="settings-panel d-none">
+    <button class="btn-back cfg-subpanel-back" id="btnBackCookies">
+      <i class="bi bi-chevron-left"></i> Termos de Uso
+    </button>
+    <div class="settings-card mt-3">
+      <div class="settings-card-title">Política de Cookies</div>
+      <div class="cfg-legal-content">
+        <p class="cfg-legal-updated">Última atualização: 1º de abril de 2026</p>
+        <p>Esta Política explica como o <strong>Fluxara</strong> utiliza cookies e tecnologias similares para garantir o funcionamento seguro e adequado da aplicação.</p>
+        <h3>1. O que são Cookies?</h3>
+        <p>Cookies são pequenos arquivos de texto armazenados pelo navegador quando o usuário acessa uma aplicação web. Eles permitem que o sistema reconheça sessões, mantenha preferências do usuário e garanta o funcionamento técnico seguro da plataforma.</p>
+        <h3>2. Cookies Utilizados pelo Fluxara</h3>
+        <p>O Fluxara utiliza exclusivamente cookies essenciais e técnicos. Não utilizamos cookies de rastreamento, publicidade ou análise de marketing.</p>
+        <div class="cfg-legal-table-wrap">
+          <table class="cfg-legal-table">
+            <thead><tr><th>Cookie</th><th>Finalidade</th><th>Duração</th></tr></thead>
+            <tbody>
+              <tr><td><code>session</code></td><td>Mantém o usuário autenticado (Flask-Login)</td><td>Sessão do navegador</td></tr>
+              <tr><td>Cookies OAuth</td><td>Utilizados nos fluxos de autenticação com Google e GitHub</td><td>Temporário</td></tr>
+              <tr><td>Preferências locais</td><td>Tema e layout (localStorage)</td><td>Persistente local</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>3. Finalidade dos Cookies</h3>
+        <ul>
+          <li>Manter o usuário autenticado durante a sessão ativa</li>
+          <li>Garantir a integridade e segurança da navegação</li>
+          <li>Proteger o acesso contra requisições não autorizadas (CSRF)</li>
+          <li>Armazenar preferências de interface localmente</li>
+        </ul>
+        <h3>4. Cookies de Marketing</h3>
+        <p>O Fluxara <strong>não utiliza</strong> cookies de rastreamento comportamental, publicidade direcionada, pixels de conversão ou ferramentas de análise de marketing de terceiros.</p>
+        <h3>5. Gerenciamento de Cookies</h3>
+        <p>O usuário pode configurar seu navegador para bloquear ou excluir cookies. A desativação de cookies essenciais irá impedir o acesso autenticado ao sistema.</p>
+        <ul>
+          <li>Google Chrome: Configurações → Privacidade e segurança → Cookies</li>
+          <li>Mozilla Firefox: Configurações → Privacidade e Segurança</li>
+          <li>Safari: Preferências → Privacidade</li>
+          <li>Microsoft Edge: Configurações → Cookies e permissões do site</li>
+        </ul>
+        <h3>6. Conformidade Legal</h3>
+        <p>O uso de cookies está em conformidade com a LGPD (Lei nº 13.709/2018). Apenas cookies estritamente necessários são utilizados, sem necessidade de consentimento explícito para cookies técnicos essenciais.</p>
+      </div>
     </div>
   </div>
 
@@ -587,7 +698,7 @@
               <i class="bi bi-person-fill-gear"></i>
               Eduardo Libório
             </div>
-            <div class="cfg-about-dev-role">CEO · Vertex Code</div>
+            <div class="cfg-about-dev-role">Fundador · Vertex Code</div>
             <div class="cfg-about-dev-links">
               <a href="https://www.vertexcode.com.br" class="cfg-about-dev-link-circle" target="_blank" rel="noopener noreferrer" title="Vertex Code">
                 <img src="{{ url_for('static', filename='images/logos/vertex_code_logo_github_900x900.png') }}?v={{ static_v }}"

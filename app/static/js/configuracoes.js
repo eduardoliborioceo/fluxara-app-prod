@@ -139,6 +139,8 @@
       viewImportExport: 'Importar / Exportar',
       viewSobre: 'Sobre',
       viewTermos: 'Termos de Uso',
+      viewPrivacidade: 'Política de Privacidade',
+      viewCookies: 'Política de Cookies',
       viewConvite: 'Convide seus amigos',
       viewSobreApp: 'Sobre o Fluxara',
     };
@@ -178,6 +180,8 @@
   document.getElementById('btnBackTermos')?.addEventListener('click', () => showPanel('viewSobre'));
   document.getElementById('btnBackConvite')?.addEventListener('click', () => showPanel('viewSobre'));
   document.getElementById('btnBackSobreApp')?.addEventListener('click', () => showPanel('viewSobre'));
+  document.getElementById('btnBackPrivacidade')?.addEventListener('click', () => showPanel('viewTermos'));
+  document.getElementById('btnBackCookies')?.addEventListener('click', () => showPanel('viewTermos'));
 
   document.querySelectorAll('.settings-item[data-subpanel]').forEach(item => {
     item.addEventListener('click', () => {
