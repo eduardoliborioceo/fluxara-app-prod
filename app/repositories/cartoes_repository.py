@@ -22,7 +22,7 @@ def list_cartoes(user_id: int, mes: int = 0, ano: int = 0) -> list:
                 FROM cartoes_credito cc
                 LEFT JOIN contas_bancarias cb ON cb.id = cc.conta_id
                 WHERE cc.user_id = %s AND cc.ativo = TRUE
-                ORDER BY cc.criado_em
+                ORDER BY COALESCE(cc.posicao, 0), cc.criado_em
             """, (mes, mes, ano, ano, user_id))
             return cur.fetchall()
 
@@ -49,6 +49,17 @@ def update_cartao(cartao_id: int, user_id: int, nome: str, limite: float, bandei
                     dia_fechamento = %s, dia_vencimento = %s, tipo = %s
                 WHERE id = %s AND user_id = %s AND ativo = TRUE
             """, (nome, limite, bandeira, conta_id, dia_fechamento, dia_vencimento, tipo, cartao_id, user_id))
+        conn.commit()
+
+
+def reorder_cartoes(user_id: int, ordered_ids: list[int]) -> None:
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            for pos, cartao_id in enumerate(ordered_ids):
+                cur.execute(
+                    "UPDATE cartoes_credito SET posicao = %s WHERE id = %s AND user_id = %s AND ativo = TRUE",
+                    (pos, cartao_id, user_id)
+                )
         conn.commit()
 
 
