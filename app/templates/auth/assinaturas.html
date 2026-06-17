@@ -197,20 +197,40 @@
     {% if dados.historico %}
     <div class="assin-historico-card">
       <div class="assin-historico-title">Histórico de assinaturas</div>
+      {% set ns = namespace(prev_year=None) %}
       {% for item in dados.historico %}
-      <div class="assin-historico-item">
-        <div class="assin-hist-dot assin-hist-dot--{{ item.status }}"></div>
-        <div class="assin-hist-info">
-          <div class="assin-hist-plano">{{ item.plano|capitalize }}</div>
-          <div class="assin-hist-meta">
-            {{ item.criado_em.strftime('%d/%m/%Y') }}
-            · {{ item.metodo_pagamento or '—' }}
+        {% set item_year = item.criado_em.year %}
+        {% if item_year != ns.prev_year %}
+          {% if ns.prev_year is not none %}</div>{% endif %}
+          {% set year_items = dados.historico | selectattr('criado_em') | list %}
+          {% set year_total = dados.historico | selectattr('criado_em') | selectattr('criado_em', 'ne', None) | list %}
+          {% set total_ano = namespace(val=0) %}
+          {% for h in dados.historico %}
+            {% if h.criado_em and h.criado_em.year == item_year %}
+              {% set total_ano.val = total_ano.val + (h.valor_brl or 0) %}
+            {% endif %}
+          {% endfor %}
+          <div class="assin-hist-year-header">
+            <span class="assin-hist-year-label">{{ item_year }}</span>
+            <span class="assin-hist-year-total">Total: R$ {{ "%.2f"|format(total_ano.val) }}</span>
           </div>
+          <div class="assin-hist-year-items">
+          {% set ns.prev_year = item_year %}
+        {% endif %}
+        <div class="assin-historico-item">
+          <div class="assin-hist-dot assin-hist-dot--{{ item.status }}"></div>
+          <div class="assin-hist-info">
+            <div class="assin-hist-plano">{{ item.plano|capitalize }}</div>
+            <div class="assin-hist-meta">
+              {{ item.criado_em.strftime('%d/%m/%Y') }}
+              · {{ item.metodo_pagamento or '—' }}
+            </div>
+          </div>
+          <div class="assin-hist-valor">R$ {{ "%.2f"|format(item.valor_brl) }}</div>
+          <span class="assin-hist-status assin-hist-status--{{ item.status }}">{{ item.status }}</span>
         </div>
-        <div class="assin-hist-valor">R$ {{ "%.2f"|format(item.valor_brl) }}</div>
-        <span class="assin-hist-status assin-hist-status--{{ item.status }}">{{ item.status }}</span>
-      </div>
       {% endfor %}
+      {% if ns.prev_year is not none %}</div>{% endif %}
     </div>
     {% endif %}
 
