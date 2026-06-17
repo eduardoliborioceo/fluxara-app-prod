@@ -522,6 +522,33 @@
 .assin-hist-status--cancelada,
 .assin-hist-status--expirada { background: rgba(220,53,69,.1); color: #dc3545; }
 
+.assin-hist-year-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0 6px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 6px;
+}
+
+.assin-hist-year-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+}
+
+.assin-hist-year-total {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.assin-hist-year-items {
+  margin-bottom: 12px;
+}
+
 /* ---- Admin panel ---- */
 .assin-admin-stats {
   display: grid;
