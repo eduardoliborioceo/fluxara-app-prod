@@ -43,6 +43,7 @@
     month--;
     if (month < 0) { month = 11; year--; }
     updateMesLabel();
+    loadCartaoInfo();
     loadExtrato();
   });
 
@@ -50,6 +51,7 @@
     month++;
     if (month > 11) { month = 0; year++; }
     updateMesLabel();
+    loadCartaoInfo();
     loadExtrato();
   });
 
