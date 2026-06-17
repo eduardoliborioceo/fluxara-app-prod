@@ -111,7 +111,6 @@ self.addEventListener("push", (event) => {
   const options = {
     body: payload.body || "",
     icon: "/static/images/logos/pwa-192.png",
-    badge: "/static/images/logos/fluxara_android_badge_96.png",
     data: { url: payload.url || "/" },
     vibrate: [200, 100, 200],
     tag: payload.tag || ("fluxara-" + Date.now()),
