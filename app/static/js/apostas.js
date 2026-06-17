@@ -1588,7 +1588,7 @@ async function openStoryModal(tipId) {
     const image = new Image();
     image.onload  = () => resolve(image);
     image.onerror = () => resolve(null);
-    image.src = "/static/images/logos/pwa-192.png";
+    image.src = "/static/images/logos/Icon-mobile-logo-vector.png";
   });
 
   const canvas  = generateTipStoryCanvas(tip, logoImg);
