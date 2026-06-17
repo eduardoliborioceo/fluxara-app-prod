@@ -42,9 +42,28 @@
 
           <div class="dev-form-group">
             <label class="dev-label">Público-alvo</label>
-            <input type="text" name="publico_alvo" class="dev-input" maxlength="200"
-                   value="{{ projeto.publico_alvo if projeto else '' }}"
-                   placeholder="Ex: Pequenas empresas">
+            {% set publico_options = [
+              'Público Geral',
+              'Pessoas Físicas (B2C)',
+              'Pequenas Empresas (SMB)',
+              'Médias e Grandes Empresas',
+              'Startups',
+              'Desenvolvedores (B2D)',
+              'Freelancers / Autônomos',
+              'Estudantes',
+              'Empresas de Tecnologia',
+              'Setor Financeiro'
+            ] %}
+            {% set val = projeto.publico_alvo if projeto else '' %}
+            <select name="publico_alvo" class="dev-input">
+              <option value="">Selecione o público-alvo</option>
+              {% for opt in publico_options %}
+              <option value="{{ opt }}" {{ 'selected' if val == opt else '' }}>{{ opt }}</option>
+              {% endfor %}
+              {% if val and val not in publico_options %}
+              <option value="{{ val }}" selected>{{ val }}</option>
+              {% endif %}
+            </select>
           </div>
 
           <div class="dev-form-group">
@@ -114,6 +133,12 @@
 <!-- TEMPLATE DE LINHA DE CUSTO (hidden) -->
 <template id="custosRowTemplate">
   <div class="dev-custo-row">
+    <div class="dev-custo-row-header">
+      <span class="dev-custo-row-num">Custo 1</span>
+      <button type="button" class="dev-custo-remove" title="Remover custo">
+        <i class="bi bi-trash"></i>
+      </button>
+    </div>
     <div class="dev-custo-fields">
 
       <div class="dev-form-group dev-form-group--wide">
@@ -227,9 +252,6 @@
       </div>
 
     </div>
-    <button type="button" class="dev-custo-remove" title="Remover custo">
-      <i class="bi bi-trash"></i>
-    </button>
   </div>
 </template>
 {% endblock %}
