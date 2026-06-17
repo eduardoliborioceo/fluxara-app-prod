@@ -66,8 +66,8 @@
                   <td style="max-width:320px;">
                     <div style="white-space:pre-wrap;font-size:.83rem;color:#1e293b;">{{ t.mensagem | truncate(120) }}</div>
                     {% if t.resposta %}
-                    <div style="margin-top:6px;padding:6px 10px;background:#f0fdf4;border-left:3px solid #16a34a;border-radius:6px;font-size:.78rem;color:#065f46;">
-                      <strong>Resposta:</strong> {{ t.resposta | truncate(80) }}
+                    <div style="margin-top:6px;padding:6px 10px;background:#f0fdf4;border-left:3px solid #16a34a;border-radius:6px;font-size:.78rem;color:#065f46;white-space:pre-wrap;word-break:break-word;">
+                      <strong>Resposta:</strong> {{ t.resposta }}
                     </div>
                     {% endif %}
                   </td>
