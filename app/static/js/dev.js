@@ -120,6 +120,13 @@
     msg.style.display = document.querySelectorAll('.dev-custo-row').length === 0 ? 'block' : 'none';
   }
 
+  function renumberCustos() {
+    document.querySelectorAll('.dev-custo-row').forEach(function (row, idx) {
+      var label = row.querySelector('.dev-custo-row-num');
+      if (label) label.textContent = 'Custo ' + (idx + 1);
+    });
+  }
+
   function injectCustomTypes(select) {
     var customs = window.devCustomTypes || [];
     // Remove previously injected custom options
@@ -184,6 +191,7 @@
         row.remove();
         updateTotals();
         updateNoCustosMsg();
+        renumberCustos();
       });
     }
 
@@ -262,6 +270,7 @@
     if (data) setRowValues(row, data);
 
     updateNoCustosMsg();
+    renumberCustos();
     updateTotals();
   }
 
