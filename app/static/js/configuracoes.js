@@ -1260,6 +1260,18 @@
 
   resetBtn?.addEventListener('click', async () => {
     if (resetInput.value.trim() !== 'RESETAR') return;
+    const opcoes = {
+      financeiro: document.getElementById('resetOptFinanceiro')?.checked ?? true,
+      tags: document.getElementById('resetOptTags')?.checked ?? false,
+      saude: document.getElementById('resetOptSaude')?.checked ?? false,
+      surebet: document.getElementById('resetOptSurebet')?.checked ?? false,
+      desenvolvedor: document.getElementById('resetOptDesenvolvedor')?.checked ?? false,
+    };
+    if (!Object.values(opcoes).some(Boolean)) {
+      resetMsg.className = 'cfg-danger-msg cfg-danger-msg--err';
+      resetMsg.textContent = 'Selecione ao menos uma área para resetar.';
+      return;
+    }
     resetBtn.disabled = true;
     resetBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Resetando...';
     resetMsg.className = 'cfg-danger-msg d-none';
@@ -1267,16 +1279,26 @@
     const r = await fetch('/api/config/reset-dados', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ confirmar: 'RESETAR' }),
+      body: JSON.stringify({ confirmar: 'RESETAR', ...opcoes }),
     });
     const data = await r.json();
 
-    resetBtn.innerHTML = '<i class="bi bi-trash3-fill"></i> Resetar dados financeiros';
+    resetBtn.innerHTML = '<i class="bi bi-trash3-fill"></i> Resetar dados selecionados';
     if (data.ok) {
       resetInput.value = '';
       resetMsg.className = 'cfg-danger-msg cfg-danger-msg--ok';
+      const partes = [];
       const res = data.resultado;
-      resetMsg.textContent = `Dados removidos: ${res.lancamentos} lançamentos, ${res.cartoes} cartões, ${res.contas} contas, ${res.orcamentos} orçamentos.`;
+      if (res.lancamentos != null) partes.push(`${res.lancamentos} lançamentos`);
+      if (res.cartoes != null) partes.push(`${res.cartoes} cartões`);
+      if (res.contas != null) partes.push(`${res.contas} contas`);
+      if (res.orcamentos != null) partes.push(`${res.orcamentos} orçamentos`);
+      if (res.tags != null) partes.push(`${res.tags} tags`);
+      if (res.surebet != null) partes.push(`${res.surebet} alavancagens`);
+      if (res.desenvolvedor != null) partes.push(`${res.desenvolvedor} projetos`);
+      if (res.saude != null) partes.push('dados de saúde');
+      resetMsg.textContent = 'Removidos: ' + (partes.join(', ') || 'nada selecionado') + '.';
+      setTimeout(() => { location.reload(); }, 1500);
     } else {
       resetMsg.className = 'cfg-danger-msg cfg-danger-msg--err';
       resetMsg.textContent = data.error || 'Erro ao resetar dados.';

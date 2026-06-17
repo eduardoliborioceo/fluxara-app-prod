@@ -109,5 +109,7 @@ def remove_subcategoria(sub_id: int, user_id: int):
     repo.delete_subcategoria(sub_id, user_id)
 
 
-def resetar_dados_financeiros(user_id: int) -> dict:
-    return repo.reset_dados_financeiros(user_id)
+def resetar_dados_financeiros(user_id: int, opcoes: dict | None = None) -> dict:
+    if opcoes is None:
+        opcoes = {"financeiro": True}
+    return repo.reset_dados_financeiros(user_id, opcoes)

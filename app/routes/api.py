@@ -118,7 +118,16 @@ def config_reset_dados():
     data = request.get_json() or {}
     if data.get("confirmar") != "RESETAR":
         return jsonify({"error": "Confirmação inválida"}), 400
-    resultado = config_service.resetar_dados_financeiros(current_user.id)
+    opcoes = {
+        "financeiro": bool(data.get("financeiro")),
+        "tags": bool(data.get("tags")),
+        "saude": bool(data.get("saude")),
+        "surebet": bool(data.get("surebet")),
+        "desenvolvedor": bool(data.get("desenvolvedor")),
+    }
+    if not any(opcoes.values()):
+        return jsonify({"error": "Selecione ao menos uma área para resetar"}), 400
+    resultado = config_service.resetar_dados_financeiros(current_user.id, opcoes)
     return jsonify({"ok": True, "resultado": resultado})
 
 

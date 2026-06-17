@@ -390,23 +390,38 @@
           <div class="cfg-danger-icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
           <div class="cfg-danger-title">Atenção: ação irreversível</div>
           <div class="cfg-danger-desc">
-            Esta operação irá remover permanentemente todos os seus <strong>lançamentos</strong>,
-            <strong>cartões de crédito</strong> e <strong>contas bancárias</strong>.
-            Suas categorias padrão serão mantidas.
+            Selecione as áreas que deseja resetar. Os dados removidos <strong>não podem ser recuperados</strong>.
+            Suas categorias nunca são apagadas.
           </div>
           <div class="cfg-danger-checklist">
-            <div class="cfg-danger-check cfg-danger-check--red"><i class="bi bi-x-circle-fill"></i> Lançamentos e transações</div>
-            <div class="cfg-danger-check cfg-danger-check--red"><i class="bi bi-x-circle-fill"></i> Cartões de crédito</div>
-            <div class="cfg-danger-check cfg-danger-check--red"><i class="bi bi-x-circle-fill"></i> Contas bancárias</div>
-            <div class="cfg-danger-check cfg-danger-check--red"><i class="bi bi-x-circle-fill"></i> Orçamentos</div>
-            <div class="cfg-danger-check cfg-danger-check--green"><i class="bi bi-check-circle-fill"></i> Categorias (mantidas)</div>
+            <label class="cfg-reset-option">
+              <input type="checkbox" id="resetOptFinanceiro" checked>
+              <span class="cfg-reset-option-label"><i class="bi bi-wallet2"></i> Financeiro <small>(lançamentos, contas, cartões, orçamentos)</small></span>
+            </label>
+            <label class="cfg-reset-option">
+              <input type="checkbox" id="resetOptTags">
+              <span class="cfg-reset-option-label"><i class="bi bi-tags"></i> Tags</span>
+            </label>
+            <label class="cfg-reset-option">
+              <input type="checkbox" id="resetOptSaude">
+              <span class="cfg-reset-option-label"><i class="bi bi-heart-pulse"></i> Minha Saúde <small>(perfil, histórico, refeições, exercícios)</small></span>
+            </label>
+            <label class="cfg-reset-option">
+              <input type="checkbox" id="resetOptSurebet">
+              <span class="cfg-reset-option-label"><i class="bi bi-graph-up-arrow"></i> Surebet — Alavancagem</span>
+            </label>
+            <label class="cfg-reset-option">
+              <input type="checkbox" id="resetOptDesenvolvedor">
+              <span class="cfg-reset-option-label"><i class="bi bi-code-square"></i> Desenvolvedor <small>(projetos e custos)</small></span>
+            </label>
+            <div class="cfg-danger-check cfg-danger-check--green mt-2"><i class="bi bi-check-circle-fill"></i> Categorias (sempre mantidas)</div>
           </div>
           <div class="cfg-danger-confirm-wrap">
             <label class="cfg-danger-label">Para confirmar, digite <strong>RESETAR</strong> abaixo:</label>
             <input type="text" id="resetConfirmInput" class="cfg-danger-input" placeholder="RESETAR" autocomplete="off">
           </div>
           <button class="cfg-danger-btn" id="btnResetarDados" disabled>
-            <i class="bi bi-trash3-fill"></i> Resetar dados financeiros
+            <i class="bi bi-trash3-fill"></i> Resetar dados selecionados
           </button>
           <div id="resetMsg" class="cfg-danger-msg d-none"></div>
         </div>
