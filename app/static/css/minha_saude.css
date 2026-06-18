@@ -8,6 +8,10 @@
   padding: 4px 16px 100px;
 }
 
+@media (max-width: 767px) {
+  .saude-wrapper { padding: 4px 0 100px; }
+}
+
 @media (min-width: 992px) {
   .saude-wrapper {
     max-width: none;

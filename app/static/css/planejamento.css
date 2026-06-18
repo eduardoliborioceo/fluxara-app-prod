@@ -1,5 +1,9 @@
 .plan-page { max-width: 680px; margin: 0 auto; padding: 0 12px 100px; }
 
+@media (max-width: 767px) {
+  .plan-page { padding: 0 0 100px; }
+}
+
 @media (min-width: 992px) {
   .plan-page { max-width: none; padding: 0 28px 100px; }
 }
