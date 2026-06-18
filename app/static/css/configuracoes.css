@@ -6,6 +6,10 @@
   padding: 16px;
 }
 
+@media (max-width: 767px) {
+  .cfg-wrapper { padding: 16px 0; }
+}
+
 @media (min-width: 992px) {
   .cfg-wrapper {
     max-width: none;

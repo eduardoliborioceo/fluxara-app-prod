@@ -7,6 +7,10 @@
   max-width: 100%;
 }
 
+@media (max-width: 767px) {
+  .dev-page { padding: 16px 0 100px; }
+}
+
 @media (min-width: 992px) {
   .dev-page {
     padding: 0 28px 60px;

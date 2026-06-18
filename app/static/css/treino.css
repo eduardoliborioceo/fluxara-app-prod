@@ -5,6 +5,10 @@
   padding: 0 16px 40px;
 }
 
+@media (max-width: 767px) {
+  .treino-wrap { padding: 0 0 40px; }
+}
+
 /* ===== TABS ===== */
 .treino-tabs {
   display: flex;
