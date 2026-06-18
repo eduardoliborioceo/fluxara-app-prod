@@ -83,14 +83,10 @@
       if (!cartao) return;
       var b = BANDEIRAS[cartao.bandeira] || BANDEIRAS.outro;
       var grad = BANDEIRA_GRADIENTS[cartao.bandeira] || BANDEIRA_GRADIENTS.outro;
-      var faturaTotal = parseFloat(cartao.fatura_atual || 0);
       var limDisp = parseFloat(cartao.limite_disponivel != null ? cartao.limite_disponivel : cartao.limite) || 0;
-      faturaAtualTotal = faturaTotal;
 
       var visual = document.getElementById('cartaoVisual');
       if (visual) visual.style.background = grad;
-      var valEl = document.getElementById('cartaoVisualValor');
-      if (valEl) valEl.textContent = formatMoney(faturaTotal);
       var bandEl = document.getElementById('cartaoVisualBandeira');
       if (bandEl) bandEl.innerHTML = buildBandeiraVisual(b);
       var dispEl = document.getElementById('cartaoInfoDisp');
@@ -102,6 +98,12 @@
     } catch (e) {}
   }
 
+  function _updateFaturaDisplay(total) {
+    faturaAtualTotal = total;
+    var valEl = document.getElementById('cartaoVisualValor');
+    if (valEl) valEl.textContent = formatMoney(total);
+  }
+
   async function loadExtrato() {
     var body = document.getElementById('extratoBody');
     body.innerHTML = '<div class="text-center py-4 text-muted small">Carregando...</div>';
@@ -110,11 +112,17 @@
       var r = await fetch('/api/cartoes/' + cartaoId + '/lancamentos?mes=' + mes + '&ano=' + year);
       var data = await r.json();
       if (!Array.isArray(data) || !data.length) {
+        _updateFaturaDisplay(0);
         body.innerHTML = '<div class="text-center py-4 text-muted small">'
           + '<i class="bi bi-inbox d-block mb-1" style="font-size:1.8rem;opacity:.3"></i>'
           + 'Nenhuma despesa nesta fatura</div>';
         return;
       }
+      var faturaTotal = data.reduce(function (acc, tx) {
+        var v = parseFloat(tx.valor || 0);
+        return acc + (tx.tipo === 'pagamento_fatura' ? -v : v);
+      }, 0);
+      _updateFaturaDisplay(faturaTotal);
       body.innerHTML = data.map(function (tx) {
         var isPagamento = tx.tipo === 'pagamento_fatura';
         var iconClass = isPagamento ? 'extrato-tx-icon--receita' : 'extrato-tx-icon--despesa-cartao';
