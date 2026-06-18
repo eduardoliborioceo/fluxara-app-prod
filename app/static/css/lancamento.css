@@ -675,6 +675,36 @@
   gap: 8px;
 }
 
+.lanc-tag-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lanc-tag-add-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: none;
+  background: var(--primary, #0d6efd);
+  color: #fff;
+  font-size: .95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity .15s;
+}
+
+.lanc-tag-add-btn:hover {
+  opacity: .85;
+}
+
+[data-theme="escuro"] .lanc-tag-add-btn {
+  background: #3b82f6;
+}
+
 .lanc-tag-colors {
   display: flex;
   flex-wrap: wrap;

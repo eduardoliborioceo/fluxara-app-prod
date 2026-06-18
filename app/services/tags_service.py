@@ -20,8 +20,6 @@ def create_tag(user_id: int, nome: str, cor: str) -> dict:
         raise ValueError("Nome da tag deve ter no máximo 30 caracteres")
     cor = cor if cor in _ALLOWED_COLORS else _DEFAULT_COLOR
     row = tags_repository.create_tag(user_id, nome, cor)
-    if not row:
-        raise ValueError("Tag com esse nome já existe")
     return dict(row)
 
 
