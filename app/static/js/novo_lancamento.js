@@ -452,14 +452,21 @@
       logo + '<span class="conta-picker-nome">' + esc(found.nome) + '</span>';
   }
 
+  function buildCartaoDualLogo(c, size) {
+    var b = BANDEIRAS[c.bandeira] || BANDEIRAS.outro;
+    var bandeiraHtml = buildBandeiraLogoHtml(b, size);
+    var contaInst = c.conta_instituicao ? String(c.conta_instituicao).toLowerCase() : null;
+    var inst = contaInst ? INSTITUICOES[contaInst] : null;
+    var bancoHtml = inst ? buildLogoHtml(inst, size) : '';
+    return '<div style="display:flex;align-items:center;gap:4px;flex-shrink:0">' + bancoHtml + bandeiraHtml + '</div>';
+  }
+
   function preselectCartao(id) {
     var found = cartoesItems.find(function (x) { return String(x.id) === String(id); });
     if (!found) return;
-    var b = BANDEIRAS[found.bandeira] || BANDEIRAS.outro;
-    var logo = buildBandeiraLogoHtml(b, 32);
     document.getElementById('lCartao').value = id;
     document.getElementById('cartaoPickerSelected').innerHTML =
-      logo + '<span class="conta-picker-nome">' + esc(found.nome) + '</span>';
+      buildCartaoDualLogo(found, 32) + '<span class="conta-picker-nome">' + esc(found.nome) + '</span>';
     atualizarFaturaDisplay(found);
   }
 
@@ -505,14 +512,13 @@
       cartoesItems = cartoes;
 
       function renderCartao(c, compact) {
-        var b = BANDEIRAS[c.bandeira] || BANDEIRAS.outro;
         var size = compact ? 32 : 36;
-        var logo = buildBandeiraLogoHtml(b, size);
+        var logosHtml = buildCartaoDualLogo(c, size);
         if (compact) {
-          return logo + '<span class="conta-picker-nome">' + esc(c.nome) + '</span>';
+          return logosHtml + '<span class="conta-picker-nome">' + esc(c.nome) + '</span>';
         }
         return '<div class="conta-picker-item" data-id="' + c.id + '">'
-          + logo + '<span class="conta-picker-nome">' + esc(c.nome) + '</span></div>';
+          + logosHtml + '<span class="conta-picker-nome">' + esc(c.nome) + '</span></div>';
       }
 
       buildContaPicker(
