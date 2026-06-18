@@ -367,6 +367,12 @@
   animation: slideUp .25s ease;
 }
 
+@media (max-width: 767.98px) {
+  .rec-sheet {
+    padding-bottom: calc(var(--bottom-nav-height, 64px) + 16px);
+  }
+}
+
 @keyframes slideUp {
   from { transform: translateY(100%); }
   to   { transform: translateY(0); }
