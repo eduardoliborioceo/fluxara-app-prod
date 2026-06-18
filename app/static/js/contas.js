@@ -65,6 +65,7 @@
 
   let categoriasContas = [];
   let instSelecionada = 'outro';
+  let _contasCache = [];
 
   const modalEl = document.getElementById('modalConta');
   function _getModal() {
@@ -106,7 +107,9 @@
   }
 
   function renderContas(contas) {
-    document.getElementById('contasItens').innerHTML = contas.map(c => {
+    _contasCache = contas;
+    const total = contas.length;
+    document.getElementById('contasItens').innerHTML = contas.map((c, idx) => {
       const inst = instMap[c.instituicao] || instMap['outro'];
       const saldo = formatMoney(parseFloat(c.saldo_inicial) || 0);
       const logoHtml = inst.svg
@@ -114,6 +117,8 @@
         : inst.icone
           ? `<div class="conta-logo-circle" style="background:${inst.cor};color:${inst.corLetra || '#fff'}"><i class="bi ${inst.icone}" style="font-size:1.1rem"></i></div>`
           : `<div class="conta-logo-circle" style="background:${inst.cor};color:${inst.corLetra || '#fff'}">${inst.letra}</div>`;
+      const upDisabled = idx === 0 ? 'style="visibility:hidden"' : '';
+      const downDisabled = idx === total - 1 ? 'style="visibility:hidden"' : '';
       return `<div class="conta-row" onclick="abrirEditarConta(${c.id})">
         ${logoHtml}
         <div class="conta-info">
@@ -121,10 +126,29 @@
           <div class="conta-nome-texto">${esc(c.nome)}</div>
         </div>
         <div class="conta-saldo-valor">${saldo}</div>
+        <div class="conta-move-btns" onclick="event.stopPropagation()">
+          <button class="conta-move-btn" onclick="moverConta(${c.id}, -1)" title="Mover para cima" ${upDisabled}><i class="bi bi-chevron-up"></i></button>
+          <button class="conta-move-btn" onclick="moverConta(${c.id}, 1)" title="Mover para baixo" ${downDisabled}><i class="bi bi-chevron-down"></i></button>
+        </div>
         <i class="bi bi-chevron-right conta-chevron"></i>
       </div>`;
     }).join('');
   }
+
+  window.moverConta = async function (id, delta) {
+    const idx = _contasCache.findIndex(c => c.id === id);
+    if (idx < 0) return;
+    const newIdx = idx + delta;
+    if (newIdx < 0 || newIdx >= _contasCache.length) return;
+    const updated = [..._contasCache];
+    [updated[idx], updated[newIdx]] = [updated[newIdx], updated[idx]];
+    renderContas(updated);
+    await fetch('/api/contas/reorder', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: updated.map(c => c.id) }),
+    });
+  };
 
   function instLogoHtml(inst, cls) {
     if (inst && inst.svg) {

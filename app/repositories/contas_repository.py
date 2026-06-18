@@ -64,7 +64,7 @@ def list_contas(user_id: int) -> list:
                 FROM contas_bancarias cb
                 LEFT JOIN categorias c ON c.id = cb.categoria_id
                 WHERE cb.user_id = %s AND cb.ativo = TRUE
-                ORDER BY cb.criado_em
+                ORDER BY COALESCE(cb.posicao, 0), cb.criado_em
             """, (user_id,))
             return cur.fetchall()
 
@@ -165,9 +165,20 @@ def list_contas_projetadas(user_id: int, mes: int, ano: int) -> list:
                 FROM contas_bancarias cb
                 LEFT JOIN categorias c ON c.id = cb.categoria_id
                 WHERE cb.user_id = %s AND cb.ativo = TRUE
-                ORDER BY cb.criado_em
+                ORDER BY COALESCE(cb.posicao, 0), cb.criado_em
             """, (ano, mes, ano, mes, ano, mes, ano, mes, ano, mes, ano, mes, ano, mes, ano, mes, ano, mes, ano, mes, user_id))
             return cur.fetchall()
+
+
+def reorder_contas(user_id: int, ordered_ids: list[int]) -> None:
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            for pos, conta_id in enumerate(ordered_ids):
+                cur.execute(
+                    "UPDATE contas_bancarias SET posicao = %s WHERE id = %s AND user_id = %s AND ativo = TRUE",
+                    (pos, conta_id, user_id)
+                )
+        conn.commit()
 
 
 def get_total_saldo(user_id: int) -> float:
