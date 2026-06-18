@@ -1005,6 +1005,27 @@ function _selectPickerMatch(el) {
 // ============================================================
 
 let _autoLeaguesLoaded = false;
+let _autoLeagueMode   = "include";
+
+function setAutoLeagueMode(mode) {
+  _autoLeagueMode = mode;
+  const grid    = document.getElementById("autoLeagueCheckboxes");
+  const hint    = document.getElementById("autoLeagueModeHint");
+  const btnIncl = document.getElementById("autoModeInclude");
+  const btnExcl = document.getElementById("autoModeExclude");
+
+  if (mode === "exclude") {
+    grid?.classList.add("mode-exclude");
+    if (hint)    hint.textContent    = "(nenhum = todos • marcados serão excluídos)";
+    if (btnIncl) btnIncl.classList.remove("auto-mode-btn--active");
+    if (btnExcl) btnExcl.classList.add("auto-mode-btn--active");
+  } else {
+    grid?.classList.remove("mode-exclude");
+    if (hint)    hint.textContent    = "(nenhum = todos)";
+    if (btnIncl) btnIncl.classList.add("auto-mode-btn--active");
+    if (btnExcl) btnExcl.classList.remove("auto-mode-btn--active");
+  }
+}
 
 async function openAutoModal() {
   document.getElementById("autoFormError").style.display = "none";
@@ -1098,6 +1119,7 @@ async function submitAutoRecommend() {
         max_games:           maxGames,
         max_recommendations: maxRecs,
         leagues,
+        league_mode:         _autoLeagueMode,
         stake,
         titulo,
       }),

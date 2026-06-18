@@ -9,16 +9,17 @@ logger = logging.getLogger(__name__)
 
 
 def auto_recommend(config: dict, user_id: int) -> dict:
-    min_diff   = max(1, int(config.get("min_diff") or 10))
-    target_odd = max(1.01, float(config.get("target_odd") or 3.00))
-    days_ahead = max(1, min(30, int(config.get("days_ahead") or 14)))
-    leagues    = config.get("leagues") or []
-    stake      = (config.get("stake") or "").strip()
-    titulo     = (config.get("titulo") or "").strip()
-    max_games  = max(2, min(8, int(config.get("max_games") or 5)))
-    max_recs   = max(1, min(5, int(config.get("max_recommendations") or 1)))
+    min_diff    = max(1, int(config.get("min_diff") or 10))
+    target_odd  = max(1.01, float(config.get("target_odd") or 3.00))
+    days_ahead  = max(1, min(30, int(config.get("days_ahead") or 14)))
+    leagues     = config.get("leagues") or []
+    league_mode = config.get("league_mode") or "include"
+    stake       = (config.get("stake") or "").strip()
+    titulo      = (config.get("titulo") or "").strip()
+    max_games   = max(2, min(8, int(config.get("max_games") or 5)))
+    max_recs    = max(1, min(5, int(config.get("max_recommendations") or 1)))
 
-    afl_ids, espn_slugs = _split_leagues(leagues)
+    afl_ids, espn_slugs = _split_leagues(leagues, league_mode)
 
     qualifying = _find_qualifying(afl_ids, espn_slugs, min_diff, days_ahead)
     if not qualifying:
@@ -145,29 +146,39 @@ def _short_league_name(name: str) -> str:
 # League splitting
 # ============================================================
 
-def _split_leagues(leagues: list) -> tuple[list[int], list[str]]:
-    if not leagues:
-        afl_ids    = [lg["id"]   for lg in apostas_apifootball_service.get_leagues()]
-        espn_slugs = [lg["slug"] for lg in apostas_espn_service.get_leagues()]
-        return afl_ids, espn_slugs
+def _split_leagues(leagues: list, mode: str = "include") -> tuple[list[int], list[str]]:
+    all_afl_ids    = [lg["id"]   for lg in apostas_apifootball_service.get_leagues()]
+    all_espn_slugs = [lg["slug"] for lg in apostas_espn_service.get_leagues()]
 
-    afl_ids    = []
-    espn_slugs = []
+    if not leagues:
+        return all_afl_ids, all_espn_slugs
+
+    selected_afl_ids    = []
+    selected_espn_slugs = []
     for item in leagues:
         item = str(item)
         if item.startswith("afl:"):
             try:
-                afl_ids.append(int(item[4:]))
+                selected_afl_ids.append(int(item[4:]))
             except ValueError:
                 pass
         elif item.startswith("espn:"):
-            espn_slugs.append(item[5:])
+            selected_espn_slugs.append(item[5:])
         else:
             try:
-                afl_ids.append(int(item))
+                selected_afl_ids.append(int(item))
             except ValueError:
-                espn_slugs.append(item)
-    return afl_ids, espn_slugs
+                selected_espn_slugs.append(item)
+
+    if mode == "exclude":
+        exclude_afl  = set(selected_afl_ids)
+        exclude_espn = set(selected_espn_slugs)
+        return (
+            [lid  for lid  in all_afl_ids    if lid  not in exclude_afl],
+            [slug for slug in all_espn_slugs if slug not in exclude_espn],
+        )
+
+    return selected_afl_ids, selected_espn_slugs
 
 
 # ============================================================
