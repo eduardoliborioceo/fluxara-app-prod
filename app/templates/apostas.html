@@ -324,7 +324,17 @@
       </div>
 
       <div class="tips-form-group">
-        <label class="tips-form-label">Campeonatos <span class="tips-form-hint-inline">(nenhum = todos)</span></label>
+        <div class="auto-league-header">
+          <label class="tips-form-label" style="margin:0">Campeonatos <span class="tips-form-hint-inline" id="autoLeagueModeHint">(nenhum = todos)</span></label>
+          <div class="auto-league-mode-toggle">
+            <button type="button" id="autoModeInclude" class="auto-mode-btn auto-mode-btn--active" onclick="setAutoLeagueMode('include')">
+              <i class="bi bi-plus-circle"></i> Incluir
+            </button>
+            <button type="button" id="autoModeExclude" class="auto-mode-btn" onclick="setAutoLeagueMode('exclude')">
+              <i class="bi bi-dash-circle"></i> Excluir
+            </button>
+          </div>
+        </div>
         <div id="autoLeagueCheckboxes" class="auto-leagues-grid"></div>
       </div>
 

@@ -1829,6 +1829,53 @@
 
 .tips-modal--wide { max-width: 560px; }
 
+.auto-league-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.auto-league-mode-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.auto-mode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  font-size: .75rem;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background .12s, color .12s;
+}
+.auto-mode-btn + .auto-mode-btn {
+  border-left: 1px solid var(--border);
+}
+.auto-mode-btn--active {
+  background: rgba(124, 58, 237, .10);
+  color: #7c3aed;
+}
+
+/* Modo excluir: checkboxes ficam com cor vermelha quando marcados */
+.auto-leagues-grid.mode-exclude .auto-league-check:has(input:checked) {
+  background: rgba(220, 38, 38, .08);
+  border-color: #dc2626;
+  color: #dc2626;
+}
+.auto-leagues-grid.mode-exclude .auto-league-check input {
+  accent-color: #dc2626;
+}
+
 .auto-leagues-grid {
   display: flex;
   flex-wrap: wrap;
