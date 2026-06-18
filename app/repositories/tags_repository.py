@@ -29,7 +29,7 @@ def create_tag(user_id: int, nome: str, cor: str):
                 """
                 INSERT INTO tags (user_id, nome, cor)
                 VALUES (%s, %s, %s)
-                ON CONFLICT (user_id, nome) DO NOTHING
+                ON CONFLICT (user_id, nome) DO UPDATE SET cor = tags.cor
                 RETURNING id, nome, cor
                 """,
                 (user_id, nome.strip(), cor),

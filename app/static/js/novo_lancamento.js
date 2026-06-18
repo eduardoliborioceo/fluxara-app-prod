@@ -92,6 +92,41 @@
     });
   }
 
+  async function adicionarTag() {
+    var input = document.getElementById('lancTagInput');
+    if (!input) return;
+    var nome = input.value.trim();
+    if (!nome) return;
+
+    var existing = allUserTags.find(function (t) { return t.nome.toLowerCase() === nome.toLowerCase(); });
+    if (existing) {
+      if (!selectedTags.some(function (s) { return s.id === existing.id; })) {
+        selectedTags.push(existing);
+        renderTagsSection();
+      }
+      input.value = '';
+      return;
+    }
+
+    try {
+      var r = await fetch('/api/tags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome: nome, cor: selectedTagColor }),
+      });
+      if (!r.ok) return;
+      var tag = await r.json();
+      if (!allUserTags.some(function (t) { return t.id === tag.id; })) {
+        allUserTags.push(tag);
+      }
+      if (!selectedTags.some(function (s) { return s.id === tag.id; })) {
+        selectedTags.push(tag);
+      }
+      input.value = '';
+      renderTagsSection();
+    } catch (err) {}
+  }
+
   async function loadTags() {
     try {
       var r = await fetch('/api/tags');
@@ -103,36 +138,19 @@
 
     var input = document.getElementById('lancTagInput');
     if (!input) return;
-    input.addEventListener('keydown', async function (e) {
+
+    input.addEventListener('keydown', function (e) {
       if (e.key !== 'Enter') return;
       e.preventDefault();
-      var nome = this.value.trim();
-      if (!nome) return;
-
-      var existing = allUserTags.find(function (t) { return t.nome.toLowerCase() === nome.toLowerCase(); });
-      if (existing) {
-        if (!selectedTags.some(function (s) { return s.id === existing.id; })) {
-          selectedTags.push(existing);
-          renderTagsSection();
-        }
-        this.value = '';
-        return;
-      }
-
-      try {
-        var r = await fetch('/api/tags', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nome: nome, cor: selectedTagColor }),
-        });
-        if (!r.ok) return;
-        var tag = await r.json();
-        allUserTags.push(tag);
-        selectedTags.push(tag);
-        this.value = '';
-        renderTagsSection();
-      } catch (err) {}
+      adicionarTag();
     });
+
+    var addBtn = document.getElementById('lancTagAddBtn');
+    if (addBtn) {
+      addBtn.addEventListener('click', function () {
+        adicionarTag();
+      });
+    }
   }
 
   var MESES_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
