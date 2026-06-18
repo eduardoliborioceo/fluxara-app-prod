@@ -167,6 +167,9 @@
       <button class="flux-period-btn flux-period-btn--plan" data-periodo="divisao" title="Planejamento por recebimento">
         <i class="bi bi-layout-split"></i>
       </button>
+      <button class="flux-period-btn flux-period-btn--fluxo" id="btnFluxoMensal" title="Fluxo mensal de caixa">
+        <i class="bi bi-table"></i>
+      </button>
     </div>
     <div class="flux-body" id="fluxBody">
       <div class="flux-loading">
@@ -204,6 +207,27 @@
       <button type="button" class="gerenciar-save" id="gerenciarSave">
         <i class="bi bi-check-lg"></i> Salvar ordem
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== MODAL FLUXO MENSAL ====== -->
+<div class="modal fade" id="modalFluxoMensal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-fullscreen-sm-down modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content" style="border-radius:14px;">
+      <div class="modal-header" style="border-color:var(--border);padding:14px 20px;">
+        <div>
+          <h5 class="modal-title fw-bold" style="font-size:1rem;">Fluxo Mensal de Caixa</h5>
+          <div style="font-size:.75rem;color:var(--text-muted);margin-top:2px;">Projeção dos próximos 24 meses</div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-0" id="fluxoMensalBody">
+        <div class="text-center py-5 text-muted">
+          <div class="spinner-border spinner-border-sm mb-2"></div>
+          <div style="font-size:.85rem;">Calculando projeção...</div>
+        </div>
+      </div>
     </div>
   </div>
 </div>

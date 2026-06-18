@@ -1113,11 +1113,101 @@
       });
   }
 
-  document.querySelectorAll('.flux-period-btn').forEach(function (btn) {
+  document.querySelectorAll('.flux-period-btn[data-periodo]').forEach(function (btn) {
     btn.addEventListener('click', function () {
       loadAssistente(btn.dataset.periodo);
     });
   });
+
+  (function initFluxoMensal() {
+    var btnFluxo = document.getElementById('btnFluxoMensal');
+    if (!btnFluxo) return;
+    var modalEl = document.getElementById('modalFluxoMensal');
+    if (!modalEl) return;
+
+    function _getModal() {
+      return bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+    }
+
+    function fmtBRL(v) {
+      var n = parseFloat(v) || 0;
+      return 'R$ ' + n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function renderFluxo(data) {
+      var body = document.getElementById('fluxoMensalBody');
+      if (!data || !data.meses || !data.meses.length) {
+        body.innerHTML = '<div class="text-center py-4 text-muted" style="font-size:.875rem;">Nenhum dado encontrado.</div>';
+        return;
+      }
+      var cartaoIds = Object.keys(data.cartoes_nomes);
+      var hasCartoes = cartaoIds.length > 0;
+
+      var headerCols = '<th class="fm-th fm-th-mes">Mês</th>'
+        + '<th class="fm-th fm-th-saldo">Saldo</th>'
+        + '<th class="fm-th">Despesas</th>'
+        + '<th class="fm-th fm-th-cartoes">Cartões</th>';
+      if (hasCartoes) {
+        cartaoIds.forEach(function (cid) {
+          headerCols += '<th class="fm-th fm-th-card">' + esc(data.cartoes_nomes[cid]) + '</th>';
+        });
+      }
+
+      var rows = data.meses.map(function (m) {
+        var saldoPos = m.saldo >= 0;
+        var cartoes = parseFloat(m.cartoes_total) || 0;
+        var cardCols = '';
+        if (hasCartoes) {
+          cartaoIds.forEach(function (cid) {
+            var v = parseFloat((m.cartoes || {})[cid]) || 0;
+            cardCols += '<td class="fm-td fm-td-card">'
+              + (v > 0 ? '<span class="fm-val-cartao">' + fmtBRL(v) + '</span>' : '<span class="fm-val-zero">—</span>')
+              + '</td>';
+          });
+        }
+        return '<tr>'
+          + '<td class="fm-td fm-td-mes">' + esc(m.label) + '</td>'
+          + '<td class="fm-td fm-td-saldo ' + (saldoPos ? 'fm-pos' : 'fm-neg') + '">'
+            + fmtBRL(m.saldo) + '</td>'
+          + '<td class="fm-td">' + (m.despesas > 0 ? fmtBRL(m.despesas) : '<span class="fm-val-zero">—</span>') + '</td>'
+          + '<td class="fm-td fm-td-cartoes">'
+            + (cartoes > 0 ? '<span class="fm-val-cartao">' + fmtBRL(cartoes) + '</span>' : '<span class="fm-val-zero">—</span>')
+            + '</td>'
+          + cardCols
+          + '</tr>';
+      }).join('');
+
+      body.innerHTML = '<div class="fm-scroll-wrap">'
+        + '<table class="fm-table">'
+        + '<thead><tr>' + headerCols + '</tr></thead>'
+        + '<tbody>' + rows + '</tbody>'
+        + '</table>'
+        + '</div>'
+        + '<div class="fm-legenda">'
+        + '<span class="fm-leg-item"><span class="fm-dot fm-dot-pos"></span>Saldo positivo</span>'
+        + '<span class="fm-leg-item"><span class="fm-dot fm-dot-neg"></span>Saldo negativo</span>'
+        + '<span class="fm-leg-item"><span class="fm-dot fm-dot-cartao"></span>Cartões/Emp.</span>'
+        + '</div>';
+    }
+
+    var loaded = false;
+    btnFluxo.addEventListener('click', function () {
+      _getModal().show();
+      if (loaded) return;
+      loaded = true;
+      fetch('/api/fluxo-mensal?meses=24')
+        .then(function (r) { return r.json(); })
+        .then(function (data) { renderFluxo(data); })
+        .catch(function () {
+          var body = document.getElementById('fluxoMensalBody');
+          if (body) body.innerHTML = '<div class="text-center py-4 text-muted" style="font-size:.875rem;">Erro ao carregar dados.</div>';
+        });
+    });
+
+    modalEl.addEventListener('hidden.bs.modal', function () {
+      loaded = false;
+    });
+  })();
 
   applyCardOrder();
   applyCardVisibility();
