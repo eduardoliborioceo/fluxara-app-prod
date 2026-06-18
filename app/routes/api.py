@@ -561,6 +561,17 @@ def cartao_gerar_fatura_lancamento(cartao_id):
         return jsonify({"error": "Erro interno"}), 500
 
 
+@bp.route("/fluxo-mensal", methods=["GET"])
+@login_required
+def fluxo_mensal():
+    from app.services import lancamentos_service
+    try:
+        meses = int(request.args.get("meses", 24) or 24)
+    except (ValueError, TypeError):
+        meses = 24
+    return jsonify(lancamentos_service.get_fluxo_mensal(current_user.id, meses))
+
+
 @bp.route("/resumo/projecao-saldo", methods=["GET"])
 @login_required
 def resumo_projecao_saldo():

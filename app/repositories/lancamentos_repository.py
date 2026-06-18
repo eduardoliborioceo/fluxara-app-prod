@@ -448,3 +448,55 @@ def get_sugestoes_descricao(user_id: int, tipo: str, query: str, limit: int = 6)
                 LIMIT %s
             """, (user_id, tipo, query, limit))
             return cur.fetchall()
+
+
+def get_fluxo_mensal_data(user_id: int, meses: int) -> dict:
+    with get_db() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("""
+                SELECT
+                    EXTRACT(YEAR  FROM l.data_vencimento)::int AS ano,
+                    EXTRACT(MONTH FROM l.data_vencimento)::int AS mes,
+                    l.tipo,
+                    SUM(l.valor) AS total
+                FROM lancamentos l
+                WHERE l.user_id = %s AND l.ativo = TRUE
+                  AND l.tipo IN ('receita', 'despesa')
+                  AND l.data_vencimento IS NOT NULL
+                  AND l.data_vencimento >= DATE_TRUNC('month', CURRENT_DATE)
+                  AND l.data_vencimento < DATE_TRUNC('month', CURRENT_DATE)
+                       + (%s * INTERVAL '1 month')
+                GROUP BY ano, mes, l.tipo
+                ORDER BY ano, mes
+            """, (user_id, meses))
+            regular = cur.fetchall()
+
+            cur.execute("""
+                SELECT
+                    l.fatura_ano  AS ano,
+                    l.fatura_mes  AS mes,
+                    l.cartao_id,
+                    cc.nome       AS cartao_nome,
+                    SUM(l.valor)  AS total
+                FROM lancamentos l
+                JOIN cartoes_credito cc ON cc.id = l.cartao_id
+                WHERE l.user_id = %s AND l.ativo = TRUE
+                  AND l.tipo = 'despesa_cartao'
+                  AND l.fatura_mes IS NOT NULL AND l.fatura_ano IS NOT NULL
+                  AND (
+                        l.fatura_ano > EXTRACT(YEAR  FROM CURRENT_DATE)::int
+                     OR (l.fatura_ano  = EXTRACT(YEAR  FROM CURRENT_DATE)::int
+                         AND l.fatura_mes >= EXTRACT(MONTH FROM CURRENT_DATE)::int)
+                  )
+                  AND (l.fatura_ano * 12 + l.fatura_mes) <
+                      (EXTRACT(YEAR FROM CURRENT_DATE)::int * 12
+                       + EXTRACT(MONTH FROM CURRENT_DATE)::int + %s)
+                GROUP BY l.fatura_ano, l.fatura_mes, l.cartao_id, cc.nome
+                ORDER BY l.fatura_ano, l.fatura_mes
+            """, (user_id, meses))
+            cartoes = cur.fetchall()
+
+            return {
+                'regular': [dict(r) for r in regular],
+                'cartoes': [dict(r) for r in cartoes],
+            }

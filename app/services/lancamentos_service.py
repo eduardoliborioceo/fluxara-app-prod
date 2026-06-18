@@ -398,3 +398,51 @@ def get_debitos_resumo(user_id: int) -> dict:
         'pagos_recentes': pagos_recentes,
         'total_pendente': round(total_pendente, 2),
     }
+
+
+def get_fluxo_mensal(user_id: int, meses: int = 24) -> dict:
+    import datetime
+    meses = max(1, min(meses, 36))
+    raw = repo.get_fluxo_mensal_data(user_id, meses)
+
+    regular_index: dict = {}
+    for r in raw['regular']:
+        key = (int(r['ano']), int(r['mes']), r['tipo'])
+        regular_index[key] = float(r['total'] or 0)
+
+    cartoes_map: dict = {}
+    cartoes_index: dict = {}
+    for r in raw['cartoes']:
+        cid = int(r['cartao_id'])
+        if cid not in cartoes_map:
+            cartoes_map[cid] = r['cartao_nome']
+        key = (int(r['ano']), int(r['mes']), cid)
+        cartoes_index[key] = float(r['total'] or 0)
+
+    LABELS = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
+    today = datetime.date.today()
+    sm, sy = today.month, today.year
+
+    result = []
+    for i in range(meses):
+        m = (sm - 1 + i) % 12 + 1
+        y = sy + (sm - 1 + i) // 12
+        receitas = regular_index.get((y, m, 'receita'), 0.0)
+        despesas = regular_index.get((y, m, 'despesa'), 0.0)
+        cartoes_total = sum(cartoes_index.get((y, m, cid), 0.0) for cid in cartoes_map)
+        saldo = receitas - despesas - cartoes_total
+        result.append({
+            'mes':          m,
+            'ano':          y,
+            'label':        f"{LABELS[m - 1]}/{str(y)[2:]}",
+            'receitas':     round(receitas, 2),
+            'despesas':     round(despesas, 2),
+            'cartoes_total': round(cartoes_total, 2),
+            'saldo':        round(saldo, 2),
+            'cartoes':      {str(cid): round(cartoes_index.get((y, m, cid), 0.0), 2) for cid in cartoes_map},
+        })
+
+    return {
+        'meses':        result,
+        'cartoes_nomes': {str(k): v for k, v in cartoes_map.items()},
+    }
