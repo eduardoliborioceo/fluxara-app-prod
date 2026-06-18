@@ -3,7 +3,10 @@ const cropImage = document.getElementById('cropImage');
 const confirmCropBtn = document.getElementById('confirmCrop');
 const removeAvatarBtn = document.getElementById('removeAvatarBtn');
 const avatarDisplay = document.getElementById('avatarDisplay');
-const cropModal = new bootstrap.Modal(document.getElementById('cropModal'));
+const _cropModalEl = document.getElementById('cropModal');
+function _getCropModal() {
+  return bootstrap.Modal.getInstance(_cropModalEl) || new bootstrap.Modal(_cropModalEl);
+}
 
 let cropper = null;
 
@@ -14,7 +17,7 @@ avatarInput.addEventListener('change', (e) => {
   const reader = new FileReader();
   reader.onload = (ev) => {
     cropImage.src = ev.target.result;
-    cropModal.show();
+    _getCropModal().show();
   };
   reader.readAsDataURL(file);
   avatarInput.value = '';
@@ -75,7 +78,7 @@ confirmCropBtn.addEventListener('click', () => {
       .finally(() => {
         confirmCropBtn.disabled = false;
         confirmCropBtn.textContent = 'Confirmar';
-        cropModal.hide();
+        _getCropModal().hide();
       });
   }, 'image/png');
 });

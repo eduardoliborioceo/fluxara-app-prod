@@ -215,8 +215,10 @@ var _convsData   = {{ conversations | tojson }};
 </script>
 <script>
 (function () {
-  var modalResposta = new bootstrap.Modal(document.getElementById('modalResposta'));
-  var modalChat     = new bootstrap.Modal(document.getElementById('modalChat'));
+  var _modalRespostaEl = document.getElementById('modalResposta');
+  var _modalChatEl     = document.getElementById('modalChat');
+  function _getModalResposta() { return bootstrap.Modal.getInstance(_modalRespostaEl) || new bootstrap.Modal(_modalRespostaEl); }
+  function _getModalChat()     { return bootstrap.Modal.getInstance(_modalChatEl)     || new bootstrap.Modal(_modalChatEl); }
   var chatUserId    = null;
 
   function esc(s) {
@@ -239,7 +241,7 @@ var _convsData   = {{ conversations | tojson }};
     document.getElementById('respostaUsuarioLabel').textContent = 'Usuário: ' + ticket.username;
     document.getElementById('respostaMensagemPreview').textContent = ticket.mensagem;
     document.getElementById('respostaTexto').value = ticket.resposta || textoRespostaPadrao(ticket.username);
-    modalResposta.show();
+    _getModalResposta().show();
   };
 
   document.getElementById('btnEnviarResposta').addEventListener('click', async function () {
@@ -254,7 +256,7 @@ var _convsData   = {{ conversations | tojson }};
         body: JSON.stringify({ resposta: resposta }),
       });
       if (r.ok) {
-        modalResposta.hide();
+        _getModalResposta().hide();
         location.reload();
       } else {
         var err = await r.json();
@@ -272,7 +274,7 @@ var _convsData   = {{ conversations | tojson }};
     document.getElementById('chatModalTitle').textContent = 'Chat com ' + (conv ? conv.username : userId);
     document.getElementById('chatModalMessages').innerHTML =
       '<div class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm"></div></div>';
-    modalChat.show();
+    _getModalChat().show();
     carregarChat(userId);
   };
 
