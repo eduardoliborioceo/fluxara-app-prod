@@ -855,6 +855,12 @@
   flex: 1;
 }
 
+@media (max-width: 767.98px) {
+  .edit-sheet-body {
+    padding-bottom: calc(var(--bottom-nav-height, 64px) + 16px);
+  }
+}
+
 .edit-field {
   margin-bottom: 18px;
 }
