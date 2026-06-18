@@ -67,7 +67,9 @@
   let instSelecionada = 'outro';
 
   const modalEl = document.getElementById('modalConta');
-  const modal = new bootstrap.Modal(modalEl);
+  function _getModal() {
+    return bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+  }
 
   async function loadCategorias() {
     const r = await fetch('/api/config/categorias?tipo=conta');
@@ -208,7 +210,7 @@
     document.getElementById('btnDeletarConta').classList.add('d-none');
     selectInst('outro');
     renderCategoriaSelect(null);
-    modal.show();
+    _getModal().show();
   }
 
   window.abrirEditarConta = function (id) {
@@ -222,7 +224,7 @@
       document.getElementById('btnDeletarConta').classList.remove('d-none');
       selectInst(c.instituicao || 'outro');
       renderCategoriaSelect(c.categoria_id);
-      modal.show();
+      _getModal().show();
     });
   };
 
@@ -250,7 +252,7 @@
     });
 
     if (r.ok) {
-      modal.hide();
+      _getModal().hide();
       loadContas();
     }
   });
@@ -259,7 +261,7 @@
     const id = document.getElementById('contaEditId').value;
     if (!id || !confirm('Excluir esta conta?')) return;
     await fetch(`/api/contas/${id}`, { method: 'DELETE' });
-    modal.hide();
+    _getModal().hide();
     loadContas();
   });
 

@@ -531,7 +531,10 @@
   }
 
   const modalCartaoEl = document.getElementById('modalCartao');
-  const modalCartao = modalCartaoEl ? new bootstrap.Modal(modalCartaoEl) : null;
+  function _getModalCartao() {
+    if (!modalCartaoEl) return null;
+    return bootstrap.Modal.getInstance(modalCartaoEl) || new bootstrap.Modal(modalCartaoEl);
+  }
 
   async function loadCartoes() {
     document.getElementById('cartoesList').innerHTML =
@@ -708,7 +711,7 @@
     document.getElementById('modalCartaoTitle').textContent = 'Novo Cartão';
     document.getElementById('btnDeletarCartao').classList.add('d-none');
     carregarContasSelect(null);
-    modalCartao.show();
+    _getModalCartao().show();
   });
 
   window.abrirEditarCartao = function (id) {
@@ -725,7 +728,7 @@
       document.getElementById('modalCartaoTitle').textContent = 'Editar Cartão';
       document.getElementById('btnDeletarCartao').classList.remove('d-none');
       carregarContasSelect(c.conta_id);
-      modalCartao.show();
+      _getModalCartao().show();
     });
   };
 
@@ -748,14 +751,14 @@
         dia_vencimento: parseInt(document.getElementById('cartaoDiaVencimento').value) || 10,
       }),
     });
-    if (r.ok) { modalCartao.hide(); loadCartoes(); }
+    if (r.ok) { _getModalCartao().hide(); loadCartoes(); }
   });
 
   document.getElementById('btnDeletarCartao')?.addEventListener('click', async () => {
     const id = document.getElementById('cartaoEditId').value;
     if (!id || !confirm('Excluir este cartão?')) return;
     await fetch(`/api/cartoes/${id}`, { method: 'DELETE' });
-    modalCartao.hide();
+    _getModalCartao().hide();
     loadCartoes();
   });
 
@@ -767,7 +770,10 @@
 
   // ── TRANSFERIR LIMITE ─────────────────────────────
   const modalTransfEl = document.getElementById('modalTransferirLimite');
-  const modalTransf = modalTransfEl ? new bootstrap.Modal(modalTransfEl) : null;
+  function _getModalTransf() {
+    if (!modalTransfEl) return null;
+    return bootstrap.Modal.getInstance(modalTransfEl) || new bootstrap.Modal(modalTransfEl);
+  }
 
   function formatLimite(v) {
     return 'R$ ' + parseFloat(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
@@ -818,7 +824,7 @@
     populateTransfSelects(id);
     document.getElementById('transfOrigem').addEventListener('change', syncDestinoOptions);
     document.getElementById('transfDestino').addEventListener('change', updateTransfLimiteLabels);
-    modalTransf.show();
+    _getModalTransf().show();
   };
 
   document.getElementById('btnConfirmarTransferir')?.addEventListener('click', async () => {
@@ -852,7 +858,7 @@
       erroEl.classList.remove('d-none');
       return;
     }
-    modalTransf.hide();
+    _getModalTransf().hide();
     loadCartoes();
   });
 

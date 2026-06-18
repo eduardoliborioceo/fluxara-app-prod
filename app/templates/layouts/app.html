@@ -375,23 +375,48 @@ function toggleSidebarGroup(btn) {
 })();
 
 function _cleanupModalState() {
-  document.querySelectorAll('.modal-backdrop').forEach(function (el) { el.remove(); });
-  document.querySelectorAll('.modal.show').forEach(function (el) {
+  if (typeof bootstrap !== 'undefined') {
+    document.querySelectorAll('.modal').forEach(function(el) {
+      try { var i = bootstrap.Modal.getInstance(el); if (i) i.dispose(); } catch(e) {}
+    });
+  }
+  document.querySelectorAll('.modal-backdrop').forEach(function(el) { el.remove(); });
+  document.querySelectorAll('.modal').forEach(function(el) {
     el.classList.remove('show');
-    el.removeAttribute('style');
+    el.style.display = '';
     el.setAttribute('aria-hidden', 'true');
+    el.removeAttribute('aria-modal');
+    el.removeAttribute('role');
   });
   document.body.classList.remove('modal-open');
   document.body.style.removeProperty('overflow');
   document.body.style.removeProperty('padding-right');
 }
 
-window.addEventListener('pageshow', function (event) {
-  if (event.persisted) { _cleanupModalState(); }
+function _moveModalsToBody() {
+  document.querySelectorAll('.modal').forEach(function(modal) {
+    if (modal.parentElement && modal.parentElement !== document.body) {
+      document.body.appendChild(modal);
+    }
+  });
+}
+
+window.addEventListener('pageshow', function(event) {
+  if (event.persisted) { _cleanupModalState(); _moveModalsToBody(); }
 });
 
-document.addEventListener('DOMContentLoaded', function () {
-  _cleanupModalState();
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.modal-backdrop').forEach(function(el) { el.remove(); });
+  document.querySelectorAll('.modal').forEach(function(el) {
+    el.classList.remove('show');
+    el.style.display = '';
+    el.setAttribute('aria-hidden', 'true');
+    el.removeAttribute('aria-modal');
+  });
+  document.body.classList.remove('modal-open');
+  document.body.style.removeProperty('overflow');
+  document.body.style.removeProperty('padding-right');
+  _moveModalsToBody();
 });
 </script>
 </body>
