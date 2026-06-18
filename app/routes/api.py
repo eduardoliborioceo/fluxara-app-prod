@@ -407,6 +407,17 @@ def contas_delete(conta_id):
     return jsonify({"ok": True})
 
 
+@bp.route("/contas/reorder", methods=["PUT"])
+@login_required
+def contas_reorder():
+    data = request.get_json() or {}
+    ids = data.get("ids", [])
+    if not isinstance(ids, list) or not all(isinstance(i, int) for i in ids):
+        return jsonify({"error": "ids inválido"}), 400
+    contas_service.reorder_contas(current_user.id, ids)
+    return jsonify({"ok": True})
+
+
 @bp.route("/cartoes", methods=["GET"])
 @login_required
 def cartoes_list():

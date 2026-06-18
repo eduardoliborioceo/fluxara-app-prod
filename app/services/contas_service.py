@@ -34,6 +34,12 @@ def remove_conta(conta_id: int, user_id: int):
     repo.delete_conta(conta_id, user_id)
 
 
+def reorder_contas(user_id: int, ordered_ids: list[int]) -> None:
+    if not isinstance(ordered_ids, list):
+        raise ValueError("ordered_ids deve ser uma lista")
+    repo.reorder_contas(user_id, ordered_ids)
+
+
 def get_total_saldo(user_id: int) -> float:
     return repo.get_total_saldo(user_id)
 
