@@ -415,28 +415,43 @@ function togglePreviewMode() {
   }
 
   const tipsList = document.getElementById("tipsList");
-  if (tipsList && tipsList.style.display !== "none") {
-    const tips = window._cachedTips || [];
-    tipsList.innerHTML = tips.map(t => buildTipCard(t, _previewMode ? false : window.APOSTAS_IS_ADMIN === true)).join("");
+  const tips = window._cachedTips || [];
+  if (tips.length > 0) {
+    const isAdmin = _previewMode ? false : window.APOSTAS_IS_ADMIN === true;
+    const visible = isAdmin ? tips : tips.filter(t => t.aprovada !== false);
+    if (visible.length === 0) {
+      showTipsState("vazio");
+    } else {
+      tipsList.innerHTML = visible.map(t => buildTipCard(t, isAdmin)).join("");
+      showTipsState("list");
+    }
   }
 }
 
 function renderTipsList(tips) {
   window._cachedTips = tips;
   const isAdmin = _previewMode ? false : window.APOSTAS_IS_ADMIN === true;
-  document.getElementById("tipsList").innerHTML = tips.map(t => buildTipCard(t, isAdmin)).join("");
+  const visible = isAdmin ? tips : tips.filter(t => t.aprovada !== false);
+  if (visible.length === 0) { showTipsState("vazio"); return; }
+  document.getElementById("tipsList").innerHTML = visible.map(t => buildTipCard(t, isAdmin)).join("");
 }
 
 function buildTipCard(tip, isAdmin) {
   const statusBadge  = buildStatusBadge(tip.status);
   const adminActions = isAdmin ? buildTipAdminActions(tip) : "";
   const hasMultipla  = Array.isArray(tip.jogos) && tip.jogos.length > 0;
+  const aprovada     = tip.aprovada !== false;
 
   const oddHtml = tip.odd != null
     ? `<span class="tips-odd-display"><i class="bi bi-calculator"></i>Odd total: <strong>${tip.odd.toFixed(2)}</strong></span>`
     : "";
 
-  const idHtml = `<span class="tips-id-display">ID: <strong>${tip.id}</strong></span>`;
+  let idHtml = "";
+  if (!aprovada && isAdmin) {
+    idHtml = `<span class="tips-badge--draft"><i class="bi bi-eye-slash"></i>Não publicada</span>`;
+  } else if (tip.numero_publico != null) {
+    idHtml = `<span class="tips-id-display">ID: <strong>#${tip.numero_publico}</strong></span>`;
+  }
 
   const storyBtnHtml = isAdmin
     ? `<button class="tips-story-btn" onclick="openStoryModal(${tip.id})" title="Baixar imagem para Story"><i class="bi bi-download"></i></button>`
@@ -471,7 +486,7 @@ function buildTipCard(tip, isAdmin) {
   const storyStandalone = (isAdmin && !tip.link_aposta) ? storyBtnHtml : "";
 
   return `
-    <div class="tips-card" id="tip-${tip.id}" data-status="${escHtml(tip.status)}">
+    <div class="tips-card" id="tip-${tip.id}" data-status="${escHtml(tip.status)}" data-aprovada="${aprovada}">
       <div class="tips-card-header">
         ${statusBadge}
         <span class="tips-card-title">${escHtml(tip.titulo)}</span>
@@ -554,15 +569,20 @@ function formatDate(iso) {
 }
 
 function buildTipAdminActions(tip) {
-  const id = tip.id;
+  const id       = tip.id;
+  const aprovada = tip.aprovada !== false;
+  const aprovBtn = aprovada
+    ? `<button class="tips-action-btn tips-action-btn--desaprovar" onclick="toggleAprovada(${id})" title="Despublicar"><i class="bi bi-eye-slash"></i></button>`
+    : `<button class="tips-action-btn tips-action-btn--aprovar"    onclick="toggleAprovada(${id})" title="Publicar"><i class="bi bi-eye"></i></button>`;
   return `
     <div class="tips-admin-actions">
+      ${aprovBtn}
       ${tip.status !== "green"    ? `<button class="tips-action-btn tips-action-btn--green"   onclick="setTipStatus(${id},'green')"    title="Green"><i class="bi bi-check-lg"></i></button>` : ""}
       ${tip.status !== "red"      ? `<button class="tips-action-btn tips-action-btn--red"     onclick="setTipStatus(${id},'red')"      title="Red"><i class="bi bi-x-lg"></i></button>` : ""}
       ${tip.status !== "pendente" ? `<button class="tips-action-btn tips-action-btn--pending" onclick="setTipStatus(${id},'pendente')" title="Em Aberto"><i class="bi bi-clock"></i></button>` : ""}
       ${tip.status !== "void"     ? `<button class="tips-action-btn tips-action-btn--void"    onclick="setTipStatus(${id},'void')"     title="Anular"><i class="bi bi-dash-lg"></i></button>` : ""}
       <button class="tips-action-btn tips-action-btn--edit"   onclick="openEditModal(${id})"  title="Editar"><i class="bi bi-pencil"></i></button>
-      <button class="tips-action-btn tips-action-btn--delete" onclick="deleteTip(${id})"   title="Excluir"><i class="bi bi-trash3"></i></button>
+      <button class="tips-action-btn tips-action-btn--delete" onclick="deleteTip(${id})"      title="Excluir"><i class="bi bi-trash3"></i></button>
     </div>
   `;
 }
@@ -580,6 +600,18 @@ async function setTipStatus(tipId, status) {
     });
     const json = await resp.json();
     if (!resp.ok) { alert(json.error || "Erro ao atualizar status"); return; }
+    await loadTips();
+  } catch { alert("Erro de conexão"); }
+}
+
+async function toggleAprovada(tipId) {
+  try {
+    const resp = await fetch(`/api/apostas/tips/${tipId}/aprovada`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+    });
+    const json = await resp.json();
+    if (!resp.ok) { alert(json.error || "Erro ao atualizar publicação"); return; }
     await loadTips();
   } catch { alert("Erro de conexão"); }
 }

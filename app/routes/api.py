@@ -1524,7 +1524,7 @@ def apostas_apifootball_usage():
 def apostas_tips_list():
     from app.services import apostas_tips_service
     try:
-        tips = apostas_tips_service.list_tips()
+        tips = apostas_tips_service.list_tips(is_admin=current_user.is_admin)
         stats = apostas_tips_service.get_stats()
         return jsonify({"tips": tips, "stats": stats})
     except Exception as exc:
@@ -1553,6 +1553,22 @@ def apostas_tips_create():
     except Exception as exc:
         logger.exception("apostas_tips_create error: %s", exc)
         return jsonify({"error": "Erro ao criar recomendação"}), 500
+
+
+@bp.route("/apostas/tips/<int:tip_id>/aprovada", methods=["PATCH"])
+@login_required
+def apostas_tips_toggle_aprovada(tip_id):
+    if not current_user.is_admin:
+        return jsonify({"error": "Sem permissão"}), 403
+    from app.services import apostas_tips_service
+    try:
+        tip = apostas_tips_service.toggle_aprovada(tip_id)
+        return jsonify(tip)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as exc:
+        logger.exception("apostas_tips_toggle_aprovada error tip=%s: %s", tip_id, exc)
+        return jsonify({"error": "Erro ao atualizar aprovação"}), 500
 
 
 @bp.route("/apostas/tips/<int:tip_id>/status", methods=["PATCH"])

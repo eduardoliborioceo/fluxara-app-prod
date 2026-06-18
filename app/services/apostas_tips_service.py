@@ -15,11 +15,17 @@ def _serialize(tip: dict) -> dict:
         result["odd"] = float(result["odd"])
     if result.get("jogos") is None:
         result["jogos"] = []
+    if "aprovada" not in result:
+        result["aprovada"] = True
+    if "numero_publico" not in result:
+        result["numero_publico"] = None
+    if result.get("numero_publico") is not None:
+        result["numero_publico"] = int(result["numero_publico"])
     return result
 
 
-def list_tips() -> list[dict]:
-    return [_serialize(t) for t in repo.list_tips()]
+def list_tips(is_admin: bool = False) -> list[dict]:
+    return [_serialize(t) for t in repo.list_tips(admin=is_admin)]
 
 
 def get_stats() -> dict:
@@ -101,6 +107,13 @@ def update_status(tip_id: int, status: str) -> dict:
     if status not in _VALID_STATUSES:
         raise ValueError(f"Status inválido: {status}")
     row = repo.update_status(tip_id, status)
+    if not row:
+        raise ValueError("Recomendação não encontrada")
+    return _serialize(row)
+
+
+def toggle_aprovada(tip_id: int) -> dict:
+    row = repo.toggle_aprovada(tip_id)
     if not row:
         raise ValueError("Recomendação não encontrada")
     return _serialize(row)
