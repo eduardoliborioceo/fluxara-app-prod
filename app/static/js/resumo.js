@@ -200,10 +200,13 @@
         var saldoPrevEl = previstoDiff
           ? '<div class="conta-saldo-previsto">Previsto: ' + formatMoney(saldoPrevisto) + '</div>'
           : saldoLabel;
+        var finalidadeTag = c.finalidade
+          ? '<span class="conta-finalidade-tag">' + esc(c.finalidade) + '</span>'
+          : '';
         return '<div class="conta-item" data-id="' + c.id + '" data-mes="' + mes + '" data-ano="' + year + '">'
           + logoHtml
           + '<div class="conta-info">'
-          +   '<div class="conta-nome">' + esc(c.nome) + '</div>'
+          +   '<div class="conta-nome">' + esc(c.nome) + finalidadeTag + '</div>'
           +   '<div class="conta-previsto">' + esc(c.tipo_nome || 'Conta') + '</div>'
           + '</div>'
           + '<div>'

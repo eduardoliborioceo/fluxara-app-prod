@@ -376,6 +376,7 @@ def contas_create():
             data.get("instituicao", "outro"),
             data.get("categoria_id"),
             data.get("saldo_inicial", 0),
+            data.get("finalidade", ""),
         )
         return jsonify(conta), 201
     except ValueError as e:
@@ -394,6 +395,7 @@ def contas_update(conta_id):
             data.get("instituicao", "outro"),
             data.get("categoria_id"),
             data.get("saldo_inicial", 0),
+            data.get("finalidade", ""),
         )
         return jsonify({"ok": True})
     except ValueError as e:

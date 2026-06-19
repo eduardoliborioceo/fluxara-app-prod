@@ -69,27 +69,29 @@ def list_contas(user_id: int) -> list:
             return cur.fetchall()
 
 
-def create_conta(user_id: int, nome: str, instituicao: str, categoria_id: int | None, saldo_inicial: float):
+def create_conta(user_id: int, nome: str, instituicao: str, categoria_id: int | None,
+                 saldo_inicial: float, finalidade: str | None = None):
     with get_db() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("""
-                INSERT INTO contas_bancarias (user_id, nome, instituicao, categoria_id, saldo_inicial)
-                VALUES (%s, %s, %s, %s, %s)
+                INSERT INTO contas_bancarias (user_id, nome, instituicao, categoria_id, saldo_inicial, finalidade)
+                VALUES (%s, %s, %s, %s, %s, %s)
                 RETURNING *
-            """, (user_id, nome, instituicao, categoria_id, saldo_inicial))
+            """, (user_id, nome, instituicao, categoria_id, saldo_inicial, finalidade))
             row = cur.fetchone()
             conn.commit()
             return row
 
 
-def update_conta(conta_id: int, user_id: int, nome: str, instituicao: str, categoria_id: int | None, saldo_inicial: float):
+def update_conta(conta_id: int, user_id: int, nome: str, instituicao: str, categoria_id: int | None,
+                 saldo_inicial: float, finalidade: str | None = None):
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute("""
                 UPDATE contas_bancarias
-                SET nome = %s, instituicao = %s, categoria_id = %s, saldo_inicial = %s
+                SET nome = %s, instituicao = %s, categoria_id = %s, saldo_inicial = %s, finalidade = %s
                 WHERE id = %s AND user_id = %s AND ativo = TRUE
-            """, (nome, instituicao, categoria_id, saldo_inicial, conta_id, user_id))
+            """, (nome, instituicao, categoria_id, saldo_inicial, finalidade, conta_id, user_id))
         conn.commit()
 
 

@@ -230,6 +230,7 @@
     document.getElementById('contaEditId').value = '';
     document.getElementById('contaNome').value = '';
     document.getElementById('contaSaldo').value = '';
+    document.getElementById('contaFinalidade').value = '';
     document.getElementById('modalContaTitulo').textContent = 'Nova Conta';
     document.getElementById('btnDeletarConta').classList.add('d-none');
     selectInst('outro');
@@ -244,6 +245,7 @@
       document.getElementById('contaEditId').value = c.id;
       document.getElementById('contaNome').value = c.nome;
       document.getElementById('contaSaldo').value = formatDecimal(parseFloat(c.saldo_inicial) || 0);
+      document.getElementById('contaFinalidade').value = c.finalidade || '';
       document.getElementById('modalContaTitulo').textContent = 'Editar Conta';
       document.getElementById('btnDeletarConta').classList.remove('d-none');
       selectInst(c.instituicao || 'outro');
@@ -260,6 +262,7 @@
     const instituicao = document.getElementById('contaInstituicao').value;
     const categoria_id = document.getElementById('contaCategoria').value || null;
     const saldo_inicial = document.getElementById('contaSaldo').value;
+    const finalidade = document.getElementById('contaFinalidade').value.trim();
 
     if (!nome) {
       document.getElementById('contaNome').focus();
@@ -272,7 +275,7 @@
     const r = await fetch(url, {
       method,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nome, instituicao, categoria_id, saldo_inicial }),
+      body: JSON.stringify({ nome, instituicao, categoria_id, saldo_inicial, finalidade }),
     });
 
     if (r.ok) {
