@@ -1399,20 +1399,29 @@ function closeDiretrizModal(e) {
   _diretrizPendente = null;
 }
 
+function _dmShowError(errEl, msg) {
+  if (!errEl) return;
+  errEl.innerHTML = '<i class="bi bi-exclamation-circle"></i>' + msg;
+  errEl.style.display = 'flex';
+}
+
+var _DM_CONFIRM_LABEL = '<i class="bi bi-check-lg"></i> Confirmar transferência';
+
 async function confirmarTransferencia() {
   if (!_diretrizPendente) return;
-  var contaDestId = parseInt(document.getElementById('diretrizContaDestino').value);
+  var contaDestId = parseInt(document.getElementById('diretrizContaDestino').value, 10);
   var errEl = document.getElementById('diretrizModalError');
+  if (errEl) errEl.style.display = 'none';
+
   if (!contaDestId) {
-    if (errEl) { errEl.textContent = 'Selecione uma conta destino'; errEl.style.display = 'block'; }
+    _dmShowError(errEl, 'Selecione uma conta destino');
     return;
   }
 
   var btn = document.getElementById('diretrizConfirmarTransf');
-  if (btn) { btn.disabled = true; btn.textContent = '...'; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Aguarde...'; }
 
   try {
-    // Cria a transferência
     var hoje = new Date().toISOString().split('T')[0];
     var trResp = await fetch('/api/transferencias', {
       method: 'POST',
@@ -1428,12 +1437,11 @@ async function confirmarTransferencia() {
     });
     if (!trResp.ok) {
       var tj = await trResp.json();
-      if (errEl) { errEl.textContent = tj.error || 'Erro na transferência'; errEl.style.display = 'block'; }
-      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-lg"></i> Confirmar'; }
+      _dmShowError(errEl, tj.error || 'Erro na transferência');
+      if (btn) { btn.disabled = false; btn.innerHTML = _DM_CONFIRM_LABEL; }
       return;
     }
 
-    // Registra a ação na diretriz
     await fetch('/api/diretrizes/dez-pct/' + _diretrizPendente.id + '/acao', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1448,11 +1456,10 @@ async function confirmarTransferencia() {
     _removerItemDiretriz(_diretrizPendente.id);
     _diretrizPendente = null;
 
-    // Recarrega contas para refletir o saldo atualizado
     if (typeof loadContas === 'function') loadContas();
   } catch (e) {
-    if (errEl) { errEl.textContent = 'Erro de conexão'; errEl.style.display = 'block'; }
+    _dmShowError(errEl, 'Erro de conexão');
   } finally {
-    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-lg"></i> Confirmar'; }
+    if (btn) { btn.disabled = false; btn.innerHTML = _DM_CONFIRM_LABEL; }
   }
 }
