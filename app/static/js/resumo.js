@@ -1228,9 +1228,11 @@
 //  DIRETRIZ 10%
 // ============================================================
 
-var _diretrizContas       = [];
-var _diretrizPendente     = null; // item sendo transferido
-var _diretrizDismissed    = new Set(); // IDs dispensados nesta sessão
+var _diretrizContas    = [];
+var _diretrizPendente  = null;
+var _diretrizDismissed = new Set();
+var _diretrizItems     = new Map();
+var _diretrizBodyBound = false;
 
 function _fmtMoeda(v) {
   return 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -1244,6 +1246,25 @@ function _fmtData(iso) {
 }
 
 async function loadDiretrizDezPct() {
+  if (!_diretrizBodyBound) {
+    var body = document.getElementById('diretrizBody');
+    if (body) {
+      body.addEventListener('click', function(e) {
+        var btn = e.target.closest('[data-action]');
+        if (!btn) return;
+        var action = btn.dataset.action;
+        var id = parseInt(btn.dataset.id, 10);
+        if (action === 'guardar') {
+          diretrizGuardei(btn, id, parseFloat(btn.dataset.valor));
+        } else if (action === 'transferir') {
+          diretrizTransferir(id);
+        } else if (action === 'ignorar') {
+          diretrizIgnorar(id);
+        }
+      });
+      _diretrizBodyBound = true;
+    }
+  }
   try {
     var resp = await fetch('/api/diretrizes/dez-pct/pendentes');
     if (!resp.ok) return;
@@ -1263,7 +1284,9 @@ function _renderDiretrizCard(items) {
     return;
   }
 
+  _diretrizItems.clear();
   body.innerHTML = items.map(function(item) {
+    _diretrizItems.set(item.id, item);
     return [
       '<div class="diretriz-item" id="diretriz-item-' + item.id + '">',
       '  <div class="diretriz-item-top">',
@@ -1281,13 +1304,13 @@ function _renderDiretrizCard(items) {
       '    </div>',
       '  </div>',
       '  <div class="diretriz-item-actions">',
-      '    <button class="diretriz-btn diretriz-btn--guardar" onclick="diretrizGuardei(' + item.id + ',' + item.valor_dez_pct + ')">',
+      '    <button class="diretriz-btn diretriz-btn--guardar" data-action="guardar" data-id="' + item.id + '" data-valor="' + item.valor_dez_pct + '">',
       '      <i class="bi bi-check-circle"></i> Já guardei',
       '    </button>',
-      '    <button class="diretriz-btn diretriz-btn--transferir" onclick="diretrizTransferir(' + JSON.stringify(item) + ')">',
+      '    <button class="diretriz-btn diretriz-btn--transferir" data-action="transferir" data-id="' + item.id + '">',
       '      <i class="bi bi-arrow-left-right"></i> Transferir',
       '    </button>',
-      '    <button class="diretriz-btn diretriz-btn--ignorar" onclick="diretrizIgnorar(' + item.id + ')">',
+      '    <button class="diretriz-btn diretriz-btn--ignorar" data-action="ignorar" data-id="' + item.id + '">',
       '      Agora não',
       '    </button>',
       '  </div>',
@@ -1302,8 +1325,7 @@ function _escHtml(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-async function diretrizGuardei(lancamentoId, valorDezPct) {
-  var btn = event.target.closest('button');
+async function diretrizGuardei(btn, lancamentoId, valorDezPct) {
   if (btn) { btn.disabled = true; btn.textContent = '...'; }
   try {
     var resp = await fetch('/api/diretrizes/dez-pct/' + lancamentoId + '/acao', {
@@ -1339,7 +1361,9 @@ function _removerItemDiretriz(lancamentoId) {
   }
 }
 
-async function diretrizTransferir(item) {
+async function diretrizTransferir(id) {
+  var item = _diretrizItems.get(id);
+  if (!item) return;
   _diretrizPendente = item;
   var desc = document.getElementById('diretrizModalDesc');
   if (desc) {
