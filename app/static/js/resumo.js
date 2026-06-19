@@ -1225,6 +1225,9 @@
   loadDebitos();
   loadAssistente('semana');
   loadDiretrizDezPct();
+
+  window._resumoInst = INSTITUICOES;
+  window._resumoBuildLogo = buildLogoHtml;
 })();
 
 // ============================================================
@@ -1368,9 +1371,12 @@ async function diretrizTransferir(id) {
   var item = _diretrizItems.get(id);
   if (!item) return;
   _diretrizPendente = item;
+
   var desc = document.getElementById('diretrizModalDesc');
   if (desc) {
-    desc.textContent = 'Transferir ' + _fmtMoeda(item.valor_dez_pct) + ' (10% de ' + _fmtMoeda(item.valor) + ') para sua conta poupança.';
+    desc.textContent = 'Selecione as contas para distribuir '
+      + _fmtMoeda(item.valor_dez_pct) + ' (10% de ' + _fmtMoeda(item.valor) + '). '
+      + 'O valor será dividido igualmente entre as contas marcadas.';
   }
 
   if (_diretrizContas.length === 0) {
@@ -1380,20 +1386,79 @@ async function diretrizTransferir(id) {
     } catch (e) { /* ignora */ }
   }
 
-  var sel = document.getElementById('diretrizContaDestino');
-  if (sel) {
-    var opcoes = _diretrizContas
-      .filter(function(c) { return c.id !== item.conta_id; })
-      .map(function(c) { return '<option value="' + c.id + '">' + _escHtml(c.nome) + '</option>'; });
-    sel.innerHTML = opcoes.length
-      ? opcoes.join('')
-      : '<option value="">Nenhuma conta disponível</option>';
+  var listEl = document.getElementById('diretrizContasList');
+  if (listEl) {
+    if (!_diretrizContas.length) {
+      listEl.innerHTML = '<div style="padding:14px;text-align:center;color:var(--text-muted);font-size:.85rem">Nenhuma conta disponível</div>';
+    } else {
+      var instMap = window._resumoInst || {};
+      var buildLogo = window._resumoBuildLogo || function() { return ''; };
+      listEl.innerHTML = _diretrizContas.map(function(c) {
+        var inst = instMap[c.instituicao] || instMap['outro'] || {};
+        var logoHtml = buildLogo(inst, 32);
+        var isOrigem = c.id === item.conta_id;
+        var origemTag = isOrigem ? '<span class="dm-conta-check-origem">origem</span>' : '';
+        return '<label class="dm-conta-check" data-id="' + c.id + '">'
+          + '<input type="checkbox" value="' + c.id + '">'
+          + logoHtml
+          + '<div class="dm-conta-check-info">'
+          +   '<div class="dm-conta-check-nome">' + _escHtml(c.nome) + '</div>'
+          + '</div>'
+          + origemTag
+          + '<div class="dm-cb-box"></div>'
+          + '</label>';
+      }).join('');
+      listEl.querySelectorAll('label.dm-conta-check').forEach(function(label) {
+        label.addEventListener('click', function(e) {
+          e.preventDefault();
+          var cb = label.querySelector('input[type="checkbox"]');
+          cb.checked = !cb.checked;
+          label.classList.toggle('dm-checked', cb.checked);
+          _updateDiretrizSplit();
+        });
+      });
+    }
   }
+
+  var summaryEl = document.getElementById('diretrizSplitSummary');
+  if (summaryEl) summaryEl.style.display = 'none';
 
   var errEl = document.getElementById('diretrizModalError');
   if (errEl) errEl.style.display = 'none';
 
   document.getElementById('diretrizModalOverlay').style.display = 'flex';
+}
+
+function _updateDiretrizSplit() {
+  if (!_diretrizPendente) return;
+  var checked = document.querySelectorAll('#diretrizContasList .dm-conta-check.dm-checked');
+  var count = checked.length;
+  var summaryEl = document.getElementById('diretrizSplitSummary');
+  var textEl = document.getElementById('diretrizSplitText');
+  if (!summaryEl || !textEl) return;
+
+  if (count === 0) {
+    summaryEl.style.display = 'none';
+    return;
+  }
+
+  var perConta = _diretrizPendente.valor_dez_pct / count;
+  var hasOrigem = false;
+  checked.forEach(function(lbl) {
+    if (parseInt(lbl.dataset.id, 10) === _diretrizPendente.conta_id) hasOrigem = true;
+  });
+  var transferCount = hasOrigem ? count - 1 : count;
+
+  summaryEl.style.display = 'flex';
+  summaryEl.style.flexDirection = 'column';
+  summaryEl.style.alignItems = 'flex-start';
+  textEl.innerHTML = count + (count === 1 ? ' conta' : ' contas') + ' &nbsp;·&nbsp; '
+    + '<strong>' + _fmtMoeda(perConta) + ' por conta</strong>'
+    + (hasOrigem && transferCount > 0
+      ? '<span class="dm-split-origin-note">' + transferCount + ' transferência' + (transferCount > 1 ? 's' : '') + ' · ' + _fmtMoeda(perConta * transferCount) + ' total enviado</span>'
+      : (hasOrigem && transferCount === 0
+        ? '<span class="dm-split-origin-note">Valor fica na conta de origem</span>'
+        : ''));
 }
 
 function closeDiretrizModal(e) {
@@ -1412,37 +1477,50 @@ var _DM_CONFIRM_LABEL = '<i class="bi bi-check-lg"></i> Confirmar transferência
 
 async function confirmarTransferencia() {
   if (!_diretrizPendente) return;
-  var contaDestId = parseInt(document.getElementById('diretrizContaDestino').value, 10);
   var errEl = document.getElementById('diretrizModalError');
   if (errEl) errEl.style.display = 'none';
 
-  if (!contaDestId) {
-    _dmShowError(errEl, 'Selecione uma conta destino');
+  var checkedLabels = Array.from(document.querySelectorAll('#diretrizContasList .dm-conta-check.dm-checked'));
+  if (checkedLabels.length === 0) {
+    _dmShowError(errEl, 'Selecione ao menos uma conta');
     return;
   }
+
+  var selectedIds = checkedLabels.map(function(lbl) { return parseInt(lbl.dataset.id, 10); });
+  var nonOrigemIds = selectedIds.filter(function(cid) { return cid !== _diretrizPendente.conta_id; });
+
+  if (nonOrigemIds.length === 0) {
+    _dmShowError(errEl, 'Selecione ao menos uma conta diferente da conta de origem');
+    return;
+  }
+
+  var perConta = _diretrizPendente.valor_dez_pct / selectedIds.length;
+  var hoje = new Date().toISOString().split('T')[0];
+  var descBase = 'Reserva 10% — ' + (_diretrizPendente.descricao || 'Receita');
 
   var btn = document.getElementById('diretrizConfirmarTransf');
   if (btn) { btn.disabled = true; btn.textContent = 'Aguarde...'; }
 
   try {
-    var hoje = new Date().toISOString().split('T')[0];
-    var trResp = await fetch('/api/transferencias', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        descricao: 'Reserva 10% — ' + (_diretrizPendente.descricao || 'Receita'),
-        valor: _diretrizPendente.valor_dez_pct,
-        conta_origem_id: _diretrizPendente.conta_id,
-        conta_destino_id: contaDestId,
-        data_vencimento: hoje,
-        efetivado: true,
-      }),
-    });
-    if (!trResp.ok) {
-      var tj = await trResp.json();
-      _dmShowError(errEl, tj.error || 'Erro na transferência');
-      if (btn) { btn.disabled = false; btn.innerHTML = _DM_CONFIRM_LABEL; }
-      return;
+    for (var i = 0; i < nonOrigemIds.length; i++) {
+      var trResp = await fetch('/api/transferencias', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          descricao: descBase,
+          valor: perConta,
+          conta_origem_id: _diretrizPendente.conta_id,
+          conta_destino_id: nonOrigemIds[i],
+          data_vencimento: hoje,
+          efetivado: true,
+        }),
+      });
+      if (!trResp.ok) {
+        var tj = await trResp.json();
+        _dmShowError(errEl, tj.error || 'Erro na transferência');
+        if (btn) { btn.disabled = false; btn.innerHTML = _DM_CONFIRM_LABEL; }
+        return;
+      }
     }
 
     await fetch('/api/diretrizes/dez-pct/' + _diretrizPendente.id + '/acao', {
@@ -1450,7 +1528,7 @@ async function confirmarTransferencia() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         acao: 'transferido',
-        conta_destino_id: contaDestId,
+        conta_destino_id: nonOrigemIds[0],
         valor_dez_pct: _diretrizPendente.valor_dez_pct,
       }),
     });
