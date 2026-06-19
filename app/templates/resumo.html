@@ -40,8 +40,8 @@
       <div class="dm-header">
         <div class="dm-header-icon"><i class="bi bi-arrow-left-right"></i></div>
         <div class="dm-header-text">
-          <div class="dm-header-title">Transferir para poupança</div>
-          <div class="dm-header-sub">Reserva dos 10%</div>
+          <div class="dm-header-title">Distribuir reserva 10%</div>
+          <div class="dm-header-sub">Divisão entre contas</div>
         </div>
         <button class="dm-close" onclick="closeDiretrizModal()" title="Fechar">
           <i class="bi bi-x-lg"></i>
@@ -55,8 +55,13 @@
         </div>
 
         <div class="dm-field">
-          <label class="dm-label" for="diretrizContaDestino">Conta destino</label>
-          <select id="diretrizContaDestino" class="dm-select"></select>
+          <label class="dm-label">Distribuir para <span class="dm-label-hint">selecione uma ou mais contas</span></label>
+          <div id="diretrizContasList" class="dm-contas-list"></div>
+        </div>
+
+        <div id="diretrizSplitSummary" class="dm-split-summary" style="display:none">
+          <i class="bi bi-calculator"></i>
+          <span id="diretrizSplitText"></span>
         </div>
 
         <div id="diretrizModalError" class="dm-error" style="display:none"></div>
