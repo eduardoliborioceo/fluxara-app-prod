@@ -461,24 +461,14 @@
       picker.classList.toggle('open');
       if (picker.classList.contains('open')) {
         var rect = triggerEl.getBoundingClientRect();
-        var bottomNavEl = document.querySelector('.bottom-nav');
-        var bottomNavH = bottomNavEl ? bottomNavEl.getBoundingClientRect().height : 0;
-        var availableBelow = window.innerHeight - rect.bottom - bottomNavH - 8;
-        var availableAbove = rect.top - 8;
         var sectionEl = triggerEl.closest('.lancamento-section');
         var baseRect = sectionEl ? sectionEl.getBoundingClientRect() : rect;
         dropdownEl.style.position = 'fixed';
         dropdownEl.style.left = baseRect.left + 'px';
         dropdownEl.style.right = (window.innerWidth - baseRect.right) + 'px';
-        if (availableBelow >= 180 || availableBelow >= availableAbove) {
-          dropdownEl.style.top = (rect.bottom + 8) + 'px';
-          dropdownEl.style.bottom = '';
-          dropdownEl.style.maxHeight = Math.min(280, Math.max(availableBelow, 120)) + 'px';
-        } else {
-          dropdownEl.style.top = '';
-          dropdownEl.style.bottom = (window.innerHeight - rect.top + 8) + 'px';
-          dropdownEl.style.maxHeight = Math.min(280, Math.max(availableAbove, 120)) + 'px';
-        }
+        dropdownEl.style.top = (rect.bottom + 8) + 'px';
+        dropdownEl.style.bottom = '';
+        dropdownEl.style.maxHeight = '280px';
       }
     });
 
