@@ -1221,4 +1221,214 @@
   loadDespesasPorCategoria();
   loadDebitos();
   loadAssistente('semana');
+  loadDiretrizDezPct();
 })();
+
+// ============================================================
+//  DIRETRIZ 10%
+// ============================================================
+
+var _diretrizContas       = [];
+var _diretrizPendente     = null; // item sendo transferido
+var _diretrizDismissed    = new Set(); // IDs dispensados nesta sessão
+
+function _fmtMoeda(v) {
+  return 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function _fmtData(iso) {
+  if (!iso) return '';
+  var p = String(iso).split('T')[0].split('-');
+  if (p.length < 3) return iso;
+  return p[2] + '/' + p[1] + '/' + p[0];
+}
+
+async function loadDiretrizDezPct() {
+  try {
+    var resp = await fetch('/api/diretrizes/dez-pct/pendentes');
+    if (!resp.ok) return;
+    var pendentes = await resp.json();
+    var visiveis = pendentes.filter(function(p) { return !_diretrizDismissed.has(p.id); });
+    _renderDiretrizCard(visiveis);
+  } catch (e) { /* silencioso */ }
+}
+
+function _renderDiretrizCard(items) {
+  var card = document.getElementById('diretrizCard');
+  var body = document.getElementById('diretrizBody');
+  if (!card || !body) return;
+
+  if (!items || items.length === 0) {
+    card.style.display = 'none';
+    return;
+  }
+
+  body.innerHTML = items.map(function(item) {
+    return [
+      '<div class="diretriz-item" id="diretriz-item-' + item.id + '">',
+      '  <div class="diretriz-item-top">',
+      '    <div class="diretriz-item-info">',
+      '      <div class="diretriz-item-desc">' + _escHtml(item.descricao || 'Receita') + '</div>',
+      '      <div class="diretriz-item-meta">',
+      '        Recebido: ' + _fmtMoeda(item.valor),
+      item.data_vencimento ? ' · ' + _fmtData(item.data_vencimento) : '',
+      item.conta_nome ? ' · ' + _escHtml(item.conta_nome) : '',
+      '      </div>',
+      '    </div>',
+      '    <div class="diretriz-valor-dez">',
+      '      ' + _fmtMoeda(item.valor_dez_pct),
+      '      <small>10% a guardar</small>',
+      '    </div>',
+      '  </div>',
+      '  <div class="diretriz-item-actions">',
+      '    <button class="diretriz-btn diretriz-btn--guardar" onclick="diretrizGuardei(' + item.id + ',' + item.valor_dez_pct + ')">',
+      '      <i class="bi bi-check-circle"></i> Já guardei',
+      '    </button>',
+      '    <button class="diretriz-btn diretriz-btn--transferir" onclick="diretrizTransferir(' + JSON.stringify(item) + ')">',
+      '      <i class="bi bi-arrow-left-right"></i> Transferir',
+      '    </button>',
+      '    <button class="diretriz-btn diretriz-btn--ignorar" onclick="diretrizIgnorar(' + item.id + ')">',
+      '      Agora não',
+      '    </button>',
+      '  </div>',
+      '</div>',
+    ].join('');
+  }).join('');
+
+  card.style.display = '';
+}
+
+function _escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function diretrizGuardei(lancamentoId, valorDezPct) {
+  var btn = event.target.closest('button');
+  if (btn) { btn.disabled = true; btn.textContent = '...'; }
+  try {
+    var resp = await fetch('/api/diretrizes/dez-pct/' + lancamentoId + '/acao', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ acao: 'investido', valor_dez_pct: valorDezPct }),
+    });
+    if (!resp.ok) {
+      var j = await resp.json();
+      alert(j.error || 'Erro ao registrar');
+      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-circle"></i> Já guardei'; }
+      return;
+    }
+    _removerItemDiretriz(lancamentoId);
+  } catch (e) {
+    alert('Erro de conexão');
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-circle"></i> Já guardei'; }
+  }
+}
+
+function diretrizIgnorar(lancamentoId) {
+  _diretrizDismissed.add(lancamentoId);
+  _removerItemDiretriz(lancamentoId);
+}
+
+function _removerItemDiretriz(lancamentoId) {
+  var el = document.getElementById('diretriz-item-' + lancamentoId);
+  if (el) el.remove();
+  var body = document.getElementById('diretrizBody');
+  var card = document.getElementById('diretrizCard');
+  if (body && card && body.children.length === 0) {
+    card.style.display = 'none';
+  }
+}
+
+async function diretrizTransferir(item) {
+  _diretrizPendente = item;
+  var desc = document.getElementById('diretrizModalDesc');
+  if (desc) {
+    desc.textContent = 'Transferir ' + _fmtMoeda(item.valor_dez_pct) + ' (10% de ' + _fmtMoeda(item.valor) + ') para sua conta poupança.';
+  }
+
+  if (_diretrizContas.length === 0) {
+    try {
+      var r = await fetch('/api/contas');
+      if (r.ok) _diretrizContas = await r.json();
+    } catch (e) { /* ignora */ }
+  }
+
+  var sel = document.getElementById('diretrizContaDestino');
+  if (sel) {
+    var opcoes = _diretrizContas
+      .filter(function(c) { return c.id !== item.conta_id; })
+      .map(function(c) { return '<option value="' + c.id + '">' + _escHtml(c.nome) + '</option>'; });
+    sel.innerHTML = opcoes.length
+      ? opcoes.join('')
+      : '<option value="">Nenhuma conta disponível</option>';
+  }
+
+  var errEl = document.getElementById('diretrizModalError');
+  if (errEl) errEl.style.display = 'none';
+
+  document.getElementById('diretrizModalOverlay').style.display = 'flex';
+}
+
+function closeDiretrizModal(e) {
+  if (e && e.target !== document.getElementById('diretrizModalOverlay')) return;
+  document.getElementById('diretrizModalOverlay').style.display = 'none';
+  _diretrizPendente = null;
+}
+
+async function confirmarTransferencia() {
+  if (!_diretrizPendente) return;
+  var contaDestId = parseInt(document.getElementById('diretrizContaDestino').value);
+  var errEl = document.getElementById('diretrizModalError');
+  if (!contaDestId) {
+    if (errEl) { errEl.textContent = 'Selecione uma conta destino'; errEl.style.display = 'block'; }
+    return;
+  }
+
+  var btn = document.getElementById('diretrizConfirmarTransf');
+  if (btn) { btn.disabled = true; btn.textContent = '...'; }
+
+  try {
+    // Cria a transferência
+    var hoje = new Date().toISOString().split('T')[0];
+    var trResp = await fetch('/api/transferencias', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        descricao: 'Reserva 10% — ' + (_diretrizPendente.descricao || 'Receita'),
+        valor: _diretrizPendente.valor_dez_pct,
+        conta_origem_id: _diretrizPendente.conta_id,
+        conta_destino_id: contaDestId,
+        data_vencimento: hoje,
+        efetivado: true,
+      }),
+    });
+    if (!trResp.ok) {
+      var tj = await trResp.json();
+      if (errEl) { errEl.textContent = tj.error || 'Erro na transferência'; errEl.style.display = 'block'; }
+      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-lg"></i> Confirmar'; }
+      return;
+    }
+
+    // Registra a ação na diretriz
+    await fetch('/api/diretrizes/dez-pct/' + _diretrizPendente.id + '/acao', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        acao: 'transferido',
+        conta_destino_id: contaDestId,
+        valor_dez_pct: _diretrizPendente.valor_dez_pct,
+      }),
+    });
+
+    document.getElementById('diretrizModalOverlay').style.display = 'none';
+    _removerItemDiretriz(_diretrizPendente.id);
+    _diretrizPendente = null;
+
+    // Recarrega contas para refletir o saldo atualizado
+    if (typeof loadContas === 'function') loadContas();
+  } catch (e) {
+    if (errEl) { errEl.textContent = 'Erro de conexão'; errEl.style.display = 'block'; }
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-lg"></i> Confirmar'; }
+  }
+}
