@@ -6,6 +6,15 @@
   --header-height: 56px;
   --bottom-nav-height: 64px;
 
+  /*
+   * --safe-bottom: espaço mínimo obrigatório acima da borda inferior da tela.
+   * Em desktop = 0. Em mobile = bottom-nav + safe-area do dispositivo.
+   * USO: qualquer modal, sheet ou footer fixo deve aplicar
+   *   padding-bottom: calc(BASE + var(--safe-bottom))
+   * para garantir que nenhum botão fique sob o menu inferior.
+   */
+  --safe-bottom: 0px;
+
   --bg: #f1f5f9;
   --card: #ffffff;
   --text: #1e293b;
@@ -815,6 +824,10 @@ body {
    AJUSTES MOBILE
 ========================= */
 @media (max-width: 767px) {
+
+  :root {
+    --safe-bottom: calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px));
+  }
 
   body {
     background: var(--mobile-header-bg);
