@@ -1863,6 +1863,43 @@ def treino_dia():
     return jsonify(result)
 
 
+# =============================================================
+# DIRETRIZES — Regra dos 10%
+# =============================================================
+
+@bp.route("/diretrizes/dez-pct/pendentes", methods=["GET"])
+@login_required
+def diretrizes_dez_pct_pendentes():
+    from app.services import diretriz_service
+    try:
+        pendentes = diretriz_service.get_pendentes(current_user.id)
+        return jsonify(pendentes)
+    except Exception as exc:
+        logger.exception("diretrizes_dez_pct_pendentes error: %s", exc)
+        return jsonify({"error": "Erro ao carregar pendentes"}), 500
+
+
+@bp.route("/diretrizes/dez-pct/<int:lancamento_id>/acao", methods=["POST"])
+@login_required
+def diretrizes_dez_pct_acao(lancamento_id):
+    from app.services import diretriz_service
+    data = request.get_json() or {}
+    try:
+        result = diretriz_service.registrar(
+            user_id=current_user.id,
+            lancamento_id=lancamento_id,
+            acao=data.get("acao", ""),
+            conta_destino_id=data.get("conta_destino_id"),
+            valor_dez_pct=float(data.get("valor_dez_pct") or 0),
+        )
+        return jsonify(result), 201
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as exc:
+        logger.exception("diretrizes_dez_pct_acao error lancamento=%s: %s", lancamento_id, exc)
+        return jsonify({"error": "Erro ao registrar ação"}), 500
+
+
 def _mp_base_url(req) -> str:
     import os
     explicit = os.environ.get("APP_BASE_URL", "").rstrip("/")
