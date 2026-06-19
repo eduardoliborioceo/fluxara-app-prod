@@ -147,7 +147,12 @@
     {% endif %}
 
     <div class="lancamento-section">
-      <div class="lancamento-field-label">Categoria</div>
+      <div class="lancamento-field-label-row">
+        <span class="lancamento-field-label">Categoria</span>
+        <button type="button" class="btn-add-inline" id="btnNovaCat" title="Nova categoria">
+          <i class="bi bi-plus"></i>
+        </button>
+      </div>
       <div class="conta-picker" id="categoriaPicker">
         <div class="conta-picker-trigger" id="categoriaPickerTrigger">
           <div class="conta-picker-selected" id="categoriaPickerSelected">
@@ -161,7 +166,12 @@
     </div>
 
     <div class="lancamento-section" id="secSubcategoria" style="display:none">
-      <div class="lancamento-field-label">Subcategoria</div>
+      <div class="lancamento-field-label-row">
+        <span class="lancamento-field-label">Subcategoria</span>
+        <button type="button" class="btn-add-inline" id="btnNovaSubcat" title="Nova subcategoria">
+          <i class="bi bi-plus"></i>
+        </button>
+      </div>
       <select id="lSubcategoria" class="form-select lancamento-select">
         <option value="">Selecionar subcategoria...</option>
       </select>
@@ -245,6 +255,54 @@
 
       <button type="button" class="btn-salvar mt-3" id="btnRecConfirmar">Confirmar</button>
 
+    </div>
+  </div>
+</div>
+
+<!-- Mini-modal nova categoria -->
+<div class="rec-overlay" id="newCatOverlay">
+  <div class="rec-sheet">
+    <div class="rec-sheet-handle"></div>
+    <div class="rec-sheet-header">
+      <span class="rec-sheet-title">Nova Categoria</span>
+      <button class="rec-sheet-close" id="newCatClose"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="rec-sheet-body">
+      <div class="rec-field">
+        <span class="rec-field-label">Nome</span>
+        <input type="text" id="newCatNome" class="form-control lancamento-text"
+               placeholder="Nome da categoria..." maxlength="40" autocomplete="off">
+      </div>
+      <div class="rec-field">
+        <span class="rec-field-label">Ícone</span>
+        <div class="nova-cat-icon-grid" id="newCatIconGrid"></div>
+        <input type="hidden" id="newCatIcone" value="bi-tag">
+      </div>
+      <div class="rec-field">
+        <span class="rec-field-label">Cor</span>
+        <div class="nova-cat-cor-swatches" id="newCatCorSwatches"></div>
+        <input type="hidden" id="newCatCor" value="">
+      </div>
+      <button type="button" class="btn-salvar mt-2" id="btnNovaCatConfirmar">Criar Categoria</button>
+    </div>
+  </div>
+</div>
+
+<!-- Mini-modal nova subcategoria -->
+<div class="rec-overlay" id="newSubOverlay">
+  <div class="rec-sheet">
+    <div class="rec-sheet-handle"></div>
+    <div class="rec-sheet-header">
+      <span class="rec-sheet-title">Nova Subcategoria</span>
+      <button class="rec-sheet-close" id="newSubClose"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="rec-sheet-body">
+      <div class="rec-field">
+        <span class="rec-field-label">Nome</span>
+        <input type="text" id="newSubNome" class="form-control lancamento-text"
+               placeholder="Nome da subcategoria..." maxlength="40" autocomplete="off">
+      </div>
+      <button type="button" class="btn-salvar mt-2" id="btnNovaSubConfirmar">Criar Subcategoria</button>
     </div>
   </div>
 </div>
