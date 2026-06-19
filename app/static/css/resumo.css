@@ -1260,8 +1260,14 @@
 }
 
 .gerenciar-footer {
-  padding: 16px 16px 24px;
+  padding: 16px 16px calc(24px + env(safe-area-inset-bottom, 0px));
   flex-shrink: 0;
+}
+
+@media (max-width: 575px) {
+  .gerenciar-footer {
+    padding-bottom: calc(var(--bottom-nav-height, 64px) + 16px);
+  }
 }
 
 .gerenciar-save {

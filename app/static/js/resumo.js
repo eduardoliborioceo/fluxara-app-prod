@@ -832,15 +832,15 @@
 
   // ── Gerenciar tela inicial ───────────────────────────────────────────────────
   var CARD_META = {
-    'contas':         { nome: 'Contas',                icone: 'bi-wallet2',        cor: '#0d6efd' },
-    'visao':          { nome: 'Visão Geral',            icone: 'bi-bar-chart-line', cor: '#0d6efd' },
-    'cartoes':        { nome: 'Cartões de Crédito',     icone: 'bi-credit-card',    cor: '#0d6efd' },
-    'projecao':       { nome: 'Projeção de Saldo',      icone: 'bi-graph-up-arrow', cor: '#0d6efd' },
-    'despesas-conta': { nome: 'Despesas por Conta',     icone: 'bi-pie-chart',      cor: '#dc3545' },
-    'despesas-cat':   { nome: 'Despesas por Categoria', icone: 'bi-tags',           cor: '#f59e0b' },
-    'debitos':        { nome: 'Débitos',                icone: 'bi-calendar-x',     cor: '#dc3545' },
-    'assistente':     { nome: 'Assistente Flux',        icone: 'bi-stars',          cor: '#6366f1' },
-    'debitos':        { nome: 'Débitos Vencidos',       icone: 'bi-exclamation-circle', cor: '#dc3545' },
+    'diretriz':       { nome: 'Regra dos 10%',          icone: 'bi-piggy-bank-fill', cor: '#16a34a' },
+    'contas':         { nome: 'Contas',                 icone: 'bi-wallet2',         cor: '#0d6efd' },
+    'visao':          { nome: 'Visão Geral',             icone: 'bi-bar-chart-line',  cor: '#0d6efd' },
+    'cartoes':        { nome: 'Cartões de Crédito',      icone: 'bi-credit-card',     cor: '#0d6efd' },
+    'projecao':       { nome: 'Projeção de Saldo',       icone: 'bi-graph-up-arrow',  cor: '#0d6efd' },
+    'despesas-conta': { nome: 'Despesas por Conta',      icone: 'bi-pie-chart',       cor: '#dc3545' },
+    'despesas-cat':   { nome: 'Despesas por Categoria',  icone: 'bi-tags',            cor: '#f59e0b' },
+    'debitos':        { nome: 'Débitos Vencidos',        icone: 'bi-exclamation-circle', cor: '#dc3545' },
+    'assistente':     { nome: 'Assistente Flux',         icone: 'bi-stars',           cor: '#6366f1' },
   };
 
   function initGerenciar() {
