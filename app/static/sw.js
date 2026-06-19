@@ -3,7 +3,7 @@
    - Não cacheia páginas autenticadas
 */
 
-const CACHE_VERSION = "fluxara-v2";
+const CACHE_VERSION = "fluxara-v3";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 
 const STATIC_ASSETS = [
@@ -111,6 +111,7 @@ self.addEventListener("push", (event) => {
   const options = {
     body: payload.body || "",
     icon: "/static/images/logos/pwa-192.png",
+    badge: "/static/images/logos/badge.svg",
     data: { url: payload.url || "/" },
     vibrate: [200, 100, 200],
     tag: payload.tag || ("fluxara-" + Date.now()),
