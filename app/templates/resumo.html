@@ -35,24 +35,37 @@
   </div>
 
   <!-- ====== MODAL CONTA DESTINO (diretriz) ====== -->
-  <div id="diretrizModalOverlay" class="diretriz-modal-overlay" style="display:none" onclick="closeDiretrizModal(event)">
-    <div class="diretriz-modal">
-      <div class="diretriz-modal-header">
-        <span><i class="bi bi-arrow-left-right" style="margin-right:6px;color:#16a34a"></i>Transferir 10% para poupança</span>
-        <button class="tips-modal-close" onclick="closeDiretrizModal()" title="Fechar"><i class="bi bi-x-lg"></i></button>
-      </div>
-      <div class="diretriz-modal-body">
-        <p class="diretriz-modal-desc" id="diretrizModalDesc"></p>
-        <div class="tips-form-group" style="margin-bottom:12px">
-          <label class="tips-form-label">Conta destino (poupança)</label>
-          <select id="diretrizContaDestino" class="tips-form-input"></select>
+  <div id="diretrizModalOverlay" class="dm-overlay" style="display:none" onclick="closeDiretrizModal(event)">
+    <div class="dm-sheet">
+      <div class="dm-header">
+        <div class="dm-header-icon"><i class="bi bi-arrow-left-right"></i></div>
+        <div class="dm-header-text">
+          <div class="dm-header-title">Transferir para poupança</div>
+          <div class="dm-header-sub">Reserva dos 10%</div>
         </div>
-        <div id="diretrizModalError" class="tips-form-error" style="display:none"></div>
+        <button class="dm-close" onclick="closeDiretrizModal()" title="Fechar">
+          <i class="bi bi-x-lg"></i>
+        </button>
       </div>
-      <div class="tips-modal-actions">
-        <button class="tips-btn-cancel" onclick="closeDiretrizModal()">Cancelar</button>
-        <button class="tips-btn-auto-submit" id="diretrizConfirmarTransf" onclick="confirmarTransferencia()">
-          <i class="bi bi-check-lg"></i> Confirmar
+
+      <div class="dm-body">
+        <div class="dm-desc-box">
+          <i class="bi bi-info-circle dm-desc-icon"></i>
+          <p class="dm-desc" id="diretrizModalDesc"></p>
+        </div>
+
+        <div class="dm-field">
+          <label class="dm-label" for="diretrizContaDestino">Conta destino</label>
+          <select id="diretrizContaDestino" class="dm-select"></select>
+        </div>
+
+        <div id="diretrizModalError" class="dm-error" style="display:none"></div>
+      </div>
+
+      <div class="dm-footer">
+        <button class="dm-btn dm-btn--cancel" onclick="closeDiretrizModal()">Cancelar</button>
+        <button class="dm-btn dm-btn--confirm" id="diretrizConfirmarTransf" onclick="confirmarTransferencia()">
+          <i class="bi bi-check-lg"></i> Confirmar transferência
         </button>
       </div>
     </div>
