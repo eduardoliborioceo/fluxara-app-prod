@@ -1260,14 +1260,8 @@
 }
 
 .gerenciar-footer {
-  padding: 16px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+  padding: 16px 16px calc(16px + var(--safe-bottom, 0px));
   flex-shrink: 0;
-}
-
-@media (max-width: 575px) {
-  .gerenciar-footer {
-    padding-bottom: calc(var(--bottom-nav-height, 64px) + 16px);
-  }
 }
 
 .gerenciar-save {
@@ -2914,7 +2908,7 @@
 .dm-footer {
   display: flex;
   gap: 10px;
-  padding: 14px 20px calc(14px + env(safe-area-inset-bottom, 0px));
+  padding: 14px 20px calc(14px + var(--safe-bottom, 0px));
   border-top: 1px solid var(--border, rgba(15,23,42,.09));
   flex-shrink: 0;
 }
