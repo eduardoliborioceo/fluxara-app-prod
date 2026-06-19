@@ -2,6 +2,26 @@
   var tipo = document.getElementById('lancamentoTipo').textContent.trim();
   var efetivado = true;
   var categoriasData = [];
+
+  var NOVA_CAT_ICONS = [
+    'bi-cart-fill','bi-bag-fill','bi-house-fill','bi-car-front-fill',
+    'bi-heart-pulse-fill','bi-book-fill','bi-controller','bi-scissors',
+    'bi-person-fill','bi-gift-fill','bi-phone-fill','bi-tv-fill',
+    'bi-cash-coin','bi-piggy-bank','bi-credit-card','bi-bank',
+    'bi-briefcase-fill','bi-tag-fill','bi-shop','bi-cup-hot-fill',
+    'bi-airplane','bi-bicycle','bi-lightning-fill','bi-tools',
+    'bi-paw','bi-tree-fill','bi-sun','bi-moon',
+    'bi-music-note-beamed','bi-activity','bi-hospital','bi-droplet-fill',
+  ];
+
+  var NOVA_CAT_CORES = [
+    '#ef4444','#f97316','#f59e0b','#84cc16','#22c55e',
+    '#10b981','#06b6d4','#3b82f6','#6366f1','#8b5cf6',
+    '#a855f7','#ec4899','#14b8a6','#0ea5e9','#64748b',
+  ];
+
+  var novaCatIconeSelecionado = 'bi-tag';
+  var novaCatCorSelecionada = '#3b82f6';
   var hoje = new Date();
   var pad = function (n) { return n < 10 ? '0' + n : String(n); };
   var dataHoje = hoje.getFullYear() + '-' + pad(hoje.getMonth() + 1) + '-' + pad(hoje.getDate());
@@ -556,31 +576,62 @@
     } catch (e) {}
   }
 
+  function renderCategoria(c, compact) {
+    var color = c.cor_fundo || '#64748b';
+    var iconHtml = '<div class="conta-picker-logo" style="background:' + color + '20;color:' + color + '">'
+      + '<i class="bi ' + c.icone + '"></i></div>';
+    if (compact) {
+      return iconHtml + '<span class="conta-picker-nome">' + esc(c.nome) + '</span>';
+    }
+    return '<div class="conta-picker-item" data-id="' + c.id + '">'
+      + iconHtml + '<span class="conta-picker-nome">' + esc(c.nome) + '</span></div>';
+  }
+
   function onCategoriaChange(catId) {
     var cat = categoriasData.find(function (c) { return c.id === catId; });
     var sec = document.getElementById('secSubcategoria');
     var sel2 = document.getElementById('lSubcategoria');
-    if (cat && cat.subcategorias && cat.subcategorias.length) {
+    if (!cat) { sec.style.display = 'none'; return; }
+    sec.style.display = '';
+    if (cat.subcategorias && cat.subcategorias.length) {
       sel2.innerHTML = '<option value="">Selecionar subcategoria...</option>' +
         cat.subcategorias.map(function (s) {
           return '<option value="' + s.id + '">' + esc(s.nome) + '</option>';
         }).join('');
-      sec.style.display = '';
+      sel2.style.display = '';
     } else {
-      sec.style.display = 'none';
+      sel2.innerHTML = '';
+      sel2.style.display = 'none';
     }
   }
 
   function preselectCategoria(id) {
     var found = categoriasData.find(function (c) { return String(c.id) === String(id); });
     if (!found) return;
-    var color = found.cor_fundo || '#64748b';
-    var iconHtml = '<div class="conta-picker-logo" style="background:' + color + '20;color:' + color + '">'
-      + '<i class="bi ' + found.icone + '"></i></div>';
     document.getElementById('lCategoria').value = id;
-    document.getElementById('categoriaPickerSelected').innerHTML =
-      iconHtml + '<span class="conta-picker-nome">' + esc(found.nome) + '</span>';
+    document.getElementById('categoriaPickerSelected').innerHTML = renderCategoria(found, true);
     onCategoriaChange(found.id);
+  }
+
+  function refreshCategoriaDropdown() {
+    var dropdownEl = document.getElementById('categoriaPickerDropdown');
+    var selectedEl = document.getElementById('categoriaPickerSelected');
+    var hiddenInput = document.getElementById('lCategoria');
+
+    dropdownEl.innerHTML = categoriasData.map(function (c) { return renderCategoria(c, false); }).join('');
+
+    dropdownEl.querySelectorAll('.conta-picker-item').forEach(function (el) {
+      el.addEventListener('click', function () {
+        var id = parseInt(this.dataset.id);
+        hiddenInput.value = id;
+        var found = categoriasData.find(function (x) { return x.id === id; });
+        if (found) {
+          selectedEl.innerHTML = renderCategoria(found, true);
+          onCategoriaChange(found.id);
+        }
+        document.getElementById('categoriaPicker').classList.remove('open');
+      });
+    });
   }
 
   async function loadCategorias() {
@@ -588,17 +639,6 @@
     try {
       var r = await fetch('/api/config/categorias?tipo=' + tipoCat);
       categoriasData = await r.json();
-
-      function renderCategoria(c, compact) {
-        var color = c.cor_fundo || '#64748b';
-        var iconHtml = '<div class="conta-picker-logo" style="background:' + color + '20;color:' + color + '">'
-          + '<i class="bi ' + c.icone + '"></i></div>';
-        if (compact) {
-          return iconHtml + '<span class="conta-picker-nome">' + esc(c.nome) + '</span>';
-        }
-        return '<div class="conta-picker-item" data-id="' + c.id + '">'
-          + iconHtml + '<span class="conta-picker-nome">' + esc(c.nome) + '</span></div>';
-      }
 
       buildContaPicker(
         'categoriaPicker',
@@ -611,6 +651,126 @@
         function (cat) { onCategoriaChange(cat.id); }
       );
     } catch (e) {}
+  }
+
+  function buildNewCatIconGrid() {
+    var grid = document.getElementById('newCatIconGrid');
+    if (!grid || grid.children.length) return;
+    NOVA_CAT_ICONS.forEach(function (icon) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'nova-cat-icon-btn' + (icon === novaCatIconeSelecionado ? ' selected' : '');
+      btn.dataset.icon = icon;
+      btn.innerHTML = '<i class="bi ' + icon + '"></i>';
+      btn.addEventListener('click', function () {
+        novaCatIconeSelecionado = icon;
+        document.getElementById('newCatIcone').value = icon;
+        grid.querySelectorAll('.nova-cat-icon-btn').forEach(function (b) { b.classList.remove('selected'); });
+        this.classList.add('selected');
+      });
+      grid.appendChild(btn);
+    });
+  }
+
+  function buildNewCatCorSwatches() {
+    var row = document.getElementById('newCatCorSwatches');
+    if (!row || row.children.length) return;
+    NOVA_CAT_CORES.forEach(function (cor) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'nova-cat-cor-btn' + (cor === novaCatCorSelecionada ? ' selected' : '');
+      btn.style.background = cor;
+      btn.dataset.cor = cor;
+      btn.addEventListener('click', function () {
+        novaCatCorSelecionada = cor;
+        document.getElementById('newCatCor').value = cor;
+        row.querySelectorAll('.nova-cat-cor-btn').forEach(function (b) { b.classList.remove('selected'); });
+        this.classList.add('selected');
+      });
+      row.appendChild(btn);
+    });
+    document.getElementById('newCatCor').value = novaCatCorSelecionada;
+  }
+
+  function openNewCatModal() {
+    document.getElementById('newCatNome').value = '';
+    buildNewCatIconGrid();
+    buildNewCatCorSwatches();
+    document.getElementById('newCatOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    setTimeout(function () { document.getElementById('newCatNome').focus(); }, 100);
+  }
+
+  function closeNewCatModal() {
+    document.getElementById('newCatOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function openNewSubModal() {
+    document.getElementById('newSubNome').value = '';
+    document.getElementById('newSubOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    setTimeout(function () { document.getElementById('newSubNome').focus(); }, 100);
+  }
+
+  function closeNewSubModal() {
+    document.getElementById('newSubOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  async function criarNovaCategoria() {
+    var nome = document.getElementById('newCatNome').value.trim();
+    if (!nome) { document.getElementById('newCatNome').focus(); return; }
+    var icone = document.getElementById('newCatIcone').value || 'bi-tag';
+    var cor = document.getElementById('newCatCor').value || '#3b82f6';
+    var tipoCat = tipo === 'receita' ? 'receita' : 'despesa';
+    var btn = document.getElementById('btnNovaCatConfirmar');
+    btn.disabled = true;
+    try {
+      var r = await fetch('/api/config/categorias', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tipo: tipoCat, nome: nome, icone: icone, cor_fundo: cor }),
+      });
+      if (!r.ok) { return; }
+      var nova = await r.json();
+      nova.subcategorias = nova.subcategorias || [];
+      categoriasData.push(nova);
+      refreshCategoriaDropdown();
+      preselectCategoria(nova.id);
+      closeNewCatModal();
+    } catch (e) {}
+    finally { btn.disabled = false; }
+  }
+
+  async function criarNovaSubcategoria() {
+    var nome = document.getElementById('newSubNome').value.trim();
+    if (!nome) { document.getElementById('newSubNome').focus(); return; }
+    var catId = parseInt(document.getElementById('lCategoria').value);
+    if (!catId) { closeNewSubModal(); return; }
+    var btn = document.getElementById('btnNovaSubConfirmar');
+    btn.disabled = true;
+    try {
+      var r = await fetch('/api/config/subcategorias', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ categoria_id: catId, nome: nome }),
+      });
+      if (!r.ok) { return; }
+      var nova = await r.json();
+      var cat = categoriasData.find(function (c) { return c.id === catId; });
+      if (cat) {
+        if (!cat.subcategorias) cat.subcategorias = [];
+        cat.subcategorias.push(nova);
+      }
+      onCategoriaChange(catId);
+      setTimeout(function () {
+        var sel = document.getElementById('lSubcategoria');
+        if (sel) sel.value = String(nova.id);
+      }, 50);
+      closeNewSubModal();
+    } catch (e) {}
+    finally { btn.disabled = false; }
   }
 
   function resetForm() {
@@ -780,6 +940,26 @@
 
   document.getElementById('lDescricao').addEventListener('blur', function () {
     setTimeout(closeSug, 180);
+  });
+
+  document.getElementById('btnNovaCat').addEventListener('click', openNewCatModal);
+  document.getElementById('newCatClose').addEventListener('click', closeNewCatModal);
+  document.getElementById('newCatOverlay').addEventListener('click', function (e) {
+    if (e.target === this) closeNewCatModal();
+  });
+  document.getElementById('btnNovaCatConfirmar').addEventListener('click', criarNovaCategoria);
+  document.getElementById('newCatNome').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') criarNovaCategoria();
+  });
+
+  document.getElementById('btnNovaSubcat').addEventListener('click', openNewSubModal);
+  document.getElementById('newSubClose').addEventListener('click', closeNewSubModal);
+  document.getElementById('newSubOverlay').addEventListener('click', function (e) {
+    if (e.target === this) closeNewSubModal();
+  });
+  document.getElementById('btnNovaSubConfirmar').addEventListener('click', criarNovaSubcategoria);
+  document.getElementById('newSubNome').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') criarNovaSubcategoria();
   });
 
   if (tipo === 'despesa_cartao') {
