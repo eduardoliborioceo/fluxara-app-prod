@@ -240,7 +240,7 @@
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0,0,0,.15);
-  z-index: 200;
+  z-index: 400;
   overflow: hidden;
   display: none;
   max-height: 280px;
