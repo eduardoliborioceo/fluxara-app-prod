@@ -159,9 +159,24 @@ function applyJogosFilter() {
 
   if (matches.length === 0) {
     const total = window._jogosData.matches.length;
-    const msg = minDiff > 0
-      ? `Nenhum jogo com diferença ≥ ${minDiff} posições (${total} jogos no período sem esse filtro).`
-      : "Nenhum jogo agendado para este período.";
+    let msg;
+    if (minDiff > 0) {
+      msg = `Nenhum jogo com diferença ≥ ${minDiff} posições (${total} jogos no período sem esse filtro).`;
+    } else {
+      const sport = window._activeSport || "soccer";
+      const hints = {
+        soccer:     "As ligas domésticas costumam parar durante Copa do Mundo. Tente selecionar Copa do Mundo FIFA ou Copa América.",
+        basketball: "Pode ser recesso de temporada (a NBA fica inativa de junho a outubro). Tente WNBA ou NBB.",
+        baseball:   "Verifique se a temporada do campeonato selecionado está ativa.",
+        tennis:     "O calendário de tênis tem lacunas entre Grand Slams. Tente ATP Tour ou WTA Tour.",
+        volleyball: "Verifique se a Superliga ou Nations League está em andamento neste período.",
+        handball:   "As ligas europeias de handebol geralmente param no verão europeu.",
+      };
+      const hint = hints[sport];
+      msg = hint
+        ? `Nenhum jogo agendado para os próximos dias. ${hint}`
+        : "Nenhum jogo agendado para este período.";
+    }
     document.getElementById("jogosVazioMsg").textContent = msg;
     setJogosState("vazio");
     return;
