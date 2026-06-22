@@ -1059,6 +1059,7 @@ function _selectPickerMatch(el) {
 
 let _autoLeaguesLoaded = false;
 let _autoLeagueMode   = "include";
+let _autoSport        = "soccer";
 
 function setAutoLeagueMode(mode) {
   _autoLeagueMode = mode;
@@ -1083,10 +1084,20 @@ function setAutoLeagueMode(mode) {
 async function openAutoModal() {
   document.getElementById("autoFormError").style.display = "none";
   document.getElementById("autoModalOverlay").style.display = "flex";
+  const sportSel = document.getElementById("autoSportSelect");
+  if (sportSel) sportSel.value = _autoSport;
   if (!_autoLeaguesLoaded) {
-    await _loadAutoLeagues();
+    await _loadAutoLeagues(_autoSport);
     _autoLeaguesLoaded = true;
   }
+}
+
+function onAutoSportChange() {
+  const sel = document.getElementById("autoSportSelect");
+  if (!sel) return;
+  _autoSport = sel.value;
+  _autoLeaguesLoaded = false;
+  _loadAutoLeagues(_autoSport).then(() => { _autoLeaguesLoaded = true; });
 }
 
 function closeAutoModal() {
@@ -1097,16 +1108,17 @@ function closeAutoModalOverlay(e) {
   if (e.target === document.getElementById("autoModalOverlay")) closeAutoModal();
 }
 
-async function _loadAutoLeagues() {
+async function _loadAutoLeagues(sport = "soccer") {
   const container = document.getElementById("autoLeagueCheckboxes");
   if (!container) return;
+  container.innerHTML = '<span style="color:var(--text-muted);font-size:.8rem">Carregando...</span>';
   try {
-    const [respAfl, respEspn] = await Promise.all([
-      fetch("/api/apostas/apifootball/leagues"),
-      fetch("/api/apostas/espn/leagues"),
-    ]);
-    const aflList  = respAfl.ok  ? await respAfl.json()  : [];
-    const espnList = respEspn.ok ? await respEspn.json() : [];
+    const requests = [fetch(`/api/apostas/espn/leagues?sport=${sport}`)];
+    if (sport === "soccer") requests.push(fetch("/api/apostas/apifootball/leagues"));
+
+    const results  = await Promise.all(requests);
+    const espnList = results[0].ok ? await results[0].json() : [];
+    const aflList  = (sport === "soccer" && results[1]?.ok) ? await results[1].json() : [];
 
     const byCategory = {};
     espnList.forEach(lg => {
@@ -1175,6 +1187,7 @@ async function submitAutoRecommend() {
         league_mode:         _autoLeagueMode,
         stake,
         titulo,
+        sport:               _autoSport || "soccer",
       }),
     });
     const json = await resp.json();

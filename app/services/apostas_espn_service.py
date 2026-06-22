@@ -118,16 +118,19 @@ def get_standings(league_slug: str, sport: str = "soccer") -> dict:
 
 
 def _fetch_standings(league_slug: str, sport: str = "soccer") -> dict:
-    url = f"{_ESPN_BASE_V2}/{sport}/{league_slug}/standings"
-    try:
-        resp = requests.get(url, headers=_HEADERS, timeout=_TIMEOUT)
-        if resp.status_code != 200:
-            logger.warning("ESPN standings HTTP %s for %s/%s", resp.status_code, sport, league_slug)
-            return {"groups": [], "season": ""}
-        return _parse_standings(resp.json())
-    except Exception as exc:
-        logger.warning("ESPN standings failed sport=%s league=%s: %s", sport, league_slug, exc)
-        return {"groups": [], "season": ""}
+    for base in [_ESPN_BASE_V2, _ESPN_BASE_SITE]:
+        url = f"{base}/{sport}/{league_slug}/standings"
+        try:
+            resp = requests.get(url, headers=_HEADERS, timeout=_TIMEOUT)
+            if resp.status_code != 200:
+                continue
+            data = _parse_standings(resp.json())
+            if data.get("groups"):
+                return data
+        except Exception as exc:
+            logger.warning("ESPN standings failed sport=%s league=%s url=%s: %s", sport, league_slug, url, exc)
+    logger.warning("ESPN standings empty for sport=%s league=%s", sport, league_slug)
+    return {"groups": [], "season": ""}
 
 
 def _parse_standings(payload: dict) -> dict:
