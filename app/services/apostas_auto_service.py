@@ -7,6 +7,17 @@ from app.services import apostas_tips_service
 
 logger = logging.getLogger(__name__)
 
+_VALID_SPORTS = {"soccer", "basketball", "baseball", "tennis", "volleyball", "handball"}
+
+_SPORT_MARKET = {
+    "soccer":     "Vitória Casa (1)",
+    "basketball": "Vitória Casa",
+    "baseball":   "Vitória Casa",
+    "tennis":     "Vitória Casa",
+    "volleyball": "Vitória Casa",
+    "handball":   "Vitória Casa",
+}
+
 
 def auto_recommend(config: dict, user_id: int) -> dict:
     min_diff    = max(1, int(config.get("min_diff") or 10))
@@ -18,10 +29,13 @@ def auto_recommend(config: dict, user_id: int) -> dict:
     titulo      = (config.get("titulo") or "").strip()
     max_games   = max(2, min(8, int(config.get("max_games") or 5)))
     max_recs    = max(1, min(5, int(config.get("max_recommendations") or 1)))
+    sport       = (config.get("sport") or "soccer").strip()
+    if sport not in _VALID_SPORTS:
+        sport = "soccer"
 
-    afl_ids, espn_slugs = _split_leagues(leagues, league_mode)
+    afl_ids, espn_slugs = _split_leagues(leagues, league_mode, sport)
 
-    qualifying = _find_qualifying(afl_ids, espn_slugs, min_diff, days_ahead)
+    qualifying = _find_qualifying(afl_ids, espn_slugs, min_diff, days_ahead, sport)
     if not qualifying:
         raise ValueError(
             "Nenhuma partida qualificada encontrada. "
@@ -29,7 +43,7 @@ def auto_recommend(config: dict, user_id: int) -> dict:
         )
 
     for match in qualifying:
-        if match.get("source") == "afl":
+        if match.get("source") == "afl" and sport == "soccer":
             odds = apostas_apifootball_service.get_fixture_odds(match["event_id"])
             if odds and odds.get("home") and odds["home"] > 1.0:
                 match["home_odd"]   = round(float(odds["home"]), 2)
@@ -38,8 +52,10 @@ def auto_recommend(config: dict, user_id: int) -> dict:
         match["home_odd"]   = _estimate_odd(match.get("pos_diff") or 10)
         match["odd_source"] = "est"
 
-    afl_names  = {lg["id"]:   lg["name"] for lg in apostas_apifootball_service.get_leagues()}
-    espn_names = {lg["slug"]: lg["name"] for lg in apostas_espn_service.get_leagues()}
+    afl_names  = {lg["id"]:   lg["name"] for lg in apostas_apifootball_service.get_leagues()} if sport == "soccer" else {}
+    espn_names = {lg["slug"]: lg["name"] for lg in apostas_espn_service.get_leagues(sport)}
+
+    market = _SPORT_MARKET.get(sport, "Vitória Casa")
 
     pool = [m for m in qualifying if (m.get("home_odd") or 0) > 1.0]
     tips_created = []
@@ -63,7 +79,7 @@ def auto_recommend(config: dict, user_id: int) -> dict:
             jogos.append({
                 "partida":      f"{m['home_name']} x {m['away_name']}",
                 "campeonato":   camp,
-                "mercado":      f"Vitória Casa (1){suffix}",
+                "mercado":      f"{market}{suffix}",
                 "odd":          m["home_odd"],
                 "data_partida": m["date_brt"][:10] if m.get("date_brt") else None,
             })
@@ -146,9 +162,9 @@ def _short_league_name(name: str) -> str:
 # League splitting
 # ============================================================
 
-def _split_leagues(leagues: list, mode: str = "include") -> tuple[list[int], list[str]]:
-    all_afl_ids    = [lg["id"]   for lg in apostas_apifootball_service.get_leagues()]
-    all_espn_slugs = [lg["slug"] for lg in apostas_espn_service.get_leagues()]
+def _split_leagues(leagues: list, mode: str = "include", sport: str = "soccer") -> tuple[list[int], list[str]]:
+    all_afl_ids    = [lg["id"]   for lg in apostas_apifootball_service.get_leagues()] if sport == "soccer" else []
+    all_espn_slugs = [lg["slug"] for lg in apostas_espn_service.get_leagues(sport)]
 
     if not leagues:
         return all_afl_ids, all_espn_slugs
@@ -158,15 +174,18 @@ def _split_leagues(leagues: list, mode: str = "include") -> tuple[list[int], lis
     for item in leagues:
         item = str(item)
         if item.startswith("afl:"):
-            try:
-                selected_afl_ids.append(int(item[4:]))
-            except ValueError:
-                pass
+            if sport == "soccer":
+                try:
+                    selected_afl_ids.append(int(item[4:]))
+                except ValueError:
+                    pass
         elif item.startswith("espn:"):
             selected_espn_slugs.append(item[5:])
         else:
             try:
-                selected_afl_ids.append(int(item))
+                lid = int(item)
+                if sport == "soccer":
+                    selected_afl_ids.append(lid)
             except ValueError:
                 selected_espn_slugs.append(item)
 
@@ -185,7 +204,7 @@ def _split_leagues(leagues: list, mode: str = "include") -> tuple[list[int], lis
 # Qualifying matches
 # ============================================================
 
-def _find_qualifying(afl_ids: list, espn_slugs: list, min_diff: int, days_ahead: int) -> list[dict]:
+def _find_qualifying(afl_ids: list, espn_slugs: list, min_diff: int, days_ahead: int, sport: str = "soccer") -> list[dict]:
     result = []
 
     for lid in afl_ids:
@@ -207,7 +226,7 @@ def _find_qualifying(afl_ids: list, espn_slugs: list, min_diff: int, days_ahead:
 
     for slug in espn_slugs:
         try:
-            data = apostas_espn_service.get_upcoming_fixtures(slug, days_ahead)
+            data = apostas_espn_service.get_upcoming_fixtures(slug, days_ahead, sport)
             for m in data.get("matches") or []:
                 if m.get("state") != "pre":
                     continue
@@ -220,7 +239,7 @@ def _find_qualifying(afl_ids: list, espn_slugs: list, min_diff: int, days_ahead:
                     continue
                 result.append({**m, "source": "espn", "league_slug": slug})
         except Exception as exc:
-            logger.warning("auto_recommend espn league=%s: %s", slug, exc)
+            logger.warning("auto_recommend espn league=%s sport=%s: %s", slug, sport, exc)
 
     result.sort(key=lambda m: m.get("date_iso") or "")
     return result
