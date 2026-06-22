@@ -44,6 +44,9 @@ _SPORT_LEAGUES: dict[str, list[dict]] = {
         {"slug": "UEFA.CHAMPIONS",         "name": "Champions League",           "category": "Mundial"},
         {"slug": "UEFA.EUROPA",            "name": "Europa League",              "category": "Mundial"},
         {"slug": "UEFA.EUROPA.CONFERENCE", "name": "Conference League",          "category": "Mundial"},
+        {"slug": "FIFA.WORLD",             "name": "Copa do Mundo FIFA",         "category": "Mundial"},
+        {"slug": "CONMEBOL.COPA",          "name": "Copa América",               "category": "América do Sul"},
+        {"slug": "UEFA.EURO",              "name": "Eurocopa",                   "category": "Europa"},
     ],
     "basketball": [
         {"slug": "nba",             "name": "NBA",                        "category": "América do Norte"},
@@ -226,7 +229,7 @@ def get_upcoming_fixtures(league_slug: str, days: int = 14, sport: str = "soccer
 
 def _fetch_scoreboard(league_slug: str, from_str: str, to_str: str, sport: str = "soccer") -> list[dict]:
     url = f"{_ESPN_BASE_SITE}/{sport}/{league_slug}/scoreboard"
-    params = {"dates": f"{from_str}-{to_str}"}
+    params = {"dates": f"{from_str}-{to_str}", "limit": 100}
     try:
         resp = requests.get(url, headers=_HEADERS, timeout=_TIMEOUT, params=params)
         if resp.status_code != 200:
@@ -238,12 +241,28 @@ def _fetch_scoreboard(league_slug: str, from_str: str, to_str: str, sport: str =
         return []
 
 
+def _get_competitor_name(c: dict) -> str:
+    team = c.get("team") or {}
+    if team.get("displayName"):
+        return team["displayName"]
+    athlete = c.get("athlete") or {}
+    if athlete.get("displayName"):
+        return athlete["displayName"]
+    return c.get("displayName", "")
+
+
 def _parse_event(event: dict, standings_map: dict[str, int]) -> dict:
     comp = (event.get("competitions") or [{}])[0]
     competitors = comp.get("competitors") or []
 
-    home = next((c for c in competitors if c.get("homeAway") == "home"), {})
-    away = next((c for c in competitors if c.get("homeAway") == "away"), {})
+    home = next(
+        (c for c in competitors if c.get("homeAway") == "home"),
+        competitors[0] if competitors else {},
+    )
+    away = next(
+        (c for c in competitors if c.get("homeAway") == "away"),
+        competitors[1] if len(competitors) > 1 else {},
+    )
 
     home_team = home.get("team") or {}
     away_team = away.get("team") or {}
@@ -271,10 +290,10 @@ def _parse_event(event: dict, standings_map: dict[str, int]) -> dict:
         "date_iso":   date_iso,
         "date_brt":   date_brt,
         "home_id":    home_id,
-        "home_name":  home_team.get("displayName", home.get("displayName", "")),
+        "home_name":  _get_competitor_name(home),
         "home_pos":   home_pos,
         "away_id":    away_id,
-        "away_name":  away_team.get("displayName", away.get("displayName", "")),
+        "away_name":  _get_competitor_name(away),
         "away_pos":   away_pos,
         "pos_diff":   pos_diff,
         "state":      state,
