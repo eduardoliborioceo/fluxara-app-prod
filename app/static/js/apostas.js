@@ -28,6 +28,11 @@ function apostasTab(tab) {
 // ============================================================
 
 document.addEventListener("DOMContentLoaded", () => {
+  const savedSport = localStorage.getItem("apostas_sport") || "soccer";
+  window._activeSport = savedSport;
+  const sportSel = document.getElementById("sportSelect");
+  if (sportSel) sportSel.value = savedSport;
+
   const saved = localStorage.getItem("apostas_tab") || "recomendacoes";
   apostasTab(saved);
   loadTips();
@@ -36,22 +41,41 @@ document.addEventListener("DOMContentLoaded", () => {
 function pad(n) { return String(n).padStart(2, "0"); }
 
 // ============================================================
-//  LEAGUE SELECTOR (shared between Jogos + Tabelas)
+//  SPORT + LEAGUE SELECTOR (shared between Jogos + Tabelas)
 // ============================================================
 
 window._leaguesLoaded  = false;
 window._activeLeague   = null;
+window._activeSport    = "soccer";
+
+function onSportSelectChange() {
+  const sel = document.getElementById("sportSelect");
+  if (!sel || !sel.value) return;
+
+  window._activeSport = sel.value;
+  window._leaguesLoaded = false;
+  window._activeLeague  = null;
+  window._jogosData     = null;
+  localStorage.setItem("apostas_sport", sel.value);
+  localStorage.removeItem("apostas_league");
+
+  const leagueSel = document.getElementById("leagueSelect");
+  if (leagueSel) leagueSel.innerHTML = '<option disabled selected>Carregando...</option>';
+
+  const currentTab = localStorage.getItem("apostas_tab") || "recomendacoes";
+  if (currentTab === "jogos" || currentTab === "tabelas") loadLeagues();
+}
 
 async function loadLeagues() {
-  const sel = document.getElementById("leagueSelect");
+  const sport = window._activeSport || "soccer";
+  const sel   = document.getElementById("leagueSelect");
   try {
-    const [respEspn, respAfl] = await Promise.all([
-      fetch("/api/apostas/espn/leagues"),
-      fetch("/api/apostas/apifootball/leagues"),
-    ]);
+    const requests = [fetch(`/api/apostas/espn/leagues?sport=${sport}`)];
+    if (sport === "soccer") requests.push(fetch("/api/apostas/apifootball/leagues"));
 
-    const espnList = respEspn.ok ? await respEspn.json() : [];
-    const aflList  = respAfl.ok  ? await respAfl.json()  : [];
+    const results  = await Promise.all(requests);
+    const espnList = results[0].ok ? await results[0].json() : [];
+    const aflList  = (sport === "soccer" && results[1]?.ok) ? await results[1].json() : [];
 
     const byCategory = {};
 
@@ -82,11 +106,14 @@ async function loadLeagues() {
 
     window._leaguesLoaded = true;
 
+    const allValues  = [...espnList.map(l => l.slug), ...aflList.map(l => `afl:${l.id}`)];
     const firstValue = espnList[0]?.slug || (aflList[0] ? `afl:${aflList[0].id}` : null);
-    const saved = localStorage.getItem("apostas_league") || firstValue;
-    if (saved) {
-      sel.value = saved;
-      selectLeague(saved);
+    const saved      = localStorage.getItem("apostas_league");
+    const selected   = (saved && allValues.includes(saved)) ? saved : firstValue;
+
+    if (selected) {
+      sel.value = selected;
+      selectLeague(selected);
     }
   } catch {
     sel.innerHTML = '<option disabled selected>Erro ao carregar campeonatos</option>';
@@ -145,13 +172,14 @@ function applyJogosFilter() {
 }
 
 async function loadJogos(slug) {
-  const days = document.getElementById("jogosDays")?.value || 14;
+  const days  = document.getElementById("jogosDays")?.value || 14;
+  const sport = window._activeSport || "soccer";
   setJogosState("loading");
 
   try {
     const url = slug.startsWith("afl:")
       ? `/api/apostas/apifootball/fixtures/${slug.slice(4)}?days=${days}`
-      : `/api/apostas/espn/fixtures/${encodeURIComponent(slug)}?days=${days}`;
+      : `/api/apostas/espn/fixtures/${encodeURIComponent(slug)}?days=${days}&sport=${sport}`;
 
     const resp = await fetch(url);
     const json = await resp.json();
@@ -262,6 +290,7 @@ function formatDayLabel(dayStr) {
 // ============================================================
 
 async function loadTabela(slug) {
+  const sport = window._activeSport || "soccer";
   document.getElementById("tabelasContent").style.display = "none";
   document.getElementById("tabelasErro").style.display    = "none";
   document.getElementById("tabelasLoading").style.display = "flex";
@@ -269,7 +298,7 @@ async function loadTabela(slug) {
   try {
     const url = slug.startsWith("afl:")
       ? `/api/apostas/apifootball/standings/${slug.slice(4)}`
-      : `/api/apostas/espn/standings/${encodeURIComponent(slug)}`;
+      : `/api/apostas/espn/standings/${encodeURIComponent(slug)}?sport=${sport}`;
 
     const resp = await fetch(url);
     const json = await resp.json();
@@ -844,10 +873,18 @@ async function submitTipForm() {
 
 let _pickerJogoIdx      = null;
 let _pickerLeaguesReady = false;
+let _pickerSport        = "soccer";
 
 function openMatchPicker(jogoIdx) {
   _pickerJogoIdx = jogoIdx;
   document.getElementById("matchPickerOverlay").style.display = "flex";
+
+  const sportSel = document.getElementById("pickerSportSelect");
+  if (sportSel && sportSel.value !== _pickerSport) {
+    _pickerSport = sportSel.value;
+    _pickerLeaguesReady = false;
+  }
+
   if (!_pickerLeaguesReady) {
     _loadPickerLeagues();
   } else {
@@ -865,10 +902,23 @@ function closeMatchPickerOverlay(e) {
   if (e.target === document.getElementById("matchPickerOverlay")) closeMatchPicker();
 }
 
+function onPickerSportChange() {
+  const sel = document.getElementById("pickerSportSelect");
+  if (!sel) return;
+  _pickerSport = sel.value;
+  _pickerLeaguesReady = false;
+  const leagueSel = document.getElementById("pickerLeagueSelect");
+  if (leagueSel) leagueSel.innerHTML = '<option disabled selected>Carregando...</option>';
+  document.getElementById("pickerMatchList").innerHTML = "";
+  document.getElementById("pickerEmpty").style.display = "none";
+  _loadPickerLeagues();
+}
+
 async function _loadPickerLeagues() {
-  const sel = document.getElementById("pickerLeagueSelect");
+  const sport = _pickerSport || "soccer";
+  const sel   = document.getElementById("pickerLeagueSelect");
   try {
-    const resp = await fetch("/api/apostas/espn/leagues");
+    const resp = await fetch(`/api/apostas/espn/leagues?sport=${sport}`);
     const list = await resp.json();
 
     const byCategory = {};
@@ -892,7 +942,9 @@ async function _loadPickerLeagues() {
 
     _pickerLeaguesReady = true;
 
-    const defaultSlug = window._activeLeague || list[0]?.slug;
+    const defaultSlug = (sport === "soccer" && window._activeLeague && !window._activeLeague.startsWith("afl:"))
+      ? window._activeLeague
+      : list[0]?.slug;
     if (defaultSlug) {
       sel.value = defaultSlug;
       _loadPickerMatches(defaultSlug);
@@ -908,6 +960,7 @@ function onPickerLeagueChange() {
 }
 
 async function _loadPickerMatches(slug) {
+  const sport     = _pickerSport || "soccer";
   const listEl    = document.getElementById("pickerMatchList");
   const loadingEl = document.getElementById("pickerLoading");
   const emptyEl   = document.getElementById("pickerEmpty");
@@ -917,7 +970,7 @@ async function _loadPickerMatches(slug) {
   loadingEl.style.display = "flex";
 
   try {
-    const resp = await fetch(`/api/apostas/espn/fixtures/${encodeURIComponent(slug)}?days=30`);
+    const resp = await fetch(`/api/apostas/espn/fixtures/${encodeURIComponent(slug)}?days=30&sport=${sport}`);
     const json = await resp.json();
     loadingEl.style.display = "none";
 

@@ -6,8 +6,8 @@ import requests
 
 logger = logging.getLogger(__name__)
 
-_ESPN_SITE = "https://site.api.espn.com/apis/site/v2/sports/soccer"
-_ESPN_V2   = "https://site.api.espn.com/apis/v2/sports/soccer"
+_ESPN_BASE_SITE = "https://site.api.espn.com/apis/site/v2/sports"
+_ESPN_BASE_V2   = "https://site.api.espn.com/apis/v2/sports"
 _HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -17,73 +17,116 @@ _HEADERS = {
     "Accept": "application/json",
 }
 _TIMEOUT = 12
-_STANDINGS_TTL = 1800   # 30 min
-_FIXTURES_TTL  = 600    # 10 min
+_STANDINGS_TTL = 1800
+_FIXTURES_TTL  = 600
 
-_LEAGUES = [
-    # Brasil
-    {"slug": "bra.1",   "name": "Brasileirão Série A",   "category": "Brasil"},
-    {"slug": "bra.2",   "name": "Brasileirão Série B",   "category": "Brasil"},
-    {"slug": "bra.3",   "name": "Brasileirão Série C",   "category": "Brasil"},
-    {"slug": "bra.cup", "name": "Copa do Brasil",         "category": "Brasil"},
-    # América do Sul
-    {"slug": "arg.1",                  "name": "Liga Argentina",      "category": "América do Sul"},
-    {"slug": "col.1",                  "name": "Liga Colombiana",     "category": "América do Sul"},
-    {"slug": "chi.1",                  "name": "Primera División (Chile)", "category": "América do Sul"},
-    {"slug": "uru.1",                  "name": "Primera División (Uruguai)", "category": "América do Sul"},
-    {"slug": "CONMEBOL.LIBERTADORES",  "name": "Copa Libertadores",   "category": "América do Sul"},
-    {"slug": "CONMEBOL.SUDAMERICANA",  "name": "Copa Sudamericana",   "category": "América do Sul"},
-    # Europa
-    {"slug": "eng.1", "name": "Premier League",    "category": "Europa"},
-    {"slug": "eng.2", "name": "Championship",      "category": "Europa"},
-    {"slug": "esp.1", "name": "La Liga",           "category": "Europa"},
-    {"slug": "ger.1", "name": "Bundesliga",        "category": "Europa"},
-    {"slug": "ita.1", "name": "Serie A",           "category": "Europa"},
-    {"slug": "fra.1", "name": "Ligue 1",           "category": "Europa"},
-    {"slug": "por.1", "name": "Primeira Liga",     "category": "Europa"},
-    {"slug": "ned.1", "name": "Eredivisie",        "category": "Europa"},
-    {"slug": "sco.1", "name": "Scottish Premiership", "category": "Europa"},
-    # Competições mundiais / continentais
-    {"slug": "UEFA.CHAMPIONS",         "name": "Champions League",    "category": "Mundial"},
-    {"slug": "UEFA.EUROPA",            "name": "Europa League",       "category": "Mundial"},
-    {"slug": "UEFA.EUROPA.CONFERENCE", "name": "Conference League",   "category": "Mundial"},
+_SPORT_LEAGUES: dict[str, list[dict]] = {
+    "soccer": [
+        {"slug": "bra.1",                  "name": "Brasileirão Série A",         "category": "Brasil"},
+        {"slug": "bra.2",                  "name": "Brasileirão Série B",         "category": "Brasil"},
+        {"slug": "bra.3",                  "name": "Brasileirão Série C",         "category": "Brasil"},
+        {"slug": "bra.cup",                "name": "Copa do Brasil",              "category": "Brasil"},
+        {"slug": "arg.1",                  "name": "Liga Argentina",              "category": "América do Sul"},
+        {"slug": "col.1",                  "name": "Liga Colombiana",             "category": "América do Sul"},
+        {"slug": "chi.1",                  "name": "Primera División (Chile)",    "category": "América do Sul"},
+        {"slug": "uru.1",                  "name": "Primera División (Uruguai)",  "category": "América do Sul"},
+        {"slug": "CONMEBOL.LIBERTADORES",  "name": "Copa Libertadores",           "category": "América do Sul"},
+        {"slug": "CONMEBOL.SUDAMERICANA",  "name": "Copa Sudamericana",           "category": "América do Sul"},
+        {"slug": "eng.1",                  "name": "Premier League",             "category": "Europa"},
+        {"slug": "eng.2",                  "name": "Championship",               "category": "Europa"},
+        {"slug": "esp.1",                  "name": "La Liga",                    "category": "Europa"},
+        {"slug": "ger.1",                  "name": "Bundesliga",                 "category": "Europa"},
+        {"slug": "ita.1",                  "name": "Serie A",                    "category": "Europa"},
+        {"slug": "fra.1",                  "name": "Ligue 1",                    "category": "Europa"},
+        {"slug": "por.1",                  "name": "Primeira Liga",              "category": "Europa"},
+        {"slug": "ned.1",                  "name": "Eredivisie",                 "category": "Europa"},
+        {"slug": "sco.1",                  "name": "Scottish Premiership",       "category": "Europa"},
+        {"slug": "UEFA.CHAMPIONS",         "name": "Champions League",           "category": "Mundial"},
+        {"slug": "UEFA.EUROPA",            "name": "Europa League",              "category": "Mundial"},
+        {"slug": "UEFA.EUROPA.CONFERENCE", "name": "Conference League",          "category": "Mundial"},
+    ],
+    "basketball": [
+        {"slug": "nba",             "name": "NBA",                        "category": "América do Norte"},
+        {"slug": "wnba",            "name": "WNBA",                       "category": "América do Norte"},
+        {"slug": "nbb",             "name": "NBB (Brasil)",               "category": "Brasil"},
+        {"slug": "mens-euroleague", "name": "EuroLeague",                 "category": "Europa"},
+        {"slug": "mens-euro-cup",   "name": "EuroCup",                   "category": "Europa"},
+        {"slug": "fiba.world",      "name": "FIBA World Cup",            "category": "Mundial"},
+    ],
+    "baseball": [
+        {"slug": "mlb", "name": "MLB (Major League Baseball)", "category": "América do Norte"},
+        {"slug": "kbo", "name": "KBO League (Coreia do Sul)", "category": "Ásia"},
+        {"slug": "npb", "name": "NPB (Japão)",                "category": "Ásia"},
+    ],
+    "tennis": [
+        {"slug": "atp", "name": "ATP Tour", "category": "Mundial"},
+        {"slug": "wta", "name": "WTA Tour", "category": "Mundial"},
+    ],
+    "volleyball": [
+        {"slug": "volleyball.m.bra", "name": "Superliga (Brasil - Masc.)",  "category": "Brasil"},
+        {"slug": "volleyball.w.bra", "name": "Superliga (Brasil - Fem.)",   "category": "Brasil"},
+        {"slug": "fivb.m",           "name": "FIVB Nations League (Masc.)", "category": "Mundial"},
+        {"slug": "fivb.w",           "name": "FIVB Nations League (Fem.)",  "category": "Mundial"},
+    ],
+    "handball": [
+        {"slug": "ehf.cl",     "name": "EHF Champions League",    "category": "Europa"},
+        {"slug": "bundesliga", "name": "Bundesliga (Alemanha)",   "category": "Europa"},
+        {"slug": "asobal",     "name": "Liga ASOBAL (Espanha)",   "category": "Europa"},
+        {"slug": "starligue",  "name": "Starligue (França)",      "category": "Europa"},
+    ],
+}
+
+_SPORTS = [
+    {"slug": "soccer",     "name": "Futebol"},
+    {"slug": "basketball", "name": "Basquete"},
+    {"slug": "baseball",   "name": "Beisebol"},
+    {"slug": "tennis",     "name": "Tênis"},
+    {"slug": "volleyball", "name": "Vôlei"},
+    {"slug": "handball",   "name": "Handebol"},
 ]
-
-KNOWN_SLUGS = {lg["slug"] for lg in _LEAGUES}
 
 _standings_cache: dict = {}
 _fixtures_cache: dict = {}
 
 
-def get_leagues() -> list[dict]:
-    return list(_LEAGUES)
+def get_sports() -> list[dict]:
+    return list(_SPORTS)
+
+
+def get_leagues(sport: str = "soccer") -> list[dict]:
+    return list(_SPORT_LEAGUES.get(sport, []))
+
+
+def get_known_slugs(sport: str = "soccer") -> set[str]:
+    return {lg["slug"] for lg in _SPORT_LEAGUES.get(sport, [])}
 
 
 # ============================================================
 # Standings
 # ============================================================
 
-def get_standings(league_slug: str) -> dict:
+def get_standings(league_slug: str, sport: str = "soccer") -> dict:
+    cache_key = f"{sport}:{league_slug}"
     now = time.monotonic()
-    cached = _standings_cache.get(league_slug)
+    cached = _standings_cache.get(cache_key)
     if cached and cached["expires"] > now:
         return cached["data"]
 
-    data = _fetch_standings(league_slug)
-    _standings_cache[league_slug] = {"data": data, "expires": now + _STANDINGS_TTL}
+    data = _fetch_standings(league_slug, sport)
+    _standings_cache[cache_key] = {"data": data, "expires": now + _STANDINGS_TTL}
     return data
 
 
-def _fetch_standings(league_slug: str) -> dict:
-    url = f"{_ESPN_V2}/{league_slug}/standings"
+def _fetch_standings(league_slug: str, sport: str = "soccer") -> dict:
+    url = f"{_ESPN_BASE_V2}/{sport}/{league_slug}/standings"
     try:
         resp = requests.get(url, headers=_HEADERS, timeout=_TIMEOUT)
         if resp.status_code != 200:
-            logger.warning("ESPN standings HTTP %s for %s", resp.status_code, league_slug)
+            logger.warning("ESPN standings HTTP %s for %s/%s", resp.status_code, sport, league_slug)
             return {"groups": [], "season": ""}
         return _parse_standings(resp.json())
     except Exception as exc:
-        logger.warning("ESPN standings failed league=%s: %s", league_slug, exc)
+        logger.warning("ESPN standings failed sport=%s league=%s: %s", sport, league_slug, exc)
         return {"groups": [], "season": ""}
 
 
@@ -132,8 +175,8 @@ def _append_group(groups: list, node: dict) -> None:
     groups.append({"name": node.get("name", ""), "rows": rows})
 
 
-def build_standings_map(league_slug: str) -> dict[str, int]:
-    data = get_standings(league_slug)
+def build_standings_map(league_slug: str, sport: str = "soccer") -> dict[str, int]:
+    data = get_standings(league_slug, sport)
     result: dict[str, int] = {}
     for group in data.get("groups") or []:
         for row in group.get("rows") or []:
@@ -148,22 +191,22 @@ def build_standings_map(league_slug: str) -> dict[str, int]:
 # Upcoming fixtures
 # ============================================================
 
-def get_upcoming_fixtures(league_slug: str, days: int = 14) -> dict:
-    cache_key = f"{league_slug}_{days}"
+def get_upcoming_fixtures(league_slug: str, days: int = 14, sport: str = "soccer") -> dict:
+    cache_key = f"{sport}:{league_slug}_{days}"
     now = time.monotonic()
     cached = _fixtures_cache.get(cache_key)
     if cached and cached["expires"] > now:
         return cached["data"]
 
-    standings_map = build_standings_map(league_slug)
-    standings_data = get_standings(league_slug)
+    standings_map = build_standings_map(league_slug, sport)
+    standings_data = get_standings(league_slug, sport)
 
     today = datetime.date.today()
     end   = today + datetime.timedelta(days=days)
     from_str = today.strftime("%Y%m%d")
     to_str   = end.strftime("%Y%m%d")
 
-    raw_events = _fetch_scoreboard(league_slug, from_str, to_str)
+    raw_events = _fetch_scoreboard(league_slug, from_str, to_str, sport)
     matches = [_parse_event(ev, standings_map) for ev in raw_events]
     matches.sort(key=lambda m: m["date_iso"])
 
@@ -178,17 +221,17 @@ def get_upcoming_fixtures(league_slug: str, days: int = 14) -> dict:
     return data
 
 
-def _fetch_scoreboard(league_slug: str, from_str: str, to_str: str) -> list[dict]:
-    url = f"{_ESPN_SITE}/{league_slug}/scoreboard"
+def _fetch_scoreboard(league_slug: str, from_str: str, to_str: str, sport: str = "soccer") -> list[dict]:
+    url = f"{_ESPN_BASE_SITE}/{sport}/{league_slug}/scoreboard"
     params = {"dates": f"{from_str}-{to_str}"}
     try:
         resp = requests.get(url, headers=_HEADERS, timeout=_TIMEOUT, params=params)
         if resp.status_code != 200:
-            logger.warning("ESPN scoreboard HTTP %s for %s", resp.status_code, league_slug)
+            logger.warning("ESPN scoreboard HTTP %s for %s/%s", resp.status_code, sport, league_slug)
             return []
         return resp.json().get("events") or []
     except Exception as exc:
-        logger.warning("ESPN scoreboard failed league=%s: %s", league_slug, exc)
+        logger.warning("ESPN scoreboard failed sport=%s league=%s: %s", sport, league_slug, exc)
         return []
 
 
