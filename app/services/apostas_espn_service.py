@@ -159,11 +159,12 @@ def _append_group(groups: list, node: dict) -> None:
         return
 
     rows = []
-    for entry in entries:
+    for i, entry in enumerate(entries):
         team = entry.get("team") or {}
         stats = {s["name"]: s.get("value", 0) for s in entry.get("stats") or []}
+        rank = int(stats.get("rank", 0))
         rows.append({
-            "position":      int(stats.get("rank", 0)),
+            "position":      rank if rank > 0 else (i + 1),
             "team_id":       team.get("id", ""),
             "team_name":     team.get("displayName", ""),
             "team_short":    team.get("abbreviation", ""),
