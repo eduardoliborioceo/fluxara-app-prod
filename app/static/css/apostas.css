@@ -1000,6 +1000,30 @@
   margin-bottom: 14px;
 }
 
+.league-select-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.league-select-row .league-select-wrap {
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.league-select-row .apostas-filter-select {
+  width: 100%;
+}
+
+@media (max-width: 480px) {
+  .league-select-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
 .league-select-wrap {
   display: flex;
   align-items: center;
@@ -1022,6 +1046,24 @@
 .league-select-bar .apostas-filter-select {
   flex: 1;
   min-width: 0;
+}
+
+.picker-sport-league-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.picker-sport-league-row .tips-form-group {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 480px) {
+  .picker-sport-league-row {
+    flex-direction: column;
+    gap: 0;
+  }
 }
 
 /* ========================

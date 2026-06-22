@@ -101,15 +101,30 @@
 
   </div>
 
-  <!-- Seletor de campeonato compartilhado (Jogos + Tabelas) -->
+  <!-- Seletores de esporte + campeonato (Jogos + Tabelas) -->
   <div id="leagueControlBar" class="league-select-bar" style="display:none">
-    <div class="league-select-wrap">
-      <label class="league-select-label" for="leagueSelect">
-        <i class="bi bi-trophy"></i> Campeonato
-      </label>
-      <select id="leagueSelect" class="apostas-filter-select" onchange="onLeagueSelectChange()">
-        <option value="" disabled selected>Carregando...</option>
-      </select>
+    <div class="league-select-row">
+      <div class="league-select-wrap">
+        <label class="league-select-label" for="sportSelect">
+          <i class="bi bi-grid-3x3-gap-fill"></i> Esporte
+        </label>
+        <select id="sportSelect" class="apostas-filter-select" onchange="onSportSelectChange()">
+          <option value="soccer">Futebol</option>
+          <option value="basketball">Basquete</option>
+          <option value="baseball">Beisebol</option>
+          <option value="tennis">Tênis</option>
+          <option value="volleyball">Vôlei</option>
+          <option value="handball">Handebol</option>
+        </select>
+      </div>
+      <div class="league-select-wrap">
+        <label class="league-select-label" for="leagueSelect">
+          <i class="bi bi-trophy"></i> Campeonato
+        </label>
+        <select id="leagueSelect" class="apostas-filter-select" onchange="onLeagueSelectChange()">
+          <option value="" disabled selected>Carregando...</option>
+        </select>
+      </div>
     </div>
   </div>
 
@@ -187,11 +202,24 @@
       </button>
     </div>
     <div class="tips-modal-body match-picker-body">
-      <div class="tips-form-group">
-        <label class="tips-form-label">Campeonato</label>
-        <select id="pickerLeagueSelect" class="tips-form-input" onchange="onPickerLeagueChange()">
-          <option value="" disabled selected>Carregando...</option>
-        </select>
+      <div class="picker-sport-league-row">
+        <div class="tips-form-group">
+          <label class="tips-form-label">Esporte</label>
+          <select id="pickerSportSelect" class="tips-form-input" onchange="onPickerSportChange()">
+            <option value="soccer">Futebol</option>
+            <option value="basketball">Basquete</option>
+            <option value="baseball">Beisebol</option>
+            <option value="tennis">Tênis</option>
+            <option value="volleyball">Vôlei</option>
+            <option value="handball">Handebol</option>
+          </select>
+        </div>
+        <div class="tips-form-group">
+          <label class="tips-form-label">Campeonato</label>
+          <select id="pickerLeagueSelect" class="tips-form-input" onchange="onPickerLeagueChange()">
+            <option value="" disabled selected>Carregando...</option>
+          </select>
+        </div>
       </div>
       <div id="pickerLoading" class="apostas-loading" style="display:none">
         <div class="apostas-spinner"></div>

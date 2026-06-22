@@ -1430,24 +1430,33 @@ def api_set_lancamento_tags(lancamento_id):
 # APOSTAS — ESPN (standings + fixtures)
 # =============================================================
 
+_VALID_SPORTS = {"soccer", "basketball", "baseball", "tennis", "volleyball", "handball"}
+
+
 @bp.route("/apostas/espn/leagues", methods=["GET"])
 @login_required
 def apostas_espn_leagues():
     from app.services import apostas_espn_service
-    return jsonify(apostas_espn_service.get_leagues())
+    sport = request.args.get("sport", "soccer")
+    if sport not in _VALID_SPORTS:
+        return jsonify({"error": "Esporte não suportado"}), 400
+    return jsonify(apostas_espn_service.get_leagues(sport))
 
 
 @bp.route("/apostas/espn/standings/<league_slug>", methods=["GET"])
 @login_required
 def apostas_espn_standings(league_slug):
     from app.services import apostas_espn_service
-    if league_slug not in apostas_espn_service.KNOWN_SLUGS:
+    sport = request.args.get("sport", "soccer")
+    if sport not in _VALID_SPORTS:
+        return jsonify({"error": "Esporte não suportado"}), 400
+    if league_slug not in apostas_espn_service.get_known_slugs(sport):
         return jsonify({"error": "Campeonato não suportado"}), 400
     try:
-        data = apostas_espn_service.get_standings(league_slug)
+        data = apostas_espn_service.get_standings(league_slug, sport)
         return jsonify(data)
     except Exception as exc:
-        logger.exception("apostas_espn_standings error league=%s: %s", league_slug, exc)
+        logger.exception("apostas_espn_standings error sport=%s league=%s: %s", sport, league_slug, exc)
         return jsonify({"error": "Erro ao buscar tabela"}), 500
 
 
@@ -1455,15 +1464,18 @@ def apostas_espn_standings(league_slug):
 @login_required
 def apostas_espn_fixtures(league_slug):
     from app.services import apostas_espn_service
-    if league_slug not in apostas_espn_service.KNOWN_SLUGS:
+    sport = request.args.get("sport", "soccer")
+    if sport not in _VALID_SPORTS:
+        return jsonify({"error": "Esporte não suportado"}), 400
+    if league_slug not in apostas_espn_service.get_known_slugs(sport):
         return jsonify({"error": "Campeonato não suportado"}), 400
     try:
         days = int(request.args.get("days", 14))
         days = max(1, min(30, days))
-        data = apostas_espn_service.get_upcoming_fixtures(league_slug, days)
+        data = apostas_espn_service.get_upcoming_fixtures(league_slug, days, sport)
         return jsonify(data)
     except Exception as exc:
-        logger.exception("apostas_espn_fixtures error league=%s: %s", league_slug, exc)
+        logger.exception("apostas_espn_fixtures error sport=%s league=%s: %s", sport, league_slug, exc)
         return jsonify({"error": "Erro ao buscar jogos"}), 500
 
 
