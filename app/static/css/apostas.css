@@ -1946,6 +1946,48 @@
 }
 .auto-league-check input { width: 13px; height: 13px; accent-color: #7c3aed; }
 
+.auto-sport-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.auto-sport-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: .8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+  transition: background .12s, border-color .12s, color .12s;
+  background: var(--card);
+}
+.auto-sport-pill:has(input:checked) {
+  background: rgba(13, 110, 253, .10);
+  border-color: var(--primary);
+  color: var(--primary);
+  font-weight: 600;
+}
+.auto-sport-pill input[type="checkbox"] { display: none; }
+
+.auto-league-sport-header {
+  width: 100%;
+  font-size: .72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  color: var(--primary);
+  margin: 12px 0 4px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+.auto-league-sport-header:first-child { margin-top: 4px; }
+
 .auto-league-category {
   width: 100%;
   font-size: .7rem;

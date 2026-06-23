@@ -1074,7 +1074,6 @@ function _selectPickerMatch(el) {
 
 let _autoLeaguesLoaded = false;
 let _autoLeagueMode   = "include";
-let _autoSport        = "soccer";
 
 function setAutoLeagueMode(mode) {
   _autoLeagueMode = mode;
@@ -1096,23 +1095,24 @@ function setAutoLeagueMode(mode) {
   }
 }
 
+function _getAutoSports() {
+  const checked = Array.from(document.querySelectorAll(".auto-sport-input:checked")).map(cb => cb.value);
+  return checked.length > 0 ? checked : ["soccer"];
+}
+
 async function openAutoModal() {
   document.getElementById("autoFormError").style.display = "none";
   document.getElementById("autoModalOverlay").style.display = "flex";
-  const sportSel = document.getElementById("autoSportSelect");
-  if (sportSel) sportSel.value = _autoSport;
   if (!_autoLeaguesLoaded) {
-    await _loadAutoLeagues(_autoSport);
+    await _loadAutoLeagues(_getAutoSports());
     _autoLeaguesLoaded = true;
   }
 }
 
-function onAutoSportChange() {
-  const sel = document.getElementById("autoSportSelect");
-  if (!sel) return;
-  _autoSport = sel.value;
+function onAutoSportsChange() {
   _autoLeaguesLoaded = false;
-  _loadAutoLeagues(_autoSport).then(() => { _autoLeaguesLoaded = true; });
+  document.getElementById("autoLeagueCheckboxes").innerHTML = "";
+  _loadAutoLeagues(_getAutoSports()).then(() => { _autoLeaguesLoaded = true; });
 }
 
 function closeAutoModal() {
@@ -1123,40 +1123,60 @@ function closeAutoModalOverlay(e) {
   if (e.target === document.getElementById("autoModalOverlay")) closeAutoModal();
 }
 
-async function _loadAutoLeagues(sport = "soccer") {
+const _SPORT_LABELS = { soccer: "Futebol", basketball: "Basquete", baseball: "Beisebol", tennis: "Tênis", volleyball: "Vôlei", handball: "Handebol" };
+
+async function _loadAutoLeagues(sports = ["soccer"]) {
   const container = document.getElementById("autoLeagueCheckboxes");
   if (!container) return;
   container.innerHTML = '<span style="color:var(--text-muted);font-size:.8rem">Carregando...</span>';
   try {
-    const requests = [fetch(`/api/apostas/espn/leagues?sport=${sport}`)];
-    if (sport === "soccer") requests.push(fetch("/api/apostas/apifootball/leagues"));
+    const reqs = sports.map(sport =>
+      fetch(`/api/apostas/espn/leagues?sport=${sport}`)
+        .then(r => r.ok ? r.json() : [])
+        .then(list => ({ sport, source: "espn", list }))
+    );
+    if (sports.includes("soccer")) {
+      reqs.push(
+        fetch("/api/apostas/apifootball/leagues")
+          .then(r => r.ok ? r.json() : [])
+          .then(list => ({ sport: "soccer", source: "afl", list }))
+      );
+    }
 
-    const results  = await Promise.all(requests);
-    const espnList = results[0].ok ? await results[0].json() : [];
-    const aflList  = (sport === "soccer" && results[1]?.ok) ? await results[1].json() : [];
-
-    const byCategory = {};
-    espnList.forEach(lg => {
-      const cat = lg.category;
-      if (!byCategory[cat]) byCategory[cat] = [];
-      byCategory[cat].push({ value: `espn:${lg.slug}`, name: lg.name });
-    });
-    aflList.forEach(lg => {
-      const cat = lg.category;
-      if (!byCategory[cat]) byCategory[cat] = [];
-      byCategory[cat].push({ value: `afl:${lg.id}`, name: lg.name });
-    });
-
+    const results   = await Promise.all(reqs);
+    const multiSport = sports.length > 1;
     let html = "";
-    Object.entries(byCategory).forEach(([cat, items]) => {
-      html += `<div class="auto-league-category">${escHtml(cat)}</div>`;
-      html += items.map(lg => `
-        <label class="auto-league-check">
-          <input type="checkbox" value="${escHtml(lg.value)}" class="auto-league-input">
-          ${escHtml(lg.name)}
-        </label>
-      `).join("");
-    });
+
+    for (const sport of sports) {
+      const sportResults = results.filter(r => r.sport === sport);
+      const byCategory = {};
+
+      for (const { source, list } of sportResults) {
+        list.forEach(lg => {
+          const cat = lg.category || "Outros";
+          if (!byCategory[cat]) byCategory[cat] = [];
+          const value = source === "afl" ? `afl:${lg.id}` : `espn:${sport}:${lg.slug}`;
+          byCategory[cat].push({ value, name: lg.name });
+        });
+      }
+
+      if (!Object.keys(byCategory).length) continue;
+
+      if (multiSport) {
+        html += `<div class="auto-league-sport-header">${escHtml(_SPORT_LABELS[sport] || sport)}</div>`;
+      }
+
+      Object.entries(byCategory).forEach(([cat, items]) => {
+        html += `<div class="auto-league-category">${escHtml(cat)}</div>`;
+        html += items.map(lg => `
+          <label class="auto-league-check">
+            <input type="checkbox" value="${escHtml(lg.value)}" class="auto-league-input">
+            ${escHtml(lg.name)}
+          </label>
+        `).join("");
+      });
+    }
+
     container.innerHTML = html || '<span style="color:var(--text-muted);font-size:.8rem">Nenhum campeonato disponível</span>';
   } catch {
     container.innerHTML = '<span style="color:var(--text-muted);font-size:.8rem">Erro ao carregar campeonatos</span>';
@@ -1202,7 +1222,7 @@ async function submitAutoRecommend() {
         league_mode:         _autoLeagueMode,
         stake,
         titulo,
-        sport:               _autoSport || "soccer",
+        sports:              _getAutoSports(),
       }),
     });
     const json = await resp.json();
