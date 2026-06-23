@@ -306,15 +306,33 @@
       <div id="autoFormError" class="tips-form-error" style="display:none"></div>
 
       <div class="tips-form-group">
-        <label class="tips-form-label">Esporte</label>
-        <select id="autoSportSelect" class="tips-form-input" onchange="onAutoSportChange()">
-          <option value="soccer">Futebol</option>
-          <option value="basketball">Basquete</option>
-          <option value="baseball">Beisebol</option>
-          <option value="tennis">Tênis</option>
-          <option value="volleyball">Vôlei</option>
-          <option value="handball">Handebol</option>
-        </select>
+        <label class="tips-form-label">Esportes</label>
+        <div class="auto-sport-pills">
+          <label class="auto-sport-pill">
+            <input type="checkbox" value="soccer" class="auto-sport-input" checked onchange="onAutoSportsChange()">
+            <i class="bi bi-dribbble"></i> Futebol
+          </label>
+          <label class="auto-sport-pill">
+            <input type="checkbox" value="basketball" class="auto-sport-input" onchange="onAutoSportsChange()">
+            <i class="bi bi-trophy"></i> Basquete
+          </label>
+          <label class="auto-sport-pill">
+            <input type="checkbox" value="baseball" class="auto-sport-input" onchange="onAutoSportsChange()">
+            <i class="bi bi-circle"></i> Beisebol
+          </label>
+          <label class="auto-sport-pill">
+            <input type="checkbox" value="tennis" class="auto-sport-input" onchange="onAutoSportsChange()">
+            <i class="bi bi-activity"></i> Tênis
+          </label>
+          <label class="auto-sport-pill">
+            <input type="checkbox" value="volleyball" class="auto-sport-input" onchange="onAutoSportsChange()">
+            <i class="bi bi-arrow-up-circle"></i> Vôlei
+          </label>
+          <label class="auto-sport-pill">
+            <input type="checkbox" value="handball" class="auto-sport-input" onchange="onAutoSportsChange()">
+            <i class="bi bi-hand-index"></i> Handebol
+          </label>
+        </div>
       </div>
 
       <div class="tips-form-row">
@@ -345,6 +363,11 @@
             <option value="4">4 jogos</option>
             <option value="5" selected>5 jogos</option>
             <option value="6">6 jogos</option>
+            <option value="7">7 jogos</option>
+            <option value="8">8 jogos</option>
+            <option value="10">10 jogos</option>
+            <option value="12">12 jogos</option>
+            <option value="15">15 jogos</option>
           </select>
         </div>
       </div>
@@ -356,8 +379,10 @@
             <option value="1" selected>1 (única)</option>
             <option value="2">2</option>
             <option value="3">3</option>
-            <option value="4">4</option>
             <option value="5">5</option>
+            <option value="7">7</option>
+            <option value="10">10</option>
+            <option value="15">15</option>
           </select>
         </div>
         <div class="tips-form-group"></div>

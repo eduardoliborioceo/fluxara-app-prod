@@ -27,15 +27,20 @@ def auto_recommend(config: dict, user_id: int) -> dict:
     league_mode = config.get("league_mode") or "include"
     stake       = (config.get("stake") or "").strip()
     titulo      = (config.get("titulo") or "").strip()
-    max_games   = max(2, min(8, int(config.get("max_games") or 5)))
-    max_recs    = max(1, min(5, int(config.get("max_recommendations") or 1)))
-    sport       = (config.get("sport") or "soccer").strip()
-    if sport not in _VALID_SPORTS:
-        sport = "soccer"
+    max_games   = max(2, min(15, int(config.get("max_games") or 5)))
+    max_recs    = max(1, min(15, int(config.get("max_recommendations") or 1)))
 
-    afl_ids, espn_slugs = _split_leagues(leagues, league_mode, sport)
+    sports_raw = config.get("sports") or []
+    if not sports_raw:
+        single = (config.get("sport") or "soccer").strip()
+        sports_raw = [single]
+    sports = [s for s in sports_raw if s in _VALID_SPORTS]
+    if not sports:
+        sports = ["soccer"]
 
-    qualifying = _find_qualifying(afl_ids, espn_slugs, min_diff, days_ahead, sport)
+    afl_ids, espn_pairs = _split_leagues(leagues, league_mode, sports)
+
+    qualifying = _find_qualifying(afl_ids, espn_pairs, min_diff, days_ahead)
     if not qualifying:
         raise ValueError(
             "Nenhuma partida qualificada encontrada. "
@@ -43,7 +48,7 @@ def auto_recommend(config: dict, user_id: int) -> dict:
         )
 
     for match in qualifying:
-        if match.get("source") == "afl" and sport == "soccer":
+        if match.get("source") == "afl" and match.get("sport") == "soccer":
             odds = apostas_apifootball_service.get_fixture_odds(match["event_id"])
             if odds and odds.get("home") and odds["home"] > 1.0:
                 match["home_odd"]   = round(float(odds["home"]), 2)
@@ -52,10 +57,14 @@ def auto_recommend(config: dict, user_id: int) -> dict:
         match["home_odd"]   = _estimate_odd(match.get("pos_diff") or 10)
         match["odd_source"] = "est"
 
-    afl_names  = {lg["id"]:   lg["name"] for lg in apostas_apifootball_service.get_leagues()} if sport == "soccer" else {}
-    espn_names = {lg["slug"]: lg["name"] for lg in apostas_espn_service.get_leagues(sport)}
-
-    market = _SPORT_MARKET.get(sport, "Vitória Casa")
+    afl_names = (
+        {lg["id"]: lg["name"] for lg in apostas_apifootball_service.get_leagues()}
+        if "soccer" in sports else {}
+    )
+    espn_names: dict[str, str] = {}
+    for s in sports:
+        for lg in apostas_espn_service.get_leagues(s):
+            espn_names[lg["slug"]] = lg["name"]
 
     pool = [m for m in qualifying if (m.get("home_odd") or 0) > 1.0]
     tips_created = []
@@ -74,12 +83,13 @@ def auto_recommend(config: dict, user_id: int) -> dict:
 
         jogos = []
         for m in selected:
-            suffix = " ★" if m["odd_source"] == "est" else ""
-            camp   = afl_names.get(m.get("league_id")) or espn_names.get(m.get("league_slug"), "")
+            suffix   = " ★" if m["odd_source"] == "est" else ""
+            camp     = afl_names.get(m.get("league_id")) or espn_names.get(m.get("league_slug"), "")
+            m_market = _SPORT_MARKET.get(m.get("sport", "soccer"), "Vitória Casa")
             jogos.append({
                 "partida":      f"{m['home_name']} x {m['away_name']}",
                 "campeonato":   camp,
-                "mercado":      f"{market}{suffix}",
+                "mercado":      f"{m_market}{suffix}",
                 "odd":          m["home_odd"],
                 "data_partida": m["date_brt"][:10] if m.get("date_brt") else None,
             })
@@ -162,49 +172,80 @@ def _short_league_name(name: str) -> str:
 # League splitting
 # ============================================================
 
-def _split_leagues(leagues: list, mode: str = "include", sport: str = "soccer") -> tuple[list[int], list[str]]:
-    all_afl_ids    = [lg["id"]   for lg in apostas_apifootball_service.get_leagues()] if sport == "soccer" else []
-    all_espn_slugs = [lg["slug"] for lg in apostas_espn_service.get_leagues(sport)]
+def _split_leagues(
+    leagues: list,
+    mode: str = "include",
+    sports: list[str] = None,
+) -> tuple[list[int], list[tuple[str, str]]]:
+    if sports is None:
+        sports = ["soccer"]
+
+    all_afl_ids: list[int] = (
+        [lg["id"] for lg in apostas_apifootball_service.get_leagues()]
+        if "soccer" in sports else []
+    )
+    all_espn_pairs: list[tuple[str, str]] = [
+        (sport, lg["slug"])
+        for sport in sports
+        for lg in apostas_espn_service.get_leagues(sport)
+    ]
 
     if not leagues:
-        return all_afl_ids, all_espn_slugs
+        return all_afl_ids, all_espn_pairs
 
-    selected_afl_ids    = []
-    selected_espn_slugs = []
+    selected_afl_ids: list[int] = []
+    selected_espn_pairs: list[tuple[str, str]] = []
+
     for item in leagues:
         item = str(item)
         if item.startswith("afl:"):
-            if sport == "soccer":
+            if "soccer" in sports:
                 try:
                     selected_afl_ids.append(int(item[4:]))
                 except ValueError:
                     pass
         elif item.startswith("espn:"):
-            selected_espn_slugs.append(item[5:])
+            rest = item[5:]
+            parts = rest.split(":", 1)
+            if len(parts) == 2:
+                sport, slug = parts
+                if sport in sports:
+                    selected_espn_pairs.append((sport, slug))
+            else:
+                slug = rest
+                for sport in sports:
+                    if slug in apostas_espn_service.get_known_slugs(sport):
+                        selected_espn_pairs.append((sport, slug))
+                        break
         else:
             try:
                 lid = int(item)
-                if sport == "soccer":
+                if "soccer" in sports:
                     selected_afl_ids.append(lid)
             except ValueError:
-                selected_espn_slugs.append(item)
+                pass
 
     if mode == "exclude":
-        exclude_afl  = set(selected_afl_ids)
-        exclude_espn = set(selected_espn_slugs)
+        exclude_afl   = set(selected_afl_ids)
+        exclude_slugs = {slug for _, slug in selected_espn_pairs}
         return (
-            [lid  for lid  in all_afl_ids    if lid  not in exclude_afl],
-            [slug for slug in all_espn_slugs if slug not in exclude_espn],
+            [lid for lid in all_afl_ids if lid not in exclude_afl],
+            [(sport, slug) for sport, slug in all_espn_pairs if slug not in exclude_slugs],
         )
 
-    return selected_afl_ids, selected_espn_slugs
+    return selected_afl_ids, selected_espn_pairs
 
 
 # ============================================================
 # Qualifying matches
 # ============================================================
 
-def _find_qualifying(afl_ids: list, espn_slugs: list, min_diff: int, days_ahead: int, sport: str = "soccer") -> list[dict]:
+def _find_qualifying(
+    afl_ids: list,
+    espn_pairs: list[tuple[str, str]],
+    min_diff: int,
+    days_ahead: int,
+) -> list[dict]:
     result = []
 
     for lid in afl_ids:
@@ -220,11 +261,11 @@ def _find_qualifying(afl_ids: list, espn_slugs: list, min_diff: int, days_ahead:
                     continue
                 if (ap - hp) < min_diff:
                     continue
-                result.append({**m, "source": "afl", "league_id": lid})
+                result.append({**m, "source": "afl", "league_id": lid, "sport": "soccer"})
         except Exception as exc:
             logger.warning("auto_recommend afl league=%s: %s", lid, exc)
 
-    for slug in espn_slugs:
+    for sport, slug in espn_pairs:
         try:
             data = apostas_espn_service.get_upcoming_fixtures(slug, days_ahead, sport)
             for m in data.get("matches") or []:
@@ -237,7 +278,7 @@ def _find_qualifying(afl_ids: list, espn_slugs: list, min_diff: int, days_ahead:
                     continue
                 if (ap - hp) < min_diff:
                     continue
-                result.append({**m, "source": "espn", "league_slug": slug})
+                result.append({**m, "source": "espn", "league_slug": slug, "sport": sport})
         except Exception as exc:
             logger.warning("auto_recommend espn league=%s sport=%s: %s", slug, sport, exc)
 
