@@ -1261,13 +1261,14 @@ function _showAutoFormError(msg) {
 async function submitAutoRecommend() {
   document.getElementById("autoFormError").style.display = "none";
 
-  const minDiff   = parseInt(document.getElementById("autoDiff").value) || 10;
-  const targetOdd = parseFloat(document.getElementById("autoTargetOdd").value) || 3.00;
-  const daysAhead = parseInt(document.getElementById("autoDays").value) || 14;
-  const maxGames  = parseInt(document.getElementById("autoMaxGames").value) || 5;
-  const maxRecs   = parseInt(document.getElementById("autoMaxRecs").value) || 1;
-  const stake     = document.getElementById("autoStake").value.trim();
-  const titulo    = document.getElementById("autoTitulo").value.trim();
+  const minDiff    = parseInt(document.getElementById("autoDiff").value) || 10;
+  const targetOdd  = parseFloat(document.getElementById("autoTargetOdd").value) || 3.00;
+  const daysAhead  = parseInt(document.getElementById("autoDays").value) || 14;
+  const maxGames   = parseInt(document.getElementById("autoMaxGames").value) || 5;
+  const maxRecs    = parseInt(document.getElementById("autoMaxRecs").value) || 1;
+  const stake      = document.getElementById("autoStake").value.trim();
+  const titulo     = document.getElementById("autoTitulo").value.trim();
+  const useAnalise = document.getElementById("autoAnaliseFilter")?.checked ?? true;
 
   const leagues = Array.from(
     document.querySelectorAll(".auto-league-input:checked")
@@ -1282,16 +1283,17 @@ async function submitAutoRecommend() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        min_diff:            minDiff,
-        target_odd:          targetOdd,
-        days_ahead:          daysAhead,
-        max_games:           maxGames,
-        max_recommendations: maxRecs,
+        min_diff:             minDiff,
+        target_odd:           targetOdd,
+        days_ahead:           daysAhead,
+        max_games:            maxGames,
+        max_recommendations:  maxRecs,
         leagues,
-        league_mode:         _autoLeagueMode,
+        league_mode:          _autoLeagueMode,
         stake,
         titulo,
-        sports:              _getAutoSports(),
+        sports:               _getAutoSports(),
+        use_analise_filter:   useAnalise,
       }),
     });
     const json = await resp.json();

@@ -1,6 +1,7 @@
 import logging
 import re
 
+from app.services import apostas_analise_service
 from app.services import apostas_apifootball_service
 from app.services import apostas_espn_service
 from app.services import apostas_tips_service
@@ -38,9 +39,11 @@ def auto_recommend(config: dict, user_id: int) -> dict:
     if not sports:
         sports = ["soccer"]
 
+    use_analise = bool(config.get("use_analise_filter", True))
+
     afl_ids, espn_pairs = _split_leagues(leagues, league_mode, sports)
 
-    qualifying = _find_qualifying(afl_ids, espn_pairs, min_diff, days_ahead)
+    qualifying = _find_qualifying(afl_ids, espn_pairs, min_diff, days_ahead, use_analise)
     if not qualifying:
         raise ValueError(
             "Nenhuma partida qualificada encontrada. "
@@ -240,11 +243,34 @@ def _split_leagues(
 # Qualifying matches
 # ============================================================
 
+_ANALISE_HOME_MIN = 60.0
+_ANALISE_AWAY_MAX = 30.0
+
+
+def _passes_analise(league_str: str, home_id: str, away_id: str) -> bool:
+    try:
+        data = apostas_analise_service.get_match_analysis(league_str, home_id, away_id)
+        home = data.get("home") or {}
+        away = data.get("away") or {}
+        home_stats = home.get("stats")
+        away_stats = away.get("stats")
+        if home_stats and home_stats.get("win_pct") is not None:
+            if home_stats["win_pct"] < _ANALISE_HOME_MIN:
+                return False
+        if away_stats and away_stats.get("win_pct") is not None:
+            if away_stats["win_pct"] > _ANALISE_AWAY_MAX:
+                return False
+    except Exception as exc:
+        logger.debug("analise filter skipped league=%s: %s", league_str, exc)
+    return True
+
+
 def _find_qualifying(
     afl_ids: list,
     espn_pairs: list[tuple[str, str]],
     min_diff: int,
     days_ahead: int,
+    use_analise: bool = True,
 ) -> list[dict]:
     result = []
 
@@ -260,6 +286,8 @@ def _find_qualifying(
                 if hp >= ap:
                     continue
                 if (ap - hp) < min_diff:
+                    continue
+                if use_analise and not _passes_analise(f"afl:{lid}", m.get("home_id", ""), m.get("away_id", "")):
                     continue
                 result.append({**m, "source": "afl", "league_id": lid, "sport": "soccer"})
         except Exception as exc:
@@ -277,6 +305,8 @@ def _find_qualifying(
                 if hp >= ap:
                     continue
                 if (ap - hp) < min_diff:
+                    continue
+                if use_analise and not _passes_analise(slug, m.get("home_id", ""), m.get("away_id", "")):
                     continue
                 result.append({**m, "source": "espn", "league_slug": slug, "sport": sport})
         except Exception as exc:

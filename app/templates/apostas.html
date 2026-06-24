@@ -410,6 +410,18 @@
       </div>
 
       <div class="tips-form-row">
+        <div class="tips-form-group tips-form-group--full">
+          <label class="auto-analise-toggle">
+            <input type="checkbox" id="autoAnaliseFilter" checked>
+            <span class="auto-analise-toggle-label">
+              <i class="bi bi-bar-chart-line"></i>
+              Análise histórica — casa ≥ 60% vitórias em casa &amp; fora ≤ 30% vitórias fora
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <div class="tips-form-row">
         <div class="tips-form-group">
           <label class="tips-form-label">Próximos dias</label>
           <select id="autoDays" class="tips-form-input">
@@ -479,7 +491,7 @@
 
       <div class="auto-info-note">
         <i class="bi bi-info-circle"></i>
-        O sistema busca partidas onde o mandante tem vantagem na tabela (≥ diferença configurada) e monta uma múltipla de Vitória Casa para atingir a odd alvo.
+        O sistema busca partidas com vantagem na tabela (≥ diferença configurada) e, quando o filtro de análise está ativo, exige ainda que o mandante tenha ≥ 60% de vitórias em casa e o visitante ≤ 30% de vitórias fora no histórico da liga.
         Odds marcadas com ★ são estimativas — edite a recomendação para colocar as odds reais e o link Betano.
       </div>
 
