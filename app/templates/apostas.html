@@ -105,7 +105,49 @@
 
   </div>
 
-  <!-- Seletores de esporte + campeonato (Jogos + Tabelas) -->
+  <!-- Seletor de esporte (Jogos + Tabelas) -->
+  <div id="sportSelectorBar" class="sport-selector-bar" style="display:none">
+    <div class="sport-pills" id="sportPills">
+      <button class="sport-pill sport-pill--active" data-sport="football" onclick="selectSport('football')">
+        <i class="bi bi-trophy-fill"></i> Futebol
+      </button>
+      <button class="sport-pill" data-sport="basketball" onclick="selectSport('basketball')">
+        <i class="bi bi-dribbble"></i> Basquete
+      </button>
+      <button class="sport-pill" data-sport="nba" onclick="selectSport('nba')">
+        <span>🏀</span> NBA
+      </button>
+      <button class="sport-pill" data-sport="baseball" onclick="selectSport('baseball')">
+        <span>⚾</span> Baseball
+      </button>
+      <button class="sport-pill" data-sport="nfl" onclick="selectSport('nfl')">
+        <span>🏈</span> NFL
+      </button>
+      <button class="sport-pill" data-sport="hockey" onclick="selectSport('hockey')">
+        <span>🏒</span> Hockey
+      </button>
+      <button class="sport-pill" data-sport="handball" onclick="selectSport('handball')">
+        <span>🤾</span> Handebol
+      </button>
+      <button class="sport-pill" data-sport="rugby" onclick="selectSport('rugby')">
+        <span>🏉</span> Rugby
+      </button>
+      <button class="sport-pill" data-sport="volleyball" onclick="selectSport('volleyball')">
+        <span>🏐</span> Vôlei
+      </button>
+      <button class="sport-pill" data-sport="afl" onclick="selectSport('afl')">
+        <span>🦘</span> AFL
+      </button>
+      <button class="sport-pill" data-sport="formula1" onclick="selectSport('formula1')">
+        <i class="bi bi-speedometer2"></i> F1
+      </button>
+      <button class="sport-pill" data-sport="mma" onclick="selectSport('mma')">
+        <span>🥊</span> MMA
+      </button>
+    </div>
+  </div>
+
+  <!-- Seletor de campeonato compartilhado (Jogos + Tabelas) -->
   <div id="leagueControlBar" class="league-select-bar" style="display:none">
     <div class="league-select-row">
       <div class="league-select-wrap">
