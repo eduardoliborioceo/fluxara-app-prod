@@ -259,7 +259,13 @@ function buildMatchRow(m) {
   }
 
   const analiseBtn = (m.state === "pre" && m.home_id && m.away_id)
-    ? `<button class="jogos-analise-btn" onclick="openMatchAnalise(${JSON.stringify(m.home_id)},${JSON.stringify(m.away_id)},${JSON.stringify(m.home_name)},${JSON.stringify(m.away_name)})" title="Análise do jogo">
+    ? `<button class="jogos-analise-btn"
+         data-hid="${escHtml(String(m.home_id))}"
+         data-aid="${escHtml(String(m.away_id))}"
+         data-hn="${escHtml(m.home_name)}"
+         data-an="${escHtml(m.away_name)}"
+         onclick="handleMatchAnalise(this)"
+         title="Análise do jogo">
         <i class="bi bi-bar-chart-line"></i>
        </button>`
     : "";
@@ -1780,6 +1786,10 @@ function closeStoryModalOverlay(e) {
 // ============================================================
 //  ANÁLISE POR JOGO
 // ============================================================
+
+function handleMatchAnalise(btn) {
+  openMatchAnalise(btn.dataset.hid, btn.dataset.aid, btn.dataset.hn, btn.dataset.an);
+}
 
 async function openMatchAnalise(homeId, awayId, homeName, awayName) {
   const overlay = document.getElementById("matchAnaliseOverlay");
