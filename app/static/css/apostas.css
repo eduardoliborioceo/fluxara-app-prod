@@ -2074,6 +2074,43 @@
   margin-left: 4px;
 }
 
+.tips-form-group--full {
+  flex: 1 1 100%;
+}
+
+.auto-analise-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  transition: border-color .12s ease, background .12s ease;
+}
+.auto-analise-toggle:has(input:checked) {
+  border-color: rgba(13, 110, 253, .35);
+  background: rgba(13, 110, 253, .04);
+}
+.auto-analise-toggle input[type="checkbox"] {
+  margin-top: 2px;
+  flex-shrink: 0;
+  accent-color: var(--primary);
+  width: 15px;
+  height: 15px;
+}
+.auto-analise-toggle-label {
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.4;
+}
+.auto-analise-toggle-label i {
+  color: var(--primary);
+  margin-right: 4px;
+}
+
 .auto-info-note {
   display: flex;
   gap: 8px;
