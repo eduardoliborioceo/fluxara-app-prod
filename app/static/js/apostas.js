@@ -215,6 +215,12 @@ function buildMatchRow(m) {
     scoreHtml = `<span class="jogos-time">${escHtml(time)}</span>`;
   }
 
+  const analiseBtn = (m.state === "pre" && m.home_id && m.away_id)
+    ? `<button class="jogos-analise-btn" onclick="openMatchAnalise(${JSON.stringify(m.home_id)},${JSON.stringify(m.away_id)},${JSON.stringify(m.home_name)},${JSON.stringify(m.away_name)})" title="Análise do jogo">
+        <i class="bi bi-bar-chart-line"></i>
+       </button>`
+    : "";
+
   return `
     <div class="jogos-match-row">
       <div class="jogos-team jogos-team--home">
@@ -229,7 +235,7 @@ function buildMatchRow(m) {
         <span class="jogos-team-name">${escHtml(m.away_name)}</span>
         ${awayPosHtml}
       </div>
-      <div class="jogos-meta">${venue}</div>
+      <div class="jogos-meta">${venue}${analiseBtn}</div>
     </div>
   `;
 }
@@ -1671,7 +1677,138 @@ function closeStoryModalOverlay(e) {
 }
 
 // ============================================================
-//  ANÁLISE HISTÓRICA
+//  ANÁLISE POR JOGO
+// ============================================================
+
+async function openMatchAnalise(homeId, awayId, homeName, awayName) {
+  const overlay = document.getElementById("matchAnaliseOverlay");
+  const title   = document.getElementById("matchAnaliseTitle");
+  const body    = document.getElementById("matchAnaliseBody");
+  if (!overlay) return;
+
+  title.textContent = `${homeName} × ${awayName}`;
+  body.innerHTML = `<div class="apostas-loading" style="display:flex"><div class="apostas-spinner"></div><span>Analisando histórico...</span></div>`;
+  overlay.style.display = "flex";
+
+  const league = window._activeLeague || "";
+  const url = `/api/apostas/analise/match?league=${encodeURIComponent(league)}&home_id=${encodeURIComponent(homeId)}&away_id=${encodeURIComponent(awayId)}`;
+
+  try {
+    const resp = await fetch(url);
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || "Erro");
+    body.innerHTML = renderMatchAnalise(data, homeName, awayName);
+  } catch (e) {
+    body.innerHTML = `<div class="apostas-erro" style="display:flex"><i class="bi bi-exclamation-triangle"></i><p>${e.message}</p></div>`;
+  }
+}
+
+function closeMatchAnalise() {
+  const overlay = document.getElementById("matchAnaliseOverlay");
+  if (overlay) overlay.style.display = "none";
+}
+
+function closeMatchAnaliseOverlay(e) {
+  if (e.target === document.getElementById("matchAnaliseOverlay")) closeMatchAnalise();
+}
+
+function renderMatchAnalise(d, homeName, awayName) {
+  const noData = `<span class="match-analise-nodata">Sem dados suficientes</span>`;
+
+  function teamBlock(team, label) {
+    if (!team.found || !team.stats) {
+      return `<div class="match-analise-team-block">
+        <div class="match-analise-team-title">${escHtml(label)}</div>
+        ${noData}
+      </div>`;
+    }
+    const s = team.stats;
+    const sideLabel = team.side === "home" ? "Casa" : "Fora";
+    const recentHtml = s.recent.map(r =>
+      `<span class="match-form-badge match-form-badge--${r.result.toLowerCase()}" title="${r.score} (${r.date})">${r.result}</span>`
+    ).join("");
+
+    return `<div class="match-analise-team-block">
+      <div class="match-analise-team-title">
+        ${escHtml(team.name || label)}
+        <span class="match-analise-side-badge">${sideLabel}</span>
+      </div>
+      <div class="match-form-row">${recentHtml || noData}</div>
+      <div class="match-analise-grid">
+        <div class="match-analise-stat">
+          <span class="match-analise-val">${s.win_pct}%</span>
+          <span class="match-analise-lbl">Vitórias</span>
+        </div>
+        <div class="match-analise-stat">
+          <span class="match-analise-val">${s.goals_for_avg}</span>
+          <span class="match-analise-lbl">Gols/jogo</span>
+        </div>
+        <div class="match-analise-stat">
+          <span class="match-analise-val">${s.goals_ag_avg}</span>
+          <span class="match-analise-lbl">Sofridos/jogo</span>
+        </div>
+        <div class="match-analise-stat">
+          <span class="match-analise-val">${s.btts_pct}%</span>
+          <span class="match-analise-lbl">Ambas marcam</span>
+        </div>
+        <div class="match-analise-stat">
+          <span class="match-analise-val">${s.over25_pct}%</span>
+          <span class="match-analise-lbl">Over 2.5</span>
+        </div>
+        <div class="match-analise-stat">
+          <span class="match-analise-val">${s.cs_pct}%</span>
+          <span class="match-analise-lbl">Clean sheet</span>
+        </div>
+      </div>
+      <div class="match-analise-sub">${s.matches} jogos analisados</div>
+    </div>`;
+  }
+
+  function h2hBlock(h2h) {
+    if (!h2h.total) {
+      return `<div class="match-analise-section">
+        <div class="match-analise-section-title">Confrontos Diretos</div>
+        ${noData}
+      </div>`;
+    }
+    const rowsHtml = h2h.matches.map(m =>
+      `<div class="h2h-row">
+        <span class="h2h-date">${m.date}</span>
+        <span class="h2h-home">${escHtml(m.home_name)}</span>
+        <span class="h2h-score">${m.score}</span>
+        <span class="h2h-away">${escHtml(m.away_name)}</span>
+      </div>`
+    ).join("");
+
+    return `<div class="match-analise-section">
+      <div class="match-analise-section-title">Confrontos Diretos (${h2h.total} encontrados)</div>
+      <div class="h2h-summary">
+        <span class="h2h-summary-item h2h-home-col">${escHtml(homeName)} <strong>${h2h.home_wins}</strong></span>
+        <span class="h2h-summary-item">Empates <strong>${h2h.draws}</strong></span>
+        <span class="h2h-summary-item h2h-away-col"><strong>${h2h.away_wins}</strong> ${escHtml(awayName)}</span>
+      </div>
+      <div class="h2h-list">${rowsHtml}</div>
+    </div>`;
+  }
+
+  const sourceBadge = d.source === "espn"
+    ? `<span class="analise-source-badge analise-source-badge--espn"><i class="bi bi-clock-history"></i> 90 dias</span>`
+    : d.source === "apifootball"
+    ? `<span class="analise-source-badge analise-source-badge--full"><i class="bi bi-check-circle-fill"></i> Temporada</span>`
+    : "";
+
+  return `
+    <div class="match-analise-source-row">${sourceBadge}</div>
+    <div class="match-analise-teams">
+      ${teamBlock(d.home, homeName)}
+      ${teamBlock(d.away, awayName)}
+    </div>
+    ${h2hBlock(d.h2h)}
+  `;
+}
+
+// ============================================================
+//  ANÁLISE HISTÓRICA (por liga)
 // ============================================================
 
 window._analiseLeaguesLoaded = false;
