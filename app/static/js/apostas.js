@@ -12,13 +12,16 @@ function apostasTab(tab) {
   });
   localStorage.setItem("apostas_tab", tab);
 
-  const bar = document.getElementById("leagueControlBar");
-  if (bar) bar.style.display = (tab === "jogos" || tab === "tabelas") ? "block" : "none";
+  const showBars = tab === "jogos" || tab === "tabelas";
+  const bar     = document.getElementById("leagueControlBar");
+  const sportBar = document.getElementById("sportSelectorBar");
+  if (bar)      bar.style.display      = showBars ? "block" : "none";
+  if (sportBar) sportBar.style.display = showBars ? "block" : "none";
 
-  if ((tab === "jogos" || tab === "tabelas") && !window._leaguesLoaded) {
-    loadLeagues();
+  if (showBars && !window._leaguesLoaded) {
+    loadSportLeagues(window._activeSport || "football");
   } else if (window._leaguesLoaded && window._activeLeague) {
-    if (tab === "jogos") loadJogos(window._activeLeague);
+    if (tab === "jogos")   loadJogos(window._activeLeague);
     if (tab === "tabelas") loadTabela(window._activeLeague);
   }
 
@@ -32,10 +35,9 @@ function apostasTab(tab) {
 // ============================================================
 
 document.addEventListener("DOMContentLoaded", () => {
-  const savedSport = localStorage.getItem("apostas_sport") || "soccer";
+  const savedSport = localStorage.getItem("apostas_sport") || "football";
   window._activeSport = savedSport;
-  const sportSel = document.getElementById("sportSelect");
-  if (sportSel) sportSel.value = savedSport;
+  _updateSportPills(savedSport);
 
   const saved = localStorage.getItem("apostas_tab") || "recomendacoes";
   apostasTab(saved);
@@ -50,49 +52,61 @@ function pad(n) { return String(n).padStart(2, "0"); }
 
 window._leaguesLoaded  = false;
 window._activeLeague   = null;
-window._activeSport    = "soccer";
+window._activeSport    = "football";
 
-function onSportSelectChange() {
-  const sel = document.getElementById("sportSelect");
-  if (!sel || !sel.value) return;
-
-  window._activeSport = sel.value;
+function selectSport(sport) {
+  window._activeSport = sport;
   window._leaguesLoaded = false;
   window._activeLeague  = null;
-  window._jogosData     = null;
-  localStorage.setItem("apostas_sport", sel.value);
-  localStorage.removeItem("apostas_league");
-
-  const leagueSel = document.getElementById("leagueSelect");
-  if (leagueSel) leagueSel.innerHTML = '<option disabled selected>Carregando...</option>';
-
-  const currentTab = localStorage.getItem("apostas_tab") || "recomendacoes";
-  if (currentTab === "jogos" || currentTab === "tabelas") loadLeagues();
+  localStorage.setItem("apostas_sport", sport);
+  _updateSportPills(sport);
+  loadSportLeagues(sport);
 }
 
-async function loadLeagues() {
-  const sport = window._activeSport || "soccer";
-  const sel   = document.getElementById("leagueSelect");
-  try {
-    const requests = [fetch(`/api/apostas/espn/leagues?sport=${sport}`)];
-    if (sport === "soccer") requests.push(fetch("/api/apostas/apifootball/leagues"));
+function _updateSportPills(sport) {
+  document.querySelectorAll(".sport-pill").forEach(btn => {
+    btn.classList.toggle("sport-pill--active", btn.dataset.sport === sport);
+  });
+}
 
-    const results  = await Promise.all(requests);
-    const espnList = results[0].ok ? await results[0].json() : [];
-    const aflList  = (sport === "soccer" && results[1]?.ok) ? await results[1].json() : [];
+async function loadSportLeagues(sport) {
+  const sel = document.getElementById("leagueSelect");
+  sel.innerHTML = '<option disabled selected>Carregando...</option>';
+
+  try {
+    let leagues = [];
+
+    if (sport === "football") {
+      const [respEspn, respFb] = await Promise.all([
+        fetch("/api/apostas/espn/leagues"),
+        fetch("/api/apostas/apifootball/leagues"),
+      ]);
+      const espnList = respEspn.ok ? await respEspn.json() : [];
+      const fbList   = respFb.ok  ? await respFb.json()   : [];
+      espnList.forEach(lg => leagues.push({ value: `espn:${lg.slug}`, name: lg.name, category: lg.category }));
+      fbList.forEach(lg   => leagues.push({ value: `football:${lg.id}`, name: lg.name, category: lg.category }));
+    } else {
+      const resp = await fetch(`/api/apostas/sports/${sport}/leagues`);
+      if (resp.ok) {
+        const list = await resp.json();
+        list.forEach(lg => leagues.push({
+          value:    `${sport}:${lg.id}`,
+          name:     lg.name,
+          category: lg.category || lg.country || "Internacional",
+          logo:     lg.logo || "",
+        }));
+      }
+    }
+
+    if (leagues.length === 0) {
+      sel.innerHTML = '<option disabled selected>Nenhum campeonato disponível</option>';
+      return;
+    }
 
     const byCategory = {};
-
-    espnList.forEach(lg => {
-      const cat = lg.category;
-      if (!byCategory[cat]) byCategory[cat] = [];
-      byCategory[cat].push({ value: lg.slug, name: lg.name });
-    });
-
-    aflList.forEach(lg => {
-      const cat = lg.category;
-      if (!byCategory[cat]) byCategory[cat] = [];
-      byCategory[cat].push({ value: `afl:${lg.id}`, name: lg.name });
+    leagues.forEach(lg => {
+      if (!byCategory[lg.category]) byCategory[lg.category] = [];
+      byCategory[lg.category].push(lg);
     });
 
     sel.innerHTML = "";
@@ -109,19 +123,19 @@ async function loadLeagues() {
     });
 
     window._leaguesLoaded = true;
-
-    const allValues  = [...espnList.map(l => l.slug), ...aflList.map(l => `afl:${l.id}`)];
-    const firstValue = espnList[0]?.slug || (aflList[0] ? `afl:${aflList[0].id}` : null);
-    const saved      = localStorage.getItem("apostas_league");
-    const selected   = (saved && allValues.includes(saved)) ? saved : firstValue;
-
-    if (selected) {
-      sel.value = selected;
-      selectLeague(selected);
+    const savedKey = `apostas_league_${sport}`;
+    const saved    = localStorage.getItem(savedKey) || leagues[0]?.value;
+    if (saved) {
+      sel.value = saved;
+      selectLeague(saved);
     }
   } catch {
     sel.innerHTML = '<option disabled selected>Erro ao carregar campeonatos</option>';
   }
+}
+
+function loadLeagues() {
+  loadSportLeagues(window._activeSport || "football");
 }
 
 function onLeagueSelectChange() {
@@ -131,14 +145,36 @@ function onLeagueSelectChange() {
 
 function selectLeague(slug) {
   window._activeLeague = slug;
-  localStorage.setItem("apostas_league", slug);
+  const sport = window._activeSport || "football";
+  localStorage.setItem(`apostas_league_${sport}`, slug);
 
   const sel = document.getElementById("leagueSelect");
   if (sel && sel.value !== slug) sel.value = slug;
 
   const currentTab = localStorage.getItem("apostas_tab") || "recomendacoes";
-  if (currentTab === "jogos") loadJogos(slug);
+  if (currentTab === "jogos")   loadJogos(slug);
   if (currentTab === "tabelas") loadTabela(slug);
+}
+
+function _slugToUrl(slug, endpoint, extraParams) {
+  if (!slug) return null;
+  const params = extraParams ? `?${extraParams}` : "";
+
+  if (slug.startsWith("espn:")) {
+    const s = slug.slice(5);
+    return `/api/apostas/espn/${endpoint === "games" ? "fixtures" : "standings"}/${encodeURIComponent(s)}${params}`;
+  }
+  if (slug.startsWith("football:") || slug.startsWith("afl:")) {
+    const id = slug.startsWith("football:") ? slug.slice(9) : slug.slice(4);
+    return `/api/apostas/apifootball/${endpoint === "games" ? "fixtures" : "standings"}/${id}${params}`;
+  }
+  const colonIdx = slug.indexOf(":");
+  if (colonIdx > 0) {
+    const sport   = slug.slice(0, colonIdx);
+    const leagueId = slug.slice(colonIdx + 1);
+    return `/api/apostas/sports/${sport}/${endpoint}/${leagueId}${params}`;
+  }
+  return `/api/apostas/espn/${endpoint === "games" ? "fixtures" : "standings"}/${encodeURIComponent(slug)}${params}`;
 }
 
 // ============================================================
@@ -196,9 +232,8 @@ async function loadJogos(slug) {
   setJogosState("loading");
 
   try {
-    const url = slug.startsWith("afl:")
-      ? `/api/apostas/apifootball/fixtures/${slug.slice(4)}?days=${days}`
-      : `/api/apostas/espn/fixtures/${encodeURIComponent(slug)}?days=${days}&sport=${sport}`;
+    const url = _slugToUrl(slug, "games", `days=${days}`);
+    if (!url) { setJogosState("erro", "Campeonato inválido."); return; }
 
     const resp = await fetch(url);
     const json = await resp.json();
@@ -249,6 +284,13 @@ function buildMatchRow(m) {
   const time  = m.date_brt ? m.date_brt.slice(11, 16) : "";
   const venue = m.venue    ? `<span class="jogos-venue">${escHtml(m.venue)}</span>` : "";
 
+  const homeLogoHtml = m.home_logo
+    ? `<img src="${escHtml(m.home_logo)}" class="jogos-team-logo" alt="" loading="lazy" onerror="this.style.display='none'">`
+    : "";
+  const awayLogoHtml = m.away_logo
+    ? `<img src="${escHtml(m.away_logo)}" class="jogos-team-logo" alt="" loading="lazy" onerror="this.style.display='none'">`
+    : "";
+
   let scoreHtml = "";
   if (m.state === "in") {
     scoreHtml = `<span class="jogos-score jogos-score--live">${escHtml(m.score_home)} – ${escHtml(m.score_away)}</span>`;
@@ -258,7 +300,8 @@ function buildMatchRow(m) {
     scoreHtml = `<span class="jogos-time">${escHtml(time)}</span>`;
   }
 
-  const analiseBtn = (m.state === "pre" && m.home_id && m.away_id)
+  const isFootball = !window._activeSport || window._activeSport === "football";
+  const analiseBtn = (isFootball && m.state === "pre" && m.home_id && m.away_id)
     ? `<button class="jogos-analise-btn"
          data-hid="${escHtml(String(m.home_id))}"
          data-aid="${escHtml(String(m.away_id))}"
@@ -274,6 +317,7 @@ function buildMatchRow(m) {
     <div class="jogos-match-row">
       <div class="jogos-team jogos-team--home">
         ${homePosHtml}
+        ${homeLogoHtml}
         <span class="jogos-team-name">${escHtml(m.home_name)}</span>
       </div>
       <div class="jogos-center">
@@ -282,6 +326,7 @@ function buildMatchRow(m) {
       </div>
       <div class="jogos-team jogos-team--away">
         <span class="jogos-team-name">${escHtml(m.away_name)}</span>
+        ${awayLogoHtml}
         ${awayPosHtml}
       </div>
       <div class="jogos-meta">${venue}${analiseBtn}</div>
@@ -327,9 +372,8 @@ async function loadTabela(slug) {
   document.getElementById("tabelasLoading").style.display = "flex";
 
   try {
-    const url = slug.startsWith("afl:")
-      ? `/api/apostas/apifootball/standings/${slug.slice(4)}`
-      : `/api/apostas/espn/standings/${encodeURIComponent(slug)}?sport=${sport}`;
+    const url = _slugToUrl(slug, "standings", "");
+    if (!url) { showTabelasErro("Campeonato inválido."); return; }
 
     const resp = await fetch(url);
     const json = await resp.json();
@@ -392,16 +436,25 @@ function renderStandings(data) {
 
 function buildStandingsRow(r, total) {
   const posCls = posRowClass(r.position, total);
-  const sgSign = r.goal_diff > 0 ? "+" : "";
+  const sgSign = Number(r.goal_diff) > 0 ? "+" : "";
+  const logoHtml = r.team_logo
+    ? `<img src="${escHtml(r.team_logo)}" class="tabelas-team-logo" alt="" loading="lazy" onerror="this.style.display='none'">`
+    : "";
+  const goalCol = (r.goals_for || r.goals_against)
+    ? `${r.goals_for}:${r.goals_against}`
+    : `${r.wins}/${r.losses}`;
   return `
     <tr class="tabelas-row ${posCls}">
       <td class="tabelas-td tabelas-td--pos"><span class="tabelas-pos">${r.position}</span></td>
-      <td class="tabelas-td tabelas-td--team"><span class="tabelas-team-name">${escHtml(r.team_name)}</span></td>
+      <td class="tabelas-td tabelas-td--team">
+        ${logoHtml}
+        <span class="tabelas-team-name">${escHtml(r.team_name)}</span>
+      </td>
       <td class="tabelas-td tabelas-td--num">${r.matches}</td>
       <td class="tabelas-td tabelas-td--num">${r.wins}</td>
       <td class="tabelas-td tabelas-td--num">${r.draws}</td>
       <td class="tabelas-td tabelas-td--num">${r.losses}</td>
-      <td class="tabelas-td tabelas-td--num">${r.goals_for}:${r.goals_against}</td>
+      <td class="tabelas-td tabelas-td--num">${goalCol}</td>
       <td class="tabelas-td tabelas-td--num">${sgSign}${r.goal_diff}</td>
       <td class="tabelas-td tabelas-td--pts"><strong>${r.points}</strong></td>
     </tr>

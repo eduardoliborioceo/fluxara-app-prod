@@ -1530,6 +1530,108 @@ def apostas_apifootball_usage():
 
 
 # =============================================================
+# APOSTAS — MULTI-SPORT (api-sports.io)
+# =============================================================
+
+_SPORT_SERVICE_MAP = {
+    "basketball": "sports_basketball_service",
+    "baseball":   "sports_baseball_service",
+    "handball":   "sports_handball_service",
+    "hockey":     "sports_hockey_service",
+    "rugby":      "sports_rugby_service",
+    "volleyball": "sports_volleyball_service",
+    "afl":        "sports_afl_service",
+    "nfl":        "sports_nfl_service",
+    "nba":        "sports_nba_service",
+    "formula1":   "sports_formula1_service",
+    "mma":        "sports_mma_service",
+}
+
+
+def _load_sport_service(sport: str):
+    module_name = _SPORT_SERVICE_MAP.get(sport)
+    if not module_name:
+        return None
+    import importlib
+    return importlib.import_module(f"app.services.{module_name}")
+
+
+@bp.route("/apostas/sports/<sport>/leagues", methods=["GET"])
+@login_required
+def apostas_sports_leagues(sport: str):
+    svc = _load_sport_service(sport)
+    if svc is None:
+        return jsonify({"error": "Esporte não suportado"}), 400
+    try:
+        return jsonify(svc.get_leagues())
+    except Exception as exc:
+        logger.exception("apostas_sports_leagues error sport=%s: %s", sport, exc)
+        return jsonify({"error": "Erro ao carregar ligas"}), 500
+
+
+@bp.route("/apostas/sports/<sport>/standings/<league_id>", methods=["GET"])
+@login_required
+def apostas_sports_standings(sport: str, league_id: str):
+    svc = _load_sport_service(sport)
+    if svc is None:
+        return jsonify({"error": "Esporte não suportado"}), 400
+    try:
+        season_param = request.args.get("season")
+        season = int(season_param) if season_param else None
+        lid = int(league_id) if league_id.lstrip("-").isdigit() else league_id
+        data = svc.get_standings(lid, season)
+        return jsonify(data)
+    except Exception as exc:
+        logger.exception("apostas_sports_standings error sport=%s league=%s: %s", sport, league_id, exc)
+        return jsonify({"error": "Erro ao buscar tabela"}), 500
+
+
+@bp.route("/apostas/sports/<sport>/games/<league_id>", methods=["GET"])
+@login_required
+def apostas_sports_games(sport: str, league_id: str):
+    svc = _load_sport_service(sport)
+    if svc is None:
+        return jsonify({"error": "Esporte não suportado"}), 400
+    try:
+        days = max(1, min(60, int(request.args.get("days", 14))))
+        season_param = request.args.get("season")
+        season = int(season_param) if season_param else None
+        lid = int(league_id) if league_id.lstrip("-").isdigit() else league_id
+        data = svc.get_games(lid, days, season)
+        return jsonify(data)
+    except Exception as exc:
+        logger.exception("apostas_sports_games error sport=%s league=%s: %s", sport, league_id, exc)
+        return jsonify({"error": "Erro ao buscar jogos"}), 500
+
+
+@bp.route("/apostas/sports/<sport>/odds/<int:game_id>", methods=["GET"])
+@login_required
+def apostas_sports_odds(sport: str, game_id: int):
+    svc = _load_sport_service(sport)
+    if svc is None:
+        return jsonify({"error": "Esporte não suportado"}), 400
+    if not hasattr(svc, "get_odds"):
+        return jsonify({"error": "Odds não disponíveis para este esporte"}), 400
+    try:
+        data = svc.get_odds(game_id)
+        if data is None:
+            return jsonify({"error": "Odds não disponíveis"}), 404
+        return jsonify(data)
+    except Exception as exc:
+        logger.exception("apostas_sports_odds error sport=%s game=%s: %s", sport, game_id, exc)
+        return jsonify({"error": "Erro ao buscar odds"}), 500
+
+
+@bp.route("/apostas/sports/usage", methods=["GET"])
+@login_required
+def apostas_sports_usage():
+    if not current_user.is_admin:
+        return jsonify({"error": "Sem permissão"}), 403
+    from app.services import sports_base
+    return jsonify(sports_base.get_daily_usage())
+
+
+# =============================================================
 # APOSTAS — TIPS (recomendações)
 # =============================================================
 
