@@ -1789,11 +1789,16 @@ function renderAnalise(d) {
       </div>`;
   }).join("");
 
+  const sourceBadge = d.source === "espn"
+    ? `<span class="analise-source-badge analise-source-badge--espn" title="Dados dos últimos 90 dias via ESPN"><i class="bi bi-clock-history"></i> Recente</span>`
+    : `<span class="analise-source-badge analise-source-badge--full" title="Temporada completa via API-Football"><i class="bi bi-check-circle-fill"></i> Temporada</span>`;
+
   return `
     <div class="analise-header">
       <span class="analise-league-name">${d.league_name}</span>
       <span class="analise-season-badge">${d.season}</span>
       <span class="analise-total-badge">${d.total} jogos</span>
+      ${sourceBadge}
     </div>
 
     <div class="analise-section">
