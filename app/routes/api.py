@@ -1676,6 +1676,23 @@ def apostas_analise_league(league_id):
         return jsonify({"error": "Erro ao buscar análise"}), 500
 
 
+@bp.route("/apostas/analise/match", methods=["GET"])
+@login_required
+def apostas_analise_match():
+    from app.services import apostas_analise_service
+    league  = request.args.get("league", "")
+    home_id = request.args.get("home_id", "")
+    away_id = request.args.get("away_id", "")
+    if not home_id or not away_id:
+        return jsonify({"error": "home_id e away_id são obrigatórios"}), 400
+    try:
+        data = apostas_analise_service.get_match_analysis(league, home_id, away_id)
+        return jsonify(data)
+    except Exception as exc:
+        logger.exception("apostas_analise_match error: %s", exc)
+        return jsonify({"error": "Erro ao buscar análise do jogo"}), 500
+
+
 @bp.route("/assinaturas/iniciar", methods=["POST"])
 @login_required
 def assinatura_iniciar():

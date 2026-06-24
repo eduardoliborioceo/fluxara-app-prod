@@ -509,6 +509,19 @@
 
 {% endif %}
 
+<!-- Modal Análise por Jogo -->
+<div id="matchAnaliseOverlay" class="tips-modal-overlay" style="display:none" onclick="closeMatchAnaliseOverlay(event)">
+  <div class="tips-modal tips-modal--wide match-analise-modal">
+    <div class="tips-modal-header">
+      <span id="matchAnaliseTitle"><i class="bi bi-bar-chart-line" style="margin-right:6px;color:var(--primary)"></i>Análise do Jogo</span>
+      <button class="tips-modal-close" onclick="closeMatchAnalise()" title="Fechar">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <div class="tips-modal-body" id="matchAnaliseBody"></div>
+  </div>
+</div>
+
 <!-- Modal Imagem Story (somente admin) -->
 {% if current_user.is_admin %}
 <div id="storyModalOverlay" class="tips-modal-overlay" style="display:none" onclick="closeStoryModalOverlay(event)">
