@@ -475,9 +475,12 @@ def _empty_match(home_id: str, away_id: str) -> dict:
 def _resolve_league_id(league: str) -> int | None:
     if not league:
         return None
-    if league.startswith("afl:"):
+    if league.startswith("espn:"):
+        return _ESPN_SLUG_REVERSE.get(league[5:])
+    if league.startswith("football:") or league.startswith("afl:"):
+        prefix_len = 9 if league.startswith("football:") else 4
         try:
-            lid = int(league[4:])
+            lid = int(league[prefix_len:])
             return lid if lid in _KNOWN_IDS else None
         except ValueError:
             return None
