@@ -1655,6 +1655,27 @@ def apostas_auto_recommend():
         return jsonify({"error": "Erro ao gerar recomendação automática"}), 500
 
 
+@bp.route("/apostas/analise/leagues", methods=["GET"])
+@login_required
+def apostas_analise_leagues():
+    from app.services import apostas_analise_service
+    return jsonify(apostas_analise_service.get_leagues())
+
+
+@bp.route("/apostas/analise/<int:league_id>", methods=["GET"])
+@login_required
+def apostas_analise_league(league_id):
+    from app.services import apostas_analise_service
+    try:
+        data = apostas_analise_service.get_league_analysis(league_id)
+        return jsonify(data)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as exc:
+        logger.exception("apostas_analise error league=%s: %s", league_id, exc)
+        return jsonify({"error": "Erro ao buscar análise"}), 500
+
+
 @bp.route("/assinaturas/iniciar", methods=["POST"])
 @login_required
 def assinatura_iniciar():

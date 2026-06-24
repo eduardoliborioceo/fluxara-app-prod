@@ -37,6 +37,10 @@
       <i class="bi bi-table"></i>
       Tabelas
     </button>
+    <button class="apostas-tab" id="tabBtnAnalise" onclick="apostasTab('analise')">
+      <i class="bi bi-bar-chart-line-fill"></i>
+      Análise
+    </button>
   </div>
 
   <!-- ======================================================
@@ -181,6 +185,36 @@
     <div id="tabelasErro" class="apostas-erro" style="display:none">
       <i class="bi bi-exclamation-triangle"></i>
       <p id="tabelasErroMsg">Erro ao carregar tabela.</p>
+    </div>
+
+  </div>
+
+  <!-- ======================================================
+       PAINEL ANÁLISE HISTÓRICA
+  ====================================================== -->
+  <div id="panelAnalise" style="display:none">
+
+    <div class="analise-league-bar">
+      <label class="league-select-label" for="analiseLeagueSelect">
+        <i class="bi bi-trophy"></i> Campeonato
+      </label>
+      <select id="analiseLeagueSelect" class="apostas-filter-select" onchange="onAnaliseLeagueChange()">
+        <option value="" disabled selected>Carregando...</option>
+      </select>
+    </div>
+
+    <div id="analiseLoading" class="apostas-loading" style="display:none">
+      <div class="apostas-spinner"></div>
+      <span>Buscando dados históricos...</span>
+    </div>
+    <div id="analiseContent" style="display:none"></div>
+    <div id="analiseVazio" class="apostas-vazio" style="display:none">
+      <i class="bi bi-bar-chart-line"></i>
+      <p>Nenhum dado disponível para esta liga.</p>
+    </div>
+    <div id="analiseErro" class="apostas-erro" style="display:none">
+      <i class="bi bi-exclamation-triangle"></i>
+      <p id="analiseErroMsg">Erro ao carregar análise.</p>
     </div>
 
   </div>

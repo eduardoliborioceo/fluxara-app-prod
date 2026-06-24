@@ -2176,3 +2176,206 @@
   .jogos-team-name { font-size: .78rem; }
   .jogos-match-row { padding: 8px 10px; }
 }
+
+/* ========================
+   ANÁLISE HISTÓRICA
+======================== */
+.analise-league-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.analise-league-bar .league-select-label {
+  white-space: nowrap;
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.analise-league-bar .apostas-filter-select {
+  flex: 1;
+  min-width: 200px;
+}
+
+.analise-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.analise-league-name {
+  font-size: .95rem;
+  font-weight: 700;
+  color: var(--text);
+  flex: 1;
+  min-width: 0;
+}
+
+.analise-season-badge,
+.analise-total-badge {
+  font-size: .72rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.analise-season-badge {
+  background: rgba(13,110,253,.10);
+  color: var(--primary);
+}
+
+.analise-total-badge {
+  background: rgba(15,23,42,.06);
+  color: var(--text-muted);
+}
+
+.analise-section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+
+.analise-section-title {
+  font-size: .72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.analise-result-bar {
+  display: flex;
+  height: 12px;
+  border-radius: 6px;
+  overflow: hidden;
+  gap: 2px;
+  margin-bottom: 10px;
+}
+
+.analise-result-seg {
+  height: 100%;
+  border-radius: 3px;
+  transition: width .3s ease;
+  min-width: 3px;
+}
+
+.analise-result-home { background: var(--primary); }
+.analise-result-draw { background: var(--text-muted); }
+.analise-result-away { background: #f59e0b; }
+
+.analise-result-labels {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.analise-result-label {
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.analise-result-label strong { color: var(--text); }
+
+.analise-result-label--home i { color: var(--primary); }
+.analise-result-label--away i { color: #f59e0b; }
+
+.analise-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 480px) {
+  .analise-stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.analise-stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.analise-stat-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+
+.analise-stat--green { color: var(--success-color); }
+
+.analise-stat-label {
+  font-size: .7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.analise-over-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.analise-over-row {
+  display: grid;
+  grid-template-columns: 64px 1fr 44px 60px;
+  align-items: center;
+  gap: 8px;
+}
+
+.analise-over-label {
+  font-size: .78rem;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.analise-over-bar-wrap {
+  height: 8px;
+  background: rgba(15,23,42,.07);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.analise-over-bar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width .3s ease;
+  min-width: 3px;
+}
+
+.analise-over-pct {
+  font-size: .8rem;
+  font-weight: 700;
+  text-align: right;
+}
+
+.analise-over-count {
+  font-size: .7rem;
+  color: var(--text-muted);
+  text-align: right;
+}
