@@ -2,8 +2,8 @@
 //  TABS
 // ============================================================
 
-const _PANELS  = { recomendacoes: "panelRecomendacoes", jogos: "panelJogos", tabelas: "panelTabelas" };
-const _TABBTNS = { recomendacoes: "tabBtnRec", jogos: "tabBtnJogos", tabelas: "tabBtnTab" };
+const _PANELS  = { recomendacoes: "panelRecomendacoes", jogos: "panelJogos", tabelas: "panelTabelas", analise: "panelAnalise" };
+const _TABBTNS = { recomendacoes: "tabBtnRec", jogos: "tabBtnJogos", tabelas: "tabBtnTab", analise: "tabBtnAnalise" };
 
 function apostasTab(tab) {
   Object.keys(_PANELS).forEach(t => {
@@ -20,6 +20,10 @@ function apostasTab(tab) {
   } else if (window._leaguesLoaded && window._activeLeague) {
     if (tab === "jogos") loadJogos(window._activeLeague);
     if (tab === "tabelas") loadTabela(window._activeLeague);
+  }
+
+  if (tab === "analise" && !window._analiseLeaguesLoaded) {
+    loadAnaliseLeagues();
   }
 }
 
@@ -1664,4 +1668,160 @@ function closeStoryModal() {
 
 function closeStoryModalOverlay(e) {
   if (e.target === document.getElementById("storyModalOverlay")) closeStoryModal();
+}
+
+// ============================================================
+//  ANÁLISE HISTÓRICA
+// ============================================================
+
+window._analiseLeaguesLoaded = false;
+window._activeAnaliseLeague  = null;
+
+async function loadAnaliseLeagues() {
+  const sel = document.getElementById("analiseLeagueSelect");
+  try {
+    const resp = await fetch("/api/apostas/analise/leagues");
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    const list = await resp.json();
+
+    const byCategory = {};
+    list.forEach(lg => {
+      if (!byCategory[lg.category]) byCategory[lg.category] = [];
+      byCategory[lg.category].push(lg);
+    });
+
+    sel.innerHTML = "";
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.disabled = true;
+    placeholder.selected = true;
+    placeholder.textContent = "Selecione um campeonato";
+    sel.appendChild(placeholder);
+
+    Object.entries(byCategory).forEach(([cat, items]) => {
+      const grp = document.createElement("optgroup");
+      grp.label = cat;
+      items.forEach(lg => {
+        const opt = document.createElement("option");
+        opt.value = lg.id;
+        opt.textContent = lg.name;
+        grp.appendChild(opt);
+      });
+      sel.appendChild(grp);
+    });
+
+    window._analiseLeaguesLoaded = true;
+  } catch (e) {
+    sel.innerHTML = '<option value="" disabled selected>Erro ao carregar</option>';
+  }
+}
+
+function onAnaliseLeagueChange() {
+  const sel = document.getElementById("analiseLeagueSelect");
+  const id = parseInt(sel.value, 10);
+  if (!id) return;
+  window._activeAnaliseLeague = id;
+  loadAnalise(id);
+}
+
+async function loadAnalise(leagueId) {
+  const loading = document.getElementById("analiseLoading");
+  const content = document.getElementById("analiseContent");
+  const vazio   = document.getElementById("analiseVazio");
+  const erro    = document.getElementById("analiseErro");
+
+  loading.style.display = "flex";
+  content.style.display = "none";
+  vazio.style.display   = "none";
+  erro.style.display    = "none";
+
+  try {
+    const resp = await fetch(`/api/apostas/analise/${leagueId}`);
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    const data = await resp.json();
+
+    loading.style.display = "none";
+
+    if (!data.total) {
+      vazio.style.display = "flex";
+      return;
+    }
+
+    content.innerHTML = renderAnalise(data);
+    content.style.display = "block";
+  } catch (e) {
+    loading.style.display = "none";
+    document.getElementById("analiseErroMsg").textContent = "Erro ao carregar análise.";
+    erro.style.display = "flex";
+  }
+}
+
+function renderAnalise(d) {
+  const resultBar = `
+    <div class="analise-result-bar">
+      <div class="analise-result-seg analise-result-home" style="width:${d.home_wins.pct}%" title="Casa ${d.home_wins.pct}%"></div>
+      <div class="analise-result-seg analise-result-draw" style="width:${d.draws.pct}%"     title="Empate ${d.draws.pct}%"></div>
+      <div class="analise-result-seg analise-result-away" style="width:${d.away_wins.pct}%" title="Fora ${d.away_wins.pct}%"></div>
+    </div>
+    <div class="analise-result-labels">
+      <span class="analise-result-label analise-result-label--home">
+        <i class="bi bi-house-fill"></i> Casa <strong>${d.home_wins.pct}%</strong>
+      </span>
+      <span class="analise-result-label analise-result-label--draw">
+        X Empate <strong>${d.draws.pct}%</strong>
+      </span>
+      <span class="analise-result-label analise-result-label--away">
+        <i class="bi bi-airplane-fill"></i> Fora <strong>${d.away_wins.pct}%</strong>
+      </span>
+    </div>`;
+
+  const overRows = ["0.5","1.5","2.5","3.5","4.5"].map(t => {
+    const o = d.over[t];
+    const color = o.pct >= 70 ? "var(--success-color)" : o.pct >= 50 ? "var(--primary)" : "var(--text-muted)";
+    return `
+      <div class="analise-over-row">
+        <span class="analise-over-label">Over ${t}</span>
+        <div class="analise-over-bar-wrap">
+          <div class="analise-over-bar" style="width:${o.pct}%;background:${color}"></div>
+        </div>
+        <span class="analise-over-pct" style="color:${color}">${o.pct}%</span>
+        <span class="analise-over-count">${o.count}/${d.total}</span>
+      </div>`;
+  }).join("");
+
+  return `
+    <div class="analise-header">
+      <span class="analise-league-name">${d.league_name}</span>
+      <span class="analise-season-badge">${d.season}</span>
+      <span class="analise-total-badge">${d.total} jogos</span>
+    </div>
+
+    <div class="analise-section">
+      <div class="analise-section-title">Resultado Final</div>
+      ${resultBar}
+    </div>
+
+    <div class="analise-stats-grid">
+      <div class="analise-stat-card">
+        <span class="analise-stat-value">${d.avg_goals}</span>
+        <span class="analise-stat-label">Média de gols</span>
+      </div>
+      <div class="analise-stat-card">
+        <span class="analise-stat-value analise-stat--green">${d.btts.pct}%</span>
+        <span class="analise-stat-label">Ambas marcam</span>
+      </div>
+      <div class="analise-stat-card">
+        <span class="analise-stat-value">${d.cs_home.pct}%</span>
+        <span class="analise-stat-label">CS Casa</span>
+      </div>
+      <div class="analise-stat-card">
+        <span class="analise-stat-value">${d.cs_away.pct}%</span>
+        <span class="analise-stat-label">CS Fora</span>
+      </div>
+    </div>
+
+    <div class="analise-section">
+      <div class="analise-section-title">Over / Under (total de gols)</div>
+      <div class="analise-over-list">${overRows}</div>
+    </div>`;
 }
