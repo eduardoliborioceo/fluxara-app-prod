@@ -2379,3 +2379,24 @@
   color: var(--text-muted);
   text-align: right;
 }
+
+.analise-source-badge {
+  font-size: .68rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+.analise-source-badge--espn {
+  background: rgba(245, 158, 11, .12);
+  color: #d97706;
+}
+
+.analise-source-badge--full {
+  background: rgba(25, 135, 84, .12);
+  color: var(--success-color);
+}
