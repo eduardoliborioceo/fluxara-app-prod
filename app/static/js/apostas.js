@@ -1192,7 +1192,7 @@ function closeAutoModalOverlay(e) {
   if (e.target === document.getElementById("autoModalOverlay")) closeAutoModal();
 }
 
-const _SPORT_LABELS = { soccer: "Futebol", basketball: "Basquete", baseball: "Beisebol", tennis: "Tênis", volleyball: "Vôlei", handball: "Handebol" };
+const _SPORT_LABELS = { soccer: "Futebol", basketball: "Basquete", baseball: "Beisebol", tennis: "Tênis", volleyball: "Vôlei", handball: "Handebol", hockey: "Hockey", football: "Fut. Americano" };
 
 async function _loadAutoLeagues(sports = ["soccer"]) {
   const container = document.getElementById("autoLeagueCheckboxes");
