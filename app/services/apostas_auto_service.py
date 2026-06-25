@@ -8,7 +8,7 @@ from app.services import apostas_tips_service
 
 logger = logging.getLogger(__name__)
 
-_VALID_SPORTS = {"soccer", "basketball", "baseball", "tennis", "volleyball", "handball"}
+_VALID_SPORTS = {"soccer", "basketball", "baseball", "tennis", "volleyball", "handball", "hockey", "football"}
 
 _SPORT_MARKET = {
     "soccer":     "Vitória Casa (1)",
@@ -17,6 +17,8 @@ _SPORT_MARKET = {
     "tennis":     "Vitória Casa",
     "volleyball": "Vitória Casa",
     "handball":   "Vitória Casa",
+    "hockey":     "Vitória Casa",
+    "football":   "Vitória Casa",
 }
 
 

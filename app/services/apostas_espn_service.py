@@ -77,6 +77,17 @@ _SPORT_LEAGUES: dict[str, list[dict]] = {
         {"slug": "asobal",     "name": "Liga ASOBAL (Espanha)",   "category": "Europa"},
         {"slug": "starligue",  "name": "Starligue (França)",      "category": "Europa"},
     ],
+    "hockey": [
+        {"slug": "nhl", "name": "NHL",             "category": "América do Norte"},
+        {"slug": "ahl", "name": "AHL",             "category": "América do Norte"},
+        {"slug": "khl", "name": "KHL (Rússia)",    "category": "Europa"},
+        {"slug": "shl", "name": "SHL (Suécia)",    "category": "Europa"},
+    ],
+    "football": [
+        {"slug": "nfl",              "name": "NFL",            "category": "América do Norte"},
+        {"slug": "college-football", "name": "NCAA Football",  "category": "América do Norte"},
+        {"slug": "cfl",              "name": "CFL (Canadá)",   "category": "América do Norte"},
+    ],
 }
 
 _SPORTS = [
@@ -86,6 +97,8 @@ _SPORTS = [
     {"slug": "tennis",     "name": "Tênis"},
     {"slug": "volleyball", "name": "Vôlei"},
     {"slug": "handball",   "name": "Handebol"},
+    {"slug": "hockey",     "name": "Hockey"},
+    {"slug": "football",   "name": "Futebol Americano"},
 ]
 
 _standings_cache: dict = {}
