@@ -1976,6 +1976,73 @@
   font-size: .72rem;
 }
 
+.jogos-importance {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 4px 8px 2px;
+  border-top: 1px solid var(--border, rgba(15,23,42,.09));
+}
+
+.jogos-imp-side {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.jogos-imp-side--away {
+  justify-content: flex-end;
+}
+
+.jogos-round {
+  font-size: .65rem;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+  white-space: nowrap;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.jogos-imp {
+  display: inline-block;
+  font-size: .65rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.jogos-imp--rel-confirmed {
+  background: rgba(185,28,28,.12);
+  color: #b91c1c;
+}
+
+.jogos-imp--rel {
+  background: rgba(220,38,38,.10);
+  color: #dc2626;
+}
+
+.jogos-imp--danger {
+  background: rgba(217,119,6,.10);
+  color: #b45309;
+}
+
+.jogos-imp--zone-locked {
+  background: rgba(25,135,84,.12);
+  color: #198754;
+}
+
+.jogos-imp--zone {
+  background: rgba(13,110,253,.10);
+  color: #0d6efd;
+}
+
+.jogos-imp--zone-chase {
+  background: rgba(8,145,178,.10);
+  color: #0891b2;
+}
+
 /* ========================
    AUTO GERAR
 ======================== */

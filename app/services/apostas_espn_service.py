@@ -231,13 +231,29 @@ def get_upcoming_fixtures(league_slug: str, days: int = 14, sport: str = "soccer
     matches = [_parse_event(ev, standings_map) for ev in raw_events]
     matches.sort(key=lambda m: m["date_iso"])
 
+    all_rows = [r for g in standings_data.get("groups", []) for r in g.get("rows", [])]
+    total_teams = len(all_rows)
+    current_round = max((r["matches"] for r in all_rows), default=0) if all_rows else 0
+    total_rounds  = (total_teams - 1) * 2 if total_teams >= 2 else 0
+
     data = {
-        "league_slug":  league_slug,
-        "season":       standings_data.get("season", ""),
-        "league_logo":  league_logo,
-        "matches":      matches,
-        "from":         today.isoformat(),
-        "to":           end.isoformat(),
+        "league_slug":   league_slug,
+        "season":        standings_data.get("season", ""),
+        "league_logo":   league_logo,
+        "matches":       matches,
+        "from":          today.isoformat(),
+        "to":            end.isoformat(),
+        "current_round": current_round,
+        "total_rounds":  total_rounds,
+        "standings": [
+            {
+                "team_id":  r["team_id"],
+                "position": r["position"],
+                "points":   r["points"],
+                "matches":  r["matches"],
+            }
+            for r in all_rows
+        ],
     }
     _fixtures_cache[cache_key] = {"data": data, "expires": now + _FIXTURES_TTL}
     return data
@@ -321,24 +337,25 @@ def _parse_event(event: dict, standings_map: dict[str, int]) -> dict:
     date_brt  = _to_brt(date_iso)
 
     return {
-        "event_id":    event.get("id", ""),
-        "date_iso":    date_iso,
-        "date_brt":    date_brt,
-        "home_id":     home_id,
-        "home_name":   _get_competitor_name(home),
-        "home_logo":   _extract_team_logo(home_team),
-        "home_pos":    home_pos,
-        "away_id":     away_id,
-        "away_name":   _get_competitor_name(away),
-        "away_logo":   _extract_team_logo(away_team),
-        "away_pos":    away_pos,
-        "pos_diff":    pos_diff,
-        "state":       state,
-        "score_home":  score_home,
-        "score_away":  score_away,
-        "venue":       venue.get("fullName", ""),
-        "city":        (venue.get("address") or {}).get("city", ""),
-        "source":      "espn",
+        "event_id":     event.get("id", ""),
+        "date_iso":     date_iso,
+        "date_brt":     date_brt,
+        "round_number": event.get("week", {}).get("number"),
+        "home_id":      home_id,
+        "home_name":    _get_competitor_name(home),
+        "home_logo":    _extract_team_logo(home_team),
+        "home_pos":     home_pos,
+        "away_id":      away_id,
+        "away_name":    _get_competitor_name(away),
+        "away_logo":    _extract_team_logo(away_team),
+        "away_pos":     away_pos,
+        "pos_diff":     pos_diff,
+        "state":        state,
+        "score_home":   score_home,
+        "score_away":   score_away,
+        "venue":        venue.get("fullName", ""),
+        "city":         (venue.get("address") or {}).get("city", ""),
+        "source":       "espn",
     }
 
 

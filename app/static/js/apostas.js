@@ -53,6 +53,114 @@ function _lgsEspnLogo(slug, sport) {
   return `https://a.espncdn.com/i/leagelogos/${s}/500/${slug}.png`;
 }
 
+// ============================================================
+//  Match importance — per-league relegation & qualification rules
+// ============================================================
+
+const _LEAGUE_RULES = {
+  'espn:bra.1': { rel:4, zones:[{pos:6,label:'Sul-Americana'},{pos:4,label:'Libertadores'}] },
+  'espn:bra.2': { rel:4, zones:[{pos:4,label:'Série A'}] },
+  'espn:bra.3': { rel:4, zones:[{pos:4,label:'Série B'}] },
+  'espn:bra.cup': { rel:0, zones:[] },
+  'espn:eng.1': { rel:3, zones:[{pos:6,label:'Conf. League'},{pos:5,label:'Eur. League'},{pos:4,label:'Champions'}] },
+  'espn:eng.2': { rel:3, zones:[{pos:6,label:'Playoff'},{pos:2,label:'Premier League'}] },
+  'espn:esp.1': { rel:3, zones:[{pos:7,label:'Conf. League'},{pos:6,label:'Eur. League'},{pos:4,label:'Champions'}] },
+  'espn:ger.1': { rel:3, zones:[{pos:7,label:'Conf. League'},{pos:6,label:'Eur. League'},{pos:4,label:'Champions'}] },
+  'espn:ita.1': { rel:3, zones:[{pos:7,label:'Conf. League'},{pos:5,label:'Eur. League'},{pos:4,label:'Champions'}] },
+  'espn:fra.1': { rel:3, zones:[{pos:6,label:'Eur. League'},{pos:3,label:'Champions'}] },
+  'espn:por.1': { rel:3, zones:[{pos:5,label:'Eur. League'},{pos:3,label:'Champions'}] },
+  'espn:ned.1': { rel:3, zones:[{pos:6,label:'Conf. League'},{pos:3,label:'Eur. League'},{pos:2,label:'Champions'}] },
+  'espn:sco.1': { rel:2, zones:[{pos:3,label:'Eur. League'},{pos:1,label:'Champions'}] },
+  'espn:arg.1': { rel:3, zones:[{pos:4,label:'Libertadores'}] },
+  'espn:col.1': { rel:2, zones:[{pos:8,label:'Libertadores'}] },
+  'espn:chi.1': { rel:3, zones:[{pos:4,label:'Libertadores'}] },
+  'espn:uru.1': { rel:2, zones:[{pos:4,label:'Libertadores'}] },
+};
+
+function _buildLeagueCtx(data, leagueSlug) {
+  const rules = _LEAGUE_RULES[leagueSlug];
+  if (!rules || !data.standings?.length || !data.total_rounds) return null;
+
+  const remaining = Math.max(0, data.total_rounds - (data.current_round || 0));
+  const ptsByPos  = {};
+  const ptsByTeam = {};
+
+  data.standings.forEach(s => {
+    ptsByPos[s.position] = s.points;
+    ptsByTeam[String(s.team_id)] = { pts: s.points, pos: s.position };
+  });
+
+  const n = data.standings.length;
+  const safePos    = n - rules.rel;
+  const relCutPts  = ptsByPos[safePos]    ?? null;
+  const relZonePts = ptsByPos[safePos + 1] ?? null;
+
+  return {
+    remaining,
+    relCount:  rules.rel,
+    relCutPts,
+    relZonePts,
+    zones:     [...rules.zones].sort((a, b) => a.pos - b.pos),
+    ptsByPos,
+    ptsByTeam,
+    totalTeams:   n,
+    totalRounds:  data.total_rounds,
+    currentRound: data.current_round || 0,
+  };
+}
+
+function _teamImportanceHtml(teamId, ctx) {
+  if (!ctx || !teamId) return '';
+  const s = ctx.ptsByTeam[String(teamId)];
+  if (!s) return '';
+
+  const { pts, pos } = s;
+  const { remaining, relCount, relCutPts, relZonePts, zones, totalTeams, ptsByPos } = ctx;
+  const maxPts = pts + remaining * 3;
+
+  if (relCount > 0) {
+    if (relCutPts !== null && maxPts < relCutPts) {
+      return '<span class="jogos-imp jogos-imp--rel-confirmed">Rebaixamento confirmado</span>';
+    }
+    if (pos > totalTeams - relCount) {
+      const gap = relCutPts !== null ? relCutPts - pts : 0;
+      const gapTxt = gap > 0 ? ` · ${gap} pts p/ fuga` : '';
+      return `<span class="jogos-imp jogos-imp--rel">Rebaixado${gapTxt}</span>`;
+    }
+    if (relZonePts !== null && pts - relZonePts <= Math.min(remaining * 2, 6) && remaining > 0) {
+      return '<span class="jogos-imp jogos-imp--danger">Perigo de rebaixamento</span>';
+    }
+  }
+
+  for (const zone of zones) {
+    const zonePts = ptsByPos[zone.pos];
+    if (zonePts === undefined) continue;
+
+    if (pos <= zone.pos) {
+      const outsiderPts = ptsByPos[zone.pos + 1];
+      if (outsiderPts !== undefined && outsiderPts + remaining * 3 < pts) {
+        return `<span class="jogos-imp jogos-imp--zone-locked">${zone.label} garantido</span>`;
+      }
+      return `<span class="jogos-imp jogos-imp--zone">${zone.label}</span>`;
+    }
+
+    if (maxPts >= zonePts) {
+      const gap = zonePts - pts;
+      return `<span class="jogos-imp jogos-imp--zone-chase">${gap > 0 ? gap + ' pts p/ ' : ''}${zone.label}</span>`;
+    }
+  }
+
+  return '';
+}
+
+function _roundInfoHtml(m, ctx) {
+  if (!ctx) return '';
+  const round = m.round_number || ctx.currentRound;
+  if (!round || !ctx.totalRounds) return '';
+  const restantes = ctx.totalRounds - round;
+  return `<span class="jogos-round">Rodada ${round} · ${restantes > 0 ? restantes + ' restantes' : 'última rodada'}</span>`;
+}
+
 class LgSelect {
   constructor(nativeEl) {
     this._n = nativeEl;
@@ -534,6 +642,9 @@ function renderJogosMatches(data, matches) {
     ? `<div class="tabelas-season">${escHtml(data.season)}</div>`
     : "";
 
+  const leagueSlug = window._activeLeague || '';
+  const ctx = _buildLeagueCtx(data, leagueSlug);
+
   const byDate = {};
   matches.forEach(m => {
     const dayKey = m.date_brt ? m.date_brt.slice(0, 10) : "?";
@@ -544,7 +655,7 @@ function renderJogosMatches(data, matches) {
   Object.entries(byDate).forEach(([day, dayMatches]) => {
     let html = `<div class="jogos-day-group">
       <div class="jogos-day-header">${formatDayLabel(day)}</div>`;
-    dayMatches.forEach(m => { html += buildMatchRow(m); });
+    dayMatches.forEach(m => { html += buildMatchRow(m, ctx); });
     html += `</div>`;
     content.innerHTML += html;
   });
@@ -622,7 +733,7 @@ function _renderInlinePrediction(data, homeName, awayName) {
   return `<div class="jogos-pred-content">${probBar}${chipsHtml}${narrativeHtml}</div>`;
 }
 
-function buildMatchRow(m) {
+function buildMatchRow(m, ctx) {
   const homePosHtml = m.home_pos ? `<span class="jogos-pos jogos-pos--${posTier(m.home_pos)}">#${m.home_pos}</span>` : "";
   const awayPosHtml = m.away_pos ? `<span class="jogos-pos jogos-pos--${posTier(m.away_pos)}">#${m.away_pos}</span>` : "";
   const diffHtml    = m.pos_diff != null ? buildJogosDiff(m.pos_diff) : "";
@@ -690,6 +801,18 @@ function buildMatchRow(m) {
         ${awayPosHtml}
       </div>
       <div class="jogos-meta">${venue}${analiseBtn}</div>
+      ${(() => {
+        const homeImp  = _teamImportanceHtml(m.home_id, ctx);
+        const awayImp  = _teamImportanceHtml(m.away_id, ctx);
+        const roundHtml = _roundInfoHtml(m, ctx);
+        return (homeImp || awayImp || roundHtml)
+          ? `<div class="jogos-importance">
+               <span class="jogos-imp-side">${homeImp}</span>
+               ${roundHtml}
+               <span class="jogos-imp-side jogos-imp-side--away">${awayImp}</span>
+             </div>`
+          : '';
+      })()}
       ${predContainer}
     </div>
   `;
