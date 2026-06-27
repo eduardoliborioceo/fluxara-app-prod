@@ -1992,6 +1992,14 @@
   font-size: .72rem;
 }
 
+.jogos-venue-icon {
+  width: 13px;
+  height: 13px;
+  object-fit: contain;
+  opacity: .7;
+  flex-shrink: 0;
+}
+
 .jogos-importance {
   grid-column: 1 / -1;
   display: flex;
