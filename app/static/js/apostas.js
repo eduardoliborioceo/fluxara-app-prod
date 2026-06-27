@@ -736,7 +736,7 @@ function buildMatchRow(m, ctx) {
   const diffHtml    = m.pos_diff != null ? buildJogosDiff(m.pos_diff) : "";
 
   const time  = m.date_brt ? m.date_brt.slice(11, 16) : "";
-  const venue = m.venue    ? `<span class="jogos-venue">${escHtml(m.venue)}</span>` : "";
+  const venue = m.venue    ? `<span class="jogos-venue"><i class="bi bi-geo-alt-fill"></i> ${escHtml(m.venue)}</span>` : "";
 
   const homeLogoHtml = m.home_logo
     ? `<img src="${escHtml(m.home_logo)}" class="jogos-team-logo" alt="" loading="lazy" onerror="this.style.display='none'">`
