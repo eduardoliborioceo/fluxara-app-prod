@@ -1099,6 +1099,18 @@ function buildTipCard(tip, isAdmin) {
 
   const storyStandalone = (isAdmin && !tip.link_aposta) ? storyBtnHtml : "";
 
+  const registrarBtn = (tip.status === "pendente" && aprovada && tip.odd > 1)
+    ? `<div class="tips-registrar-row">
+         <button class="tips-btn-registrar"
+           data-tid="${tip.id}"
+           data-titulo="${escHtml(tip.titulo)}"
+           data-odd="${tip.odd}"
+           onclick="openRegistrarAposta(this)">
+           <i class="bi bi-cash-coin"></i> Registrar Aposta
+         </button>
+       </div>`
+    : "";
+
   return `
     <div class="tips-card" id="tip-${tip.id}" data-status="${escHtml(tip.status)}" data-aprovada="${aprovada}">
       <div class="tips-card-header">
@@ -1108,6 +1120,7 @@ function buildTipCard(tip, isAdmin) {
       </div>
       ${(oddHtml || idHtml || linkHtml) ? `<div class="tips-card-row2">${oddHtml}${idHtml}${linkHtml}</div>` : ""}
       ${toggleSection}
+      ${registrarBtn}
       ${adminActions}
     </div>
   `;
@@ -3036,4 +3049,193 @@ function renderAnalise(d) {
       <div class="analise-section-title">Over / Under (total de gols)</div>
       <div class="analise-over-list">${overRows}</div>
     </div>`;
+}
+
+// ============================================================
+// Registrar Aposta modal
+// ============================================================
+
+let _registrarContas = null;
+let _registrarCatsDespesa = null;
+let _registrarCatsReceita = null;
+
+function openRegistrarAposta(btn) {
+  const tipId    = btn.dataset.tid;
+  const titulo   = btn.dataset.titulo;
+  const odd      = parseFloat(btn.dataset.odd) || 0;
+
+  document.getElementById("registrarTipId").value = tipId;
+  document.getElementById("registrarOdd").value   = odd;
+  document.getElementById("registrarValor").value  = "";
+  document.getElementById("registrarRetorno").textContent = "—";
+  document.getElementById("registrarApostaError").style.display = "none";
+
+  const today = new Date();
+  const yyyy  = today.getFullYear();
+  const mm    = String(today.getMonth() + 1).padStart(2, "0");
+  const dd    = String(today.getDate()).padStart(2, "0");
+  document.getElementById("registrarData").value = `${yyyy}-${mm}-${dd}`;
+
+  document.getElementById("registrarTipInfo").innerHTML =
+    `<div class="registrar-tip-title">${titulo}</div>` +
+    `<div class="registrar-tip-odd">Odd total: <strong>${odd.toFixed(2)}</strong></div>`;
+
+  document.getElementById("registrarApostaOverlay").style.display = "flex";
+
+  Promise.all([_loadRegistrarContas(), _loadRegistrarCats()]);
+}
+
+function closeRegistrarAposta() {
+  document.getElementById("registrarApostaOverlay").style.display = "none";
+}
+
+function closeRegistrarApostaOverlay(e) {
+  if (e.target === document.getElementById("registrarApostaOverlay")) closeRegistrarAposta();
+}
+
+function calcRegistrarRetorno() {
+  const valor  = parseFloat(document.getElementById("registrarValor").value) || 0;
+  const odd    = parseFloat(document.getElementById("registrarOdd").value) || 0;
+  const retorno = odd > 0 ? valor * odd : 0;
+  const el     = document.getElementById("registrarRetorno");
+  el.textContent = retorno > 0
+    ? `R$ ${retorno.toFixed(2).replace(".", ",")}`
+    : "—";
+}
+
+async function _loadRegistrarContas() {
+  if (_registrarContas) { _populateRegistrarContas(_registrarContas); return; }
+  try {
+    const resp = await fetch("/api/contas");
+    if (!resp.ok) return;
+    _registrarContas = await resp.json();
+    _populateRegistrarContas(_registrarContas);
+  } catch {}
+}
+
+function _populateRegistrarContas(contas) {
+  const sel = document.getElementById("registrarContaId");
+  sel.innerHTML = '<option value="" disabled selected>Selecione a conta...</option>';
+  (contas || []).forEach(c => {
+    const opt = document.createElement("option");
+    opt.value = c.id;
+    opt.textContent = c.nome + (c.instituicao ? ` (${c.instituicao})` : "");
+    sel.appendChild(opt);
+  });
+}
+
+async function _loadRegistrarCats() {
+  if (!_registrarCatsDespesa || !_registrarCatsReceita) {
+    const [rD, rR] = await Promise.all([
+      fetch("/api/config/categorias?tipo=despesa"),
+      fetch("/api/config/categorias?tipo=receita"),
+    ]);
+    if (rD.ok) _registrarCatsDespesa = await rD.json();
+    if (rR.ok) _registrarCatsReceita = await rR.json();
+  }
+  _populateRegistrarCatSelect("registrarCategoriaDespesa", "registrarSubcategoriaDespesa", _registrarCatsDespesa || []);
+  _populateRegistrarCatSelect("registrarCategoriaReceita", "registrarSubcategoriaReceita", _registrarCatsReceita || []);
+}
+
+function _populateRegistrarCatSelect(catSelId, subSelId, cats) {
+  const catSel = document.getElementById(catSelId);
+  catSel.innerHTML = '<option value="">Sem categoria</option>';
+  cats.forEach(c => {
+    const opt = document.createElement("option");
+    opt.value = c.id;
+    opt.textContent = c.nome;
+    opt.dataset.subs = JSON.stringify(c.subcategorias || []);
+    catSel.appendChild(opt);
+  });
+  _updateRegistrarSubs(catSelId, subSelId);
+}
+
+function _updateRegistrarSubs(catSelId, subSelId) {
+  const catSel  = document.getElementById(catSelId);
+  const subSel  = document.getElementById(subSelId);
+  const selected = catSel.options[catSel.selectedIndex];
+  subSel.innerHTML = '<option value="">—</option>';
+  if (!selected || !selected.value) return;
+  const subs = JSON.parse(selected.dataset.subs || "[]");
+  subs.forEach(s => {
+    const opt = document.createElement("option");
+    opt.value = s.id;
+    opt.textContent = s.nome;
+    subSel.appendChild(opt);
+  });
+}
+
+function onRegistrarCategoriaDespesaChange() {
+  _updateRegistrarSubs("registrarCategoriaDespesa", "registrarSubcategoriaDespesa");
+}
+
+function onRegistrarCategoriaReceitaChange() {
+  _updateRegistrarSubs("registrarCategoriaReceita", "registrarSubcategoriaReceita");
+}
+
+async function submitRegistrarAposta() {
+  const tipId    = document.getElementById("registrarTipId").value;
+  const contaId  = document.getElementById("registrarContaId").value;
+  const valor    = parseFloat(document.getElementById("registrarValor").value) || 0;
+  const catD     = document.getElementById("registrarCategoriaDespesa").value || null;
+  const subD     = document.getElementById("registrarSubcategoriaDespesa").value || null;
+  const catR     = document.getElementById("registrarCategoriaReceita").value || null;
+  const subR     = document.getElementById("registrarSubcategoriaReceita").value || null;
+  const data     = document.getElementById("registrarData").value;
+
+  const errEl = document.getElementById("registrarApostaError");
+  errEl.style.display = "none";
+
+  if (!contaId) { errEl.textContent = "Selecione a conta"; errEl.style.display = "block"; return; }
+  if (!valor || valor <= 0) { errEl.textContent = "Informe o valor apostado"; errEl.style.display = "block"; return; }
+
+  const btn = document.getElementById("registrarSubmitBtn");
+  btn.disabled = true;
+
+  try {
+    const resp = await fetch("/api/apostas/registrar-aposta", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        tip_id:                  parseInt(tipId),
+        conta_id:                parseInt(contaId),
+        valor_apostado:          valor,
+        categoria_despesa_id:    catD ? parseInt(catD) : null,
+        subcategoria_despesa_id: subD ? parseInt(subD) : null,
+        categoria_receita_id:    catR ? parseInt(catR) : null,
+        subcategoria_receita_id: subR ? parseInt(subR) : null,
+        data_vencimento:         data || null,
+      }),
+    });
+    const json = await resp.json();
+    if (!resp.ok) {
+      errEl.textContent = json.error || "Erro ao registrar";
+      errEl.style.display = "block";
+      return;
+    }
+    closeRegistrarAposta();
+    _showRegistrarSuccessToast(json);
+  } catch {
+    errEl.textContent = "Erro de conexão";
+    errEl.style.display = "block";
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function _showRegistrarSuccessToast(data) {
+  const valor   = (data.valor_apostado   || 0).toFixed(2).replace(".", ",");
+  const retorno = (data.retorno_potencial || 0).toFixed(2).replace(".", ",");
+  const toast   = document.createElement("div");
+  toast.className = "registrar-success-toast";
+  toast.innerHTML =
+    `<i class="bi bi-check-circle-fill"></i>` +
+    `<div><strong>Aposta registrada!</strong>` +
+    `<span>Despesa R$ ${valor} · Retorno pendente R$ ${retorno}</span></div>`;
+  document.body.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add("registrar-success-toast--show"));
+  setTimeout(() => {
+    toast.classList.remove("registrar-success-toast--show");
+    setTimeout(() => toast.remove(), 400);
+  }, 4500);
 }

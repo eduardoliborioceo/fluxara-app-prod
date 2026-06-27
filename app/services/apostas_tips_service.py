@@ -1,4 +1,7 @@
+import datetime
+
 from app.repositories import apostas_tips_repository as repo
+from app.repositories import lancamentos_repository as lanc_repo
 
 _VALID_STATUSES = {"pendente", "green", "red", "void"}
 
@@ -121,3 +124,57 @@ def toggle_aprovada(tip_id: int) -> dict:
 
 def delete_tip(tip_id: int) -> None:
     repo.delete_tip(tip_id)
+
+
+def registrar_aposta(tip_id: int, user_id: int, conta_id: int,
+                     valor_apostado: float,
+                     categoria_despesa_id, subcategoria_despesa_id,
+                     categoria_receita_id, subcategoria_receita_id,
+                     data_vencimento: str | None = None) -> dict:
+    tip = repo.get_tip_by_id(tip_id)
+    if not tip:
+        raise ValueError("Recomendação não encontrada")
+    if valor_apostado <= 0:
+        raise ValueError("Valor da aposta deve ser positivo")
+    if not conta_id:
+        raise ValueError("Conta obrigatória")
+
+    odd = float(tip.get("odd") or 0)
+    if odd <= 1.0:
+        raise ValueError("Odd inválida")
+
+    retorno = round(valor_apostado * odd, 2)
+    data = data_vencimento or datetime.date.today().isoformat()
+    titulo = (tip.get("titulo") or "Aposta")[:180]
+
+    cat_d = int(categoria_despesa_id) if categoria_despesa_id else None
+    sub_d = int(subcategoria_despesa_id) if subcategoria_despesa_id else None
+    cat_r = int(categoria_receita_id) if categoria_receita_id else None
+    sub_r = int(subcategoria_receita_id) if subcategoria_receita_id else None
+
+    despesa = lanc_repo.create_lancamento(
+        user_id=user_id, tipo="despesa",
+        descricao=f"Aposta: {titulo}",
+        valor=valor_apostado, data_vencimento=data,
+        efetivado=True, recorrente=False, recorrencia_tipo=None,
+        categoria_id=cat_d, subcategoria_id=sub_d,
+        conta_id=conta_id, cartao_id=None,
+        fatura_mes=None, fatura_ano=None,
+    )
+
+    receita = lanc_repo.create_lancamento(
+        user_id=user_id, tipo="receita",
+        descricao=f"Retorno: {titulo}",
+        valor=retorno, data_vencimento=data,
+        efetivado=False, recorrente=False, recorrencia_tipo=None,
+        categoria_id=cat_r, subcategoria_id=sub_r,
+        conta_id=conta_id, cartao_id=None,
+        fatura_mes=None, fatura_ano=None,
+    )
+
+    return {
+        "despesa_id": despesa["id"],
+        "receita_id": receita["id"],
+        "valor_apostado": float(valor_apostado),
+        "retorno_potencial": retorno,
+    }

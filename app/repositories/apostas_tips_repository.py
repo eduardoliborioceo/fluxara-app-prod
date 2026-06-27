@@ -165,6 +165,17 @@ def update_tip(tip_id: int, titulo: str, stake, link_aposta):
             return row
 
 
+def get_tip_by_id(tip_id: int):
+    with get_db() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("""
+                SELECT id, titulo, odd, status, aprovada
+                FROM apostas_tips
+                WHERE id = %s
+            """, (tip_id,))
+            return cur.fetchone()
+
+
 def delete_tip(tip_id: int):
     with get_db() as conn:
         with conn.cursor() as cur:
