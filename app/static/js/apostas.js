@@ -381,6 +381,11 @@ function buildMatchRow(m) {
          data-an="${escHtml(m.away_name)}"
          data-hp="${m.home_pos || ""}"
          data-ap="${m.away_pos || ""}"
+         data-hl="${escHtml(m.home_logo || '')}"
+         data-al="${escHtml(m.away_logo || '')}"
+         data-ll="${escHtml((window._jogosData && window._jogosData.league_logo) || m.league_logo || '')}"
+         data-eid="${escHtml(String(m.event_id || ''))}"
+         data-src="${escHtml(m.source || '')}"
          onclick="handleMatchAnalise(this)"
          title="Ver análise completa">
         <i class="bi bi-bar-chart-line"></i>
@@ -1950,20 +1955,38 @@ function closeStoryModalOverlay(e) {
 // ============================================================
 
 function handleMatchAnalise(btn) {
-  openMatchAnalise(
-    btn.dataset.hid, btn.dataset.aid,
-    btn.dataset.hn,  btn.dataset.an,
-    btn.dataset.hp || "", btn.dataset.ap || ""
-  );
+  openMatchAnalise({
+    homeId:   btn.dataset.hid,
+    awayId:   btn.dataset.aid,
+    homeName: btn.dataset.hn,
+    awayName: btn.dataset.an,
+    homePos:  btn.dataset.hp || "",
+    awayPos:  btn.dataset.ap || "",
+    homeLogo: btn.dataset.hl || "",
+    awayLogo: btn.dataset.al || "",
+    leagueLogo: btn.dataset.ll || "",
+    eventId:  btn.dataset.eid || "",
+    source:   btn.dataset.src || "",
+  });
 }
 
-async function openMatchAnalise(homeId, awayId, homeName, awayName, homePos, awayPos) {
+async function openMatchAnalise({ homeId, awayId, homeName, awayName, homePos, awayPos, homeLogo, awayLogo, leagueLogo, eventId, source }) {
   const overlay = document.getElementById("matchAnaliseOverlay");
   const title   = document.getElementById("matchAnaliseTitle");
   const body    = document.getElementById("matchAnaliseBody");
   if (!overlay) return;
 
-  title.textContent = `${homeName} × ${awayName}`;
+  const homeLgHtml = homeLogo
+    ? `<img src="${escHtml(homeLogo)}" class="match-analise-header-logo" alt="" onerror="this.style.display='none'">`
+    : "";
+  const awayLgHtml = awayLogo
+    ? `<img src="${escHtml(awayLogo)}" class="match-analise-header-logo" alt="" onerror="this.style.display='none'">`
+    : "";
+  const leagueLgHtml = leagueLogo
+    ? `<img src="${escHtml(leagueLogo)}" class="match-analise-league-logo" alt="" onerror="this.style.display='none'">`
+    : "";
+
+  title.innerHTML = `${leagueLgHtml}${homeLgHtml}<span>${escHtml(homeName)}</span> <span class="match-analise-vs">×</span> <span>${escHtml(awayName)}</span>${awayLgHtml}`;
   body.innerHTML = `<div class="apostas-loading" style="display:flex"><div class="apostas-spinner"></div><span>Analisando histórico...</span></div>`;
   overlay.style.display = "flex";
 
@@ -1976,7 +1999,7 @@ async function openMatchAnalise(homeId, awayId, homeName, awayName, homePos, awa
     const resp = await fetch(url);
     const data = await resp.json();
     if (!resp.ok) throw new Error(data.error || "Erro");
-    body.innerHTML = renderMatchAnalise(data, homeName, awayName);
+    body.innerHTML = renderMatchAnalise(data, homeName, awayName, homeLogo, awayLogo);
   } catch (e) {
     body.innerHTML = `<div class="apostas-erro" style="display:flex"><i class="bi bi-exclamation-triangle"></i><p>${e.message}</p></div>`;
   }
@@ -1991,13 +2014,16 @@ function closeMatchAnaliseOverlay(e) {
   if (e.target === document.getElementById("matchAnaliseOverlay")) closeMatchAnalise();
 }
 
-function renderMatchAnalise(d, homeName, awayName) {
+function renderMatchAnalise(d, homeName, awayName, homeLogo, awayLogo) {
   const noData = `<span class="match-analise-nodata">Sem dados suficientes</span>`;
 
-  function teamBlock(team, label) {
+  function teamBlock(team, label, logoUrl) {
+    const logoHtml = logoUrl
+      ? `<img src="${escHtml(logoUrl)}" class="match-analise-team-logo" alt="" onerror="this.style.display='none'">`
+      : "";
     if (!team.found || !team.stats) {
       return `<div class="match-analise-team-block">
-        <div class="match-analise-team-title">${escHtml(label)}</div>
+        <div class="match-analise-team-title">${logoHtml}${escHtml(label)}</div>
         ${noData}
       </div>`;
     }
@@ -2009,6 +2035,7 @@ function renderMatchAnalise(d, homeName, awayName) {
 
     return `<div class="match-analise-team-block">
       <div class="match-analise-team-title">
+        ${logoHtml}
         ${escHtml(team.name || label)}
         <span class="match-analise-side-badge">${sideLabel}</span>
       </div>
@@ -2116,8 +2143,8 @@ function renderMatchAnalise(d, homeName, awayName) {
     <div class="match-analise-source-row">${sourceBadge}</div>
     ${predBlock(d.prediction)}
     <div class="match-analise-teams">
-      ${teamBlock(d.home, homeName)}
-      ${teamBlock(d.away, awayName)}
+      ${teamBlock(d.home, homeName, homeLogo)}
+      ${teamBlock(d.away, awayName, awayLogo)}
     </div>
     ${h2hBlock(d.h2h)}
   `;

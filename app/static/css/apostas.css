@@ -2941,3 +2941,59 @@
   .match-pred-chip { min-width: 56px; padding: 6px 8px; }
   .match-pred-chip-val { font-size: .84rem; }
 }
+
+/* ========================
+   LOGOS NO MODAL DE ANÁLISE
+======================== */
+#matchAnaliseTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: .9rem;
+  font-weight: 600;
+  min-width: 0;
+}
+
+.match-analise-vs {
+  color: var(--text-muted);
+  font-weight: 400;
+  font-size: .8rem;
+  margin: 0 2px;
+}
+
+.match-analise-header-logo {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  flex-shrink: 0;
+  border-radius: 3px;
+}
+
+.match-analise-league-logo {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  flex-shrink: 0;
+  border-radius: 2px;
+  opacity: 0.85;
+}
+
+.match-analise-team-logo {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  flex-shrink: 0;
+  border-radius: 3px;
+}
+
+.match-analise-team-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (max-width: 480px) {
+  .match-analise-header-logo { width: 18px; height: 18px; }
+  .match-analise-team-logo   { width: 20px; height: 20px; }
+}
