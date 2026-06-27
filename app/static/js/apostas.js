@@ -98,8 +98,10 @@ class LgSelect {
     panel.addEventListener('click', e => e.stopPropagation());
     document.addEventListener('click', () => this._close());
     document.addEventListener('keydown', e => { if (e.key === 'Escape') this._close(); });
-    document.addEventListener('scroll', () => this._close(), true);
-    window.addEventListener('resize', () => this._close());
+    document.addEventListener('scroll', e => {
+      if (this._panel?.contains(e.target)) return;
+      this._close();
+    }, true);
   }
 
   populate(groups, initValue) {
@@ -206,8 +208,6 @@ class LgSelect {
       this._panel.style.bottom = 'auto';
     }
 
-    const active = this._optsEl?.querySelector('.lgs-opt--on');
-    if (active) setTimeout(() => active.scrollIntoView({ block: 'nearest' }), 30);
     setTimeout(() => this._searchInput?.focus(), 30);
   }
 
