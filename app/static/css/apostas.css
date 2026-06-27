@@ -1909,6 +1909,19 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
+}
+
+@media (max-width: 767px) {
+  .jogos-team-name {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    line-height: 1.25;
+  }
+  .jogos-team {
+    align-items: flex-start;
+  }
 }
 
 .jogos-team-logo {
@@ -2016,25 +2029,10 @@
 }
 
 @media (max-width: 767px) {
-  .jogos-importance {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 3px;
-  }
-  .jogos-round {
-    order: -1;
-    align-self: center;
-  }
-  .jogos-imp-side {
-    width: 100%;
-    flex: none;
-  }
-  .jogos-imp-side--away {
-    justify-content: flex-end;
-  }
   .jogos-imp {
     font-size: .6rem;
     padding: 2px 4px;
+    white-space: normal;
   }
 }
 
@@ -3058,9 +3056,14 @@
   gap: 4px;
 }
 
-.jogos-pred-lbl--home { color: #0d6efd; font-weight: 600; white-space: nowrap; }
-.jogos-pred-lbl--draw { color: var(--text-muted); text-align: center; }
-.jogos-pred-lbl--away { color: #f59e0b; font-weight: 600; text-align: right; white-space: nowrap; }
+.jogos-pred-lbl--home { color: #0d6efd; font-weight: 600; white-space: nowrap; min-width: 0; }
+.jogos-pred-lbl--draw { color: var(--text-muted); text-align: center; flex-shrink: 0; }
+.jogos-pred-lbl--away { color: #f59e0b; font-weight: 600; text-align: right; white-space: nowrap; min-width: 0; }
+
+@media (max-width: 767px) {
+  .jogos-pred-lbl--home { white-space: normal; }
+  .jogos-pred-lbl--away { white-space: normal; }
+}
 
 .jogos-pred-chips {
   display: flex;
