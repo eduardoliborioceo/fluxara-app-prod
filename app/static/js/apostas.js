@@ -2713,6 +2713,78 @@ async function loadAnalise(leagueId) {
   }
 }
 
+function _computeBestBets(d) {
+  const candidates = [];
+  const o15 = d.over['1.5']?.pct ?? 0;
+  const o25 = d.over['2.5']?.pct ?? 0;
+  const o35 = d.over['3.5']?.pct ?? 0;
+
+  if (d.home_wins.pct >= 50)
+    candidates.push({ tip: 'Vitória do mandante', pct: d.home_wins.pct, icon: 'bi-house-fill', market: 'Resultado' });
+  if (d.away_wins.pct >= 45)
+    candidates.push({ tip: 'Vitória do visitante', pct: d.away_wins.pct, icon: 'bi-airplane-fill', market: 'Resultado' });
+  if (d.draws.pct >= 32)
+    candidates.push({ tip: 'Empate provável', pct: d.draws.pct, icon: 'bi-dash-circle-fill', market: 'Resultado' });
+
+  if (d.btts.pct >= 55)
+    candidates.push({ tip: 'Ambas as equipes marcam', pct: d.btts.pct, icon: 'bi-crosshair2', market: 'Ambas Marcam' });
+  if (d.btts.pct <= 38)
+    candidates.push({ tip: 'Ao menos um time não marca', pct: 100 - d.btts.pct, icon: 'bi-shield-check', market: 'Ambas Marcam' });
+
+  if (o15 >= 82)
+    candidates.push({ tip: 'Over 1.5 gols (muito seguro)', pct: o15, icon: 'bi-check-circle-fill', market: 'Gols' });
+  if (o25 >= 62)
+    candidates.push({ tip: 'Over 2.5 gols', pct: o25, icon: 'bi-lightning-fill', market: 'Gols' });
+  if (o25 <= 38)
+    candidates.push({ tip: 'Under 2.5 gols', pct: 100 - o25, icon: 'bi-lock-fill', market: 'Gols' });
+  if (o35 >= 48)
+    candidates.push({ tip: 'Over 3.5 gols (jogo aberto)', pct: o35, icon: 'bi-fire', market: 'Gols' });
+
+  if (d.cs_home.pct >= 42 && d.home_wins.pct >= 48)
+    candidates.push({ tip: 'Mandante vence sem sofrer gol', pct: Math.round((d.cs_home.pct + d.home_wins.pct) / 2), icon: 'bi-house-door-fill', market: 'Resultado' });
+  if (d.cs_away.pct >= 38 && d.away_wins.pct >= 42)
+    candidates.push({ tip: 'Visitante vence sem sofrer gol', pct: Math.round((d.cs_away.pct + d.away_wins.pct) / 2), icon: 'bi-shield-shaded', market: 'Resultado' });
+
+  candidates.sort((a, b) => b.pct - a.pct);
+  const seen = new Set();
+  return candidates.filter(c => {
+    if (seen.has(c.market)) return false;
+    seen.add(c.market);
+    return true;
+  }).slice(0, 3);
+}
+
+function _renderPalpites(d) {
+  const bets = _computeBestBets(d);
+  if (!bets.length) return '';
+
+  const cards = bets.map(b => {
+    const tier = b.pct >= 68 ? 'high' : b.pct >= 54 ? 'mid' : 'low';
+    const label = b.pct >= 68 ? 'Alta confiança' : b.pct >= 54 ? 'Média confiança' : 'Confiança moderada';
+    return `
+      <div class="analise-palpite analise-palpite--${tier}">
+        <div class="analise-palpite-icon"><i class="bi ${b.icon}"></i></div>
+        <div class="analise-palpite-body">
+          <span class="analise-palpite-tip">${escHtml(b.tip)}</span>
+          <span class="analise-palpite-market">${escHtml(b.market)}</span>
+        </div>
+        <div class="analise-palpite-right">
+          <span class="analise-palpite-pct">${b.pct}%</span>
+          <span class="analise-palpite-conf">${label}</span>
+        </div>
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="analise-palpites-block">
+      <div class="analise-palpites-header">
+        <i class="bi bi-stars"></i> Palpites de Maior Assertividade
+      </div>
+      ${cards}
+      <p class="analise-palpites-note">Baseado no histórico da temporada. Não é garantia de resultado.</p>
+    </div>`;
+}
+
 function renderAnalise(d) {
   const resultBar = `
     <div class="analise-result-bar">
@@ -2757,6 +2829,8 @@ function renderAnalise(d) {
       <span class="analise-total-badge">${d.total} jogos</span>
       ${sourceBadge}
     </div>
+
+    ${_renderPalpites(d)}
 
     <div class="analise-section">
       <div class="analise-section-title">Resultado Final</div>
