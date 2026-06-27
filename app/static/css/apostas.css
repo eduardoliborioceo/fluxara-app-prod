@@ -3313,3 +3313,216 @@
   .lineup-player        { max-width: 42px; }
   .lineup-player-name   { font-size: .54rem; }
 }
+
+/* ========================
+   LgSelect — Custom League Dropdown
+======================== */
+.lgs {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.lgs-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 7px 10px;
+  background: var(--card, #fff);
+  border: 1px solid var(--border, rgba(15,23,42,.09));
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: .85rem;
+  color: var(--text, #1e293b);
+  gap: 8px;
+  transition: border-color .15s, box-shadow .15s;
+  text-align: left;
+  min-height: 36px;
+}
+
+.lgs-trigger:hover {
+  border-color: var(--primary, #0d6efd);
+}
+
+.lgs.lgs--open .lgs-trigger {
+  border-color: var(--primary, #0d6efd);
+  box-shadow: 0 0 0 3px rgba(13,110,253,.12);
+}
+
+.lgs-sel {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.lgs-sel-logo {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  flex-shrink: 0;
+  border-radius: 3px;
+}
+
+.lgs-sel-flag {
+  font-size: .95rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.lgs-sel-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: .85rem;
+  font-weight: 500;
+}
+
+.lgs-arrow {
+  font-size: .7rem;
+  flex-shrink: 0;
+  color: var(--text-muted, #64748b);
+  transition: transform .18s ease;
+}
+
+.lgs.lgs--open .lgs-arrow {
+  transform: rotate(180deg);
+}
+
+.lgs-panel {
+  position: fixed;
+  min-width: 240px;
+  background: var(--card, #fff);
+  border: 1px solid var(--border, rgba(15,23,42,.09));
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(15,23,42,.12);
+  z-index: 2000;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  max-height: 340px;
+}
+
+.lgs.lgs--open .lgs-panel {
+  display: flex;
+}
+
+.lgs-search-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border, rgba(15,23,42,.09));
+  flex-shrink: 0;
+}
+
+.lgs-search-icon {
+  font-size: .8rem;
+  color: var(--text-muted, #64748b);
+  flex-shrink: 0;
+}
+
+.lgs-search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: .82rem;
+  color: var(--text, #1e293b);
+}
+
+.lgs-search-input::placeholder {
+  color: var(--text-muted, #64748b);
+}
+
+.lgs-opts {
+  overflow-y: auto;
+  flex: 1;
+  padding: 4px 0;
+}
+
+.lgs-group {
+  padding: 6px 10px 3px;
+  font-size: .68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: var(--text-muted, #64748b);
+  background: rgba(15,23,42,.03);
+  border-bottom: 1px solid var(--border, rgba(15,23,42,.06));
+}
+
+.lgs-opt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  cursor: pointer;
+  transition: background .1s;
+  font-size: .83rem;
+  color: var(--text, #1e293b);
+}
+
+.lgs-opt:hover {
+  background: rgba(13,110,253,.06);
+}
+
+.lgs-opt.lgs-opt--on {
+  background: rgba(13,110,253,.09);
+  font-weight: 600;
+  color: var(--primary, #0d6efd);
+}
+
+.lgs-opt-logo {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  flex-shrink: 0;
+  border-radius: 2px;
+}
+
+.lgs-opt-logo-ph {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.lgs-opt-flag {
+  font-size: .88rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.lgs-opt-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lgs-empty {
+  padding: 12px 10px;
+  font-size: .82rem;
+  color: var(--text-muted, #64748b);
+  text-align: center;
+}
+
+/* Context integration — LgSelect fills its flex container */
+.league-select-bar .lgs  { flex: 1; min-width: 0; }
+.analise-league-bar .lgs { flex: 1; min-width: 200px; }
+.tips-form-group .lgs    { width: 100%; }
+
+/* Mobile adjustments */
+@media (max-width: 480px) {
+  .lgs-panel { max-height: 280px; }
+  .lgs-opt   { padding: 8px 10px; font-size: .86rem; }
+  .lgs-trigger { font-size: .86rem; }
+  .lgs-sel-name { font-size: .86rem; }
+}
