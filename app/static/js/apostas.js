@@ -274,6 +274,78 @@ function renderJogosMatches(data, matches) {
     html += `</div>`;
     content.innerHTML += html;
   });
+
+  const sport = window._activeSport || "football";
+  if (sport === "football") {
+    const preMatches = matches.filter(m => m.state === "pre" && m.home_id && m.away_id);
+    _autoPredictions(preMatches);
+  }
+}
+
+async function _autoPredictions(matches) {
+  if (!matches.length) return;
+  await _loadMatchPrediction(matches[0]);
+  for (let i = 1; i < matches.length; i++) {
+    setTimeout(() => _loadMatchPrediction(matches[i]), (i - 1) * 80);
+  }
+}
+
+async function _loadMatchPrediction(m) {
+  const predId = `pred-${String(m.home_id)}-${String(m.away_id)}`;
+  const container = document.getElementById(predId);
+  if (!container) return;
+
+  const league = window._activeLeague || "";
+  const hp = m.home_pos ? `&home_pos=${encodeURIComponent(m.home_pos)}` : "";
+  const ap = m.away_pos ? `&away_pos=${encodeURIComponent(m.away_pos)}` : "";
+  const url = `/api/apostas/analise/match?league=${encodeURIComponent(league)}&home_id=${encodeURIComponent(m.home_id)}&away_id=${encodeURIComponent(m.away_id)}${hp}${ap}`;
+
+  try {
+    const resp = await fetch(url);
+    const data = await resp.json();
+    if (!resp.ok) throw new Error();
+    container.innerHTML = _renderInlinePrediction(data, m.home_name, m.away_name);
+  } catch {
+    container.style.display = "none";
+  }
+}
+
+function _renderInlinePrediction(data, homeName, awayName) {
+  const pred = data.prediction;
+  if (!pred || !pred.has_data) return '<div class="jogos-pred-nodata">Sem dados históricos suficientes</div>';
+
+  const p = pred.probabilities;
+  const g = pred.goals;
+
+  const homeShort = (homeName || "").split(" ")[0];
+  const awayShort = (awayName || "").split(" ")[0];
+
+  const probBar = `
+    <div class="jogos-pred-prob">
+      <div class="jogos-pred-bar">
+        <div class="jogos-pred-seg jogos-pred-seg--home" style="width:${p.home_win}%"></div>
+        <div class="jogos-pred-seg jogos-pred-seg--draw" style="width:${p.draw}%"></div>
+        <div class="jogos-pred-seg jogos-pred-seg--away" style="width:${p.away_win}%"></div>
+      </div>
+      <div class="jogos-pred-labels">
+        <span class="jogos-pred-lbl--home">${escHtml(homeShort)} ${p.home_win}%</span>
+        <span class="jogos-pred-lbl--draw">Empate ${p.draw}%</span>
+        <span class="jogos-pred-lbl--away">${p.away_win}% ${escHtml(awayShort)}</span>
+      </div>
+    </div>`;
+
+  const chips = [];
+  if (g.expected   != null) chips.push(`<span class="jogos-pred-chip">~${g.expected} gols</span>`);
+  if (g.over_25_pct != null) chips.push(`<span class="jogos-pred-chip">Over 2.5 ${g.over_25_pct}%</span>`);
+  if (g.btts_pct   != null) chips.push(`<span class="jogos-pred-chip">Ambas ${g.btts_pct}%</span>`);
+  const chipsHtml = chips.length ? `<div class="jogos-pred-chips">${chips.join("")}</div>` : "";
+
+  const topN = (pred.narratives || []).slice(0, 2);
+  const narrativeHtml = topN.length
+    ? `<ul class="jogos-pred-narrative-list">${topN.map(n => `<li>${escHtml(n)}</li>`).join("")}</ul>`
+    : "";
+
+  return `<div class="jogos-pred-content">${probBar}${chipsHtml}${narrativeHtml}</div>`;
 }
 
 function buildMatchRow(m) {
@@ -307,10 +379,19 @@ function buildMatchRow(m) {
          data-aid="${escHtml(String(m.away_id))}"
          data-hn="${escHtml(m.home_name)}"
          data-an="${escHtml(m.away_name)}"
+         data-hp="${m.home_pos || ""}"
+         data-ap="${m.away_pos || ""}"
          onclick="handleMatchAnalise(this)"
-         title="Análise do jogo">
+         title="Ver análise completa">
         <i class="bi bi-bar-chart-line"></i>
        </button>`
+    : "";
+
+  const predId = `pred-${String(m.home_id)}-${String(m.away_id)}`;
+  const predContainer = (isFootball && m.state === "pre" && m.home_id && m.away_id)
+    ? `<div class="jogos-prediction" id="${escHtml(predId)}">
+         <div class="jogos-pred-loading"><div class="apostas-spinner" style="width:12px;height:12px;border-width:2px"></div></div>
+       </div>`
     : "";
 
   return `
@@ -330,6 +411,7 @@ function buildMatchRow(m) {
         ${awayPosHtml}
       </div>
       <div class="jogos-meta">${venue}${analiseBtn}</div>
+      ${predContainer}
     </div>
   `;
 }
@@ -1868,10 +1950,14 @@ function closeStoryModalOverlay(e) {
 // ============================================================
 
 function handleMatchAnalise(btn) {
-  openMatchAnalise(btn.dataset.hid, btn.dataset.aid, btn.dataset.hn, btn.dataset.an);
+  openMatchAnalise(
+    btn.dataset.hid, btn.dataset.aid,
+    btn.dataset.hn,  btn.dataset.an,
+    btn.dataset.hp || "", btn.dataset.ap || ""
+  );
 }
 
-async function openMatchAnalise(homeId, awayId, homeName, awayName) {
+async function openMatchAnalise(homeId, awayId, homeName, awayName, homePos, awayPos) {
   const overlay = document.getElementById("matchAnaliseOverlay");
   const title   = document.getElementById("matchAnaliseTitle");
   const body    = document.getElementById("matchAnaliseBody");
@@ -1882,7 +1968,9 @@ async function openMatchAnalise(homeId, awayId, homeName, awayName) {
   overlay.style.display = "flex";
 
   const league = window._activeLeague || "";
-  const url = `/api/apostas/analise/match?league=${encodeURIComponent(league)}&home_id=${encodeURIComponent(homeId)}&away_id=${encodeURIComponent(awayId)}`;
+  const hp = homePos ? `&home_pos=${encodeURIComponent(homePos)}` : "";
+  const ap = awayPos ? `&away_pos=${encodeURIComponent(awayPos)}` : "";
+  const url = `/api/apostas/analise/match?league=${encodeURIComponent(league)}&home_id=${encodeURIComponent(homeId)}&away_id=${encodeURIComponent(awayId)}${hp}${ap}`;
 
   try {
     const resp = await fetch(url);
@@ -1988,8 +2076,45 @@ function renderMatchAnalise(d, homeName, awayName) {
     ? `<span class="analise-source-badge analise-source-badge--full"><i class="bi bi-check-circle-fill"></i> Temporada</span>`
     : "";
 
+  function predBlock(pred) {
+    if (!pred || !pred.has_data) return "";
+    const p = pred.probabilities;
+    const g = pred.goals;
+
+    const bar = `
+      <div class="match-pred-bar">
+        <div class="match-pred-seg match-pred-seg--home" style="width:${p.home_win}%" title="${escHtml(homeName)}: ${p.home_win}%"></div>
+        <div class="match-pred-seg match-pred-seg--draw"  style="width:${p.draw}%"      title="Empate: ${p.draw}%"></div>
+        <div class="match-pred-seg match-pred-seg--away" style="width:${p.away_win}%" title="${escHtml(awayName)}: ${p.away_win}%"></div>
+      </div>
+      <div class="match-pred-labels">
+        <span class="match-pred-lbl match-pred-lbl--home"><i class="bi bi-house-fill"></i> ${escHtml(homeName)} <strong>${p.home_win}%</strong></span>
+        <span class="match-pred-lbl match-pred-lbl--draw">Empate <strong>${p.draw}%</strong></span>
+        <span class="match-pred-lbl match-pred-lbl--away"><strong>${p.away_win}%</strong> ${escHtml(awayName)} <i class="bi bi-airplane-fill"></i></span>
+      </div>`;
+
+    const goalChips = [];
+    if (g.expected    != null) goalChips.push(`<div class="match-pred-chip"><span class="match-pred-chip-val">${g.expected}</span><span class="match-pred-chip-lbl">Gols esperados</span></div>`);
+    if (g.over_25_pct != null) goalChips.push(`<div class="match-pred-chip${g.over_25_pct >= 55 ? " match-pred-chip--high" : ""}"><span class="match-pred-chip-val">${g.over_25_pct}%</span><span class="match-pred-chip-lbl">Over 2.5</span></div>`);
+    if (g.over_15_pct != null) goalChips.push(`<div class="match-pred-chip"><span class="match-pred-chip-val">${g.over_15_pct}%</span><span class="match-pred-chip-lbl">Over 1.5</span></div>`);
+    if (g.btts_pct    != null) goalChips.push(`<div class="match-pred-chip${g.btts_pct >= 55 ? " match-pred-chip--high" : ""}"><span class="match-pred-chip-val">${g.btts_pct}%</span><span class="match-pred-chip-lbl">Ambas marcam</span></div>`);
+
+    const narrativesHtml = (pred.narratives || []).length
+      ? `<ul class="match-pred-narratives">${pred.narratives.map(n => `<li><i class="bi bi-arrow-right-short"></i>${escHtml(n)}</li>`).join("")}</ul>`
+      : "";
+
+    return `
+      <div class="match-pred-block">
+        <div class="match-pred-title"><i class="bi bi-graph-up-arrow"></i> Cenário Provável</div>
+        ${bar}
+        ${goalChips.length ? `<div class="match-pred-goals">${goalChips.join("")}</div>` : ""}
+        ${narrativesHtml}
+      </div>`;
+  }
+
   return `
     <div class="match-analise-source-row">${sourceBadge}</div>
+    ${predBlock(d.prediction)}
     <div class="match-analise-teams">
       ${teamBlock(d.home, homeName)}
       ${teamBlock(d.away, awayName)}

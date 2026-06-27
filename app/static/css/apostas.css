@@ -2712,3 +2712,232 @@
 .h2h-home { text-align: right; font-weight: 600; color: var(--text); }
 .h2h-score { text-align: center; font-weight: 700; color: var(--primary); }
 .h2h-away { text-align: left; font-weight: 600; color: var(--text); }
+
+/* ========================
+   INLINE PREDICTION — PRÓXIMOS JOGOS
+======================== */
+.jogos-prediction {
+  grid-column: 1 / -1;
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.jogos-pred-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 0;
+}
+
+.jogos-pred-nodata {
+  font-size: .7rem;
+  color: var(--text-muted);
+  font-style: italic;
+  text-align: center;
+  padding: 4px 0;
+}
+
+.jogos-pred-content {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.jogos-pred-prob { margin-bottom: 1px; }
+
+.jogos-pred-bar {
+  display: flex;
+  height: 5px;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.jogos-pred-seg--home { background: #0d6efd; flex-shrink: 0; }
+.jogos-pred-seg--draw { background: #94a3b8; flex-shrink: 0; }
+.jogos-pred-seg--away { background: #f59e0b; flex-shrink: 0; flex: 1; }
+
+.jogos-pred-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: .67rem;
+  line-height: 1;
+  gap: 4px;
+}
+
+.jogos-pred-lbl--home { color: #0d6efd; font-weight: 600; white-space: nowrap; }
+.jogos-pred-lbl--draw { color: var(--text-muted); text-align: center; }
+.jogos-pred-lbl--away { color: #f59e0b; font-weight: 600; text-align: right; white-space: nowrap; }
+
+.jogos-pred-chips {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.jogos-pred-chip {
+  font-size: .65rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.jogos-pred-narrative-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.jogos-pred-narrative-list li {
+  font-size: .69rem;
+  color: var(--text-muted);
+  padding: 1px 0;
+  line-height: 1.35;
+}
+
+.jogos-pred-narrative-list li::before {
+  content: "›";
+  color: var(--primary);
+  font-weight: 700;
+  margin-right: 4px;
+}
+
+/* ========================
+   MODAL PREDICTION BLOCK
+======================== */
+.match-pred-block {
+  background: linear-gradient(135deg, rgba(13,110,253,.05), rgba(13,110,253,.02));
+  border: 1px solid rgba(13,110,253,.18);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.match-pred-title {
+  font-size: .68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  color: var(--primary);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.match-pred-bar {
+  display: flex;
+  height: 10px;
+  border-radius: 5px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.match-pred-seg--home { background: #0d6efd; flex-shrink: 0; }
+.match-pred-seg--draw { background: #94a3b8; flex-shrink: 0; }
+.match-pred-seg--away { background: #f59e0b; flex-shrink: 0; flex: 1; }
+
+.match-pred-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: .78rem;
+  margin-bottom: 14px;
+  gap: 4px;
+}
+
+.match-pred-lbl {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: .75rem;
+}
+
+.match-pred-lbl--home { color: #0d6efd; }
+.match-pred-lbl--home strong { font-size: .85rem; }
+
+.match-pred-lbl--draw { color: var(--text-muted); flex: 1; justify-content: center; text-align: center; }
+.match-pred-lbl--draw strong { color: var(--text); }
+
+.match-pred-lbl--away { color: #f59e0b; flex-direction: row-reverse; }
+.match-pred-lbl--away strong { font-size: .85rem; }
+
+.match-pred-goals {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.match-pred-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 10px;
+  min-width: 68px;
+  flex: 1;
+}
+
+.match-pred-chip--high {
+  border-color: rgba(25,135,84,.3);
+  background: rgba(25,135,84,.06);
+}
+
+.match-pred-chip-val {
+  font-size: .92rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+
+.match-pred-chip--high .match-pred-chip-val { color: var(--success-color); }
+
+.match-pred-chip-lbl {
+  font-size: .62rem;
+  color: var(--text-muted);
+  margin-top: 3px;
+  text-align: center;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.match-pred-narratives {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+
+.match-pred-narratives li {
+  font-size: .78rem;
+  color: var(--text);
+  padding: 4px 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 3px;
+  line-height: 1.4;
+  border-bottom: 1px solid rgba(15,23,42,.04);
+}
+
+.match-pred-narratives li:last-child { border-bottom: none; }
+
+.match-pred-narratives li i {
+  color: var(--primary);
+  font-size: 1rem;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+@media (max-width: 480px) {
+  .match-pred-labels { font-size: .7rem; }
+  .match-pred-chip { min-width: 56px; padding: 6px 8px; }
+  .match-pred-chip-val { font-size: .84rem; }
+}

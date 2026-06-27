@@ -83,7 +83,13 @@ def get_league_analysis(league_id: int) -> dict:
 # Match-level analysis
 # ============================================================
 
-def get_match_analysis(league: str, home_id: str, away_id: str) -> dict:
+def get_match_analysis(
+    league: str,
+    home_id: str,
+    away_id: str,
+    home_pos: int | None = None,
+    away_pos: int | None = None,
+) -> dict:
     """
     league: ESPN slug (e.g. "bra.1") or "afl:{id}"
     home_id / away_id: team IDs matching the league source
@@ -100,12 +106,159 @@ def get_match_analysis(league: str, home_id: str, away_id: str) -> dict:
     home_stats = _team_profile(team_index, home_id, side="home")
     away_stats = _team_profile(team_index, away_id, side="away")
     h2h        = _compute_h2h(raw_pairs, home_id, away_id)
+    prediction = compute_prediction(home_stats, away_stats, h2h, home_pos, away_pos)
 
     return {
-        "home":   home_stats,
-        "away":   away_stats,
-        "h2h":    h2h,
-        "source": source,
+        "home":       home_stats,
+        "away":       away_stats,
+        "h2h":        h2h,
+        "source":     source,
+        "prediction": prediction,
+    }
+
+
+def compute_prediction(
+    home: dict,
+    away: dict,
+    h2h: dict,
+    home_pos: int | None = None,
+    away_pos: int | None = None,
+) -> dict:
+    home_stats = home.get("stats")
+    away_stats = away.get("stats")
+    home_name  = home.get("name") or "Time da casa"
+    away_name  = away.get("name") or "Time visitante"
+
+    if not home_stats and not away_stats:
+        return {"has_data": False}
+
+    # ---- Probabilities (weighted combination of each team's performance) ----
+    if home_stats and away_stats:
+        hw_raw = home_stats["win_pct"]  * 0.55 + away_stats["loss_pct"] * 0.45
+        aw_raw = away_stats["win_pct"]  * 0.55 + home_stats["loss_pct"] * 0.45
+        dr_raw = home_stats["draw_pct"] * 0.50 + away_stats["draw_pct"] * 0.50
+        total  = hw_raw + aw_raw + dr_raw
+        if total > 0:
+            hw = round(hw_raw / total * 100, 1)
+            aw = round(aw_raw / total * 100, 1)
+            dr = round(100 - hw - aw, 1)
+        else:
+            hw, dr, aw = 40.0, 27.0, 33.0
+    elif home_stats:
+        hw = home_stats["win_pct"]
+        dr = home_stats["draw_pct"]
+        aw = home_stats["loss_pct"]
+    else:
+        hw = away_stats["loss_pct"]
+        dr = away_stats["draw_pct"]
+        aw = away_stats["win_pct"]
+
+    # ---- Expected goals ----
+    if home_stats and away_stats:
+        home_xg    = (home_stats["goals_for_avg"] + away_stats["goals_ag_avg"]) / 2
+        away_xg    = (away_stats["goals_for_avg"] + home_stats["goals_ag_avg"]) / 2
+        exp_goals  = round(home_xg + away_xg, 1)
+        over25_pct = round((home_stats["over25_pct"] + away_stats["over25_pct"]) / 2, 1)
+        over15_pct = round((home_stats["over15_pct"] + away_stats["over15_pct"]) / 2, 1)
+        btts_pct   = round((home_stats["btts_pct"]  + away_stats["btts_pct"])  / 2, 1)
+    elif home_stats:
+        exp_goals  = round(home_stats["goals_for_avg"] + home_stats["goals_ag_avg"], 1)
+        over25_pct = home_stats["over25_pct"]
+        over15_pct = home_stats["over15_pct"]
+        btts_pct   = home_stats["btts_pct"]
+    else:
+        exp_goals  = round(away_stats["goals_for_avg"] + away_stats["goals_ag_avg"], 1)
+        over25_pct = away_stats["over25_pct"]
+        over15_pct = away_stats["over15_pct"]
+        btts_pct   = away_stats["btts_pct"]
+
+    # ---- Narrative insights ----
+    narratives: list[str] = []
+
+    def _streak(recent: list, outcomes: tuple) -> int:
+        count = 0
+        for r in recent:
+            if r["result"] in outcomes:
+                count += 1
+            else:
+                break
+        return count
+
+    if home_stats:
+        recent_h  = home_stats.get("recent", [])
+        unbeaten  = _streak(recent_h, ("W", "D"))
+        wins_run  = _streak(recent_h, ("W",))
+        loss_run  = _streak(recent_h, ("L",))
+
+        if unbeaten >= 4:
+            narratives.append(f"{home_name} não perde em casa há {unbeaten} jogos")
+        if wins_run >= 3:
+            narratives.append(f"{home_name} vem de {wins_run} vitórias consecutivas em casa")
+        elif loss_run >= 3:
+            narratives.append(f"{home_name} vem de {loss_run} derrotas consecutivas em casa")
+
+        if home_stats["win_pct"] >= 65:
+            narratives.append(f"{home_name} vence {home_stats['win_pct']:.0f}% dos jogos em casa")
+        elif home_stats["win_pct"] <= 25 and home_stats["matches"] >= 4:
+            narratives.append(f"{home_name} vence apenas {home_stats['win_pct']:.0f}% em casa nesta temporada")
+
+        if home_stats["cs_pct"] >= 45:
+            narratives.append(f"{home_name} não sofre gols em {home_stats['cs_pct']:.0f}% dos jogos em casa")
+
+        if home_stats["goals_for_avg"] >= 2.3:
+            narratives.append(f"{home_name} marca em média {home_stats['goals_for_avg']:.1f} gols por jogo em casa")
+
+    if away_stats:
+        recent_a   = away_stats.get("recent", [])
+        unbeaten_a = _streak(recent_a, ("W", "D"))
+        wins_run_a = _streak(recent_a, ("W",))
+        loss_run_a = _streak(recent_a, ("L",))
+
+        if unbeaten_a >= 4:
+            narratives.append(f"{away_name} não perde fora há {unbeaten_a} jogos")
+        if wins_run_a >= 3:
+            narratives.append(f"{away_name} vem de {wins_run_a} vitórias consecutivas fora")
+        elif loss_run_a >= 3:
+            narratives.append(f"{away_name} vem de {loss_run_a} derrotas seguidas fora de casa")
+        elif loss_run_a == 2:
+            narratives.append(f"{away_name} perdeu os últimos 2 jogos fora")
+
+        if away_stats["win_pct"] >= 50:
+            narratives.append(f"{away_name} vence {away_stats['win_pct']:.0f}% das partidas fora de casa")
+        elif away_stats["win_pct"] <= 15 and away_stats["matches"] >= 4:
+            narratives.append(f"{away_name} vence apenas {away_stats['win_pct']:.0f}% fora de casa")
+
+    # H2H
+    if h2h.get("total", 0) >= 3:
+        tot     = h2h["total"]
+        hw_h2h  = h2h["home_wins"]
+        aw_h2h  = h2h["away_wins"]
+        if hw_h2h / tot >= 0.6:
+            narratives.append(f"{home_name} venceu {hw_h2h} dos últimos {tot} confrontos diretos")
+        elif aw_h2h / tot >= 0.6:
+            narratives.append(f"{away_name} venceu {aw_h2h} dos últimos {tot} confrontos diretos")
+        if h2h.get("avg_goals", 0) >= 3.0:
+            narratives.append(f"Confrontos diretos têm média de {h2h['avg_goals']} gols por jogo")
+
+    # Position difference
+    if home_pos and away_pos:
+        diff = abs(home_pos - away_pos)
+        if diff >= 5:
+            if home_pos < away_pos:
+                narratives.append(f"{home_name} está {diff} posições acima de {away_name} na tabela")
+            else:
+                narratives.append(f"{away_name} está {diff} posições acima de {home_name} na tabela")
+
+    return {
+        "has_data": True,
+        "probabilities": {"home_win": hw, "draw": dr, "away_win": aw},
+        "goals": {
+            "expected":    exp_goals,
+            "over_25_pct": over25_pct,
+            "over_15_pct": over15_pct,
+            "btts_pct":    btts_pct,
+        },
+        "narratives": narratives[:5],
     }
 
 
