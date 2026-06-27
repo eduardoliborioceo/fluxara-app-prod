@@ -1,4 +1,239 @@
 // ============================================================
+//  LgSelect — Custom League Dropdown with logos and flags
+// ============================================================
+
+const _LGS_FLAGS = {
+  'espn:bra.1':'🇧🇷','espn:bra.2':'🇧🇷','espn:bra.3':'🇧🇷','espn:bra.cup':'🇧🇷',
+  'espn:arg.1':'🇦🇷','espn:col.1':'🇨🇴','espn:chi.1':'🇨🇱','espn:uru.1':'🇺🇾',
+  'espn:CONMEBOL.LIBERTADORES':'🌎','espn:CONMEBOL.SUDAMERICANA':'🌎','espn:CONMEBOL.COPA':'🌎',
+  'espn:eng.1':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','espn:eng.2':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','espn:esp.1':'🇪🇸',
+  'espn:ger.1':'🇩🇪','espn:ita.1':'🇮🇹','espn:fra.1':'🇫🇷',
+  'espn:por.1':'🇵🇹','espn:ned.1':'🇳🇱','espn:sco.1':'🏴󠁧󠁢󠁳󠁣󠁴󠁿',
+  'espn:UEFA.CHAMPIONS':'🇪🇺','espn:UEFA.EUROPA':'🇪🇺','espn:UEFA.EUROPA.CONFERENCE':'🇪🇺','espn:UEFA.EURO':'🇪🇺',
+  'espn:FIFA.WORLD':'🌍',
+  'espn:nba':'🇺🇸','espn:wnba':'🇺🇸','espn:nbb':'🇧🇷',
+  'espn:mens-euroleague':'🇪🇺','espn:mens-euro-cup':'🇪🇺','espn:fiba.world':'🌍',
+  'espn:mlb':'🇺🇸','espn:kbo':'🇰🇷','espn:npb':'🇯🇵',
+  'espn:atp':'🌍','espn:wta':'🌍',
+  'espn:nhl':'🇺🇸','espn:ahl':'🇺🇸','espn:khl':'🇷🇺','espn:shl':'🇸🇪',
+  'espn:nfl':'🇺🇸','espn:college-football':'🇺🇸','espn:cfl':'🇨🇦',
+  'espn:volleyball.m.bra':'🇧🇷','espn:volleyball.w.bra':'🇧🇷',
+  'espn:fivb.m':'🌍','espn:fivb.w':'🌍',
+  'espn:ehf.cl':'🇪🇺','espn:bundesliga':'🇩🇪','espn:asobal':'🇪🇸','espn:starligue':'🇫🇷',
+  'football:203':'🇹🇷','football:235':'🇷🇺','football:144':'🇧🇪',
+  'football:197':'🇬🇷','football:106':'🇵🇱','football:119':'🇩🇰',
+  'football:253':'🇺🇸','football:262':'🇲🇽','football:98':'🇯🇵','football:307':'🇸🇦',
+};
+
+const _LGS_CAT_FLAGS = {
+  'Brasil':'🇧🇷','América do Sul':'🌎','Europa':'🇪🇺','Europa Extra':'🇪🇺',
+  'América do Norte':'🇺🇸','Américas':'🌎','Ásia':'🌏','Mundial':'🌍',
+};
+
+function _lgsFlag(value, category) {
+  return _LGS_FLAGS[value] || _LGS_FLAGS[`espn:${value}`] || _LGS_CAT_FLAGS[category] || '🏆';
+}
+
+function _lgsLogo(value) {
+  const mFb = value.match(/^football:(\d+)$/);
+  if (mFb) return `https://media.api-sports.io/football/leagues/${mFb[1]}.png`;
+  const mS = value.match(/^(basketball|baseball|volleyball|handball|hockey|rugby|mma|afl|formula1):(\d+)$/);
+  if (mS) return `https://media.api-sports.io/${mS[1]}/leagues/${mS[2]}.png`;
+  return '';
+}
+
+class LgSelect {
+  constructor(nativeEl) {
+    this._n = nativeEl;
+    this._groups = [];
+    this._value = '';
+    this._open = false;
+    this._q = '';
+    this._wrap = null;
+    this._btn = null;
+    this._panel = null;
+    this._searchInput = null;
+    this._optsEl = null;
+    this._init();
+  }
+
+  _init() {
+    this._n.style.cssText = 'position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;overflow:hidden';
+    const wrap = document.createElement('div');
+    wrap.className = 'lgs';
+    this._n.parentNode.insertBefore(wrap, this._n);
+    wrap.appendChild(this._n);
+    this._wrap = wrap;
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'lgs-trigger';
+    btn.innerHTML = `
+      <span class="lgs-sel">
+        <img class="lgs-sel-logo" src="" alt="" style="display:none" onerror="this.style.display='none'">
+        <span class="lgs-sel-flag"></span>
+        <span class="lgs-sel-name">Selecione um campeonato</span>
+      </span>
+      <i class="bi bi-chevron-down lgs-arrow"></i>
+    `;
+    wrap.appendChild(btn);
+    this._btn = btn;
+
+    const panel = document.createElement('div');
+    panel.className = 'lgs-panel';
+    panel.innerHTML = `
+      <div class="lgs-search-row">
+        <i class="bi bi-search lgs-search-icon"></i>
+        <input class="lgs-search-input" type="text" placeholder="Buscar campeonato..." autocomplete="off">
+      </div>
+      <div class="lgs-opts"></div>
+    `;
+    wrap.appendChild(panel);
+    this._panel = panel;
+    this._searchInput = panel.querySelector('.lgs-search-input');
+    this._optsEl = panel.querySelector('.lgs-opts');
+
+    btn.addEventListener('click', e => { e.stopPropagation(); this._toggle(); });
+    this._searchInput.addEventListener('input', () => { this._q = this._searchInput.value; this._renderOpts(); });
+    panel.addEventListener('click', e => e.stopPropagation());
+    document.addEventListener('click', () => this._close());
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') this._close(); });
+    document.addEventListener('scroll', () => this._close(), true);
+    window.addEventListener('resize', () => this._close());
+  }
+
+  populate(groups, initValue) {
+    this._groups = groups;
+    this._q = '';
+    if (this._searchInput) this._searchInput.value = '';
+    this._renderOpts();
+    const val = initValue || groups[0]?.items[0]?.value || '';
+    if (val) this._updateDisplay(val);
+  }
+
+  _renderOpts() {
+    const q = this._q.toLowerCase().trim();
+    let html = '';
+    this._groups.forEach(g => {
+      const items = q ? g.items.filter(it => it.name.toLowerCase().includes(q)) : g.items;
+      if (!items.length) return;
+      html += `<div class="lgs-group">${_lgsEsc(g.label)}</div>`;
+      items.forEach(it => {
+        const active = it.value === this._value ? ' lgs-opt--on' : '';
+        const logoHtml = it.logo
+          ? `<img class="lgs-opt-logo" src="${_lgsEsc(it.logo)}" alt="" loading="lazy" onerror="this.style.display='none'">`
+          : `<span class="lgs-opt-logo-ph"></span>`;
+        html += `<div class="lgs-opt${active}" data-v="${_lgsEsc(it.value)}">
+          ${logoHtml}
+          <span class="lgs-opt-flag">${it.flag || ''}</span>
+          <span class="lgs-opt-name">${_lgsEsc(it.name)}</span>
+        </div>`;
+      });
+    });
+    if (!html) html = '<div class="lgs-empty">Nenhum resultado</div>';
+    this._optsEl.innerHTML = html;
+    this._optsEl.querySelectorAll('.lgs-opt').forEach(el => {
+      el.addEventListener('click', () => this._pick(el.dataset.v));
+    });
+  }
+
+  _pick(value) {
+    this._n.value = value;
+    this._updateDisplay(value);
+    this._close();
+    this._n.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  _updateDisplay(value) {
+    this._value = value;
+    const item = this._groups.flatMap(g => g.items).find(it => it.value === value);
+    if (!this._btn) return;
+    const logo = this._btn.querySelector('.lgs-sel-logo');
+    const flag = this._btn.querySelector('.lgs-sel-flag');
+    const name = this._btn.querySelector('.lgs-sel-name');
+    if (item) {
+      if (logo) { logo.src = item.logo || ''; logo.style.display = item.logo ? '' : 'none'; }
+      if (flag) flag.textContent = item.flag || '';
+      if (name) name.textContent = item.name;
+    }
+    this._renderOpts();
+  }
+
+  setValue(value) { this._updateDisplay(value); }
+
+  updateTriggerLogo(logoUrl) {
+    const logo = this._btn?.querySelector('.lgs-sel-logo');
+    if (logo && logoUrl) { logo.src = logoUrl; logo.style.display = ''; }
+  }
+
+  setLoading() {
+    const name = this._btn?.querySelector('.lgs-sel-name');
+    if (name) name.textContent = 'Carregando...';
+    if (this._optsEl) this._optsEl.innerHTML = '<div class="lgs-empty">Carregando...</div>';
+  }
+
+  setError() {
+    const name = this._btn?.querySelector('.lgs-sel-name');
+    if (name) name.textContent = 'Erro ao carregar';
+    if (this._optsEl) this._optsEl.innerHTML = '<div class="lgs-empty">Erro ao carregar campeonatos</div>';
+  }
+
+  _toggle() { this._open ? this._close() : this._openPanel(); }
+
+  _openPanel() {
+    document.querySelectorAll('.lgs.lgs--open').forEach(el => {
+      if (el !== this._wrap) el.classList.remove('lgs--open');
+    });
+    this._open = true;
+    this._wrap.classList.add('lgs--open');
+
+    const rect = this._btn.getBoundingClientRect();
+    const vp   = window.innerHeight;
+    const panelMaxH = 340;
+    const spaceBelow = vp - rect.bottom - 8;
+    const above = spaceBelow < 180 && rect.top > panelMaxH;
+
+    this._panel.style.position = 'fixed';
+    this._panel.style.left     = rect.left + 'px';
+    this._panel.style.width    = rect.width + 'px';
+    this._panel.style.zIndex   = '2000';
+    this._panel.style.right    = 'auto';
+    if (above) {
+      this._panel.style.bottom = (vp - rect.top + 4) + 'px';
+      this._panel.style.top    = 'auto';
+    } else {
+      this._panel.style.top    = (rect.bottom + 4) + 'px';
+      this._panel.style.bottom = 'auto';
+    }
+
+    const active = this._optsEl?.querySelector('.lgs-opt--on');
+    if (active) setTimeout(() => active.scrollIntoView({ block: 'nearest' }), 30);
+    setTimeout(() => this._searchInput?.focus(), 30);
+  }
+
+  _close() {
+    if (!this._open) return;
+    this._open = false;
+    this._wrap?.classList.remove('lgs--open');
+    if (this._panel) {
+      this._panel.style.position = '';
+      this._panel.style.left  = '';
+      this._panel.style.width = '';
+      this._panel.style.top   = '';
+      this._panel.style.bottom = '';
+      this._panel.style.right = '';
+      this._panel.style.zIndex = '';
+    }
+  }
+}
+
+function _lgsEsc(str) {
+  return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+window._lgSelects = {};
+
+// ============================================================
 //  TABS
 // ============================================================
 
@@ -35,6 +270,13 @@ function apostasTab(tab) {
 // ============================================================
 
 document.addEventListener("DOMContentLoaded", () => {
+  const nLeague  = document.getElementById("leagueSelect");
+  const nAnalise = document.getElementById("analiseLeagueSelect");
+  const nPicker  = document.getElementById("pickerLeagueSelect");
+  if (nLeague)  window._lgSelects.leagueSelect        = new LgSelect(nLeague);
+  if (nAnalise) window._lgSelects.analiseLeagueSelect = new LgSelect(nAnalise);
+  if (nPicker)  window._lgSelects.pickerLeagueSelect  = new LgSelect(nPicker);
+
   const savedSport = localStorage.getItem("apostas_sport") || "football";
   window._activeSport = savedSport;
   _updateSportPills(savedSport);
@@ -72,6 +314,7 @@ function _updateSportPills(sport) {
 async function loadSportLeagues(sport) {
   const sel = document.getElementById("leagueSelect");
   sel.innerHTML = '<option disabled selected>Carregando...</option>';
+  window._lgSelects?.leagueSelect?.setLoading();
 
   try {
     let leagues = [];
@@ -83,23 +326,34 @@ async function loadSportLeagues(sport) {
       ]);
       const espnList = respEspn.ok ? await respEspn.json() : [];
       const fbList   = respFb.ok  ? await respFb.json()   : [];
-      espnList.forEach(lg => leagues.push({ value: `espn:${lg.slug}`, name: lg.name, category: lg.category }));
-      fbList.forEach(lg   => leagues.push({ value: `football:${lg.id}`, name: lg.name, category: lg.category }));
+      espnList.forEach(lg => {
+        const v = `espn:${lg.slug}`;
+        leagues.push({ value: v, name: lg.name, category: lg.category, flag: _lgsFlag(v, lg.category), logo: '' });
+      });
+      fbList.forEach(lg => {
+        const v = `football:${lg.id}`;
+        leagues.push({ value: v, name: lg.name, category: lg.category, flag: _lgsFlag(v, lg.category), logo: `https://media.api-sports.io/football/leagues/${lg.id}.png` });
+      });
     } else {
       const resp = await fetch(`/api/apostas/sports/${sport}/leagues`);
       if (resp.ok) {
         const list = await resp.json();
-        list.forEach(lg => leagues.push({
-          value:    `${sport}:${lg.id}`,
-          name:     lg.name,
-          category: lg.category || lg.country || "Internacional",
-          logo:     lg.logo || "",
-        }));
+        list.forEach(lg => {
+          const v = `${sport}:${lg.id}`;
+          leagues.push({
+            value:    v,
+            name:     lg.name,
+            category: lg.category || lg.country || "Internacional",
+            flag:     _lgsFlag(v, lg.category || lg.country || ''),
+            logo:     lg.logo || _lgsLogo(v),
+          });
+        });
       }
     }
 
     if (leagues.length === 0) {
       sel.innerHTML = '<option disabled selected>Nenhum campeonato disponível</option>';
+      window._lgSelects?.leagueSelect?.setError();
       return;
     }
 
@@ -110,9 +364,10 @@ async function loadSportLeagues(sport) {
     });
 
     sel.innerHTML = "";
-    Object.entries(byCategory).forEach(([cat, items]) => {
+    const groups = Object.entries(byCategory).map(([label, items]) => ({ label, items }));
+    groups.forEach(({ label, items }) => {
       const grp = document.createElement("optgroup");
-      grp.label = cat;
+      grp.label = label;
       items.forEach(lg => {
         const opt = document.createElement("option");
         opt.value = lg.value;
@@ -125,12 +380,16 @@ async function loadSportLeagues(sport) {
     window._leaguesLoaded = true;
     const savedKey = `apostas_league_${sport}`;
     const saved    = localStorage.getItem(savedKey) || leagues[0]?.value;
+
+    window._lgSelects?.leagueSelect?.populate(groups, saved || '');
+
     if (saved) {
       sel.value = saved;
       selectLeague(saved);
     }
   } catch {
     sel.innerHTML = '<option disabled selected>Erro ao carregar campeonatos</option>';
+    window._lgSelects?.leagueSelect?.setError();
   }
 }
 
@@ -150,6 +409,7 @@ function selectLeague(slug) {
 
   const sel = document.getElementById("leagueSelect");
   if (sel && sel.value !== slug) sel.value = slug;
+  window._lgSelects?.leagueSelect?.setValue(slug);
 
   const currentTab = localStorage.getItem("apostas_tab") || "recomendacoes";
   if (currentTab === "jogos")   loadJogos(slug);
@@ -240,6 +500,7 @@ async function loadJogos(slug) {
     if (!resp.ok) { setJogosState("erro", json.error); return; }
 
     window._jogosData = json;
+    if (json.league_logo) window._lgSelects?.leagueSelect?.updateTriggerLogo(json.league_logo);
     applyJogosFilter();
   } catch {
     setJogosState("erro", "Não foi possível conectar ao servidor.");
@@ -1080,6 +1341,7 @@ function onPickerSportChange() {
   _pickerLeaguesReady = false;
   const leagueSel = document.getElementById("pickerLeagueSelect");
   if (leagueSel) leagueSel.innerHTML = '<option disabled selected>Carregando...</option>';
+  window._lgSelects?.pickerLeagueSelect?.setLoading();
   document.getElementById("pickerMatchList").innerHTML = "";
   document.getElementById("pickerEmpty").style.display = "none";
   _loadPickerLeagues();
@@ -1088,6 +1350,7 @@ function onPickerSportChange() {
 async function _loadPickerLeagues() {
   const sport = _pickerSport || "soccer";
   const sel   = document.getElementById("pickerLeagueSelect");
+  window._lgSelects?.pickerLeagueSelect?.setLoading();
   try {
     const resp = await fetch(`/api/apostas/espn/leagues?sport=${sport}`);
     const list = await resp.json();
@@ -1099,29 +1362,44 @@ async function _loadPickerLeagues() {
     });
 
     sel.innerHTML = "";
-    Object.entries(byCategory).forEach(([cat, items]) => {
+    const groups = Object.entries(byCategory).map(([label, rawItems]) => ({
+      label,
+      items: rawItems.map(lg => ({
+        value: lg.slug,
+        name:  lg.name,
+        flag:  _lgsFlag(`espn:${lg.slug}`, lg.category),
+        logo:  '',
+      })),
+    }));
+
+    groups.forEach(({ label, items }) => {
       const grp = document.createElement("optgroup");
-      grp.label = cat;
-      items.forEach(lg => {
+      grp.label = label;
+      items.forEach(it => {
         const opt = document.createElement("option");
-        opt.value = lg.slug;
-        opt.textContent = lg.name;
+        opt.value = it.value;
+        opt.textContent = it.name;
         grp.appendChild(opt);
       });
       sel.appendChild(grp);
     });
 
+    window._lgSelects?.pickerLeagueSelect?.populate(groups, '');
     _pickerLeaguesReady = true;
 
-    const defaultSlug = (sport === "soccer" && window._activeLeague && !window._activeLeague.startsWith("afl:"))
-      ? window._activeLeague
-      : list[0]?.slug;
+    let defaultSlug = list[0]?.slug;
+    if (sport === "soccer" && window._activeLeague && !window._activeLeague.startsWith("afl:") && !window._activeLeague.startsWith("football:")) {
+      const activeSlug = window._activeLeague.startsWith("espn:") ? window._activeLeague.slice(5) : window._activeLeague;
+      if (list.find(l => l.slug === activeSlug)) defaultSlug = activeSlug;
+    }
     if (defaultSlug) {
       sel.value = defaultSlug;
+      window._lgSelects?.pickerLeagueSelect?.setValue(defaultSlug);
       _loadPickerMatches(defaultSlug);
     }
   } catch {
     sel.innerHTML = '<option disabled>Erro ao carregar campeonatos</option>';
+    window._lgSelects?.pickerLeagueSelect?.setError();
   }
 }
 
@@ -2339,6 +2617,7 @@ window._activeAnaliseLeague  = null;
 
 async function loadAnaliseLeagues() {
   const sel = document.getElementById("analiseLeagueSelect");
+  window._lgSelects?.analiseLeagueSelect?.setLoading();
   try {
     const resp = await fetch("/api/apostas/analise/leagues");
     if (!resp.ok) throw new Error("HTTP " + resp.status);
@@ -2358,21 +2637,33 @@ async function loadAnaliseLeagues() {
     placeholder.textContent = "Selecione um campeonato";
     sel.appendChild(placeholder);
 
-    Object.entries(byCategory).forEach(([cat, items]) => {
+    const groups = Object.entries(byCategory).map(([label, rawItems]) => ({
+      label,
+      items: rawItems.map(lg => ({
+        value: String(lg.id),
+        name:  lg.name,
+        flag:  _LGS_FLAGS[`football:${lg.id}`] || _LGS_CAT_FLAGS[lg.category] || '🏆',
+        logo:  `https://media.api-sports.io/football/leagues/${lg.id}.png`,
+      })),
+    }));
+
+    groups.forEach(({ label, items }) => {
       const grp = document.createElement("optgroup");
-      grp.label = cat;
-      items.forEach(lg => {
+      grp.label = label;
+      items.forEach(it => {
         const opt = document.createElement("option");
-        opt.value = lg.id;
-        opt.textContent = lg.name;
+        opt.value = it.value;
+        opt.textContent = it.name;
         grp.appendChild(opt);
       });
       sel.appendChild(grp);
     });
 
+    window._lgSelects?.analiseLeagueSelect?.populate(groups, '');
     window._analiseLeaguesLoaded = true;
   } catch (e) {
     sel.innerHTML = '<option value="" disabled selected>Erro ao carregar</option>';
+    window._lgSelects?.analiseLeagueSelect?.setError();
   }
 }
 
