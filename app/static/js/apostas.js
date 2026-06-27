@@ -341,7 +341,7 @@ async function loadSportLeagues(sport) {
       const fbList   = respFb.ok  ? await respFb.json()   : [];
       espnList.forEach(lg => {
         const v = `espn:${lg.slug}`;
-        leagues.push({ value: v, name: lg.name, category: lg.category, flag: _lgsFlag(v, lg.category), logo: _lgsEspnLogo(lg.slug, sport) });
+        leagues.push({ value: v, name: lg.name, category: lg.category, flag: _lgsFlag(v, lg.category), logo: _lgsEspnLogo(lg.slug, 'soccer') });
       });
       fbList.forEach(lg => {
         const v = `football:${lg.id}`;
