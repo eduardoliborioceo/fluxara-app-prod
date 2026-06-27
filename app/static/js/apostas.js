@@ -2000,9 +2000,83 @@ async function openMatchAnalise({ homeId, awayId, homeName, awayName, homePos, a
     const data = await resp.json();
     if (!resp.ok) throw new Error(data.error || "Erro");
     body.innerHTML = renderMatchAnalise(data, homeName, awayName, homeLogo, awayLogo);
+    _loadMatchCards(homeId, awayId, homeName, awayName, league, body);
   } catch (e) {
     body.innerHTML = `<div class="apostas-erro" style="display:flex"><i class="bi bi-exclamation-triangle"></i><p>${e.message}</p></div>`;
   }
+}
+
+async function _loadMatchCards(homeId, awayId, homeName, awayName, league, body) {
+  const m = (league || "").match(/^football:(\d+)$/);
+  if (!m) return;
+  const leagueId = m[1];
+
+  const placeholder = document.createElement("div");
+  placeholder.className = "match-cards-loading";
+  placeholder.innerHTML = `<div class="apostas-spinner" style="width:14px;height:14px;border-width:2px"></div>`;
+  body.appendChild(placeholder);
+
+  try {
+    const url = `/api/apostas/analise/cards?league_id=${leagueId}&home_id=${encodeURIComponent(homeId)}&away_id=${encodeURIComponent(awayId)}`;
+    const resp = await fetch(url);
+    const data = await resp.json();
+
+    if (!data.available || (!data.home.length && !data.away.length)) {
+      placeholder.remove();
+      return;
+    }
+
+    const section = document.createElement("div");
+    section.innerHTML = _renderCardsSection(data, homeName, awayName);
+    placeholder.replaceWith(section.firstElementChild);
+  } catch {
+    placeholder.remove();
+  }
+}
+
+function _renderCardsSection(data, homeName, awayName) {
+  function playerRow(p) {
+    const photo = p.photo
+      ? `<img src="${escHtml(p.photo)}" class="cards-player-photo" alt="" loading="lazy" onerror="this.style.display='none'">`
+      : `<div class="cards-player-photo cards-player-photo--placeholder"><i class="bi bi-person-fill"></i></div>`;
+
+    const isDanger = p.level === "danger";
+    const badgeText = isDanger
+      ? `${p.yellow_red}x amarelo-vermelho`
+      : `${p.yellow} amarelos — próximo = suspensão`;
+    const iconColor = isDanger ? "#dc2626" : "#f59e0b";
+
+    return `<div class="cards-player cards-alert--${p.level}">
+      ${photo}
+      <div class="cards-player-info">
+        <span class="cards-player-name">${escHtml(p.name)}</span>
+        <span class="cards-player-badge">
+          <i class="bi bi-square-fill" style="color:${iconColor};font-size:.72rem"></i>
+          ${escHtml(badgeText)}
+        </span>
+      </div>
+    </div>`;
+  }
+
+  function teamSection(players, name, side) {
+    if (!players.length) return "";
+    return `<div class="cards-team-section">
+      <div class="cards-team-label">
+        ${escHtml(name)}
+        <span class="cards-team-badge cards-team-badge--${side}">${side === "home" ? "Casa" : "Fora"}</span>
+      </div>
+      ${players.map(playerRow).join("")}
+    </div>`;
+  }
+
+  return `<div class="match-analise-section">
+    <div class="match-analise-section-title">
+      <i class="bi bi-square-fill" style="color:#f59e0b;font-size:.82rem;vertical-align:middle"></i>
+      Cartões em Alerta
+    </div>
+    ${teamSection(data.home, homeName, "home")}
+    ${teamSection(data.away, awayName, "away")}
+  </div>`;
 }
 
 function closeMatchAnalise() {
