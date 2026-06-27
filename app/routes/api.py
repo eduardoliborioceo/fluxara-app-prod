@@ -1799,6 +1799,23 @@ def apostas_analise_match():
         return jsonify({"error": "Erro ao buscar análise do jogo"}), 500
 
 
+@bp.route("/apostas/analise/cards", methods=["GET"])
+@login_required
+def apostas_analise_cards():
+    from app.services import apostas_cards_service
+    league_id_str = request.args.get("league_id", "")
+    home_id = request.args.get("home_id", "")
+    away_id = request.args.get("away_id", "")
+    if not league_id_str.isdigit() or not home_id or not away_id:
+        return jsonify({"available": False, "home": [], "away": []})
+    try:
+        data = apostas_cards_service.get_match_card_alerts(int(league_id_str), home_id, away_id)
+        return jsonify(data)
+    except Exception as exc:
+        logger.exception("apostas_analise_cards error: %s", exc)
+        return jsonify({"available": False, "home": [], "away": []})
+
+
 @bp.route("/assinaturas/iniciar", methods=["POST"])
 @login_required
 def assinatura_iniciar():
