@@ -181,6 +181,7 @@ def _append_group(groups: list, node: dict) -> None:
             "team_id":       team.get("id", ""),
             "team_name":     team.get("displayName", ""),
             "team_short":    team.get("abbreviation", ""),
+            "team_logo":     _extract_team_logo(team),
             "matches":       int(stats.get("gamesPlayed", 0)),
             "wins":          int(stats.get("wins", 0)),
             "draws":         int(stats.get("ties", 0)),
