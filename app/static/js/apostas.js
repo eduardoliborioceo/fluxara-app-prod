@@ -403,16 +403,16 @@ function buildMatchRow(m) {
     <div class="jogos-match-row">
       <div class="jogos-team jogos-team--home">
         ${homePosHtml}
-        ${homeLogoHtml}
         <span class="jogos-team-name">${escHtml(m.home_name)}</span>
+        ${homeLogoHtml}
       </div>
       <div class="jogos-center">
         ${diffHtml}
         ${scoreHtml}
       </div>
       <div class="jogos-team jogos-team--away">
-        <span class="jogos-team-name">${escHtml(m.away_name)}</span>
         ${awayLogoHtml}
+        <span class="jogos-team-name">${escHtml(m.away_name)}</span>
         ${awayPosHtml}
       </div>
       <div class="jogos-meta">${venue}${analiseBtn}</div>
