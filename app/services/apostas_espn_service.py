@@ -325,8 +325,9 @@ def _parse_event(event: dict, standings_map: dict[str, int]) -> dict:
     away_pos = standings_map.get(away_id)
     pos_diff = abs(home_pos - away_pos) if home_pos and away_pos else None
 
-    status = (comp.get("status") or {}).get("type") or {}
-    state = status.get("state", "pre")
+    status_obj  = comp.get("status") or {}
+    status_type = status_obj.get("type") or {}
+    state       = status_type.get("state", "pre")
 
     score_home = home.get("score", "")
     score_away = away.get("score", "")
@@ -337,25 +338,28 @@ def _parse_event(event: dict, standings_map: dict[str, int]) -> dict:
     date_brt  = _to_brt(date_iso)
 
     return {
-        "event_id":     event.get("id", ""),
-        "date_iso":     date_iso,
-        "date_brt":     date_brt,
-        "round_number": event.get("week", {}).get("number"),
-        "home_id":      home_id,
-        "home_name":    _get_competitor_name(home),
-        "home_logo":    _extract_team_logo(home_team),
-        "home_pos":     home_pos,
-        "away_id":      away_id,
-        "away_name":    _get_competitor_name(away),
-        "away_logo":    _extract_team_logo(away_team),
-        "away_pos":     away_pos,
-        "pos_diff":     pos_diff,
-        "state":        state,
-        "score_home":   score_home,
-        "score_away":   score_away,
-        "venue":        venue.get("fullName", ""),
-        "city":         (venue.get("address") or {}).get("city", ""),
-        "source":       "espn",
+        "event_id":      event.get("id", ""),
+        "date_iso":      date_iso,
+        "date_brt":      date_brt,
+        "round_number":  event.get("week", {}).get("number"),
+        "home_id":       home_id,
+        "home_name":     _get_competitor_name(home),
+        "home_logo":     _extract_team_logo(home_team),
+        "home_pos":      home_pos,
+        "away_id":       away_id,
+        "away_name":     _get_competitor_name(away),
+        "away_logo":     _extract_team_logo(away_team),
+        "away_pos":      away_pos,
+        "pos_diff":      pos_diff,
+        "state":         state,
+        "score_home":    score_home,
+        "score_away":    score_away,
+        "venue":         venue.get("fullName", ""),
+        "city":          (venue.get("address") or {}).get("city", ""),
+        "display_clock": status_obj.get("displayClock", ""),
+        "status_detail": status_type.get("detail", ""),
+        "period":        status_obj.get("period", 0),
+        "source":        "espn",
     }
 
 
