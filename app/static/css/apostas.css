@@ -3367,10 +3367,19 @@
   border-radius: 3px;
 }
 
-.lgs-sel-flag {
-  font-size: .95rem;
+.lgs-sel-flag-wrap {
+  display: inline-flex;
+  align-items: center;
   flex-shrink: 0;
-  line-height: 1;
+  width: 20px;
+  height: 15px;
+}
+
+.lgs-sel-flag-wrap img {
+  width: 20px;
+  height: auto;
+  border-radius: 2px;
+  display: block;
 }
 
 .lgs-sel-name {
@@ -3494,9 +3503,22 @@
 }
 
 .lgs-opt-flag {
-  font-size: .88rem;
+  display: inline-flex;
+  align-items: center;
   flex-shrink: 0;
-  line-height: 1;
+  width: 20px;
+  height: 14px;
+}
+
+.lgs-opt-flag img {
+  width: 20px;
+  height: auto;
+  border-radius: 2px;
+  display: block;
+}
+
+.lgs-opt-flag.lgs-opt-flag--empty {
+  width: 20px;
 }
 
 .lgs-opt-name {
