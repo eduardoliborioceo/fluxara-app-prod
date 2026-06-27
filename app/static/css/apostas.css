@@ -1978,17 +1978,20 @@
 
 .jogos-importance {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 6px;
+  gap: 3px 6px;
   padding: 4px 8px 2px;
   border-top: 1px solid var(--border, rgba(15,23,42,.09));
+  overflow: hidden;
 }
 
 .jogos-imp-side {
   flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
+  overflow: hidden;
 }
 
 .jogos-imp-side--away {
@@ -2011,6 +2014,21 @@
   padding: 2px 6px;
   border-radius: 4px;
   white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 767px) {
+  .jogos-round {
+    order: -1;
+    width: 100%;
+    text-align: center;
+  }
+  .jogos-imp {
+    font-size: .6rem;
+    padding: 2px 4px;
+  }
 }
 
 .jogos-imp--rel-confirmed {
