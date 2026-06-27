@@ -1442,17 +1442,32 @@ async function _loadPickerMatches(slug) {
       return;
     }
 
-    const sel    = document.getElementById("pickerLeagueSelect");
-    const season = json.season || sel.options[sel.selectedIndex]?.text || "";
-    _renderPickerMatches(upcoming, season);
+    const sel        = document.getElementById("pickerLeagueSelect");
+    const season     = json.season || sel.options[sel.selectedIndex]?.text || "";
+    const leagueLogo = json.league_logo || '';
+    const leagueFlag = _lgsFlag(`espn:${slug}`, '');
+    _renderPickerMatches(upcoming, season, leagueLogo, leagueFlag);
   } catch {
     loadingEl.style.display = "none";
     emptyEl.style.display = "flex";
   }
 }
 
-function _renderPickerMatches(matches, season) {
+function _renderPickerMatches(matches, season, leagueLogo, leagueFlag) {
   const listEl = document.getElementById("pickerMatchList");
+
+  const leagueLogoHtml = leagueLogo
+    ? `<img class="picker-league-logo" src="${escHtml(leagueLogo)}" alt="" onerror="this.style.visibility='hidden'">`
+    : `<span class="picker-league-logo-ph"></span>`;
+  const leagueFlagHtml = leagueFlag
+    ? `<span class="picker-league-flag">${_lgsFlagImg(leagueFlag, 18)}</span>`
+    : '';
+
+  let html = `<div class="picker-league-header">
+    ${leagueLogoHtml}
+    ${leagueFlagHtml}
+    <span class="picker-league-name">${escHtml(season)}</span>
+  </div>`;
 
   const byDate = {};
   matches.forEach(m => {
@@ -1461,17 +1476,25 @@ function _renderPickerMatches(matches, season) {
     byDate[dayKey].push(m);
   });
 
-  let html = "";
   Object.entries(byDate).forEach(([day, dayMatches]) => {
     html += `<div class="picker-day-group">
       <div class="picker-day-header">${formatDayLabel(day)}</div>`;
     dayMatches.forEach(m => {
-      const time   = m.date_brt ? m.date_brt.slice(11, 16) : "";
+      const time    = m.date_brt ? m.date_brt.slice(11, 16) : "";
       const partida = `${m.home_name} x ${m.away_name}`;
-      const date   = m.date_brt ? m.date_brt.slice(0, 10) : "";
-      const diff   = m.pos_diff != null && m.pos_diff >= 2 ? buildJogosDiff(m.pos_diff) : "";
+      const date    = m.date_brt ? m.date_brt.slice(0, 10) : "";
+      const diff    = m.pos_diff != null && m.pos_diff >= 2 ? buildJogosDiff(m.pos_diff) : "";
+
+      const homeLogoHtml = m.home_logo
+        ? `<img class="picker-team-logo" src="${escHtml(m.home_logo)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">`
+        : `<span class="picker-team-logo-ph"></span>`;
+      const awayLogoHtml = m.away_logo
+        ? `<img class="picker-team-logo" src="${escHtml(m.away_logo)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">`
+        : `<span class="picker-team-logo-ph"></span>`;
+
       const homePosHtml = m.home_pos ? `<span class="picker-pos picker-pos--${posTier(m.home_pos)}">#${m.home_pos}</span>` : "";
       const awayPosHtml = m.away_pos ? `<span class="picker-pos picker-pos--${posTier(m.away_pos)}">#${m.away_pos}</span>` : "";
+
       html += `
         <div class="picker-match-row"
              data-partida="${escHtml(partida)}"
@@ -1479,11 +1502,17 @@ function _renderPickerMatches(matches, season) {
              data-date="${escHtml(date)}"
              onclick="_selectPickerMatch(this)">
           <div class="picker-match-teams">
-            ${homePosHtml}
-            <span class="picker-team picker-team--home">${escHtml(m.home_name)}</span>
+            <div class="picker-team-block">
+              ${homeLogoHtml}
+              ${homePosHtml}
+              <span class="picker-team picker-team--home">${escHtml(m.home_name)}</span>
+            </div>
             <span class="picker-vs">×</span>
-            <span class="picker-team picker-team--away">${escHtml(m.away_name)}</span>
-            ${awayPosHtml}
+            <div class="picker-team-block picker-team-block--away">
+              <span class="picker-team picker-team--away">${escHtml(m.away_name)}</span>
+              ${awayPosHtml}
+              ${awayLogoHtml}
+            </div>
           </div>
           <div class="picker-match-meta">
             ${time ? `<span class="picker-time"><i class="bi bi-clock"></i>${time}</span>` : ""}
