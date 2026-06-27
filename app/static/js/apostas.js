@@ -730,6 +730,24 @@ function _renderInlinePrediction(data, homeName, awayName) {
   return `<div class="jogos-pred-content">${probBar}${chipsHtml}${narrativeHtml}</div>`;
 }
 
+function _getLiveClock(m) {
+  if (m.state !== "in") return "";
+  if (m.elapsed != null) {
+    if (m.status_short === "HT") return "Int.";
+    return `${m.elapsed}'`;
+  }
+  if (m.status_detail) {
+    if (m.status_detail === "Halftime") return "Int.";
+    const minMatch = m.status_detail.match(/(\d+)['′]/);
+    if (minMatch) return `${minMatch[1]}'`;
+    if (m.status_detail === "Full Time" || m.status_detail === "FT") return "FT";
+  }
+  if (m.period && m.display_clock) {
+    return `${m.period}T ${m.display_clock}`;
+  }
+  return "AO VIVO";
+}
+
 function buildMatchRow(m, ctx) {
   const homePosHtml = m.home_pos ? `<span class="jogos-pos jogos-pos--${posTier(m.home_pos)}">#${m.home_pos}</span>` : "";
   const awayPosHtml = m.away_pos ? `<span class="jogos-pos jogos-pos--${posTier(m.away_pos)}">#${m.away_pos}</span>` : "";
@@ -747,7 +765,9 @@ function buildMatchRow(m, ctx) {
 
   let scoreHtml = "";
   if (m.state === "in") {
-    scoreHtml = `<span class="jogos-score jogos-score--live">${escHtml(m.score_home)} – ${escHtml(m.score_away)}</span>`;
+    const clockTxt = _getLiveClock(m);
+    const clockHtml = clockTxt ? `<span class="jogos-live-clock">${escHtml(clockTxt)}</span>` : "";
+    scoreHtml = `<div class="jogos-score-live-wrap">${clockHtml}<span class="jogos-score jogos-score--live">${escHtml(m.score_home)} – ${escHtml(m.score_away)}</span></div>`;
   } else if (m.state === "post") {
     scoreHtml = `<span class="jogos-score jogos-score--final">${escHtml(m.score_home)} – ${escHtml(m.score_away)}</span>`;
   } else {

@@ -252,6 +252,8 @@ def _parse_fixture(fixture: dict, standings_map: dict[str, int]) -> dict:
         "venue":       venue.get("name") or "",
         "city":        venue.get("city") or "",
         "league_logo": league.get("logo") or "",
+        "elapsed":     status.get("elapsed"),
+        "status_short": status.get("short") or "",
         "source":      "apifootball",
     }
 
