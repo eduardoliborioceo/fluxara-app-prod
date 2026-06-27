@@ -226,33 +226,53 @@ def get_upcoming_fixtures(league_slug: str, days: int = 14, sport: str = "soccer
     from_str = today.strftime("%Y%m%d")
     to_str   = end.strftime("%Y%m%d")
 
-    raw_events = _fetch_scoreboard(league_slug, from_str, to_str, sport)
+    raw_events, league_logo = _fetch_scoreboard(league_slug, from_str, to_str, sport)
     matches = [_parse_event(ev, standings_map) for ev in raw_events]
     matches.sort(key=lambda m: m["date_iso"])
 
     data = {
-        "league_slug": league_slug,
-        "season": standings_data.get("season", ""),
-        "matches": matches,
-        "from": today.isoformat(),
-        "to": end.isoformat(),
+        "league_slug":  league_slug,
+        "season":       standings_data.get("season", ""),
+        "league_logo":  league_logo,
+        "matches":      matches,
+        "from":         today.isoformat(),
+        "to":           end.isoformat(),
     }
     _fixtures_cache[cache_key] = {"data": data, "expires": now + _FIXTURES_TTL}
     return data
 
 
-def _fetch_scoreboard(league_slug: str, from_str: str, to_str: str, sport: str = "soccer") -> list[dict]:
+def _fetch_scoreboard(league_slug: str, from_str: str, to_str: str, sport: str = "soccer") -> tuple[list[dict], str]:
     url = f"{_ESPN_BASE_SITE}/{sport}/{league_slug}/scoreboard"
     params = {"dates": f"{from_str}-{to_str}", "limit": 100}
     try:
         resp = requests.get(url, headers=_HEADERS, timeout=_TIMEOUT, params=params)
         if resp.status_code != 200:
             logger.warning("ESPN scoreboard HTTP %s for %s/%s", resp.status_code, sport, league_slug)
-            return []
-        return resp.json().get("events") or []
+            return [], ""
+        payload = resp.json()
+        league_logo = _extract_league_logo(payload)
+        return payload.get("events") or [], league_logo
     except Exception as exc:
         logger.warning("ESPN scoreboard failed sport=%s league=%s: %s", sport, league_slug, exc)
-        return []
+        return [], ""
+
+
+def _extract_league_logo(payload: dict) -> str:
+    leagues = payload.get("leagues") or []
+    if not leagues:
+        return ""
+    logos = leagues[0].get("logos") or []
+    if logos:
+        return logos[0].get("href") or ""
+    return leagues[0].get("logo") or ""
+
+
+def _extract_team_logo(team: dict) -> str:
+    logos = team.get("logos") or []
+    if logos:
+        return logos[0].get("href") or ""
+    return team.get("logo") or ""
 
 
 def _get_competitor_name(c: dict) -> str:
@@ -300,21 +320,24 @@ def _parse_event(event: dict, standings_map: dict[str, int]) -> dict:
     date_brt  = _to_brt(date_iso)
 
     return {
-        "event_id":   event.get("id", ""),
-        "date_iso":   date_iso,
-        "date_brt":   date_brt,
-        "home_id":    home_id,
-        "home_name":  _get_competitor_name(home),
-        "home_pos":   home_pos,
-        "away_id":    away_id,
-        "away_name":  _get_competitor_name(away),
-        "away_pos":   away_pos,
-        "pos_diff":   pos_diff,
-        "state":      state,
-        "score_home": score_home,
-        "score_away": score_away,
-        "venue":      venue.get("fullName", ""),
-        "city":       (venue.get("address") or {}).get("city", ""),
+        "event_id":    event.get("id", ""),
+        "date_iso":    date_iso,
+        "date_brt":    date_brt,
+        "home_id":     home_id,
+        "home_name":   _get_competitor_name(home),
+        "home_logo":   _extract_team_logo(home_team),
+        "home_pos":    home_pos,
+        "away_id":     away_id,
+        "away_name":   _get_competitor_name(away),
+        "away_logo":   _extract_team_logo(away_team),
+        "away_pos":    away_pos,
+        "pos_diff":    pos_diff,
+        "state":       state,
+        "score_home":  score_home,
+        "score_away":  score_away,
+        "venue":       venue.get("fullName", ""),
+        "city":        (venue.get("address") or {}).get("city", ""),
+        "source":      "espn",
     }
 
 
