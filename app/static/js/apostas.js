@@ -702,9 +702,6 @@ function _renderInlinePrediction(data, homeName, awayName) {
   const p = pred.probabilities;
   const g = pred.goals;
 
-  const homeShort = (homeName || "").split(" ")[0];
-  const awayShort = (awayName || "").split(" ")[0];
-
   const probBar = `
     <div class="jogos-pred-prob">
       <div class="jogos-pred-bar">
@@ -713,9 +710,9 @@ function _renderInlinePrediction(data, homeName, awayName) {
         <div class="jogos-pred-seg jogos-pred-seg--away" style="width:${p.away_win}%"></div>
       </div>
       <div class="jogos-pred-labels">
-        <span class="jogos-pred-lbl--home">${escHtml(homeShort)} ${p.home_win}%</span>
+        <span class="jogos-pred-lbl--home">${escHtml(homeName || '')} ${p.home_win}%</span>
         <span class="jogos-pred-lbl--draw">Empate ${p.draw}%</span>
-        <span class="jogos-pred-lbl--away">${p.away_win}% ${escHtml(awayShort)}</span>
+        <span class="jogos-pred-lbl--away">${p.away_win}% ${escHtml(awayName || '')}</span>
       </div>
     </div>`;
 
