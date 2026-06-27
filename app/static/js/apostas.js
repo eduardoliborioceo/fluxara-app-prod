@@ -127,7 +127,7 @@ class LgSelect {
       items.forEach(it => {
         const active = it.value === this._value ? ' lgs-opt--on' : '';
         const logoHtml = it.logo
-          ? `<img class="lgs-opt-logo" src="${_lgsEsc(it.logo)}" alt="" loading="lazy" onerror="this.style.display='none'">`
+          ? `<img class="lgs-opt-logo" src="${_lgsEsc(it.logo)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">`
           : `<span class="lgs-opt-logo-ph"></span>`;
         const flagHtml = it.flag
           ? `<span class="lgs-opt-flag">${_lgsFlagImg(it.flag, 20)}</span>`
@@ -157,7 +157,7 @@ class LgSelect {
     const item = this._groups.flatMap(g => g.items).find(it => it.value === value);
     if (!this._btn) return;
     const logo = this._btn.querySelector('.lgs-sel-logo');
-    const flag = this._btn.querySelector('.lgs-sel-flag');
+    const flag = this._btn.querySelector('.lgs-sel-flag-wrap');
     const name = this._btn.querySelector('.lgs-sel-name');
     if (item) {
       if (logo) { logo.src = item.logo || ''; logo.style.display = item.logo ? '' : 'none'; }
