@@ -1799,6 +1799,21 @@ def apostas_analise_match():
         return jsonify({"error": "Erro ao buscar análise do jogo"}), 500
 
 
+@bp.route("/apostas/analise/lineup", methods=["GET"])
+@login_required
+def apostas_analise_lineup():
+    from app.services import apostas_lineup_service
+    fixture_id = request.args.get("fixture_id", "").strip()
+    if not fixture_id or not fixture_id.isdigit():
+        return jsonify({"available": False, "announced": False})
+    try:
+        data = apostas_lineup_service.get_lineup(fixture_id)
+        return jsonify(data)
+    except Exception as exc:
+        logger.exception("apostas_analise_lineup error: %s", exc)
+        return jsonify({"available": False, "announced": False})
+
+
 @bp.route("/apostas/analise/cards", methods=["GET"])
 @login_required
 def apostas_analise_cards():

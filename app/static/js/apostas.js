@@ -2001,6 +2001,7 @@ async function openMatchAnalise({ homeId, awayId, homeName, awayName, homePos, a
     if (!resp.ok) throw new Error(data.error || "Erro");
     body.innerHTML = renderMatchAnalise(data, homeName, awayName, homeLogo, awayLogo);
     _loadMatchCards(homeId, awayId, homeName, awayName, league, body);
+    _loadMatchLineup(eventId, source, homeName, awayName, body);
   } catch (e) {
     body.innerHTML = `<div class="apostas-erro" style="display:flex"><i class="bi bi-exclamation-triangle"></i><p>${e.message}</p></div>`;
   }
@@ -2076,6 +2077,101 @@ function _renderCardsSection(data, homeName, awayName) {
     </div>
     ${teamSection(data.home, homeName, "home")}
     ${teamSection(data.away, awayName, "away")}
+  </div>`;
+}
+
+async function _loadMatchLineup(eventId, source, homeName, awayName, body) {
+  if (source !== "apifootball" || !eventId) return;
+
+  const placeholder = document.createElement("div");
+  placeholder.className = "lineup-loading";
+  placeholder.innerHTML = `<div class="apostas-spinner" style="width:14px;height:14px;border-width:2px"></div>`;
+  body.appendChild(placeholder);
+
+  try {
+    const resp = await fetch(`/api/apostas/analise/lineup?fixture_id=${encodeURIComponent(eventId)}`);
+    const data = await resp.json();
+
+    if (!data.available) {
+      placeholder.remove();
+      return;
+    }
+
+    const section = document.createElement("div");
+    if (!data.announced) {
+      section.innerHTML = `<div class="match-analise-section">
+        <div class="match-analise-section-title"><i class="bi bi-person-lines-fill"></i> Escalação</div>
+        <div class="lineup-not-announced"><i class="bi bi-clock"></i> Escalação ainda não divulgada</div>
+      </div>`;
+    } else {
+      section.innerHTML = _renderLineupSection(data, homeName, awayName);
+    }
+    placeholder.replaceWith(section.firstElementChild);
+  } catch {
+    placeholder.remove();
+  }
+}
+
+function _renderLineupSection(data, homeName, awayName) {
+  function playerCircle(p, isSub) {
+    const lastName = (p.name || "").split(" ").pop();
+    const photo = p.photo
+      ? `<img src="${escHtml(p.photo)}" alt="" loading="lazy" onerror="this.style.display='none'">`
+      : `<i class="bi bi-person-fill" style="font-size:1rem;color:var(--text-muted)"></i>`;
+    const num = p.number != null
+      ? `<span class="lineup-player-num">${p.number}</span>`
+      : "";
+    return `<div class="lineup-player${isSub ? " lineup-player--sub" : ""}">
+      <div class="lineup-player-circle">${photo}${num}</div>
+      <span class="lineup-player-name">${escHtml(lastName)}</span>
+    </div>`;
+  }
+
+  function pitchGrid(team) {
+    if (!team || !team.starters.length) {
+      return `<div class="lineup-not-announced"><i class="bi bi-question-circle"></i> Sem dados</div>`;
+    }
+    const rows = {};
+    team.starters.forEach(p => {
+      const r = p.row || 0;
+      if (!rows[r]) rows[r] = [];
+      rows[r].push(p);
+    });
+    const sortedRows = Object.keys(rows).map(Number).sort((a, b) => b - a);
+    const rowsHtml = sortedRows.map(rowNum => {
+      const players = rows[rowNum].slice().sort((a, b) => (a.col || 0) - (b.col || 0));
+      return `<div class="lineup-row">${players.map(p => playerCircle(p, false)).join("")}</div>`;
+    }).join("");
+    return `<div class="lineup-pitch">${rowsHtml}</div>`;
+  }
+
+  function teamBlock(team, name) {
+    const logo = team && team.logo
+      ? `<img src="${escHtml(team.logo)}" class="lineup-team-logo" alt="" onerror="this.style.display='none'">`
+      : "";
+    const formation = team && team.formation
+      ? `<span class="lineup-formation-badge">${escHtml(team.formation)}</span>`
+      : "";
+    const subs = (team && team.substitutes || []);
+    const subsHtml = subs.length
+      ? `<div class="lineup-subs">
+          <div class="lineup-subs-label">Reservas</div>
+          <div class="lineup-subs-list">${subs.map(p => playerCircle(p, true)).join("")}</div>
+        </div>`
+      : "";
+    return `<div class="lineup-team">
+      <div class="lineup-team-header">${logo}<span class="lineup-team-name">${escHtml(name)}</span>${formation}</div>
+      ${pitchGrid(team)}
+      ${subsHtml}
+    </div>`;
+  }
+
+  return `<div class="match-analise-section match-lineup-section">
+    <div class="match-analise-section-title"><i class="bi bi-person-lines-fill"></i> Escalação</div>
+    <div class="lineup-teams">
+      ${teamBlock(data.home, homeName)}
+      ${teamBlock(data.away, awayName)}
+    </div>
   </div>`;
 }
 
