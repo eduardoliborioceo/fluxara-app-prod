@@ -1740,6 +1740,34 @@ def apostas_tips_delete(tip_id):
         return jsonify({"error": "Erro ao excluir recomendação"}), 500
 
 
+@bp.route("/apostas/registrar-aposta", methods=["POST"])
+@login_required
+def apostas_registrar_aposta():
+    from app.services import apostas_tips_service
+    data = request.get_json() or {}
+    try:
+        tip_id = int(data.get("tip_id") or 0)
+        conta_id = int(data.get("conta_id") or 0)
+        valor = float(data.get("valor_apostado") or 0)
+        result = apostas_tips_service.registrar_aposta(
+            tip_id=tip_id,
+            user_id=current_user.id,
+            conta_id=conta_id,
+            valor_apostado=valor,
+            categoria_despesa_id=data.get("categoria_despesa_id"),
+            subcategoria_despesa_id=data.get("subcategoria_despesa_id"),
+            categoria_receita_id=data.get("categoria_receita_id"),
+            subcategoria_receita_id=data.get("subcategoria_receita_id"),
+            data_vencimento=data.get("data_vencimento"),
+        )
+        return jsonify(result), 201
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    except Exception as exc:
+        logger.exception("apostas_registrar_aposta error: %s", exc)
+        return jsonify({"error": "Erro ao registrar aposta"}), 500
+
+
 @bp.route("/apostas/auto-recommend", methods=["POST"])
 @login_required
 def apostas_auto_recommend():

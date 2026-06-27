@@ -3875,3 +3875,137 @@
   .lgs-trigger { font-size: .86rem; }
   .lgs-sel-name { font-size: .86rem; }
 }
+
+/* ============================================================
+   Registrar Aposta — button on tip card
+   ============================================================ */
+
+.tips-registrar-row {
+  padding: 8px 14px 10px;
+  border-top: 1px solid var(--border, rgba(15,23,42,.09));
+}
+
+.tips-btn-registrar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--primary, #0d6efd);
+  background: rgba(13,110,253,.07);
+  border: 1px solid rgba(13,110,253,.20);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background .12s, border-color .12s;
+  white-space: nowrap;
+}
+
+.tips-btn-registrar:hover {
+  background: rgba(13,110,253,.14);
+  border-color: rgba(13,110,253,.35);
+}
+
+/* ============================================================
+   Registrar Aposta — modal internals
+   ============================================================ */
+
+.registrar-tip-info {
+  background: var(--bg, #f1f5f9);
+  border: 1px solid var(--border, rgba(15,23,42,.09));
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+}
+
+.registrar-tip-title {
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--text, #1e293b);
+  margin-bottom: 4px;
+}
+
+.registrar-tip-odd {
+  font-size: .8rem;
+  color: var(--text-muted, #64748b);
+}
+
+.registrar-valor-row,
+.registrar-cats-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.registrar-retorno-display {
+  height: 38px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  background: rgba(25,135,84,.08);
+  border: 1px solid rgba(25,135,84,.25);
+  border-radius: 8px;
+  font-size: .9rem;
+  font-weight: 700;
+  color: #198754;
+}
+
+/* ============================================================
+   Registrar Aposta — success toast
+   ============================================================ */
+
+.registrar-success-toast {
+  position: fixed;
+  bottom: calc(80px + var(--safe-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #198754;
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-size: .85rem;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(25,135,84,.28);
+  opacity: 0;
+  transition: opacity .3s, transform .3s;
+  z-index: 9999;
+  max-width: calc(100vw - 32px);
+  white-space: nowrap;
+}
+
+.registrar-success-toast--show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.registrar-success-toast i {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.registrar-success-toast div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.registrar-success-toast span {
+  font-weight: 400;
+  font-size: .78rem;
+  opacity: .9;
+}
+
+@media (max-width: 767px) {
+  .registrar-valor-row,
+  .registrar-cats-row {
+    grid-template-columns: 1fr;
+  }
+
+  .registrar-success-toast {
+    white-space: normal;
+    text-align: center;
+  }
+}
