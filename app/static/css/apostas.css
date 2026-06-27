@@ -2029,6 +2029,11 @@
 }
 
 @media (max-width: 767px) {
+  .jogos-round {
+    order: -1;
+    width: 100%;
+    text-align: center;
+  }
   .jogos-imp {
     font-size: .6rem;
     padding: 2px 4px;
