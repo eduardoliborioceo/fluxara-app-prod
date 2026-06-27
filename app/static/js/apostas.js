@@ -2,36 +2,40 @@
 //  LgSelect — Custom League Dropdown with logos and flags
 // ============================================================
 
-const _LGS_FLAGS = {
-  'espn:bra.1':'🇧🇷','espn:bra.2':'🇧🇷','espn:bra.3':'🇧🇷','espn:bra.cup':'🇧🇷',
-  'espn:arg.1':'🇦🇷','espn:col.1':'🇨🇴','espn:chi.1':'🇨🇱','espn:uru.1':'🇺🇾',
-  'espn:CONMEBOL.LIBERTADORES':'🌎','espn:CONMEBOL.SUDAMERICANA':'🌎','espn:CONMEBOL.COPA':'🌎',
-  'espn:eng.1':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','espn:eng.2':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','espn:esp.1':'🇪🇸',
-  'espn:ger.1':'🇩🇪','espn:ita.1':'🇮🇹','espn:fra.1':'🇫🇷',
-  'espn:por.1':'🇵🇹','espn:ned.1':'🇳🇱','espn:sco.1':'🏴󠁧󠁢󠁳󠁣󠁴󠁿',
-  'espn:UEFA.CHAMPIONS':'🇪🇺','espn:UEFA.EUROPA':'🇪🇺','espn:UEFA.EUROPA.CONFERENCE':'🇪🇺','espn:UEFA.EURO':'🇪🇺',
-  'espn:FIFA.WORLD':'🌍',
-  'espn:nba':'🇺🇸','espn:wnba':'🇺🇸','espn:nbb':'🇧🇷',
-  'espn:mens-euroleague':'🇪🇺','espn:mens-euro-cup':'🇪🇺','espn:fiba.world':'🌍',
-  'espn:mlb':'🇺🇸','espn:kbo':'🇰🇷','espn:npb':'🇯🇵',
-  'espn:atp':'🌍','espn:wta':'🌍',
-  'espn:nhl':'🇺🇸','espn:ahl':'🇺🇸','espn:khl':'🇷🇺','espn:shl':'🇸🇪',
-  'espn:nfl':'🇺🇸','espn:college-football':'🇺🇸','espn:cfl':'🇨🇦',
-  'espn:volleyball.m.bra':'🇧🇷','espn:volleyball.w.bra':'🇧🇷',
-  'espn:fivb.m':'🌍','espn:fivb.w':'🌍',
-  'espn:ehf.cl':'🇪🇺','espn:bundesliga':'🇩🇪','espn:asobal':'🇪🇸','espn:starligue':'🇫🇷',
-  'football:203':'🇹🇷','football:235':'🇷🇺','football:144':'🇧🇪',
-  'football:197':'🇬🇷','football:106':'🇵🇱','football:119':'🇩🇰',
-  'football:253':'🇺🇸','football:262':'🇲🇽','football:98':'🇯🇵','football:307':'🇸🇦',
+const _LGS_COUNTRY = {
+  'espn:bra.1':'br','espn:bra.2':'br','espn:bra.3':'br','espn:bra.cup':'br',
+  'espn:arg.1':'ar','espn:col.1':'co','espn:chi.1':'cl','espn:uru.1':'uy',
+  'espn:CONMEBOL.LIBERTADORES':'','espn:CONMEBOL.SUDAMERICANA':'','espn:CONMEBOL.COPA':'',
+  'espn:eng.1':'gb-eng','espn:eng.2':'gb-eng','espn:esp.1':'es',
+  'espn:ger.1':'de','espn:ita.1':'it','espn:fra.1':'fr',
+  'espn:por.1':'pt','espn:ned.1':'nl','espn:sco.1':'gb-sct',
+  'espn:UEFA.CHAMPIONS':'','espn:UEFA.EUROPA':'','espn:UEFA.EUROPA.CONFERENCE':'','espn:UEFA.EURO':'',
+  'espn:FIFA.WORLD':'',
+  'espn:nba':'us','espn:wnba':'us','espn:nbb':'br',
+  'espn:mens-euroleague':'','espn:mens-euro-cup':'','espn:fiba.world':'',
+  'espn:mlb':'us','espn:kbo':'kr','espn:npb':'jp',
+  'espn:atp':'','espn:wta':'',
+  'espn:nhl':'us','espn:ahl':'us','espn:khl':'ru','espn:shl':'se',
+  'espn:nfl':'us','espn:college-football':'us','espn:cfl':'ca',
+  'espn:volleyball.m.bra':'br','espn:volleyball.w.bra':'br',
+  'espn:fivb.m':'','espn:fivb.w':'',
+  'espn:ehf.cl':'','espn:bundesliga':'de','espn:asobal':'es','espn:starligue':'fr',
+  'football:203':'tr','football:235':'ru','football:144':'be',
+  'football:197':'gr','football:106':'pl','football:119':'dk',
+  'football:253':'us','football:262':'mx','football:98':'jp','football:307':'sa',
 };
 
-const _LGS_CAT_FLAGS = {
-  'Brasil':'🇧🇷','América do Sul':'🌎','Europa':'🇪🇺','Europa Extra':'🇪🇺',
-  'América do Norte':'🇺🇸','Américas':'🌎','Ásia':'🌏','Mundial':'🌍',
+const _LGS_CAT_COUNTRY = {
+  'Brasil':'br','América do Norte':'us',
 };
 
 function _lgsFlag(value, category) {
-  return _LGS_FLAGS[value] || _LGS_FLAGS[`espn:${value}`] || _LGS_CAT_FLAGS[category] || '🏆';
+  return _LGS_COUNTRY[value] ?? _LGS_COUNTRY[`espn:${value}`] ?? _LGS_CAT_COUNTRY[category] ?? '';
+}
+
+function _lgsFlagImg(code, size) {
+  if (!code) return '';
+  return `<img src="https://flagcdn.com/w${size || 20}/${_lgsEsc(code)}.png" alt="" loading="lazy" onerror="this.style.display='none'">`;
 }
 
 function _lgsLogo(value) {
@@ -71,7 +75,7 @@ class LgSelect {
     btn.innerHTML = `
       <span class="lgs-sel">
         <img class="lgs-sel-logo" src="" alt="" style="display:none" onerror="this.style.display='none'">
-        <span class="lgs-sel-flag"></span>
+        <span class="lgs-sel-flag-wrap"></span>
         <span class="lgs-sel-name">Selecione um campeonato</span>
       </span>
       <i class="bi bi-chevron-down lgs-arrow"></i>
@@ -125,9 +129,11 @@ class LgSelect {
         const logoHtml = it.logo
           ? `<img class="lgs-opt-logo" src="${_lgsEsc(it.logo)}" alt="" loading="lazy" onerror="this.style.display='none'">`
           : `<span class="lgs-opt-logo-ph"></span>`;
+        const flagHtml = it.flag
+          ? `<span class="lgs-opt-flag">${_lgsFlagImg(it.flag, 20)}</span>`
+          : `<span class="lgs-opt-flag lgs-opt-flag--empty"></span>`;
         html += `<div class="lgs-opt${active}" data-v="${_lgsEsc(it.value)}">
-          ${logoHtml}
-          <span class="lgs-opt-flag">${it.flag || ''}</span>
+          ${logoHtml}${flagHtml}
           <span class="lgs-opt-name">${_lgsEsc(it.name)}</span>
         </div>`;
       });
@@ -155,7 +161,7 @@ class LgSelect {
     const name = this._btn.querySelector('.lgs-sel-name');
     if (item) {
       if (logo) { logo.src = item.logo || ''; logo.style.display = item.logo ? '' : 'none'; }
-      if (flag) flag.textContent = item.flag || '';
+      if (flag) flag.innerHTML = _lgsFlagImg(item.flag, 20);
       if (name) name.textContent = item.name;
     }
     this._renderOpts();
@@ -2642,7 +2648,7 @@ async function loadAnaliseLeagues() {
       items: rawItems.map(lg => ({
         value: String(lg.id),
         name:  lg.name,
-        flag:  _LGS_FLAGS[`football:${lg.id}`] || _LGS_CAT_FLAGS[lg.category] || '🏆',
+        flag:  _lgsFlag(`football:${lg.id}`, lg.category),
         logo:  `https://media.api-sports.io/football/leagues/${lg.id}.png`,
       })),
     }));
