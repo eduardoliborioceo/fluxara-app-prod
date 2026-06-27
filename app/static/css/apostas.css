@@ -1986,6 +1986,9 @@
 .jogos-diff--low  { background: rgba(100,116,139,.1); color: #475569; }
 
 .jogos-venue {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: .72rem;
 }
 
