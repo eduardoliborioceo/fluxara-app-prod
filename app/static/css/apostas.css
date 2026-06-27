@@ -3111,6 +3111,17 @@
   color: var(--text-muted, #64748b);
 }
 
+.cards-no-alert {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .8rem;
+  color: var(--success-color, #198754);
+  padding: 10px 0 4px;
+}
+
+.cards-no-alert i { font-size: .9rem; }
+
 @media (max-width: 480px) {
   .cards-player-photo { width: 32px; height: 32px; }
   .cards-player-name  { font-size: .8rem; }

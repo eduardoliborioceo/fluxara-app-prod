@@ -2022,13 +2022,23 @@ async function _loadMatchCards(homeId, awayId, homeName, awayName, league, body)
     const resp = await fetch(url);
     const data = await resp.json();
 
-    if (!data.available || (!data.home.length && !data.away.length)) {
+    if (!data.available) {
       placeholder.remove();
       return;
     }
 
     const section = document.createElement("div");
-    section.innerHTML = _renderCardsSection(data, homeName, awayName);
+    if (!data.home.length && !data.away.length) {
+      section.innerHTML = `<div class="match-analise-section">
+        <div class="match-analise-section-title">
+          <i class="bi bi-square-fill" style="color:#f59e0b;font-size:.82rem;vertical-align:middle"></i>
+          Cartões em Alerta
+        </div>
+        <div class="cards-no-alert"><i class="bi bi-check-circle"></i> Nenhum jogador com risco de suspensão por cartões</div>
+      </div>`;
+    } else {
+      section.innerHTML = _renderCardsSection(data, homeName, awayName);
+    }
     placeholder.replaceWith(section.firstElementChild);
   } catch {
     placeholder.remove();

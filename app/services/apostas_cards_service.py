@@ -10,7 +10,7 @@ _CARDS_TTL = 43200  # 12 hours
 
 _cards_cache: dict = {}
 
-_YELLOW_ALERT = 4
+_YELLOW_ALERT = 3
 _YELLOW_RED_ALERT = 1
 
 
