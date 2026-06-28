@@ -3037,19 +3037,12 @@
   color: var(--text-muted, #64748b);
 }
 
-.analise-verify-tag {
-  display: inline-block;
-  font-size: .65rem;
-  font-weight: 700;
-  letter-spacing: .3px;
-  border-radius: 4px;
-  padding: 1px 5px;
-  text-transform: uppercase;
+.analise-verify-empty {
+  font-size: .78rem;
+  color: var(--text-muted, #64748b);
+  text-align: center;
+  padding: 8px 0 2px;
 }
-
-.analise-verify-tag--palpite  { background: rgba(13,110,253,.1); color: #0d6efd; }
-.analise-verify-tag--moderado { background: rgba(234,179,8,.12); color: #b45309; }
-.analise-verify-tag--nao      { background: rgba(100,116,139,.1); color: #64748b; }
 
 .analise-verify-detail {
   font-size: .73rem;
