@@ -2897,11 +2897,23 @@ function renderMatchAnalise(d, homeName, awayName, homeLogo, awayLogo, matchStat
         <span class="match-pred-lbl match-pred-lbl--away"><strong>${p.away_win}%</strong> ${escHtml(awayName)} <i class="bi bi-airplane-fill"></i></span>
       </div>`;
 
+    const _chipCls = pct => pct >= 55 ? " match-pred-chip--high" : pct < 45 ? " match-pred-chip--low" : "";
+
     const goalChips = [];
-    if (g.expected    != null) goalChips.push(`<div class="match-pred-chip"><span class="match-pred-chip-val">${g.expected}</span><span class="match-pred-chip-lbl">Gols esperados</span></div>`);
-    if (g.over_25_pct != null) goalChips.push(`<div class="match-pred-chip${g.over_25_pct >= 55 ? " match-pred-chip--high" : ""}"><span class="match-pred-chip-val">${g.over_25_pct}%</span><span class="match-pred-chip-lbl">Over 2.5</span></div>`);
-    if (g.over_15_pct != null) goalChips.push(`<div class="match-pred-chip"><span class="match-pred-chip-val">${g.over_15_pct}%</span><span class="match-pred-chip-lbl">Over 1.5</span></div>`);
-    if (g.btts_pct    != null) goalChips.push(`<div class="match-pred-chip${g.btts_pct >= 55 ? " match-pred-chip--high" : ""}"><span class="match-pred-chip-val">${g.btts_pct}%</span><span class="match-pred-chip-lbl">Ambas marcam</span></div>`);
+    if (g.expected != null) {
+      goalChips.push(`<div class="match-pred-chip"><span class="match-pred-chip-val">${g.expected}</span><span class="match-pred-chip-lbl">Gols esperados</span></div>`);
+    }
+    if (g.over_25_pct != null) {
+      goalChips.push(`<div class="match-pred-chip${_chipCls(g.over_25_pct)}"><span class="match-pred-chip-val">${g.over_25_pct}%</span><span class="match-pred-chip-lbl">Over 2.5</span></div>`);
+    }
+    if (g.over_15_pct != null) {
+      goalChips.push(`<div class="match-pred-chip${_chipCls(g.over_15_pct)}"><span class="match-pred-chip-val">${g.over_15_pct}%</span><span class="match-pred-chip-lbl">Over 1.5</span></div>`);
+    }
+    if (g.btts_pct != null) {
+      const bttsSim    = g.btts_pct >= 50;
+      const bttsDisplay = bttsSim ? g.btts_pct : +(100 - g.btts_pct).toFixed(1);
+      goalChips.push(`<div class="match-pred-chip${_chipCls(bttsDisplay)}"><span class="match-pred-chip-val">${bttsDisplay}%</span><span class="match-pred-chip-lbl">Ambas marcam: ${bttsSim ? "sim" : "não"}</span></div>`);
+    }
 
     const narrativesHtml = (pred.narratives || []).length
       ? `<ul class="match-pred-narratives">${pred.narratives.map(n => `<li><i class="bi bi-arrow-right-short"></i>${escHtml(n)}</li>`).join("")}</ul>`
@@ -2959,7 +2971,7 @@ function _buildResultVerification(d, homeName, awayName, homeGoals, awayGoals) {
   const p      = pred.probabilities;
   const g      = pred.goals;
 
-  // Resultado — always verify the highest-probability outcome from the bar
+  // Resultado — always verify; use the highest-probability outcome from the bar
   const predictedOutcome = (p.home_win >= p.draw && p.home_win >= p.away_win) ? "home"
     : (p.away_win >= p.draw && p.away_win >= p.home_win) ? "away"
     : "draw";
@@ -2976,39 +2988,47 @@ function _buildResultVerification(d, homeName, awayName, homeGoals, awayGoals) {
     detail: `${homeGoals}–${awayGoals}`,
   });
 
-  // Goals chips — same markets shown pre-match (Over 2.5, Over 1.5, Ambas marcam)
+  // Only verify goal markets that were highlighted as palpites in the chips (≥55% confidence)
   const goalsDetail = `${totalGoals} gol${totalGoals !== 1 ? "s" : ""} no total`;
 
-  if (g && g.over_25_pct != null) {
-    // over 2.5 = 3+ goals; under 2.5 = 0–2 goals
-    const sim = g.over_25_pct >= 50;
+  // Over 2.5 (3+ goals) — only a palpite when chip was highlighted, never show "Over 2.5: não"
+  if (g && g.over_25_pct != null && g.over_25_pct >= 55) {
     checks.push({
-      label:  `Over 2.5 gols: ${sim ? "sim" : "não"}`,
+      label:  "Over 2.5 gols: sim",
       pct:    g.over_25_pct,
-      hit:    sim ? totalGoals > 2 : totalGoals <= 2,
+      hit:    totalGoals > 2,
       detail: goalsDetail,
     });
   }
 
-  if (g && g.over_15_pct != null) {
-    // over 1.5 = 2+ goals; under 1.5 = 0–1 goals
-    const sim = g.over_15_pct >= 50;
+  // Over 1.5 (2+ goals) — only when chip was highlighted
+  if (g && g.over_15_pct != null && g.over_15_pct >= 55) {
     checks.push({
-      label:  `Over 1.5 gols: ${sim ? "sim" : "não"}`,
+      label:  "Over 1.5 gols: sim",
       pct:    g.over_15_pct,
-      hit:    sim ? totalGoals > 1 : totalGoals <= 1,
+      hit:    totalGoals > 1,
       detail: goalsDetail,
     });
   }
 
+  // Ambas marcam — verify sim when btts_pct ≥55, verify não when btts_pct ≤45
   if (g && g.btts_pct != null) {
-    const sim = g.btts_pct >= 50;
-    checks.push({
-      label:  `Ambas marcam: ${sim ? "sim" : "não"}`,
-      pct:    g.btts_pct,
-      hit:    sim ? btts : !btts,
-      detail: btts ? "Ambas marcaram" : "Ao menos um time não marcou",
-    });
+    if (g.btts_pct >= 55) {
+      checks.push({
+        label:  "Ambas marcam: sim",
+        pct:    g.btts_pct,
+        hit:    btts,
+        detail: btts ? "Ambas marcaram" : "Ao menos um time não marcou",
+      });
+    } else if (g.btts_pct <= 45) {
+      const displayPct = +(100 - g.btts_pct).toFixed(1);
+      checks.push({
+        label:  "Ambas marcam: não",
+        pct:    displayPct,
+        hit:    !btts,
+        detail: btts ? "Ambas marcaram" : "Ao menos um time não marcou",
+      });
+    }
   }
 
   const rows = checks.map(c => `
