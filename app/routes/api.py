@@ -1838,10 +1838,11 @@ def apostas_analise_match():
         return jsonify({"error": "home_id e away_id são obrigatórios"}), 400
     home_pos_str = request.args.get("home_pos", "")
     away_pos_str = request.args.get("away_pos", "")
-    home_pos = int(home_pos_str) if home_pos_str.isdigit() else None
-    away_pos = int(away_pos_str) if away_pos_str.isdigit() else None
+    home_pos   = int(home_pos_str) if home_pos_str.isdigit() else None
+    away_pos   = int(away_pos_str) if away_pos_str.isdigit() else None
+    fixture_id = request.args.get("fixture_id", "").strip() or None
     try:
-        data = apostas_analise_service.get_match_analysis(league, home_id, away_id, home_pos, away_pos)
+        data = apostas_analise_service.get_match_analysis(league, home_id, away_id, home_pos, away_pos, fixture_id)
         return jsonify(data)
     except Exception as exc:
         logger.exception("apostas_analise_match error: %s", exc)
