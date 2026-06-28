@@ -76,6 +76,15 @@
     outro:      { nome: 'Outro',      cor: '#6c757d' },
   };
 
+  var BANDEIRA_GRADIENTS = {
+    visa:       'linear-gradient(135deg, #1a1f71 0%, #0d47a1 100%)',
+    mastercard: 'linear-gradient(135deg, #eb001b 0%, #f79e1b 100%)',
+    elo:        'linear-gradient(135deg, #00a4e0 0%, #0070b3 100%)',
+    amex:       'linear-gradient(135deg, #2e77bc 0%, #1a5276 100%)',
+    hipercard:  'linear-gradient(135deg, #b22222 0%, #7b0000 100%)',
+    outro:      'linear-gradient(135deg, #334155 0%, #1e293b 100%)',
+  };
+
   var now = new Date();
   var year  = now.getFullYear();
   var month = now.getMonth();
@@ -256,7 +265,8 @@
         var contaBanco = contaInst && INSTITUICOES[contaInst] ? INSTITUICOES[contaInst] : (contaInst ? INSTITUICOES.outro : null);
         var contaLogoHtml = contaBanco ? buildLogoHtml(contaBanco, 30) : '';
         var fechaInfo = 'Fecha dia ' + c.dia_fechamento + ' · Vence dia ' + c.dia_vencimento;
-        return '<div class="cartao-card" data-id="' + c.id + '" data-mes="' + mes + '" data-ano="' + year + '">'
+        var grad = BANDEIRA_GRADIENTS[c.bandeira] || BANDEIRA_GRADIENTS.outro;
+        return '<div class="cartao-card" data-id="' + c.id + '" data-mes="' + mes + '" data-ano="' + year + '" style="background:' + grad + '">'
           + '<div class="cartao-card-header">'
           +   '<div class="cartao-logos">'
           +     (contaLogoHtml ? contaLogoHtml : '')
