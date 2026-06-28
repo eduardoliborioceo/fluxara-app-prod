@@ -2912,7 +2912,11 @@ function renderMatchAnalise(d, homeName, awayName, homeLogo, awayLogo, matchStat
     if (g.btts_pct != null) {
       const bttsSim    = g.btts_pct >= 50;
       const bttsDisplay = bttsSim ? g.btts_pct : +(100 - g.btts_pct).toFixed(1);
-      goalChips.push(`<div class="match-pred-chip${_chipCls(bttsDisplay)}"><span class="match-pred-chip-val">${bttsDisplay}%</span><span class="match-pred-chip-lbl">Ambas marcam: ${bttsSim ? "sim" : "não"}</span></div>`);
+      // Só destaca como palpite quando predição é "sim" com ≥55% — "não" tem acurácia negativa
+      const bttsChipCls = (bttsSim && g.btts_pct >= 55) ? " match-pred-chip--high"
+                        : (!bttsSim) ? " match-pred-chip--low"
+                        : "";
+      goalChips.push(`<div class="match-pred-chip${bttsChipCls}"><span class="match-pred-chip-val">${bttsDisplay}%</span><span class="match-pred-chip-lbl">Ambas marcam: ${bttsSim ? "sim" : "não"}</span></div>`);
     }
 
     const narrativesHtml = (pred.narratives || []).length
@@ -3011,24 +3015,14 @@ function _buildResultVerification(d, homeName, awayName, homeGoals, awayGoals) {
     });
   }
 
-  // Ambas marcam — verify sim when btts_pct ≥55, verify não when btts_pct ≤45
-  if (g && g.btts_pct != null) {
-    if (g.btts_pct >= 55) {
-      checks.push({
-        label:  "Ambas marcam: sim",
-        pct:    g.btts_pct,
-        hit:    btts,
-        detail: btts ? "Ambas marcaram" : "Ao menos um time não marcou",
-      });
-    } else if (g.btts_pct <= 45) {
-      const displayPct = +(100 - g.btts_pct).toFixed(1);
-      checks.push({
-        label:  "Ambas marcam: não",
-        pct:    displayPct,
-        hit:    !btts,
-        detail: btts ? "Ambas marcaram" : "Ao menos um time não marcou",
-      });
-    }
+  // Ambas marcam: só verifica quando palpite é "sim" (≥55%) — "não" tem acurácia negativa
+  if (g && g.btts_pct != null && g.btts_pct >= 55) {
+    checks.push({
+      label:  "Ambas marcam: sim",
+      pct:    g.btts_pct,
+      hit:    btts,
+      detail: btts ? "Ambas marcaram" : "Ao menos um time não marcou",
+    });
   }
 
   const rows = checks.map(c => `
