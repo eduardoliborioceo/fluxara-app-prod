@@ -754,7 +754,7 @@ function buildMatchRow(m, ctx) {
   const diffHtml    = m.pos_diff != null ? buildJogosDiff(m.pos_diff) : "";
 
   const time  = m.date_brt ? m.date_brt.slice(11, 16) : "";
-  const venue = m.venue    ? `<span class="jogos-venue"><img src="/static/images/icons/stadium_1259792.png" class="jogos-venue-icon" alt=""> ${escHtml(m.venue)}</span>` : "";
+  const venue = m.venue    ? `<span class="jogos-venue"><img src="/static/images/icons/vecteezy_stadium-icon-vector-in-line-style_35090213.svg" class="jogos-venue-icon" alt=""> ${escHtml(m.venue)}</span>` : "";
 
   const homeLogoHtml = m.home_logo
     ? `<img src="${escHtml(m.home_logo)}" class="jogos-team-logo" alt="" loading="lazy" onerror="this.style.display='none'">`
