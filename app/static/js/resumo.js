@@ -76,6 +76,12 @@
     outro:      { nome: 'Outro',      cor: '#6c757d' },
   };
 
+  var TIPOS_LABEL = {
+    credito:        'Crédito',
+    debito:         'Débito',
+    credito_debito: 'Crédito e Débito',
+  };
+
   function _darkenHex(hex, amount) {
     var c = hex.replace('#', '');
     var num = parseInt(c.length === 3 ? c.split('').map(function(x) { return x + x; }).join('') : c, 16);
@@ -275,13 +281,17 @@
         var contaLogoHtml = contaBanco ? buildLogoHtml(contaBanco, 30) : '';
         var fechaInfo = 'Fecha dia ' + c.dia_fechamento + ' · Vence dia ' + c.dia_vencimento;
         var grad = _cardBackground(c.conta_instituicao);
+        var tipoLabel = TIPOS_LABEL[c.tipo] || 'Crédito';
         return '<div class="cartao-card" data-id="' + c.id + '" data-mes="' + mes + '" data-ano="' + year + '" style="background:' + grad + '">'
           + '<div class="cartao-card-header">'
           +   '<div class="cartao-logos">'
           +     (contaLogoHtml ? contaLogoHtml : '')
           +     bandeiraHtml
           +   '</div>'
-          +   '<div class="cartao-card-nome">' + esc(c.nome) + '</div>'
+          +   '<div class="cartao-card-info">'
+          +     '<div class="cartao-card-nome">' + esc(c.nome) + '</div>'
+          +     '<span class="cartao-card-tipo-badge">' + esc(tipoLabel) + '</span>'
+          +   '</div>'
           +   '<i class="bi bi-chevron-right cartao-card-chevron"></i>'
           + '</div>'
           + '<div class="cartao-card-fatura-label">' + faturaLabel + '</div>'
