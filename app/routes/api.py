@@ -1470,9 +1470,16 @@ def apostas_espn_fixtures(league_slug):
     if league_slug not in apostas_espn_service.get_known_slugs(sport):
         return jsonify({"error": "Campeonato não suportado"}), 400
     try:
-        days = int(request.args.get("days", 14))
+        days = int(request.args.get("days", 7))
         days = max(1, min(30, days))
-        data = apostas_espn_service.get_upcoming_fixtures(league_slug, days, sport)
+        from_date = request.args.get("from_date") or None
+        if from_date:
+            import datetime as _dt
+            try:
+                _dt.date.fromisoformat(from_date)
+            except ValueError:
+                from_date = None
+        data = apostas_espn_service.get_upcoming_fixtures(league_slug, days, sport, from_date=from_date)
         return jsonify(data)
     except Exception as exc:
         logger.exception("apostas_espn_fixtures error sport=%s league=%s: %s", sport, league_slug, exc)
@@ -1511,9 +1518,16 @@ def apostas_apifootball_fixtures(league_id):
     if league_id not in apostas_apifootball_service.KNOWN_IDS:
         return jsonify({"error": "Campeonato não suportado"}), 400
     try:
-        days = int(request.args.get("days", 14))
+        days = int(request.args.get("days", 7))
         days = max(1, min(30, days))
-        data = apostas_apifootball_service.get_upcoming_fixtures(league_id, days)
+        from_date = request.args.get("from_date") or None
+        if from_date:
+            import datetime as _dt
+            try:
+                _dt.date.fromisoformat(from_date)
+            except ValueError:
+                from_date = None
+        data = apostas_apifootball_service.get_upcoming_fixtures(league_id, days, from_date=from_date)
         return jsonify(data)
     except Exception as exc:
         logger.exception("apostas_apifootball_fixtures error league=%s: %s", league_id, exc)
@@ -1593,11 +1607,18 @@ def apostas_sports_games(sport: str, league_id: str):
     if svc is None:
         return jsonify({"error": "Esporte não suportado"}), 400
     try:
-        days = max(1, min(60, int(request.args.get("days", 14))))
+        days = max(1, min(60, int(request.args.get("days", 7))))
         season_param = request.args.get("season")
         season = int(season_param) if season_param else None
+        from_date = request.args.get("from_date") or None
+        if from_date:
+            import datetime as _dt
+            try:
+                _dt.date.fromisoformat(from_date)
+            except ValueError:
+                from_date = None
         lid = int(league_id) if league_id.lstrip("-").isdigit() else league_id
-        data = svc.get_games(lid, days, season)
+        data = svc.get_games(lid, days, season, from_date=from_date)
         return jsonify(data)
     except Exception as exc:
         logger.exception("apostas_sports_games error sport=%s league=%s: %s", sport, league_id, exc)

@@ -60,8 +60,10 @@ def get_standings(league_id: int) -> dict:
     return data
 
 
-def get_upcoming_fixtures(league_id: int, days: int = 14) -> dict:
-    cache_key = f"{league_id}_{days}"
+def get_upcoming_fixtures(league_id: int, days: int = 7, from_date: str | None = None) -> dict:
+    import datetime as _dt
+    start = _dt.date.fromisoformat(from_date) if from_date else _dt.date.today()
+    cache_key = f"{league_id}_{start.isoformat()}_{days}"
     now = time.monotonic()
     cached = _fixtures_cache.get(cache_key)
     if cached and cached["expires"] > now:
@@ -74,8 +76,10 @@ def get_upcoming_fixtures(league_id: int, days: int = 14) -> dict:
 
     standings_map, standings_logos = _build_standings_map(league_id)
 
-    from_date, to_date = sports_base.make_date_range(days)
-    raw = _fetch_fixtures(league_id, from_date, to_date)
+    end_date = start + _dt.timedelta(days=days - 1)
+    from_str = start.isoformat()
+    to_str   = end_date.isoformat()
+    raw = _fetch_fixtures(league_id, from_str, to_str)
     matches = [_parse_fixture(f, standings_map) for f in raw]
     matches.sort(key=lambda m: m["date_iso"])
 
@@ -85,8 +89,8 @@ def get_upcoming_fixtures(league_id: int, days: int = 14) -> dict:
         "season":      _season_label(league_info),
         "league_logo": standings_logos.get("league_logo", ""),
         "matches":     matches,
-        "from":        from_date,
-        "to":          to_date,
+        "from":        from_str,
+        "to":          to_str,
     }
     _fixtures_cache[cache_key] = {"data": data, "expires": now + _FIXTURES_TTL}
     return data
