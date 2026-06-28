@@ -608,6 +608,7 @@ function applyJogosFilter() {
 }
 
 async function loadJogos(slug) {
+  _stopLivePolling();
   const days  = document.getElementById("jogosDays")?.value || 14;
   const sport = window._activeSport || "soccer";
   setJogosState("loading");
@@ -665,6 +666,8 @@ function renderJogosMatches(data, matches) {
     const preMatches = matches.filter(m => m.state === "pre" && m.home_id && m.away_id);
     _autoPredictions(preMatches);
   }
+
+  _startLivePolling();
 }
 
 async function _autoPredictions(matches) {
@@ -693,6 +696,73 @@ async function _loadMatchPrediction(m) {
   } catch {
     container.style.display = "none";
   }
+}
+
+// ============================================================
+//  Live clock auto-refresh (polls every 60 s when live matches exist)
+// ============================================================
+
+window._liveInterval = null;
+
+function _stopLivePolling() {
+  if (window._liveInterval) {
+    clearInterval(window._liveInterval);
+    window._liveInterval = null;
+  }
+  const badge = document.getElementById("jogosLiveBadge");
+  if (badge) badge.remove();
+}
+
+function _startLivePolling() {
+  _stopLivePolling();
+  if (!window._jogosData) return;
+  const hasLive = window._jogosData.matches.some(m => m.state === "in");
+  if (!hasLive) return;
+
+  _showLiveBadge();
+  window._liveInterval = setInterval(_livePoll, 60000);
+}
+
+function _showLiveBadge() {
+  if (document.getElementById("jogosLiveBadge")) return;
+  const badge = document.createElement("div");
+  badge.id = "jogosLiveBadge";
+  badge.className = "jogos-live-badge";
+  badge.innerHTML = `<span class="jogos-live-badge-dot"></span>AO VIVO`;
+  const content = document.getElementById("jogosContent");
+  if (content) content.prepend(badge);
+}
+
+async function _livePoll() {
+  const slug = window._activeLeague;
+  if (!slug) return;
+
+  const days = document.getElementById("jogosDays")?.value || 14;
+  const url  = _slugToUrl(slug, "games", `days=${days}`);
+  if (!url) return;
+
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) return;
+    const json = await resp.json();
+
+    const freshMap = {};
+    json.matches.forEach(m => { freshMap[m.event_id] = m; });
+
+    let stillLive = false;
+    window._jogosData.matches = window._jogosData.matches.map(old => {
+      const fresh = freshMap[old.event_id];
+      if (!fresh) return old;
+
+      const el = document.getElementById(`live-score-${old.event_id}`);
+      if (el) el.innerHTML = _buildScoreHtml(fresh);
+
+      if (fresh.state === "in") stillLive = true;
+      return Object.assign({}, old, fresh);
+    });
+
+    if (!stillLive) _stopLivePolling();
+  } catch {}
 }
 
 function _renderInlinePrediction(data, homeName, awayName) {
@@ -748,13 +818,25 @@ function _getLiveClock(m) {
   return "AO VIVO";
 }
 
+function _buildScoreHtml(m) {
+  if (m.state === "in") {
+    const clockTxt  = _getLiveClock(m);
+    const clockHtml = clockTxt ? `<span class="jogos-live-clock">${escHtml(clockTxt)}</span>` : "";
+    return `<div class="jogos-score-live-wrap">${clockHtml}<span class="jogos-score jogos-score--live">${escHtml(m.score_home)} – ${escHtml(m.score_away)}</span></div>`;
+  }
+  if (m.state === "post") {
+    return `<span class="jogos-score jogos-score--final">${escHtml(m.score_home)} – ${escHtml(m.score_away)}</span>`;
+  }
+  const time = m.date_brt ? m.date_brt.slice(11, 16) : "";
+  return `<span class="jogos-time">${escHtml(time)}</span>`;
+}
+
 function buildMatchRow(m, ctx) {
   const homePosHtml = m.home_pos ? `<span class="jogos-pos jogos-pos--${posTier(m.home_pos)}">#${m.home_pos}</span>` : "";
   const awayPosHtml = m.away_pos ? `<span class="jogos-pos jogos-pos--${posTier(m.away_pos)}">#${m.away_pos}</span>` : "";
   const diffHtml    = m.pos_diff != null ? buildJogosDiff(m.pos_diff) : "";
 
-  const time  = m.date_brt ? m.date_brt.slice(11, 16) : "";
-  const venue = m.venue    ? `<span class="jogos-venue"><img src="/static/images/icons/vecteezy_stadium-icon-vector-in-line-style_35090213.svg" class="jogos-venue-icon" alt=""> ${escHtml(m.venue)}</span>` : "";
+  const venue = m.venue ? `<span class="jogos-venue"><img src="/static/images/icons/vecteezy_stadium-icon-vector-in-line-style_35090213.svg" class="jogos-venue-icon" alt=""> ${escHtml(m.venue)}</span>` : "";
 
   const homeLogoHtml = m.home_logo
     ? `<img src="${escHtml(m.home_logo)}" class="jogos-team-logo" alt="" loading="lazy" onerror="this.style.display='none'">`
@@ -763,16 +845,7 @@ function buildMatchRow(m, ctx) {
     ? `<img src="${escHtml(m.away_logo)}" class="jogos-team-logo" alt="" loading="lazy" onerror="this.style.display='none'">`
     : "";
 
-  let scoreHtml = "";
-  if (m.state === "in") {
-    const clockTxt = _getLiveClock(m);
-    const clockHtml = clockTxt ? `<span class="jogos-live-clock">${escHtml(clockTxt)}</span>` : "";
-    scoreHtml = `<div class="jogos-score-live-wrap">${clockHtml}<span class="jogos-score jogos-score--live">${escHtml(m.score_home)} – ${escHtml(m.score_away)}</span></div>`;
-  } else if (m.state === "post") {
-    scoreHtml = `<span class="jogos-score jogos-score--final">${escHtml(m.score_home)} – ${escHtml(m.score_away)}</span>`;
-  } else {
-    scoreHtml = `<span class="jogos-time">${escHtml(time)}</span>`;
-  }
+  const scoreHtml = _buildScoreHtml(m);
 
   const isFootball = !window._activeSport || window._activeSport === "football";
   const analiseBtn = (isFootball && m.state === "pre" && m.home_id && m.away_id)
@@ -810,7 +883,7 @@ function buildMatchRow(m, ctx) {
       </div>
       <div class="jogos-center">
         ${diffHtml}
-        ${scoreHtml}
+        <div id="live-score-${escHtml(String(m.event_id))}">${scoreHtml}</div>
       </div>
       <div class="jogos-team jogos-team--away">
         ${awayLogoHtml}
