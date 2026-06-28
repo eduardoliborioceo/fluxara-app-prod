@@ -3306,20 +3306,100 @@ function renderAnalise(d) {
 // Registrar Aposta modal
 // ============================================================
 
-let _registrarContas = null;
+let _registrarContas      = null;
 let _registrarCatsDespesa = null;
 let _registrarCatsReceita = null;
 
-function openRegistrarAposta(btn) {
-  const tipId    = btn.dataset.tid;
-  const titulo   = btn.dataset.titulo;
-  const odd      = parseFloat(btn.dataset.odd) || 0;
+const _INST_MAP = {
+  nubank:      { cor: "#8A05BE", letra: "N", svg: "nubank.svg" },
+  itau:        { cor: "#EC7000", letra: "I", svg: "itau.svg" },
+  bradesco:    { cor: "#CC092F", letra: "B", svg: "bradesco.svg" },
+  bb:          { cor: "#F9D600", letra: "B", corLetra: "#000", svg: "banco-do-brasil.svg" },
+  caixa:       { cor: "#006CA8", letra: "C", svg: "caixa.svg" },
+  "caixa-tem": { cor: "#006CA8", letra: "C", svg: "caixa-tem.svg" },
+  santander:   { cor: "#EC0000", letra: "S", svg: "santander.svg" },
+  inter:       { cor: "#FF7A00", letra: "I", svg: "inter.svg" },
+  c6:          { cor: "#242424", letra: "C", svg: "c6.svg" },
+  picpay:      { cor: "#11C76F", letra: "P", svg: "picpay.svg" },
+  mercadopago: { cor: "#009EE3", letra: "M", svg: "mercado-pago.svg" },
+  xp:          { cor: "#000000", letra: "X", svg: "xp.svg" },
+  btg:         { cor: "#003399", letra: "B", svg: "btg-pactual.svg" },
+  sicoob:      { cor: "#007A3D", letra: "S" },
+  sicredi:     { cor: "#006633", letra: "S", svg: "sicredi.svg" },
+  neon:        { cor: "#00CFFF", letra: "N", corLetra: "#000", svg: "neon.svg" },
+  next:        { cor: "#00CC99", letra: "N", corLetra: "#000", svg: "next.svg" },
+  wise:        { cor: "#9FE870", letra: "W", corLetra: "#000" },
+  paypal:      { cor: "#003087", letra: "P", svg: "paypal.svg" },
+  iti:         { cor: "#FF6600", letra: "i", svg: "iti.svg" },
+  will:        { cor: "#FFCC00", letra: "W", corLetra: "#000", svg: "will-bank.svg" },
+  bs2:         { cor: "#0066CC", letra: "B" },
+  original:    { cor: "#00A650", letra: "O", svg: "original.svg" },
+  sofisa:      { cor: "#E2001A", letra: "S", svg: "sofisa.svg" },
+  banrisul:    { cor: "#005CA9", letra: "B", svg: "banrisul.svg" },
+  bv:          { cor: "#004B8D", letra: "B", svg: "bv.svg" },
+  bmg:         { cor: "#E30613", letra: "B", svg: "bmg.svg" },
+  pan:         { cor: "#FFD100", letra: "P", corLetra: "#000", svg: "pan.svg" },
+  daycoval:    { cor: "#005A9E", letra: "D", svg: "daycoval.svg" },
+  mercantil:   { cor: "#004A9F", letra: "M", svg: "mercantil.svg" },
+  digio:       { cor: "#0077CC", letra: "D", svg: "digio.svg" },
+  stone:       { cor: "#00A868", letra: "S", svg: "stone.svg" },
+  pagseguro:   { cor: "#FFC72C", letra: "P", corLetra: "#000", svg: "pagseguro.svg" },
+  "nu-invest": { cor: "#8A05BE", letra: "N", svg: "nu-invest.svg" },
+  nomad:       { cor: "#1A1A2E", letra: "N", svg: "nomad.svg" },
+  zrobank:     { cor: "#0055B8", letra: "Z", svg: "zrobank.svg" },
+  n26:         { cor: "#000000", letra: "N", svg: "n26.svg" },
+  warren:      { cor: "#4C12A1", letra: "W", svg: "warren.svg" },
+  toro:        { cor: "#FF6B00", letra: "T", svg: "toro.svg" },
+  clear:       { cor: "#00C4B3", letra: "C", svg: "clear.svg" },
+  rico:        { cor: "#00B386", letra: "R", svg: "rico.svg" },
+  genial:      { cor: "#FF6600", letra: "G", svg: "genial-investimentos.svg" },
+  avenue:      { cor: "#0033A0", letra: "A", svg: "avenue.svg" },
+  ame:         { cor: "#FF0064", letra: "A", svg: "ame.svg" },
+  amazon:      { cor: "#FF9900", letra: "A", corLetra: "#000", svg: "amazon.svg" },
+  magalu:      { cor: "#0086FF", letra: "M", svg: "magalu.svg" },
+  samsung:     { cor: "#1428A0", letra: "S", svg: "samsung.svg" },
+  infinitepay: { cor: "#00BCD4", letra: "I", svg: "infinitepay.svg" },
+  ton:         { cor: "#00C853", letra: "T", svg: "ton.svg" },
+  fitbank:     { cor: "#1A237E", letra: "F", svg: "fitbank.svg" },
+  cora:        { cor: "#FF4C8B", letra: "C", svg: "cora.svg" },
+  dm:          { cor: "#004B87", letra: "D", svg: "dm.svg" },
+  flash:       { cor: "#F24E1E", letra: "F", svg: "flash.svg" },
+  caju:        { cor: "#FF6B35", letra: "C", svg: "caju.svg" },
+  binance:     { cor: "#F3BA2F", letra: "B", corLetra: "#000", svg: "binance.svg" },
+  metamask:    { cor: "#E2761B", letra: "M", svg: "metamask.svg" },
+  bitybank:    { cor: "#0066FF", letra: "B", svg: "bitybank.svg" },
+  outro:       { cor: "#64748b", icone: "bi-wallet2", corLetra: "#fff" },
+};
 
-  document.getElementById("registrarTipId").value = tipId;
-  document.getElementById("registrarOdd").value   = odd;
+function _buildContaLogoHtml(inst, size) {
+  size = size || 28;
+  const base = `width:${size}px;height:${size}px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;`;
+  if (inst && inst.svg) {
+    return `<div style="background:#f8fafc;${base}"><img src="/static/images/bank-icons-logos-svg/${inst.svg}" alt="" style="width:65%;height:65%;object-fit:contain"></div>`;
+  }
+  const bg  = (inst && inst.cor)     || "#64748b";
+  const fg  = (inst && inst.corLetra) || "#fff";
+  const fsz = Math.round(size * 0.52) + "px";
+  if (inst && inst.icone) {
+    return `<div style="background:${bg};color:${fg};${base}"><i class="bi ${inst.icone}" style="font-size:${fsz}"></i></div>`;
+  }
+  return `<div style="background:${bg};color:${fg};${base};font-size:${fsz};font-weight:700;">${(inst && inst.letra) || "?"}</div>`;
+}
+
+function openRegistrarAposta(btn) {
+  const tipId  = btn.dataset.tid;
+  const titulo = btn.dataset.titulo;
+  const odd    = parseFloat(btn.dataset.odd) || 0;
+
+  document.getElementById("registrarTipId").value  = tipId;
+  document.getElementById("registrarOdd").value    = odd;
   document.getElementById("registrarValor").value  = "";
   document.getElementById("registrarRetorno").textContent = "—";
   document.getElementById("registrarApostaError").style.display = "none";
+  document.getElementById("registrarContaId").value = "";
+  document.getElementById("registrarContaSelected").innerHTML =
+    `<span class="registrar-conta-placeholder">Selecione a conta...</span>`;
+  _closeRegistrarContaDropdown();
 
   const today = new Date();
   const yyyy  = today.getFullYear();
@@ -3332,23 +3412,62 @@ function openRegistrarAposta(btn) {
     `<div class="registrar-tip-odd">Odd total: <strong>${odd.toFixed(2)}</strong></div>`;
 
   document.getElementById("registrarApostaOverlay").style.display = "flex";
+  document.addEventListener("click", _handleRegistrarContaOutsideClick);
 
   Promise.all([_loadRegistrarContas(), _loadRegistrarCats()]);
 }
 
 function closeRegistrarAposta() {
   document.getElementById("registrarApostaOverlay").style.display = "none";
+  _closeRegistrarContaDropdown();
+  document.removeEventListener("click", _handleRegistrarContaOutsideClick);
 }
 
 function closeRegistrarApostaOverlay(e) {
   if (e.target === document.getElementById("registrarApostaOverlay")) closeRegistrarAposta();
 }
 
+function toggleRegistrarContaDropdown(e) {
+  e && e.stopPropagation();
+  const dd      = document.getElementById("registrarContaDropdown");
+  const chevron = document.getElementById("registrarContaChevron");
+  const open    = dd.style.display !== "none" && dd.style.display !== "";
+  if (open) {
+    dd.style.display = "none";
+    if (chevron) chevron.style.transform = "";
+  } else {
+    dd.style.display = "block";
+    if (chevron) chevron.style.transform = "rotate(180deg)";
+  }
+}
+
+function _closeRegistrarContaDropdown() {
+  const dd      = document.getElementById("registrarContaDropdown");
+  const chevron = document.getElementById("registrarContaChevron");
+  if (dd) dd.style.display = "none";
+  if (chevron) chevron.style.transform = "";
+}
+
+function _handleRegistrarContaOutsideClick(e) {
+  const picker = document.getElementById("registrarContaPicker");
+  if (picker && !picker.contains(e.target)) {
+    _closeRegistrarContaDropdown();
+  }
+}
+
+function _selectRegistrarConta(id, nome, inst) {
+  document.getElementById("registrarContaId").value = id;
+  const logo = _buildContaLogoHtml(inst, 24);
+  document.getElementById("registrarContaSelected").innerHTML =
+    `<div style="display:flex;align-items:center;gap:8px;">${logo}<span>${escHtml(nome)}</span></div>`;
+  _closeRegistrarContaDropdown();
+}
+
 function calcRegistrarRetorno() {
-  const valor  = parseFloat(document.getElementById("registrarValor").value) || 0;
-  const odd    = parseFloat(document.getElementById("registrarOdd").value) || 0;
+  const valor   = parseFloat(document.getElementById("registrarValor").value) || 0;
+  const odd     = parseFloat(document.getElementById("registrarOdd").value) || 0;
   const retorno = odd > 0 ? valor * odd : 0;
-  const el     = document.getElementById("registrarRetorno");
+  const el      = document.getElementById("registrarRetorno");
   el.textContent = retorno > 0
     ? `R$ ${retorno.toFixed(2).replace(".", ",")}`
     : "—";
@@ -3365,13 +3484,20 @@ async function _loadRegistrarContas() {
 }
 
 function _populateRegistrarContas(contas) {
-  const sel = document.getElementById("registrarContaId");
-  sel.innerHTML = '<option value="" disabled selected>Selecione a conta...</option>';
+  const dropdown = document.getElementById("registrarContaDropdown");
+  if (!dropdown) return;
+  dropdown.innerHTML = "";
   (contas || []).forEach(c => {
-    const opt = document.createElement("option");
-    opt.value = c.id;
-    opt.textContent = c.nome + (c.instituicao ? ` (${c.instituicao})` : "");
-    sel.appendChild(opt);
+    const inst = _INST_MAP[c.instituicao] || _INST_MAP.outro;
+    const logo = _buildContaLogoHtml(inst, 28);
+    const item = document.createElement("div");
+    item.className = "registrar-conta-item";
+    item.innerHTML = logo + `<span class="registrar-conta-nome">${escHtml(c.nome)}</span>`;
+    item.addEventListener("click", (e) => {
+      e.stopPropagation();
+      _selectRegistrarConta(c.id, c.nome, inst);
+    });
+    dropdown.appendChild(item);
   });
 }
 
@@ -3385,7 +3511,10 @@ async function _loadRegistrarCats() {
     if (rR.ok) _registrarCatsReceita = await rR.json();
   }
   _populateRegistrarCatSelect("registrarCategoriaDespesa", "registrarSubcategoriaDespesa", _registrarCatsDespesa || []);
+  _autoSelectRegistrarCat("registrarCategoriaDespesa", "registrarSubcategoriaDespesa", "apostas", "stake");
+
   _populateRegistrarCatSelect("registrarCategoriaReceita", "registrarSubcategoriaReceita", _registrarCatsReceita || []);
+  _autoSelectRegistrarCat("registrarCategoriaReceita", "registrarSubcategoriaReceita", "apostas esportivas", "aposta ganhadora");
 }
 
 function _populateRegistrarCatSelect(catSelId, subSelId, cats) {
@@ -3401,9 +3530,27 @@ function _populateRegistrarCatSelect(catSelId, subSelId, cats) {
   _updateRegistrarSubs(catSelId, subSelId);
 }
 
+function _autoSelectRegistrarCat(catSelId, subSelId, catName, subName) {
+  const catSel = document.getElementById(catSelId);
+  if (!catSel) return;
+  const catOpt = Array.from(catSel.options).find(
+    o => o.textContent.trim().toLowerCase() === catName.toLowerCase()
+  );
+  if (!catOpt) return;
+  catSel.value = catOpt.value;
+  _updateRegistrarSubs(catSelId, subSelId);
+  if (!subName) return;
+  const subSel = document.getElementById(subSelId);
+  if (!subSel) return;
+  const subOpt = Array.from(subSel.options).find(
+    o => o.textContent.trim().toLowerCase() === subName.toLowerCase()
+  );
+  if (subOpt) subSel.value = subOpt.value;
+}
+
 function _updateRegistrarSubs(catSelId, subSelId) {
-  const catSel  = document.getElementById(catSelId);
-  const subSel  = document.getElementById(subSelId);
+  const catSel   = document.getElementById(catSelId);
+  const subSel   = document.getElementById(subSelId);
   const selected = catSel.options[catSel.selectedIndex];
   subSel.innerHTML = '<option value="">—</option>';
   if (!selected || !selected.value) return;

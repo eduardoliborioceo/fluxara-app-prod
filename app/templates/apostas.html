@@ -617,9 +617,16 @@
 
       <div class="tips-form-group">
         <label class="tips-form-label">Conta <span class="tips-required">*</span></label>
-        <select id="registrarContaId" class="tips-form-input">
-          <option value="" disabled selected>Carregando contas...</option>
-        </select>
+        <div class="registrar-conta-picker" id="registrarContaPicker">
+          <div class="registrar-conta-trigger" id="registrarContaTrigger" onclick="toggleRegistrarContaDropdown(event)">
+            <div class="registrar-conta-selected" id="registrarContaSelected">
+              <span class="registrar-conta-placeholder">Carregando contas...</span>
+            </div>
+            <i class="bi bi-chevron-down registrar-conta-chevron" id="registrarContaChevron"></i>
+          </div>
+          <div class="registrar-conta-dropdown" id="registrarContaDropdown"></div>
+        </div>
+        <input type="hidden" id="registrarContaId">
       </div>
 
       <div class="registrar-valor-row">

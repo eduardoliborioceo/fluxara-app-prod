@@ -4145,6 +4145,97 @@
    Registrar Aposta — modal internals
    ============================================================ */
 
+/* conta picker */
+.registrar-conta-picker {
+  position: relative;
+}
+
+.registrar-conta-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--border, rgba(15,23,42,.09));
+  border-radius: 8px;
+  background: var(--card, #fff);
+  cursor: pointer;
+  min-height: 42px;
+  transition: border-color .15s, box-shadow .15s;
+}
+
+.registrar-conta-trigger:hover {
+  border-color: rgba(13,110,253,.4);
+}
+
+.registrar-conta-trigger:focus-within,
+.registrar-conta-trigger:focus {
+  border-color: var(--primary, #0d6efd);
+  box-shadow: 0 0 0 3px rgba(13,110,253,.12);
+  outline: none;
+}
+
+.registrar-conta-selected {
+  flex: 1;
+  font-size: .875rem;
+  color: var(--text, #1e293b);
+  display: flex;
+  align-items: center;
+}
+
+.registrar-conta-placeholder {
+  color: var(--text-muted, #64748b);
+}
+
+.registrar-conta-chevron {
+  font-size: .8rem;
+  color: var(--text-muted, #64748b);
+  transition: transform .15s;
+  flex-shrink: 0;
+}
+
+.registrar-conta-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--card, #fff);
+  border: 1px solid var(--border, rgba(15,23,42,.09));
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(15,23,42,.10);
+  z-index: 200;
+  max-height: 220px;
+  overflow-y: auto;
+  display: none;
+}
+
+.registrar-conta-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  cursor: pointer;
+  font-size: .875rem;
+  color: var(--text, #1e293b);
+  transition: background .1s;
+}
+
+.registrar-conta-item:hover {
+  background: rgba(13,110,253,.05);
+}
+
+.registrar-conta-nome {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   Registrar Aposta — modal internals
+   ============================================================ */
+
 .registrar-tip-info {
   background: var(--bg, #f1f5f9);
   border: 1px solid var(--border, rgba(15,23,42,.09));
