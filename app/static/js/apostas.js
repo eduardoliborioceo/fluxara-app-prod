@@ -2935,8 +2935,19 @@ function renderMatchAnalise(d, homeName, awayName, homeLogo, awayLogo, matchStat
 function _buildResultVerification(d, homeName, awayName, homeGoals, awayGoals) {
   if (isNaN(homeGoals) || isNaN(awayGoals)) return "";
 
-  const pred    = d.prediction;
-  const hasPred = pred && pred.has_data && pred.probabilities;
+  const scoreLabel = `${homeGoals} – ${awayGoals}`;
+  const pred       = d.prediction;
+
+  if (!pred || !pred.has_data || !pred.probabilities) {
+    return `
+      <div class="analise-verify-block">
+        <div class="analise-verify-header">
+          <i class="bi bi-clipboard-check-fill"></i>
+          Verificação &nbsp;<span class="analise-verify-score">${scoreLabel}</span>
+        </div>
+        <div class="analise-verify-empty">Sem previsão disponível para este jogo</div>
+      </div>`;
+  }
 
   const totalGoals    = homeGoals + awayGoals;
   const btts          = homeGoals > 0 && awayGoals > 0;
@@ -2945,60 +2956,60 @@ function _buildResultVerification(d, homeName, awayName, homeGoals, awayGoals) {
     : "draw";
 
   const checks = [];
+  const p      = pred.probabilities;
+  const g      = pred.goals;
 
-  if (hasPred) {
-    const p = pred.probabilities;
-    const predictedOutcome = (p.home_win >= p.draw && p.home_win >= p.away_win) ? "home"
-      : (p.away_win >= p.draw && p.away_win >= p.home_win) ? "away"
-      : "draw";
+  // Resultado — always verify the highest-probability outcome from the bar
+  const predictedOutcome = (p.home_win >= p.draw && p.home_win >= p.away_win) ? "home"
+    : (p.away_win >= p.draw && p.away_win >= p.home_win) ? "away"
+    : "draw";
+  const outcomeLabels = {
+    home: `${escHtml(homeName)} vence`,
+    away: `${escHtml(awayName)} vence`,
+    draw: "Empate",
+  };
+  const resultPct = Math.round({ home: p.home_win, away: p.away_win, draw: p.draw }[predictedOutcome] ?? 0);
+  checks.push({
+    label:  `Resultado: ${outcomeLabels[predictedOutcome]}`,
+    pct:    resultPct,
+    hit:    predictedOutcome === actualOutcome,
+    detail: `${homeGoals}–${awayGoals}`,
+  });
 
-    const outcomeLabels = {
-      home: `${escHtml(homeName)} vence`,
-      away: `${escHtml(awayName)} vence`,
-      draw: "Empate",
-    };
-    const predictedPct = Math.round({ home: p.home_win, away: p.away_win, draw: p.draw }[predictedOutcome] ?? 0);
+  // Goals chips — same markets shown pre-match (Over 2.5, Over 1.5, Ambas marcam)
+  const goalsDetail = `${totalGoals} gol${totalGoals !== 1 ? "s" : ""} no total`;
+
+  if (g && g.over_25_pct != null) {
+    // over 2.5 = 3+ goals; under 2.5 = 0–2 goals
+    const sim = g.over_25_pct >= 50;
     checks.push({
-      label:  `Resultado: ${outcomeLabels[predictedOutcome]}`,
-      pct:    predictedPct,
-      hit:    predictedOutcome === actualOutcome,
-      detail: `Real: ${homeGoals}–${awayGoals}`,
+      label:  `Over 2.5 gols: ${sim ? "sim" : "não"}`,
+      pct:    g.over_25_pct,
+      hit:    sim ? totalGoals > 2 : totalGoals <= 2,
+      detail: goalsDetail,
     });
-
-    const g = pred.goals;
-    if (g && g.over_25_pct != null) {
-      // over 2.5 = 3+ goals (0.5→1, 1.5→2, 2.5→3)
-      const predOver25 = g.over_25_pct >= 50;
-      const pct        = predOver25 ? Math.round(g.over_25_pct) : Math.round(100 - g.over_25_pct);
-      const hit        = predOver25 ? totalGoals > 2 : totalGoals <= 2;
-      checks.push({
-        label:  `Over 2.5 gols: ${predOver25 ? "sim" : "não"}`,
-        pct,
-        hit,
-        detail: `${totalGoals} gol${totalGoals !== 1 ? "s" : ""} no total`,
-      });
-    }
-
-    if (g && g.btts_pct != null) {
-      const predBtts = g.btts_pct >= 50;
-      const pct      = predBtts ? Math.round(g.btts_pct) : Math.round(100 - g.btts_pct);
-      const hit      = predBtts ? btts : !btts;
-      checks.push({
-        label:  `Ambas marcam: ${predBtts ? "sim" : "não"}`,
-        pct,
-        hit,
-        detail: btts ? "Ambas marcaram" : "Ao menos um time não marcou",
-      });
-    }
   }
 
-  if (!checks.length) return "";
+  if (g && g.over_15_pct != null) {
+    // over 1.5 = 2+ goals; under 1.5 = 0–1 goals
+    const sim = g.over_15_pct >= 50;
+    checks.push({
+      label:  `Over 1.5 gols: ${sim ? "sim" : "não"}`,
+      pct:    g.over_15_pct,
+      hit:    sim ? totalGoals > 1 : totalGoals <= 1,
+      detail: goalsDetail,
+    });
+  }
 
-  const _verifyTag = pct => {
-    if (pct >= 60) return `<span class="analise-verify-tag analise-verify-tag--palpite">Palpite</span>`;
-    if (pct >= 50) return `<span class="analise-verify-tag analise-verify-tag--moderado">Baixa confiança</span>`;
-    return `<span class="analise-verify-tag analise-verify-tag--nao">Não recomendado</span>`;
-  };
+  if (g && g.btts_pct != null) {
+    const sim = g.btts_pct >= 50;
+    checks.push({
+      label:  `Ambas marcam: ${sim ? "sim" : "não"}`,
+      pct:    g.btts_pct,
+      hit:    sim ? btts : !btts,
+      detail: btts ? "Ambas marcaram" : "Ao menos um time não marcou",
+    });
+  }
 
   const rows = checks.map(c => `
     <div class="analise-verify-row">
@@ -3006,17 +3017,12 @@ function _buildResultVerification(d, homeName, awayName, homeGoals, awayGoals) {
         <i class="bi ${c.hit ? 'bi-check-circle-fill' : 'bi-x-circle-fill'}"></i>
       </span>
       <div class="analise-verify-content">
-        <span class="analise-verify-label">
-          ${c.label}
-          <span class="analise-verify-pct">${c.pct}%</span>
-          ${_verifyTag(c.pct)}
-        </span>
+        <span class="analise-verify-label">${c.label} <span class="analise-verify-pct">${c.pct}%</span></span>
         <span class="analise-verify-detail">${c.detail}</span>
       </div>
     </div>`).join("");
 
-  const hits       = checks.filter(c => c.hit).length;
-  const scoreLabel = `${homeGoals} – ${awayGoals}`;
+  const hits = checks.filter(c => c.hit).length;
 
   return `
     <div class="analise-verify-block">
