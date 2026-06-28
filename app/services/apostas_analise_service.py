@@ -117,6 +117,19 @@ def get_match_analysis(
     }
 
 
+def _weighted_form(recent: list, n: int = 5) -> dict | None:
+    games = recent[:n]
+    if not games:
+        return None
+    k = len(games)
+    weights = [k - i for i in range(k)]
+    total_w = sum(weights)
+    counts: dict[str, float] = {"W": 0.0, "D": 0.0, "L": 0.0}
+    for g, w in zip(games, weights):
+        counts[g["result"]] += w
+    return {key: round(val / total_w * 100, 1) for key, val in counts.items()}
+
+
 def compute_prediction(
     home: dict,
     away: dict,
@@ -132,18 +145,57 @@ def compute_prediction(
     if not home_stats and not away_stats:
         return {"has_data": False}
 
-    # ---- Probabilities (weighted combination of each team's performance) ----
+    # ── 1. Probabilidades ────────────────────────────────────────────────────
     if home_stats and away_stats:
-        hw_raw = home_stats["win_pct"]  * 0.55 + away_stats["loss_pct"] * 0.45
-        aw_raw = away_stats["win_pct"]  * 0.55 + home_stats["loss_pct"] * 0.45
-        dr_raw = home_stats["draw_pct"] * 0.50 + away_stats["draw_pct"] * 0.50
-        total  = hw_raw + aw_raw + dr_raw
+        # Componente sazonal: desempenho em casa (home) vs fora (away) na temporada
+        hw_s = home_stats["win_pct"]  * 0.55 + away_stats["loss_pct"] * 0.45
+        aw_s = away_stats["win_pct"]  * 0.55 + home_stats["loss_pct"] * 0.45
+        dr_s = home_stats["draw_pct"] * 0.50 + away_stats["draw_pct"] * 0.50
+
+        # Componente de forma recente: últimos 5 jogos com peso linear por recência
+        h_form = _weighted_form(home_stats.get("recent", []))
+        a_form = _weighted_form(away_stats.get("recent", []))
+
+        if h_form and a_form:
+            hw_f = h_form["W"] * 0.55 + a_form["L"] * 0.45
+            aw_f = a_form["W"] * 0.55 + h_form["L"] * 0.45
+            dr_f = h_form["D"] * 0.50 + a_form["D"] * 0.50
+            # 45% temporada + 35% forma recente
+            hw_raw = hw_s * 0.45 + hw_f * 0.35
+            aw_raw = aw_s * 0.45 + aw_f * 0.35
+            dr_raw = dr_s * 0.45 + dr_f * 0.35
+        else:
+            hw_raw = hw_s
+            aw_raw = aw_s
+            dr_raw = dr_s
+
+        # Comparação de poder ofensivo vs defensivo (±10 pts no máximo)
+        home_exp = (home_stats["goals_for_avg"] + away_stats["goals_ag_avg"]) / 2
+        away_exp = (away_stats["goals_for_avg"] + home_stats["goals_ag_avg"]) / 2
+        exp_total = home_exp + away_exp
+        if exp_total > 0.1:
+            goal_ratio = home_exp / exp_total
+            hw_raw += (goal_ratio - 0.5) * 20
+            aw_raw += (0.5 - goal_ratio) * 20
+
+        # H2H — blenda 10% quando há 3+ confrontos diretos
+        h2h_total = h2h.get("total", 0)
+        if h2h_total >= 3:
+            h2h_hw = h2h["home_wins"] / h2h_total * 100
+            h2h_aw = h2h["away_wins"] / h2h_total * 100
+            h2h_dr = h2h["draws"]     / h2h_total * 100
+            hw_raw = hw_raw * 0.90 + h2h_hw * 0.10
+            aw_raw = aw_raw * 0.90 + h2h_aw * 0.10
+            dr_raw = dr_raw * 0.90 + h2h_dr * 0.10
+
+        total = hw_raw + aw_raw + dr_raw
         if total > 0:
             hw = round(hw_raw / total * 100, 1)
             aw = round(aw_raw / total * 100, 1)
             dr = round(100 - hw - aw, 1)
         else:
             hw, dr, aw = 40.0, 27.0, 33.0
+
     elif home_stats:
         hw = home_stats["win_pct"]
         dr = home_stats["draw_pct"]
