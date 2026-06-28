@@ -4101,7 +4101,7 @@
 }
 
 /* Context integration — LgSelect fills its flex container */
-.league-select-bar .lgs  { flex: 1; min-width: 0; }
+.league-select-bar .lgs  { flex: 1; min-width: 0; align-self: stretch; width: 100%; }
 .analise-league-bar .lgs { flex: 1; min-width: 200px; }
 .tips-form-group .lgs    { width: 100%; }
 
@@ -4111,6 +4111,10 @@
   .lgs-opt   { padding: 8px 10px; font-size: .86rem; }
   .lgs-trigger { font-size: .86rem; }
   .lgs-sel-name { font-size: .86rem; }
+}
+
+@media (max-width: 767px) {
+  .lgs-panel { max-width: calc(100vw - 8px); }
 }
 
 /* ============================================================

@@ -312,13 +312,20 @@ class LgSelect {
 
     const rect = this._btn.getBoundingClientRect();
     const vp   = window.innerHeight;
+    const vw   = window.innerWidth;
     const panelMaxH = 340;
     const spaceBelow = vp - rect.bottom - 8;
     const above = spaceBelow < 180 && rect.top > panelMaxH;
 
+    const minPanelW   = 240;
+    const panelWidth  = Math.max(rect.width, minPanelW);
+    let   panelLeft   = rect.left;
+    if (panelLeft + panelWidth > vw - 4) panelLeft = Math.max(4, vw - panelWidth - 4);
+    if (panelLeft < 4) panelLeft = 4;
+
     this._panel.style.position = 'fixed';
-    this._panel.style.left     = rect.left + 'px';
-    this._panel.style.width    = rect.width + 'px';
+    this._panel.style.left     = panelLeft + 'px';
+    this._panel.style.width    = panelWidth + 'px';
     this._panel.style.zIndex   = '2000';
     this._panel.style.right    = 'auto';
     if (above) {
