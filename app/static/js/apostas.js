@@ -2588,9 +2588,10 @@ async function openMatchAnalise({ homeId, awayId, homeName, awayName, homePos, a
   overlay.style.display = "flex";
 
   const league = window._activeLeague || "";
-  const hp = homePos ? `&home_pos=${encodeURIComponent(homePos)}` : "";
-  const ap = awayPos ? `&away_pos=${encodeURIComponent(awayPos)}` : "";
-  const url = `/api/apostas/analise/match?league=${encodeURIComponent(league)}&home_id=${encodeURIComponent(homeId)}&away_id=${encodeURIComponent(awayId)}${hp}${ap}`;
+  const hp  = homePos ? `&home_pos=${encodeURIComponent(homePos)}` : "";
+  const ap  = awayPos ? `&away_pos=${encodeURIComponent(awayPos)}` : "";
+  const fid = (source === "apifootball" && eventId) ? `&fixture_id=${encodeURIComponent(eventId)}` : "";
+  const url = `/api/apostas/analise/match?league=${encodeURIComponent(league)}&home_id=${encodeURIComponent(homeId)}&away_id=${encodeURIComponent(awayId)}${hp}${ap}${fid}`;
 
   try {
     const resp = await fetch(url);
@@ -2923,9 +2924,13 @@ function renderMatchAnalise(d, homeName, awayName, homeLogo, awayLogo, matchStat
       ? `<ul class="match-pred-narratives">${pred.narratives.map(n => `<li><i class="bi bi-arrow-right-short"></i>${escHtml(n)}</li>`).join("")}</ul>`
       : "";
 
+    const oddsTag = pred.odds_available
+      ? `<span class="pred-odds-tag pred-odds-tag--live"><i class="bi bi-lightning-charge-fill"></i> Com odds reais</span>`
+      : `<span class="pred-odds-tag pred-odds-tag--stats"><i class="bi bi-bar-chart-fill"></i> Modelo estatístico</span>`;
+
     return `
       <div class="match-pred-block">
-        <div class="match-pred-title"><i class="bi bi-graph-up-arrow"></i> Cenário Provável</div>
+        <div class="match-pred-title"><i class="bi bi-graph-up-arrow"></i> Cenário Provável ${oddsTag}</div>
         ${bar}
         ${goalChips.length ? `<div class="match-pred-goals">${goalChips.join("")}</div>` : ""}
         ${narrativesHtml}

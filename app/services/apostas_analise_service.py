@@ -89,10 +89,12 @@ def get_match_analysis(
     away_id: str,
     home_pos: int | None = None,
     away_pos: int | None = None,
+    fixture_id: str | None = None,
 ) -> dict:
     """
     league: ESPN slug (e.g. "bra.1") or "afl:{id}"
     home_id / away_id: team IDs matching the league source
+    fixture_id: api-football fixture ID for odds enrichment (optional)
     """
     league_id = _resolve_league_id(league)
     if league_id is None:
@@ -106,7 +108,16 @@ def get_match_analysis(
     home_stats = _team_profile(team_index, home_id, side="home")
     away_stats = _team_profile(team_index, away_id, side="away")
     h2h        = _compute_h2h(raw_pairs, home_id, away_id)
-    prediction = compute_prediction(home_stats, away_stats, h2h, home_pos, away_pos)
+
+    odds = None
+    if fixture_id:
+        try:
+            from app.services import apostas_odds_service
+            odds = apostas_odds_service.get_odds(fixture_id)
+        except Exception as exc:
+            logger.debug("odds fetch skipped fixture=%s: %s", fixture_id, exc)
+
+    prediction = compute_prediction(home_stats, away_stats, h2h, home_pos, away_pos, odds)
 
     return {
         "home":       home_stats,
@@ -136,6 +147,7 @@ def compute_prediction(
     h2h: dict,
     home_pos: int | None = None,
     away_pos: int | None = None,
+    odds: dict | None = None,
 ) -> dict:
     home_stats = home.get("stats")
     away_stats = away.get("stats")
@@ -301,9 +313,29 @@ def compute_prediction(
             else:
                 narratives.append(f"{away_name} está {diff} posições acima de {home_name} na tabela")
 
+    # ── Odds blend (api-football) — 65% odds / 35% modelo estatístico ──────
+    if odds:
+        if all(k in odds for k in ("home_win", "draw", "away_win")):
+            hw_b = hw * 0.35 + odds["home_win"] * 0.65
+            dr_b = dr * 0.35 + odds["draw"]     * 0.65
+            aw_b = aw * 0.35 + odds["away_win"] * 0.65
+            tot  = hw_b + dr_b + aw_b
+            if tot > 0:
+                hw = round(hw_b / tot * 100, 1)
+                aw = round(aw_b / tot * 100, 1)
+                dr = round(100 - hw - aw, 1)
+
+        if odds.get("over_25") is not None:
+            over25_pct = round(over25_pct * 0.40 + odds["over_25"] * 0.60, 1)
+        if odds.get("over_15") is not None:
+            over15_pct = round(over15_pct * 0.40 + odds["over_15"] * 0.60, 1)
+        if odds.get("btts_yes") is not None:
+            btts_pct = round(btts_pct * 0.40 + odds["btts_yes"] * 0.60, 1)
+
     return {
-        "has_data": True,
-        "probabilities": {"home_win": hw, "draw": dr, "away_win": aw},
+        "has_data":       True,
+        "odds_available": odds is not None,
+        "probabilities":  {"home_win": hw, "draw": dr, "away_win": aw},
         "goals": {
             "expected":    exp_goals,
             "over_25_pct": over25_pct,

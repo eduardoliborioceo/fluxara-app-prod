@@ -3359,6 +3359,30 @@
   display: flex;
   align-items: center;
   gap: 5px;
+  flex-wrap: wrap;
+}
+
+.pred-odds-tag {
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .4px;
+  padding: 2px 7px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  text-transform: none;
+  margin-left: auto;
+}
+
+.pred-odds-tag--live {
+  background: rgba(25, 135, 84, .12);
+  color: var(--success-color);
+}
+
+.pred-odds-tag--stats {
+  background: rgba(100, 116, 139, .10);
+  color: var(--text-muted);
 }
 
 .match-pred-bar {
