@@ -2935,12 +2935,11 @@ function renderMatchAnalise(d, homeName, awayName, homeLogo, awayLogo, matchStat
 function _buildResultVerification(d, homeName, awayName, homeGoals, awayGoals) {
   if (isNaN(homeGoals) || isNaN(awayGoals)) return "";
 
-  const pred = d.prediction;
+  const pred    = d.prediction;
   const hasPred = pred && pred.has_data && pred.probabilities;
 
-  const totalGoals = homeGoals + awayGoals;
-  const btts       = homeGoals > 0 && awayGoals > 0;
-
+  const totalGoals    = homeGoals + awayGoals;
+  const btts          = homeGoals > 0 && awayGoals > 0;
   const actualOutcome = homeGoals > awayGoals ? "home"
     : awayGoals > homeGoals ? "away"
     : "draw";
@@ -2958,31 +2957,36 @@ function _buildResultVerification(d, homeName, awayName, homeGoals, awayGoals) {
       away: `${escHtml(awayName)} vence`,
       draw: "Empate",
     };
-    const hit = predictedOutcome === actualOutcome;
+    const predictedPct = Math.round({ home: p.home_win, away: p.away_win, draw: p.draw }[predictedOutcome] ?? 0);
     checks.push({
       label:  `Resultado: ${outcomeLabels[predictedOutcome]}`,
-      hit,
-      detail: `Real: ${homeGoals}–${awayGoals} (${outcomeLabels[actualOutcome]})`,
+      pct:    predictedPct,
+      hit:    predictedOutcome === actualOutcome,
+      detail: `Real: ${homeGoals}–${awayGoals}`,
     });
 
     const g = pred.goals;
-    if (g.over_25_pct != null) {
+    if (g && g.over_25_pct != null) {
+      // over 2.5 = 3+ goals (0.5→1, 1.5→2, 2.5→3)
       const predOver25 = g.over_25_pct >= 50;
-      const realOver25 = totalGoals > 2;
-      const hitO25     = predOver25 === realOver25;
+      const pct        = predOver25 ? Math.round(g.over_25_pct) : Math.round(100 - g.over_25_pct);
+      const hit        = predOver25 ? totalGoals > 2 : totalGoals <= 2;
       checks.push({
-        label:  `Over 2.5 gols (${predOver25 ? "sim" : "não"} — ${g.over_25_pct}%)`,
-        hit:    hitO25,
+        label:  `Over 2.5 gols: ${predOver25 ? "sim" : "não"}`,
+        pct,
+        hit,
         detail: `${totalGoals} gol${totalGoals !== 1 ? "s" : ""} no total`,
       });
     }
 
-    if (g.btts_pct != null) {
+    if (g && g.btts_pct != null) {
       const predBtts = g.btts_pct >= 50;
-      const hitBtts  = predBtts === btts;
+      const pct      = predBtts ? Math.round(g.btts_pct) : Math.round(100 - g.btts_pct);
+      const hit      = predBtts ? btts : !btts;
       checks.push({
-        label:  `Ambas marcam (${predBtts ? "sim" : "não"} — ${g.btts_pct}%)`,
-        hit:    hitBtts,
+        label:  `Ambas marcam: ${predBtts ? "sim" : "não"}`,
+        pct,
+        hit,
         detail: btts ? "Ambas marcaram" : "Ao menos um time não marcou",
       });
     }
@@ -2990,22 +2994,36 @@ function _buildResultVerification(d, homeName, awayName, homeGoals, awayGoals) {
 
   if (!checks.length) return "";
 
+  const _verifyTag = pct => {
+    if (pct >= 60) return `<span class="analise-verify-tag analise-verify-tag--palpite">Palpite</span>`;
+    if (pct >= 50) return `<span class="analise-verify-tag analise-verify-tag--moderado">Baixa confiança</span>`;
+    return `<span class="analise-verify-tag analise-verify-tag--nao">Não recomendado</span>`;
+  };
+
   const rows = checks.map(c => `
     <div class="analise-verify-row">
       <span class="analise-verify-icon ${c.hit ? 'analise-verify-icon--hit' : 'analise-verify-icon--miss'}">
         <i class="bi ${c.hit ? 'bi-check-circle-fill' : 'bi-x-circle-fill'}"></i>
       </span>
-      <span class="analise-verify-label">${c.label}</span>
-      <span class="analise-verify-detail">${c.detail}</span>
+      <div class="analise-verify-content">
+        <span class="analise-verify-label">
+          ${c.label}
+          <span class="analise-verify-pct">${c.pct}%</span>
+          ${_verifyTag(c.pct)}
+        </span>
+        <span class="analise-verify-detail">${c.detail}</span>
+      </div>
     </div>`).join("");
 
+  const hits       = checks.filter(c => c.hit).length;
   const scoreLabel = `${homeGoals} – ${awayGoals}`;
 
   return `
     <div class="analise-verify-block">
       <div class="analise-verify-header">
         <i class="bi bi-clipboard-check-fill"></i>
-        Verificação do Resultado &nbsp;<span class="analise-verify-score">${scoreLabel}</span>
+        Verificação &nbsp;<span class="analise-verify-score">${scoreLabel}</span>
+        <span class="analise-verify-summary">${hits}/${checks.length} corretos</span>
       </div>
       ${rows}
     </div>`;
