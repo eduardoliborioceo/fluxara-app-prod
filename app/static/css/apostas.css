@@ -2883,6 +2883,90 @@
   }
 }
 
+.jogos-analise-btn--post {
+  color: #6366f1;
+  border-color: rgba(99,102,241,.25);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .jogos-analise-btn--post:hover {
+    background: rgba(99,102,241,.08);
+    color: #6366f1;
+    border-color: rgba(99,102,241,.35);
+  }
+}
+
+/* ========================
+   VERIFICAÇÃO DE RESULTADO
+======================== */
+
+.analise-verify-block {
+  background: var(--bg, #f1f5f9);
+  border: 1px solid var(--border, rgba(15,23,42,.09));
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+
+.analise-verify-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .8rem;
+  font-weight: 700;
+  color: var(--text, #1e293b);
+  margin-bottom: 10px;
+}
+
+.analise-verify-header i {
+  color: #6366f1;
+}
+
+.analise-verify-score {
+  font-size: .82rem;
+  font-weight: 700;
+  color: var(--text-muted, #64748b);
+  background: rgba(15,23,42,.06);
+  border-radius: 6px;
+  padding: 1px 7px;
+}
+
+.analise-verify-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 0;
+  border-top: 1px solid var(--border, rgba(15,23,42,.07));
+}
+
+.analise-verify-icon {
+  flex-shrink: 0;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.analise-verify-icon--hit  { color: #16a34a; }
+.analise-verify-icon--miss { color: #dc2626; }
+
+.analise-verify-label {
+  flex: 1;
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--text, #1e293b);
+  line-height: 1.4;
+}
+
+.analise-verify-detail {
+  font-size: .75rem;
+  color: var(--text-muted, #64748b);
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .analise-verify-row { flex-wrap: wrap; }
+  .analise-verify-detail { width: 100%; padding-left: 24px; white-space: normal; }
+}
+
 /* ========================
    MODAL ANÁLISE POR JOGO
 ======================== */

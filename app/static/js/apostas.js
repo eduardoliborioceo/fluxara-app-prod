@@ -848,8 +848,8 @@ function buildMatchRow(m, ctx) {
   const scoreHtml = _buildScoreHtml(m);
 
   const isFootball = !window._activeSport || window._activeSport === "football";
-  const analiseBtn = (isFootball && m.state === "pre" && m.home_id && m.away_id)
-    ? `<button class="jogos-analise-btn"
+  const analiseBtn = (isFootball && m.home_id && m.away_id)
+    ? `<button class="jogos-analise-btn${m.state === "post" ? " jogos-analise-btn--post" : ""}"
          data-hid="${escHtml(String(m.home_id))}"
          data-aid="${escHtml(String(m.away_id))}"
          data-hn="${escHtml(m.home_name)}"
@@ -861,8 +861,11 @@ function buildMatchRow(m, ctx) {
          data-ll="${escHtml((window._jogosData && window._jogosData.league_logo) || m.league_logo || '')}"
          data-eid="${escHtml(String(m.event_id || ''))}"
          data-src="${escHtml(m.source || '')}"
+         data-state="${escHtml(m.state || 'pre')}"
+         data-sh="${escHtml(String(m.score_home ?? ''))}"
+         data-sa="${escHtml(String(m.score_away ?? ''))}"
          onclick="handleMatchAnalise(this)"
-         title="Ver análise completa">
+         title="${m.state === 'post' ? 'Ver análise e resultado' : 'Ver análise completa'}">
         <i class="bi bi-bar-chart-line"></i>
        </button>`
     : "";
@@ -2502,21 +2505,24 @@ function closeStoryModalOverlay(e) {
 
 function handleMatchAnalise(btn) {
   openMatchAnalise({
-    homeId:   btn.dataset.hid,
-    awayId:   btn.dataset.aid,
-    homeName: btn.dataset.hn,
-    awayName: btn.dataset.an,
-    homePos:  btn.dataset.hp || "",
-    awayPos:  btn.dataset.ap || "",
-    homeLogo: btn.dataset.hl || "",
-    awayLogo: btn.dataset.al || "",
+    homeId:     btn.dataset.hid,
+    awayId:     btn.dataset.aid,
+    homeName:   btn.dataset.hn,
+    awayName:   btn.dataset.an,
+    homePos:    btn.dataset.hp || "",
+    awayPos:    btn.dataset.ap || "",
+    homeLogo:   btn.dataset.hl || "",
+    awayLogo:   btn.dataset.al || "",
     leagueLogo: btn.dataset.ll || "",
-    eventId:  btn.dataset.eid || "",
-    source:   btn.dataset.src || "",
+    eventId:    btn.dataset.eid || "",
+    source:     btn.dataset.src || "",
+    matchState: btn.dataset.state || "pre",
+    scoreHome:  btn.dataset.sh ?? "",
+    scoreAway:  btn.dataset.sa ?? "",
   });
 }
 
-async function openMatchAnalise({ homeId, awayId, homeName, awayName, homePos, awayPos, homeLogo, awayLogo, leagueLogo, eventId, source }) {
+async function openMatchAnalise({ homeId, awayId, homeName, awayName, homePos, awayPos, homeLogo, awayLogo, leagueLogo, eventId, source, matchState, scoreHome, scoreAway }) {
   const overlay = document.getElementById("matchAnaliseOverlay");
   const title   = document.getElementById("matchAnaliseTitle");
   const body    = document.getElementById("matchAnaliseBody");
@@ -2545,7 +2551,7 @@ async function openMatchAnalise({ homeId, awayId, homeName, awayName, homePos, a
     const resp = await fetch(url);
     const data = await resp.json();
     if (!resp.ok) throw new Error(data.error || "Erro");
-    body.innerHTML = renderMatchAnalise(data, homeName, awayName, homeLogo, awayLogo);
+    body.innerHTML = renderMatchAnalise(data, homeName, awayName, homeLogo, awayLogo, matchState, scoreHome, scoreAway);
     _loadMatchCards(homeId, awayId, homeName, awayName, league, body);
     _loadMatchLineup(eventId, source, homeName, awayName, body);
   } catch (e) {
@@ -2740,7 +2746,7 @@ function closeMatchAnaliseOverlay(e) {
   if (e.target === document.getElementById("matchAnaliseOverlay")) closeMatchAnalise();
 }
 
-function renderMatchAnalise(d, homeName, awayName, homeLogo, awayLogo) {
+function renderMatchAnalise(d, homeName, awayName, homeLogo, awayLogo, matchState, scoreHome, scoreAway) {
   const noData = `<span class="match-analise-nodata">Sem dados suficientes</span>`;
 
   function teamBlock(team, label, logoUrl) {
@@ -2865,7 +2871,12 @@ function renderMatchAnalise(d, homeName, awayName, homeLogo, awayLogo) {
       </div>`;
   }
 
+  const verificationBlock = (matchState === "post" && scoreHome !== "" && scoreAway !== "")
+    ? _buildResultVerification(d, homeName, awayName, parseInt(scoreHome, 10), parseInt(scoreAway, 10))
+    : "";
+
   return `
+    ${verificationBlock}
     <div class="match-analise-source-row">${sourceBadge}</div>
     ${predBlock(d.prediction)}
     <div class="match-analise-teams">
@@ -2874,6 +2885,85 @@ function renderMatchAnalise(d, homeName, awayName, homeLogo, awayLogo) {
     </div>
     ${h2hBlock(d.h2h)}
   `;
+}
+
+function _buildResultVerification(d, homeName, awayName, homeGoals, awayGoals) {
+  if (isNaN(homeGoals) || isNaN(awayGoals)) return "";
+
+  const pred = d.prediction;
+  const hasPred = pred && pred.has_data && pred.probabilities;
+
+  const totalGoals = homeGoals + awayGoals;
+  const btts       = homeGoals > 0 && awayGoals > 0;
+
+  const actualOutcome = homeGoals > awayGoals ? "home"
+    : awayGoals > homeGoals ? "away"
+    : "draw";
+
+  const checks = [];
+
+  if (hasPred) {
+    const p = pred.probabilities;
+    const predictedOutcome = (p.home_win >= p.draw && p.home_win >= p.away_win) ? "home"
+      : (p.away_win >= p.draw && p.away_win >= p.home_win) ? "away"
+      : "draw";
+
+    const outcomeLabels = {
+      home: `${escHtml(homeName)} vence`,
+      away: `${escHtml(awayName)} vence`,
+      draw: "Empate",
+    };
+    const hit = predictedOutcome === actualOutcome;
+    checks.push({
+      label:  `Resultado: ${outcomeLabels[predictedOutcome]}`,
+      hit,
+      detail: `Real: ${homeGoals}–${awayGoals} (${outcomeLabels[actualOutcome]})`,
+    });
+
+    const g = pred.goals;
+    if (g.over_25_pct != null) {
+      const predOver25 = g.over_25_pct >= 50;
+      const realOver25 = totalGoals > 2;
+      const hitO25     = predOver25 === realOver25;
+      checks.push({
+        label:  `Over 2.5 gols (${predOver25 ? "sim" : "não"} — ${g.over_25_pct}%)`,
+        hit:    hitO25,
+        detail: `${totalGoals} gol${totalGoals !== 1 ? "s" : ""} no total`,
+      });
+    }
+
+    if (g.btts_pct != null) {
+      const predBtts = g.btts_pct >= 50;
+      const hitBtts  = predBtts === btts;
+      checks.push({
+        label:  `Ambas marcam (${predBtts ? "sim" : "não"} — ${g.btts_pct}%)`,
+        hit:    hitBtts,
+        detail: btts ? "Ambas marcaram" : "Ao menos um time não marcou",
+      });
+    }
+  }
+
+  if (!checks.length) return "";
+
+  const rows = checks.map(c => `
+    <div class="analise-verify-row">
+      <span class="analise-verify-icon ${c.hit ? 'analise-verify-icon--hit' : 'analise-verify-icon--miss'}">
+        <i class="bi ${c.hit ? 'bi-check-circle-fill' : 'bi-x-circle-fill'}"></i>
+      </span>
+      <span class="analise-verify-label">${c.label}</span>
+      <span class="analise-verify-detail">${c.detail}</span>
+    </div>`).join("");
+
+  const scoreLabel = `${homeGoals} – ${awayGoals}`;
+
+  return `
+    <div class="analise-verify-block">
+      <div class="analise-verify-header">
+        <i class="bi bi-clipboard-check-fill"></i>
+        Verificação do Resultado &nbsp;<span class="analise-verify-score">${scoreLabel}</span>
+      </div>
+      ${rows}
+    </div>`;
 }
 
 // ============================================================
