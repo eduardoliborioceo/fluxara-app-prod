@@ -2,6 +2,39 @@
   var MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
                'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
+  var INSTITUICOES = {
+    nubank:      { cor: '#8A05BE' }, itau:        { cor: '#EC7000' },
+    bradesco:    { cor: '#CC092F' }, bb:          { cor: '#F9D600' },
+    caixa:       { cor: '#006CA8' }, 'caixa-tem': { cor: '#006CA8' },
+    santander:   { cor: '#EC0000' }, inter:       { cor: '#FF7A00' },
+    c6:          { cor: '#242424' }, picpay:      { cor: '#11C76F' },
+    mercadopago: { cor: '#009EE3' }, xp:          { cor: '#000000' },
+    btg:         { cor: '#003399' }, sicoob:      { cor: '#007A3D' },
+    sicredi:     { cor: '#006633' }, neon:        { cor: '#00CFFF' },
+    next:        { cor: '#00CC99' }, wise:        { cor: '#9FE870' },
+    paypal:      { cor: '#003087' }, iti:         { cor: '#FF6600' },
+    will:        { cor: '#FFCC00' }, bs2:         { cor: '#0066CC' },
+    original:    { cor: '#00A650' }, sofisa:      { cor: '#E2001A' },
+    banrisul:    { cor: '#005CA9' }, bv:          { cor: '#004B8D' },
+    bmg:         { cor: '#E30613' }, pan:         { cor: '#FFD100' },
+    daycoval:    { cor: '#005A9E' }, mercantil:   { cor: '#004A9F' },
+    digio:       { cor: '#0077CC' }, stone:       { cor: '#00A868' },
+    pagseguro:   { cor: '#FFC72C' }, 'nu-invest': { cor: '#8A05BE' },
+    nomad:       { cor: '#1A1A2E' }, zrobank:     { cor: '#0055B8' },
+    n26:         { cor: '#000000' }, warren:      { cor: '#4C12A1' },
+    toro:        { cor: '#FF6B00' }, clear:       { cor: '#00C4B3' },
+    rico:        { cor: '#00B386' }, genial:      { cor: '#FF6600' },
+    avenue:      { cor: '#0033A0' }, ame:         { cor: '#FF0064' },
+    amazon:      { cor: '#FF9900' }, magalu:      { cor: '#0086FF' },
+    samsung:     { cor: '#1428A0' }, infinitepay: { cor: '#00BCD4' },
+    ton:         { cor: '#00C853' }, fitbank:     { cor: '#1A237E' },
+    cora:        { cor: '#FF4C8B' }, dm:          { cor: '#004B87' },
+    flash:       { cor: '#F24E1E' }, caju:        { cor: '#FF6B35' },
+    binance:     { cor: '#F3BA2F' }, metamask:    { cor: '#E2761B' },
+    bitybank:    { cor: '#0066FF' }, bet365:      { cor: '#116B14' },
+    riachuelo:   { cor: '#C41E3A' }, outro:       { cor: '#64748b' },
+  };
+
   var BANDEIRAS = {
     visa:       { nome: 'Visa',       cor: '#1A1F71', svg: 'visa.svg' },
     mastercard: { nome: 'Mastercard', cor: '#EB001B', svg: 'mastercard.svg' },
@@ -10,6 +43,24 @@
     hipercard:  { nome: 'Hipercard',  cor: '#B22222', svg: 'hipercard.svg' },
     outro:      { nome: 'Outro',      cor: '#6c757d' },
   };
+
+  function _darkenHex(hex, amount) {
+    var c = hex.replace('#', '');
+    var num = parseInt(c.length === 3 ? c.split('').map(function(x) { return x + x; }).join('') : c, 16);
+    var r = Math.max(0, (num >> 16) - amount);
+    var g = Math.max(0, ((num >> 8) & 0xff) - amount);
+    var b = Math.max(0, (num & 0xff) - amount);
+    return '#' + [r, g, b].map(function(x) { return x.toString(16).padStart(2, '0'); }).join('');
+  }
+
+  function _cardBackground(contaInstituicao) {
+    var instKey = contaInstituicao ? contaInstituicao.toLowerCase() : '';
+    if (instKey && INSTITUICOES[instKey]) {
+      var base = INSTITUICOES[instKey].cor;
+      return 'linear-gradient(135deg, ' + base + ', ' + _darkenHex(base, 28) + ')';
+    }
+    return 'linear-gradient(135deg, #334155, #0f172a)';
+  }
 
   var cfg = document.getElementById('extratoConfig');
   var cartaoId = parseInt(cfg.dataset.id);
@@ -57,14 +108,6 @@
 
   updateMesLabel();
 
-  var BANDEIRA_GRADIENTS = {
-    visa:       'linear-gradient(135deg, #1a1f71 0%, #0d47a1 100%)',
-    mastercard: 'linear-gradient(135deg, #eb001b 0%, #f79e1b 100%)',
-    elo:        'linear-gradient(135deg, #00a4e0 0%, #0070b3 100%)',
-    amex:       'linear-gradient(135deg, #2e77bc 0%, #1a5276 100%)',
-    hipercard:  'linear-gradient(135deg, #b22222 0%, #7b0000 100%)',
-    outro:      'linear-gradient(135deg, #334155 0%, #1e293b 100%)',
-  };
 
   function buildBandeiraVisual(b) {
     if (b && b.svg) {
@@ -82,7 +125,7 @@
       var cartao = Array.isArray(data) ? data.find(function (c) { return c.id === cartaoId; }) : null;
       if (!cartao) return;
       var b = BANDEIRAS[cartao.bandeira] || BANDEIRAS.outro;
-      var grad = BANDEIRA_GRADIENTS[cartao.bandeira] || BANDEIRA_GRADIENTS.outro;
+      var grad = _cardBackground(cartao.conta_instituicao);
       var limDisp = parseFloat(cartao.limite_disponivel != null ? cartao.limite_disponivel : cartao.limite) || 0;
 
       var visual = document.getElementById('cartaoVisual');
