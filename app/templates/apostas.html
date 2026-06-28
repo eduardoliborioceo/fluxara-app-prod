@@ -167,15 +167,19 @@
   <div id="panelJogos" style="display:none">
 
     <div class="jogos-filter-row">
-      <label class="apostas-filter-label" for="jogosDays">Próximos dias</label>
-      <select id="jogosDays" class="apostas-filter-select" onchange="reloadJogos()">
-        <option value="7">7 dias</option>
-        <option value="14" selected>14 dias</option>
-        <option value="21">21 dias</option>
-        <option value="30">30 dias</option>
-      </select>
+      <div class="jogos-date-nav">
+        <button class="jogos-date-btn" onclick="shiftJogosDate(-7)" title="Semana anterior">
+          <i class="bi bi-chevron-left"></i>
+        </button>
+        <button class="jogos-date-label-btn" id="jogosDateReset" onclick="resetJogosDate()" title="Voltar para hoje" style="display:none">
+          <i class="bi bi-calendar-check"></i>
+        </button>
+        <span id="jogosDateLabel" class="jogos-date-label">—</span>
+        <button class="jogos-date-btn" onclick="shiftJogosDate(7)" title="Próxima semana">
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
 
-      <label class="apostas-filter-label" for="jogosDiff">Diferença</label>
       <select id="jogosDiff" class="apostas-filter-select" onchange="applyJogosFilter()">
         <option value="0">Todos</option>
         <option value="2">Δ ≥ 2</option>

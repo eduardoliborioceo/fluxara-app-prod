@@ -212,8 +212,10 @@ def build_standings_map(league_slug: str, sport: str = "soccer") -> dict[str, in
 # Upcoming fixtures
 # ============================================================
 
-def get_upcoming_fixtures(league_slug: str, days: int = 14, sport: str = "soccer") -> dict:
-    cache_key = f"{sport}:{league_slug}_{days}"
+def get_upcoming_fixtures(league_slug: str, days: int = 7, sport: str = "soccer",
+                          from_date: str | None = None) -> dict:
+    start = datetime.date.fromisoformat(from_date) if from_date else datetime.date.today()
+    cache_key = f"{sport}:{league_slug}_{start.isoformat()}_{days}"
     now = time.monotonic()
     cached = _fixtures_cache.get(cache_key)
     if cached and cached["expires"] > now:
@@ -222,9 +224,8 @@ def get_upcoming_fixtures(league_slug: str, days: int = 14, sport: str = "soccer
     standings_map = build_standings_map(league_slug, sport)
     standings_data = get_standings(league_slug, sport)
 
-    today = datetime.date.today()
-    end   = today + datetime.timedelta(days=days)
-    from_str = today.strftime("%Y%m%d")
+    end      = start + datetime.timedelta(days=days - 1)
+    from_str = start.strftime("%Y%m%d")
     to_str   = end.strftime("%Y%m%d")
 
     raw_events, league_logo = _fetch_scoreboard(league_slug, from_str, to_str, sport)
@@ -241,7 +242,7 @@ def get_upcoming_fixtures(league_slug: str, days: int = 14, sport: str = "soccer
         "season":        standings_data.get("season", ""),
         "league_logo":   league_logo,
         "matches":       matches,
-        "from":          today.isoformat(),
+        "from":          start.isoformat(),
         "to":            end.isoformat(),
         "current_round": current_round,
         "total_rounds":  total_rounds,

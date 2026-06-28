@@ -402,6 +402,8 @@ document.addEventListener("DOMContentLoaded", () => {
   window._activeSport = savedSport;
   _updateSportPills(savedSport);
 
+  _updateJogosDateLabel();
+
   const saved = localStorage.getItem("apostas_tab") || "recomendacoes";
   apostasTab(saved);
   loadTips();
@@ -562,7 +564,48 @@ function _slugToUrl(slug, endpoint, extraParams) {
 //  PRÓXIMOS JOGOS
 // ============================================================
 
-window._jogosData = null;
+window._jogosData       = null;
+window._jogosDateOffset = 0;
+
+function _jogosFromDate() {
+  const d = new Date();
+  d.setDate(d.getDate() + (window._jogosDateOffset || 0));
+  const yyyy = d.getFullYear();
+  const mm   = String(d.getMonth() + 1).padStart(2, "0");
+  const dd   = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function _updateJogosDateLabel() {
+  const offset = window._jogosDateOffset || 0;
+  const start  = new Date();
+  start.setDate(start.getDate() + offset);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 6);
+
+  const months = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+  const thisYear = new Date().getFullYear();
+  const fmt = dt => `${dt.getDate()} ${months[dt.getMonth()]}`;
+  const yr  = end.getFullYear() !== thisYear ? ` ${end.getFullYear()}` : "";
+
+  const el = document.getElementById("jogosDateLabel");
+  if (el) el.textContent = `${fmt(start)} – ${fmt(end)}${yr}`;
+
+  const reset = document.getElementById("jogosDateReset");
+  if (reset) reset.style.display = offset === 0 ? "none" : "inline-flex";
+}
+
+function shiftJogosDate(delta) {
+  window._jogosDateOffset = (window._jogosDateOffset || 0) + delta;
+  _updateJogosDateLabel();
+  reloadJogos();
+}
+
+function resetJogosDate() {
+  window._jogosDateOffset = 0;
+  _updateJogosDateLabel();
+  reloadJogos();
+}
 
 function reloadJogos() {
   if (window._activeLeague) loadJogos(window._activeLeague);
@@ -609,12 +652,14 @@ function applyJogosFilter() {
 
 async function loadJogos(slug) {
   _stopLivePolling();
-  const days  = document.getElementById("jogosDays")?.value || 14;
-  const sport = window._activeSport || "soccer";
+  _updateJogosDateLabel();
   setJogosState("loading");
 
+  const fromDate = _jogosFromDate();
+  const params   = `days=7&from_date=${fromDate}`;
+
   try {
-    const url = _slugToUrl(slug, "games", `days=${days}`);
+    const url = _slugToUrl(slug, "games", params);
     if (!url) { setJogosState("erro", "Campeonato inválido."); return; }
 
     const resp = await fetch(url);
@@ -737,8 +782,8 @@ async function _livePoll() {
   const slug = window._activeLeague;
   if (!slug) return;
 
-  const days = document.getElementById("jogosDays")?.value || 14;
-  const url  = _slugToUrl(slug, "games", `days=${days}`);
+  const fromDate = _jogosFromDate();
+  const url      = _slugToUrl(slug, "games", `days=7&from_date=${fromDate}`);
   if (!url) return;
 
   try {
