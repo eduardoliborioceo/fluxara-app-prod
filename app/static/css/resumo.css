@@ -830,11 +830,52 @@
 /* ========================
    CARD CARTÃO CRÉDITO (resumo)
 ======================== */
+#cartoesBody {
+  padding: 12px 14px 14px !important;
+}
+
 .cartao-card {
-  padding: 16px 20px;
+  position: relative;
+  padding: 18px 20px 16px;
   cursor: pointer;
-  border-bottom: 1px solid rgba(0,0,0,.05);
-  transition: background .12s;
+  border-bottom: none;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 55%, #6366f1 100%);
+  color: #fff;
+  overflow: hidden;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  box-shadow: 0 4px 16px rgba(30, 58, 138, 0.25);
+}
+
+.cartao-card::before {
+  content: '';
+  position: absolute;
+  top: -50px;
+  right: -30px;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.cartao-card::after {
+  content: '';
+  position: absolute;
+  bottom: -65px;
+  left: -25px;
+  width: 170px;
+  height: 170px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.cartao-card > * {
+  position: relative;
+  z-index: 1;
 }
 
 .cartao-card:last-child {
@@ -842,7 +883,8 @@
 }
 
 .cartao-card:hover {
-  background: rgba(0,0,0,.02);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(30, 58, 138, 0.38);
 }
 
 .cartao-card-header {
@@ -861,9 +903,9 @@
 
 .cartao-card-nome {
   flex: 1;
-  font-weight: 600;
-  font-size: .85rem;
-  color: var(--text, #1e293b);
+  font-weight: 700;
+  font-size: .88rem;
+  color: #fff;
   min-width: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -872,7 +914,7 @@
 
 .cartao-card-chevron {
   font-size: .8rem;
-  color: #94a3b8;
+  color: rgba(255, 255, 255, 0.5);
   flex-shrink: 0;
 }
 
@@ -880,7 +922,7 @@
   width: 36px;
   height: 36px;
   border-radius: 8px;
-  background: linear-gradient(135deg, #334155, #1e293b);
+  background: rgba(255, 255, 255, 0.15);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -889,18 +931,18 @@
 }
 
 .cartao-card-fatura-label {
-  font-size: .7rem;
+  font-size: .68rem;
   font-weight: 600;
-  color: var(--text-muted, #64748b);
+  color: rgba(255, 255, 255, 0.65);
   text-transform: uppercase;
-  letter-spacing: .4px;
+  letter-spacing: .5px;
   margin-bottom: 2px;
 }
 
 .cartao-card-fatura-valor {
-  font-size: 1.35rem;
+  font-size: 1.45rem;
   font-weight: 700;
-  color: var(--text, #1e293b);
+  color: #fff;
   margin-bottom: 4px;
   line-height: 1.1;
   white-space: nowrap;
@@ -908,13 +950,13 @@
 
 .cartao-card-fecha {
   font-size: .75rem;
-  color: var(--text-muted, #64748b);
+  color: rgba(255, 255, 255, 0.6);
   margin-bottom: 12px;
 }
 
 .cartao-card-divider {
   height: 1px;
-  background: rgba(0,0,0,.06);
+  background: rgba(255, 255, 255, 0.15);
   margin-bottom: 12px;
 }
 
@@ -926,27 +968,15 @@
 
 .cartao-card-limite-label {
   font-size: .8rem;
-  color: var(--text-muted, #64748b);
+  color: rgba(255, 255, 255, 0.65);
   font-weight: 500;
 }
 
 .cartao-card-limite-valor {
   font-size: .88rem;
   font-weight: 700;
-  color: var(--text, #1e293b);
+  color: #fff;
   white-space: nowrap;
-}
-
-[data-theme="escuro"] .cartao-card {
-  border-bottom-color: rgba(255,255,255,.06);
-}
-
-[data-theme="escuro"] .cartao-card:hover {
-  background: rgba(255,255,255,.03);
-}
-
-[data-theme="escuro"] .cartao-card-divider {
-  background: rgba(255,255,255,.06);
 }
 
 /* ========================
@@ -954,6 +984,7 @@
 ======================== */
 .cartoes-carousel-wrapper {
   overflow: hidden;
+  border-radius: 16px;
 }
 
 .cartoes-slides {
@@ -965,15 +996,18 @@
   flex: 0 0 100%;
   width: 100%;
   border-bottom: none;
+  border-radius: 16px;
+  box-shadow: none;
+  transform: none !important;
 }
 
 .cartoes-carousel-nav {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 8px 16px 14px;
+  padding: 10px 16px 2px;
   gap: 10px;
-  border-top: 1px solid rgba(0,0,0,.05);
+  border-top: none;
 }
 
 .cartoes-nav-btn {
