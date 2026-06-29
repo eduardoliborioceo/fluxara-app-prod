@@ -365,8 +365,14 @@ window._lgSelects = {};
 //  TABS
 // ============================================================
 
-const _PANELS  = { recomendacoes: "panelRecomendacoes", jogos: "panelJogos", tabelas: "panelTabelas", analise: "panelAnalise" };
-const _TABBTNS = { recomendacoes: "tabBtnRec", jogos: "tabBtnJogos", tabelas: "tabBtnTab", analise: "tabBtnAnalise" };
+const _PANELS  = Object.assign(
+  { recomendacoes: "panelRecomendacoes", jogos: "panelJogos", tabelas: "panelTabelas", analise: "panelAnalise" },
+  window.APOSTAS_IS_ADMIN ? { debug: "panelDebug" } : {}
+);
+const _TABBTNS = Object.assign(
+  { recomendacoes: "tabBtnRec", jogos: "tabBtnJogos", tabelas: "tabBtnTab", analise: "tabBtnAnalise" },
+  window.APOSTAS_IS_ADMIN ? { debug: "tabBtnDebug" } : {}
+);
 
 function apostasTab(tab) {
   Object.keys(_PANELS).forEach(t => {
@@ -411,7 +417,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   _updateJogosDateLabel();
 
-  const saved = localStorage.getItem("apostas_tab") || "recomendacoes";
+  const savedRaw = localStorage.getItem("apostas_tab") || "recomendacoes";
+  const saved = _PANELS[savedRaw] ? savedRaw : "recomendacoes";
   apostasTab(saved);
   loadTips();
 });
@@ -3643,4 +3650,103 @@ function _showRegistrarSuccessToast(data) {
     toast.classList.remove("registrar-success-toast--show");
     setTimeout(() => toast.remove(), 400);
   }, 4500);
+}
+
+// ============================================================
+//  DEBUG ASSERTIVIDADE (admin only)
+// ============================================================
+
+async function runDebugAssertividade() {
+  if (!window.APOSTAS_IS_ADMIN) return;
+  const btn    = document.getElementById("debugRunBtn");
+  const result = document.getElementById("debugAssertividadeResult");
+  if (!btn || !result) return;
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="debug-spinner"></span> Calculando...';
+  result.innerHTML = "";
+
+  try {
+    const resp = await fetch("/api/apostas/debug/assertividade");
+    const data = await resp.json();
+    if (!resp.ok) {
+      result.innerHTML = `<div class="debug-error"><i class="bi bi-exclamation-triangle-fill"></i> ${escHtml(data.error || "Erro desconhecido")}</div>`;
+      return;
+    }
+    result.innerHTML = _renderDebugAssertividade(data);
+  } catch {
+    result.innerHTML = `<div class="debug-error"><i class="bi bi-exclamation-triangle-fill"></i> Erro de conexão</div>`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Reanalisar';
+  }
+}
+
+function _renderDebugAssertividade(d) {
+  const g = d.geral || {};
+
+  function _taxaClass(taxa) {
+    if (taxa >= 60) return "debug-taxa--green";
+    if (taxa >= 45) return "debug-taxa--yellow";
+    return "debug-taxa--red";
+  }
+
+  function _statBlock(label, n, green, red, taxa) {
+    return `
+      <div class="debug-stat-block">
+        <div class="debug-stat-label">${escHtml(label)}</div>
+        <div class="debug-stat-nums">
+          <span class="debug-stat-total">${n} tips</span>
+          <span class="debug-badge debug-badge--green">${green}G</span>
+          <span class="debug-badge debug-badge--red">${red}R</span>
+          <span class="debug-taxa ${_taxaClass(taxa)}">${taxa}%</span>
+        </div>
+        <div class="debug-taxa-bar"><div class="debug-taxa-fill" style="width:${Math.min(taxa,100)}%;background:${taxa>=60?'#198754':taxa>=45?'#fd7e14':'#dc3545'}"></div></div>
+      </div>`;
+  }
+
+  const gRow = `
+    <div class="debug-section">
+      <div class="debug-section-title">Geral</div>
+      <div class="debug-geral-grid">
+        <div class="debug-geral-item"><span class="debug-geral-val">${g.total_tips}</span><span class="debug-geral-lbl">Total tips</span></div>
+        <div class="debug-geral-item"><span class="debug-geral-val" style="color:#198754">${g.green}</span><span class="debug-geral-lbl">Green</span></div>
+        <div class="debug-geral-item"><span class="debug-geral-val" style="color:#dc3545">${g.red}</span><span class="debug-geral-lbl">Red</span></div>
+        <div class="debug-geral-item"><span class="debug-geral-val" style="color:#64748b">${g.pendentes}</span><span class="debug-geral-lbl">Pendente</span></div>
+        <div class="debug-geral-item"><span class="debug-geral-val" style="color:#64748b">${g.voids}</span><span class="debug-geral-lbl">Void</span></div>
+        <div class="debug-geral-item"><span class="debug-geral-val ${_taxaClass(g.taxa)}">${g.taxa}%</span><span class="debug-geral-lbl">Taxa</span></div>
+      </div>
+    </div>`;
+
+  const pp = d.por_periodo || {};
+  const p30 = pp.ultimos_30d || {};
+  const p60 = pp.ultimos_60d || {};
+  const p90 = pp.ultimos_90d || {};
+  const periodoRow = `
+    <div class="debug-section">
+      <div class="debug-section-title">Por período (tips resolvidas)</div>
+      ${_statBlock("Últimos 30 dias", p30.total||0, p30.green||0, p30.red||0, p30.taxa||0)}
+      ${_statBlock("Últimos 60 dias", p60.total||0, p60.green||0, p60.red||0, p60.taxa||0)}
+      ${_statBlock("Últimos 90 dias", p90.total||0, p90.green||0, p90.red||0, p90.taxa||0)}
+    </div>`;
+
+  const oddRow = `
+    <div class="debug-section">
+      <div class="debug-section-title">Por faixa de odd</div>
+      ${(d.por_odd||[]).map(o => _statBlock(o.label, o.total, o.green, o.red, o.taxa)).join("") || '<div class="debug-empty">Sem dados</div>'}
+    </div>`;
+
+  const stakeRow = `
+    <div class="debug-section">
+      <div class="debug-section-title">Por stake</div>
+      ${(d.por_stake||[]).map(s => _statBlock(s.label, s.total, s.green, s.red, s.taxa)).join("") || '<div class="debug-empty">Sem dados</div>'}
+    </div>`;
+
+  const legsRow = `
+    <div class="debug-section">
+      <div class="debug-section-title">Por número de jogos na tip</div>
+      ${(d.por_legs||[]).map(l => _statBlock(l.label, l.total, l.green, l.red, l.taxa)).join("") || '<div class="debug-empty">Sem dados</div>'}
+    </div>`;
+
+  return `<div class="debug-assertividade-body">${gRow}${periodoRow}${oddRow}${stakeRow}${legsRow}</div>`;
 }

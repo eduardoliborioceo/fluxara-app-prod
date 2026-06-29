@@ -1881,6 +1881,19 @@ def apostas_analise_cards():
         return jsonify({"available": False, "home": [], "away": []})
 
 
+@bp.route("/apostas/debug/assertividade", methods=["GET"])
+@login_required
+def apostas_debug_assertividade():
+    if not current_user.is_admin:
+        return jsonify({"error": "Sem permissão"}), 403
+    from app.services import apostas_debug_service
+    try:
+        return jsonify(apostas_debug_service.get_assertividade_debug())
+    except Exception as exc:
+        logger.exception("apostas_debug_assertividade error: %s", exc)
+        return jsonify({"error": "Erro ao calcular assertividade"}), 500
+
+
 @bp.route("/assinaturas/iniciar", methods=["POST"])
 @login_required
 def assinatura_iniciar():

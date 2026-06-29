@@ -4341,3 +4341,212 @@
     text-align: center;
   }
 }
+
+/* ============================================================
+   DEBUG ASSERTIVIDADE (admin only)
+   ============================================================ */
+
+.apostas-tab--debug {
+  color: #a78bfa;
+}
+.apostas-tab--debug.apostas-tab--active {
+  color: #7c3aed;
+}
+
+.debug-assertividade-wrap {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 8px;
+}
+
+.debug-assertividade-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.debug-assertividade-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.debug-assertividade-sub {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.debug-run-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #7c3aed;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s ease;
+}
+.debug-run-btn:hover:not(:disabled) { background: #6d28d9; }
+.debug-run-btn:disabled { opacity: .6; cursor: default; }
+
+.debug-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: debug-spin .7s linear infinite;
+}
+@keyframes debug-spin { to { transform: rotate(360deg); } }
+
+.debug-assertividade-body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.debug-section {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.debug-section-title {
+  background: rgba(15,23,42,.04);
+  padding: 8px 14px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+}
+
+.debug-geral-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+}
+
+.debug-geral-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 8px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.debug-geral-item:nth-child(3),
+.debug-geral-item:nth-child(6) { border-right: none; }
+.debug-geral-item:nth-child(4),
+.debug-geral-item:nth-child(5),
+.debug-geral-item:nth-child(6) { border-bottom: none; }
+
+.debug-geral-val {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+
+.debug-geral-lbl {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.debug-stat-block {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.debug-stat-block:last-child { border-bottom: none; }
+
+.debug-stat-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.debug-stat-nums {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.debug-stat-total {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.debug-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.debug-badge--green { background: rgba(25,135,84,.12); color: #198754; }
+.debug-badge--red   { background: rgba(220,53,69,.12);  color: #dc3545; }
+
+.debug-taxa {
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-left: auto;
+}
+.debug-taxa--green  { color: #198754; }
+.debug-taxa--yellow { color: #fd7e14; }
+.debug-taxa--red    { color: #dc3545; }
+
+.debug-taxa-bar {
+  height: 4px;
+  background: rgba(15,23,42,.06);
+  border-radius: 2px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+.debug-taxa-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width .4s ease;
+}
+
+.debug-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px;
+  background: rgba(220,53,69,.08);
+  border: 1px solid rgba(220,53,69,.2);
+  border-radius: 8px;
+  color: #dc3545;
+  font-size: 0.85rem;
+}
+
+.debug-empty {
+  padding: 14px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+@media (max-width: 767px) {
+  .debug-assertividade-wrap { padding: 14px; }
+  .debug-geral-grid { grid-template-columns: repeat(3, 1fr); }
+  .debug-run-btn { font-size: 0.8rem; padding: 7px 12px; }
+}
