@@ -1137,12 +1137,14 @@
       .then(function (data) {
         if (data.error) {
           body.innerHTML = '<div class="flux-error">' + esc(data.error) + '</div>';
-          return;
+        } else {
+          body.innerHTML = '<div class="flux-text">' + esc(data.analise) + '</div>';
         }
-        body.innerHTML = '<div class="flux-text">' + esc(data.analise) + '</div>';
+        if (banner) banner.classList.add('flux-banner--loaded');
       })
       .catch(function () {
         body.innerHTML = '<div class="flux-error">Não foi possível carregar a análise.</div>';
+        if (banner) banner.classList.add('flux-banner--loaded');
       });
   }
 
