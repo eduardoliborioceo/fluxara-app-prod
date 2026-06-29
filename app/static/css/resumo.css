@@ -2321,6 +2321,94 @@
 }
 
 /* ========================
+   ASSISTENTE FLUX — BANNER
+======================== */
+.flux-banner-card .flux-period-btns {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border, rgba(15,23,42,0.09));
+  background: var(--card, #fff);
+}
+
+.flux-banner {
+  position: relative;
+  background-image: url("../images/banners/68845e9d-c9cc-4204-ac2a-7af126282fe0.png");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  aspect-ratio: 3 / 2;
+  max-height: 380px;
+  overflow: hidden;
+}
+
+.flux-frame {
+  position: absolute;
+  left: 38%;
+  top: 4%;
+  right: 3%;
+  bottom: 12%;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow: hidden;
+}
+
+.flux-frame-header {
+  flex-shrink: 0;
+  padding: 8px 12px 6px;
+  border-bottom: 1px solid rgba(15,23,42,0.07);
+}
+
+.flux-frame-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text, #1e293b);
+  line-height: 1.2;
+}
+
+.flux-frame-sub {
+  font-size: 0.62rem;
+  color: var(--text-muted, #64748b);
+  font-weight: 500;
+  margin-top: 1px;
+}
+
+.flux-banner-card .flux-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 12px 10px;
+  min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(99,102,241,0.3) transparent;
+}
+
+.flux-banner-card .flux-body::-webkit-scrollbar { width: 4px; }
+.flux-banner-card .flux-body::-webkit-scrollbar-track { background: transparent; }
+.flux-banner-card .flux-body::-webkit-scrollbar-thumb {
+  background: rgba(99,102,241,0.3);
+  border-radius: 4px;
+}
+
+.flux-banner-card .flux-text {
+  font-size: 0.78rem;
+  line-height: 1.6;
+  color: var(--text, #1e293b);
+}
+
+.flux-banner-card .flux-loading {
+  font-size: 0.75rem;
+  color: #475569;
+}
+
+.flux-banner-card .flux-error {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+@media (max-width: 767px) {
+  .flux-banner { max-height: none; }
+  .flux-banner-card .flux-period-btn { font-size: 0.72rem; padding: 5px 0; }
+}
+
+/* ========================
    PLANEJAMENTO POR RECEBIMENTO
 ======================== */
 .quin-wrapper {
