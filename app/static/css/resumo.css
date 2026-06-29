@@ -2381,6 +2381,34 @@
   color: #64748b;
 }
 
+/* Planejamento — fundo normal, sem imagem */
+.flux-banner.flux-banner--plain {
+  background-image: none;
+  background: var(--card, #fff);
+  aspect-ratio: unset;
+  max-height: unset;
+  height: auto;
+  overflow: visible;
+}
+
+.flux-banner.flux-banner--plain .flux-frame {
+  position: static;
+  left: auto;
+  top: auto;
+  right: auto;
+  bottom: auto;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.flux-banner.flux-banner--plain .flux-body {
+  height: auto;
+  width: 100%;
+  padding: 14px 16px 18px;
+  overflow-y: visible;
+}
+
 @media (max-width: 767px) {
   .flux-banner { max-height: none; }
   .flux-banner-card .flux-period-btn { font-size: 0.72rem; padding: 5px 0; }
