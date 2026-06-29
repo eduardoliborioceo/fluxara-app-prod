@@ -2345,37 +2345,15 @@
   top: 4%;
   right: 3%;
   bottom: 12%;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
   overflow: hidden;
 }
 
-.flux-frame-header {
-  flex-shrink: 0;
-  padding: 8px 12px 6px;
-  border-bottom: 1px solid rgba(15,23,42,0.07);
-}
-
-.flux-frame-title {
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: var(--text, #1e293b);
-  line-height: 1.2;
-}
-
-.flux-frame-sub {
-  font-size: 0.62rem;
-  color: var(--text-muted, #64748b);
-  font-weight: 500;
-  margin-top: 1px;
-}
-
 .flux-banner-card .flux-body {
-  flex: 1;
+  width: 100%;
+  height: 100%;
   overflow-y: auto;
-  padding: 8px 12px 10px;
-  min-height: 0;
+  padding: 10px 14px 12px;
+  box-sizing: border-box;
   scrollbar-width: thin;
   scrollbar-color: rgba(99,102,241,0.3) transparent;
 }
