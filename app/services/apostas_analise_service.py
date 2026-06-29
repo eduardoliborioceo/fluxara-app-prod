@@ -743,3 +743,75 @@ def _fmt_date(iso: str) -> str:
         return d.strftime("%d/%m/%y")
     except Exception:
         return iso[:10]
+
+
+# ============================================================
+# Debug / calibration API (admin only)
+# ============================================================
+
+def get_cached_league_ids() -> list[int]:
+    now = time.monotonic()
+    return [lid for lid, entry in _cache.items() if entry.get("expires", 0) > now]
+
+
+def evaluate_predictions(league_id: int) -> list[dict]:
+    """
+    For every finished game in the cache, compute the model's prediction
+    and compare it to the actual result.
+    Uses current accumulated team stats (look-ahead bias present — intended
+    for calibration analysis, not strict out-of-sample validation).
+    """
+    entry = _cache.get(league_id)
+    if not entry:
+        return []
+
+    raw_pairs  = entry.get("raw_pairs") or []
+    team_index = entry.get("team_index") or {}
+    _empty_h2h = {"total": 0, "home_wins": 0, "draws": 0, "away_wins": 0,
+                  "avg_goals": 0, "matches": []}
+
+    results = []
+    for pair in raw_pairs:
+        home_id = pair["home_id"]
+        away_id = pair["away_id"]
+        gh      = pair["gh"]
+        ga      = pair["ga"]
+
+        home_stats = _team_profile(team_index, home_id, side="home")
+        away_stats = _team_profile(team_index, away_id, side="away")
+        pred = compute_prediction(home_stats, away_stats, _empty_h2h, None, None, None)
+        if not pred.get("has_data"):
+            continue
+
+        probs = pred["probabilities"]
+        goals = pred.get("goals") or {}
+
+        actual_outcome = "home" if gh > ga else ("draw" if gh == ga else "away")
+
+        max_p = max(probs["home_win"], probs["draw"], probs["away_win"])
+        if probs["home_win"] == max_p:
+            predicted_outcome = "home"
+        elif probs["draw"] == max_p:
+            predicted_outcome = "draw"
+        else:
+            predicted_outcome = "away"
+
+        results.append({
+            "home_name":        pair["home_name"],
+            "away_name":        pair["away_name"],
+            "date":             pair["date"],
+            "gh":               gh,
+            "ga":               ga,
+            "actual_outcome":   actual_outcome,
+            "predicted_outcome": predicted_outcome,
+            "home_win_pct":     probs["home_win"],
+            "draw_pct":         probs["draw"],
+            "away_win_pct":     probs["away_win"],
+            "over_25_pct":      goals.get("over_25_pct", 0),
+            "btts_pct":         goals.get("btts_pct", 0),
+            "actual_over25":    (gh + ga) > 2,
+            "actual_btts":      gh > 0 and ga > 0,
+            "outcome_correct":  actual_outcome == predicted_outcome,
+        })
+
+    return results

@@ -3683,70 +3683,95 @@ async function runDebugAssertividade() {
 }
 
 function _renderDebugAssertividade(d) {
-  const g = d.geral || {};
+  if (!d.available) {
+    return `<div class="debug-not-available"><i class="bi bi-info-circle"></i> ${escHtml(d.message || "Sem dados disponíveis")}</div>`;
+  }
 
   function _taxaClass(taxa) {
-    if (taxa >= 60) return "debug-taxa--green";
-    if (taxa >= 45) return "debug-taxa--yellow";
+    if (taxa >= 55) return "debug-taxa--green";
+    if (taxa >= 40) return "debug-taxa--yellow";
     return "debug-taxa--red";
   }
 
-  function _statBlock(label, n, green, red, taxa) {
+  function _taxaColor(taxa) {
+    return taxa >= 55 ? "#198754" : taxa >= 40 ? "#fd7e14" : "#dc3545";
+  }
+
+  function _metricBlock(label, corretos, total, taxa) {
     return `
       <div class="debug-stat-block">
         <div class="debug-stat-label">${escHtml(label)}</div>
         <div class="debug-stat-nums">
-          <span class="debug-stat-total">${n} tips</span>
-          <span class="debug-badge debug-badge--green">${green}G</span>
-          <span class="debug-badge debug-badge--red">${red}R</span>
+          <span class="debug-stat-total">${corretos}/${total} jogos</span>
           <span class="debug-taxa ${_taxaClass(taxa)}">${taxa}%</span>
         </div>
-        <div class="debug-taxa-bar"><div class="debug-taxa-fill" style="width:${Math.min(taxa,100)}%;background:${taxa>=60?'#198754':taxa>=45?'#fd7e14':'#dc3545'}"></div></div>
+        <div class="debug-taxa-bar"><div class="debug-taxa-fill" style="width:${Math.min(taxa,100)}%;background:${_taxaColor(taxa)}"></div></div>
       </div>`;
   }
 
-  const gRow = `
+  const oc = d.outcome || {};
+  const o2 = d.over25  || {};
+  const bt = d.btts    || {};
+  const pt = d.por_tipo || {};
+
+  const geralRow = `
     <div class="debug-section">
-      <div class="debug-section-title">Geral</div>
-      <div class="debug-geral-grid">
-        <div class="debug-geral-item"><span class="debug-geral-val">${g.total_tips}</span><span class="debug-geral-lbl">Total tips</span></div>
-        <div class="debug-geral-item"><span class="debug-geral-val" style="color:#198754">${g.green}</span><span class="debug-geral-lbl">Green</span></div>
-        <div class="debug-geral-item"><span class="debug-geral-val" style="color:#dc3545">${g.red}</span><span class="debug-geral-lbl">Red</span></div>
-        <div class="debug-geral-item"><span class="debug-geral-val" style="color:#64748b">${g.pendentes}</span><span class="debug-geral-lbl">Pendente</span></div>
-        <div class="debug-geral-item"><span class="debug-geral-val" style="color:#64748b">${g.voids}</span><span class="debug-geral-lbl">Void</span></div>
-        <div class="debug-geral-item"><span class="debug-geral-val ${_taxaClass(g.taxa)}">${g.taxa}%</span><span class="debug-geral-lbl">Taxa</span></div>
+      <div class="debug-section-title">Resumo geral — ${d.total_jogos} jogos · ${d.ligas_analisadas} liga${d.ligas_analisadas !== 1 ? "s" : ""}</div>
+      <div class="debug-geral-grid debug-geral-grid--3">
+        <div class="debug-geral-item">
+          <span class="debug-geral-val ${_taxaClass(oc.taxa)}">${oc.taxa}%</span>
+          <span class="debug-geral-lbl">Resultado</span>
+          <span class="debug-geral-sub">${oc.corretos}/${oc.total}</span>
+        </div>
+        <div class="debug-geral-item">
+          <span class="debug-geral-val ${_taxaClass(o2.taxa)}">${o2.taxa}%</span>
+          <span class="debug-geral-lbl">Over/Under 2.5</span>
+          <span class="debug-geral-sub">${o2.corretos}/${o2.total}</span>
+        </div>
+        <div class="debug-geral-item">
+          <span class="debug-geral-val ${_taxaClass(bt.taxa)}">${bt.taxa}%</span>
+          <span class="debug-geral-lbl">BTTS</span>
+          <span class="debug-geral-sub">${bt.corretos}/${bt.total}</span>
+        </div>
       </div>
     </div>`;
 
-  const pp = d.por_periodo || {};
-  const p30 = pp.ultimos_30d || {};
-  const p60 = pp.ultimos_60d || {};
-  const p90 = pp.ultimos_90d || {};
-  const periodoRow = `
+  const ph = pt.home   || {};
+  const pd = pt.empate || {};
+  const pa = pt.away   || {};
+  const tipoRow = `
     <div class="debug-section">
-      <div class="debug-section-title">Por período (tips resolvidas)</div>
-      ${_statBlock("Últimos 30 dias", p30.total||0, p30.green||0, p30.red||0, p30.taxa||0)}
-      ${_statBlock("Últimos 60 dias", p60.total||0, p60.green||0, p60.red||0, p60.taxa||0)}
-      ${_statBlock("Últimos 90 dias", p90.total||0, p90.green||0, p90.red||0, p90.taxa||0)}
+      <div class="debug-section-title">Precisão por tipo de resultado previsto</div>
+      ${_metricBlock(`Casa (previsão casa — ${ph.previsto} jogos)`,  ph.correto||0, ph.previsto||0, ph.taxa||0)}
+      ${_metricBlock(`Empate (previsão empate — ${pd.previsto} jogos)`, pd.correto||0, pd.previsto||0, pd.taxa||0)}
+      ${_metricBlock(`Fora (previsão fora — ${pa.previsto} jogos)`,  pa.correto||0, pa.previsto||0, pa.taxa||0)}
     </div>`;
 
-  const oddRow = `
+  const calRow = `
     <div class="debug-section">
-      <div class="debug-section-title">Por faixa de odd</div>
-      ${(d.por_odd||[]).map(o => _statBlock(o.label, o.total, o.green, o.red, o.taxa)).join("") || '<div class="debug-empty">Sem dados</div>'}
+      <div class="debug-section-title">Calibração — acerto por confiança do modelo</div>
+      ${(d.calibration||[]).map(c => _metricBlock(`Confiança ${c.label}`, c.correct, c.total, c.taxa)).join("") || '<div class="debug-empty">Sem dados</div>'}
     </div>`;
 
-  const stakeRow = `
+  const ligaRows = (d.por_liga || []).map(lg => `
+    <div class="debug-stat-block">
+      <div class="debug-stat-label">${escHtml(lg.league_name)} <span class="debug-source-badge">${escHtml(lg.source)}</span></div>
+      <div class="debug-stat-nums">
+        <span class="debug-stat-total">${lg.jogos} jogos</span>
+        <span class="debug-taxa ${_taxaClass(lg.outcome_taxa)}">${lg.outcome_taxa}% resultado</span>
+        <span class="debug-taxa--muted">O2.5 ${lg.over25_taxa}%</span>
+        <span class="debug-taxa--muted">BTTS ${lg.btts_taxa}%</span>
+      </div>
+      <div class="debug-taxa-bar"><div class="debug-taxa-fill" style="width:${Math.min(lg.outcome_taxa,100)}%;background:${_taxaColor(lg.outcome_taxa)}"></div></div>
+    </div>`).join("") || '<div class="debug-empty">Sem ligas</div>';
+
+  const ligaSection = `
     <div class="debug-section">
-      <div class="debug-section-title">Por stake</div>
-      ${(d.por_stake||[]).map(s => _statBlock(s.label, s.total, s.green, s.red, s.taxa)).join("") || '<div class="debug-empty">Sem dados</div>'}
+      <div class="debug-section-title">Por liga (ordenado por acerto de resultado)</div>
+      ${ligaRows}
     </div>`;
 
-  const legsRow = `
-    <div class="debug-section">
-      <div class="debug-section-title">Por número de jogos na tip</div>
-      ${(d.por_legs||[]).map(l => _statBlock(l.label, l.total, l.green, l.red, l.taxa)).join("") || '<div class="debug-empty">Sem dados</div>'}
-    </div>`;
+  const nota = `<div class="debug-nota"><i class="bi bi-info-circle"></i> Análise sobre dados atuais do cache (ESPN + API-Football como fallback). Dados do cache incluem o próprio jogo — serve para calibração, não para validação out-of-sample.</div>`;
 
-  return `<div class="debug-assertividade-body">${gRow}${periodoRow}${oddRow}${stakeRow}${legsRow}</div>`;
+  return `<div class="debug-assertividade-body">${nota}${geralRow}${tipoRow}${calRow}${ligaSection}</div>`;
 }
