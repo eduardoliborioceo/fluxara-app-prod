@@ -42,6 +42,27 @@
 }
 
 /* ========================
+   LOADING STATE
+======================== */
+#cardsContainer {
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+
+#cardsContainer.cards-ready {
+  opacity: 1;
+}
+
+@keyframes resumo-placeholder-pulse {
+  0%, 100% { opacity: 0.9; }
+  50%       { opacity: 0.3; }
+}
+
+.resumo-placeholder {
+  animation: resumo-placeholder-pulse 1.4s ease-in-out 3;
+}
+
+/* ========================
    DESKTOP LAYOUT
 ======================== */
 /* Wrapper semântico apenas — nunca ocupa espaço no layout */

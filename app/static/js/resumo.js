@@ -1244,6 +1244,10 @@
 
   applyCardOrder();
   applyCardVisibility();
+  requestAnimationFrame(function () {
+    var c = document.getElementById('cardsContainer');
+    if (c) c.classList.add('cards-ready');
+  });
   initGerenciar();
   loadContas();
   loadCartoes();
