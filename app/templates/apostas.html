@@ -41,6 +41,12 @@
       <i class="bi bi-bar-chart-line-fill"></i>
       Análise
     </button>
+    {% if current_user.is_admin %}
+    <button class="apostas-tab apostas-tab--debug" id="tabBtnDebug" onclick="apostasTab('debug')">
+      <i class="bi bi-bug-fill"></i>
+      Debug Assertividade
+    </button>
+    {% endif %}
   </div>
 
   <!-- ======================================================
@@ -684,6 +690,26 @@
     </div>
   </div>
 </div>
+
+  {% if current_user.is_admin %}
+  <!-- ======================================================
+       PAINEL DEBUG ASSERTIVIDADE (admin only)
+  ====================================================== -->
+  <div id="panelDebug" style="display:none">
+    <div class="debug-assertividade-wrap">
+      <div class="debug-assertividade-header">
+        <div>
+          <div class="debug-assertividade-title"><i class="bi bi-bug-fill"></i> Debug Assertividade</div>
+          <div class="debug-assertividade-sub">Análise do índice de acerto das previsões</div>
+        </div>
+        <button class="debug-run-btn" id="debugRunBtn" onclick="runDebugAssertividade()">
+          <i class="bi bi-play-fill"></i> Rodar análise
+        </button>
+      </div>
+      <div id="debugAssertividadeResult"></div>
+    </div>
+  </div>
+  {% endif %}
 
 {% endblock %}
 
