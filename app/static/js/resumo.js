@@ -417,79 +417,6 @@
     return new Date(String(str).substring(0, 10) + 'T12:00:00');
   }
 
-  async function loadProjecao() {
-    var body = document.getElementById('projecaoBody');
-    try {
-      var r = await fetch('/api/resumo/projecao-saldo');
-      var data = await r.json();
-      var saldoAtual = parseFloat(data.saldo_atual || 0);
-      var eventos = Array.isArray(data.eventos) ? data.eventos : [];
-
-      if (!eventos.length) {
-        body.innerHTML = '<div class="projecao-vazio">'
-          + '<i class="bi bi-calendar-check d-block mb-1" style="font-size:1.6rem;opacity:.3"></i>'
-          + 'Sem lançamentos pendentes nos próximos 60 dias</div>';
-        var hj = document.getElementById('projecaoHoje');
-        if (hj) hj.textContent = formatMoney(saldoAtual);
-        return;
-      }
-
-      var hj = document.getElementById('projecaoHoje');
-      if (hj) hj.textContent = formatMoney(saldoAtual);
-
-      var grupos = {};
-      eventos.forEach(function (ev) {
-        var d = ev.data;
-        if (!grupos[d]) grupos[d] = [];
-        grupos[d].push(ev);
-      });
-
-      var html = '';
-      var currentMesSep = null;
-      Object.keys(grupos).sort().forEach(function (dataStr) {
-        var evs = grupos[dataStr];
-        var dt = parseProjecaoDate(dataStr);
-        var mesSepKey = dt.getFullYear() * 100 + dt.getMonth();
-        if (mesSepKey !== currentMesSep) {
-          currentMesSep = mesSepKey;
-          html += '<div class="projecao-mes-sep">==== ' + MESES[dt.getMonth()] + ' ' + dt.getFullYear() + ' ====</div>';
-        }
-        var label = dt.getDate() + ' ' + MESES_ABREV[dt.getMonth()] + ' ' + dt.getFullYear();
-        var saldoDia = parseFloat(evs[evs.length - 1].saldo_acumulado);
-        var temReceita = evs.some(function (e) { return e.tipo === 'receita'; });
-        var temDespesa = evs.some(function (e) { return e.tipo === 'despesa'; });
-        var dotClass = (temReceita && temDespesa) ? 'misto' : (temReceita ? 'receita' : 'despesa');
-        var saldoClass = saldoDia >= 0 ? 'projecao-dia-saldo--pos' : 'projecao-dia-saldo--neg';
-
-        html += '<div class="projecao-dia">'
-          + '<div class="projecao-dia-linha">'
-          +   '<div class="projecao-dia-dot projecao-dia-dot--' + dotClass + '"></div>'
-          +   '<div class="projecao-dia-vert"></div>'
-          + '</div>'
-          + '<div class="projecao-dia-conteudo">'
-          +   '<div class="projecao-dia-header">'
-          +     '<span class="projecao-dia-data">' + esc(label) + '</span>'
-          +     '<span class="projecao-dia-saldo ' + saldoClass + '">' + formatMoney(saldoDia) + '</span>'
-          +   '</div>';
-
-        evs.forEach(function (ev) {
-          var prefix = ev.tipo === 'receita' ? '+ ' : '− ';
-          html += '<div class="projecao-tx">'
-            + '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px">'
-            + esc(ev.descricao || 'Sem descrição') + '</span>'
-            + '<span class="projecao-tx-valor projecao-tx-valor--' + ev.tipo + '">'
-            + prefix + formatMoney(ev.valor) + '</span>'
-            + '</div>';
-        });
-
-        html += '</div></div>';
-      });
-
-      body.innerHTML = '<div class="projecao-timeline">' + html + '</div>';
-    } catch (e) {
-      body.innerHTML = '<div class="projecao-vazio">Erro ao carregar projeção.</div>';
-    }
-  }
 
   var CARDS_ORDER_KEY      = 'fluxara_cards_order';
   var CARD_VISIBILITY_KEY  = 'fluxara_cards_visibility';
@@ -868,7 +795,6 @@
     'contas':         { nome: 'Contas',                 icone: 'bi-wallet2',         cor: '#0d6efd' },
     'visao':          { nome: 'Visão Geral',             icone: 'bi-bar-chart-line',  cor: '#0d6efd' },
     'cartoes':        { nome: 'Cartões de Crédito',      icone: 'bi-credit-card',     cor: '#0d6efd' },
-    'projecao':       { nome: 'Projeção de Saldo',       icone: 'bi-graph-up-arrow',  cor: '#0d6efd' },
     'despesas-conta': { nome: 'Despesas por Conta',      icone: 'bi-pie-chart',       cor: '#dc3545' },
     'despesas-cat':   { nome: 'Despesas por Categoria',  icone: 'bi-tags',            cor: '#f59e0b' },
     'debitos':        { nome: 'Débitos Vencidos',        icone: 'bi-exclamation-circle', cor: '#dc3545' },
@@ -1250,7 +1176,6 @@
   loadContas();
   loadCartoes();
   loadVisaoGeral();
-  loadProjecao();
   loadDebitos();
   loadDespesasPorConta();
   loadDespesasPorCategoria();
