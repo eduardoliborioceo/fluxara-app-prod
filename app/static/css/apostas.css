@@ -63,26 +63,22 @@
   color: #fff !important;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 767px) {
   .apostas-tabs {
-    gap: 3px;
-    padding: 3px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+  }
+
+  .apostas-tabs::-webkit-scrollbar {
+    display: none;
   }
 
   .apostas-tab {
-    flex-direction: column;
-    gap: 3px;
-    padding: 7px 3px;
-    font-size: .62rem;
-    white-space: normal;
-    text-align: center;
-    line-height: 1.2;
-    min-width: 0;
-  }
-
-  .apostas-tab i {
-    font-size: .95rem;
-    flex-shrink: 0;
+    flex: 0 0 auto;
+    padding: 8px 14px;
+    font-size: .8rem;
   }
 }
 
