@@ -2324,12 +2324,16 @@
 
 .flux-banner {
   position: relative;
-  background-image: url("../images/banners/68845e9d-c9cc-4204-ac2a-7af126282fe0.png");
+  background: #0f172a;
   background-size: 100% 100%;
   background-repeat: no-repeat;
   aspect-ratio: 3 / 2;
   max-height: 380px;
   overflow: hidden;
+}
+
+.flux-banner.flux-banner--loaded {
+  background-image: url("../images/banners/68845e9d-c9cc-4204-ac2a-7af126282fe0.png");
 }
 
 .flux-frame {
