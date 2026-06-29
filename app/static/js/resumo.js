@@ -1113,6 +1113,9 @@
       btn.classList.toggle('active', btn.dataset.periodo === periodo);
     });
 
+    var banner = document.querySelector('.flux-banner');
+    if (banner) banner.classList.toggle('flux-banner--plain', periodo === 'divisao');
+
     if (periodo === 'divisao') {
       fluxLoading(body, 'Calculando planejamento...');
       fetch('/api/assistente/planejamento')
