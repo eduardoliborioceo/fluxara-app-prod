@@ -1,104 +1,134 @@
-import datetime
-import json
 import logging
-
-from app.repositories import apostas_tips_repository as repo
 
 logger = logging.getLogger(__name__)
 
 
 def get_assertividade_debug() -> dict:
-    tips = repo.list_tips(admin=True)
+    from app.services import apostas_analise_service as svc
 
-    resolved = [t for t in tips if t.get("status") in ("green", "red")]
-    total_r  = len(resolved)
-    green_r  = sum(1 for t in resolved if t.get("status") == "green")
-    red_r    = total_r - green_r
-    taxa_r   = round(green_r / total_r * 100, 1) if total_r else 0.0
+    cached_ids = svc.get_cached_league_ids()
 
-    today = datetime.date.today()
+    if not cached_ids:
+        return {
+            "available": False,
+            "message": (
+                "Nenhuma liga carregada em memória. "
+                "Acesse a aba Próximos Jogos ou Análise para carregar os dados, "
+                "depois rode o debug novamente."
+            ),
+        }
 
-    def _period_stats(days: int) -> dict:
-        cutoff = today - datetime.timedelta(days=days)
-        subset = []
-        for t in resolved:
-            ca = t.get("created_at")
-            if ca:
-                d = ca.date() if hasattr(ca, "date") else datetime.date.fromisoformat(str(ca)[:10])
-                if d >= cutoff:
-                    subset.append(t)
-        n = len(subset)
-        g = sum(1 for t in subset if t.get("status") == "green")
-        return {"total": n, "green": g, "red": n - g, "taxa": round(g / n * 100, 1) if n else 0.0}
+    league_map = {lg["id"]: lg for lg in svc.get_leagues()}
+    all_evals: list[dict] = []
+    by_league: list[dict] = []
 
-    ranges = [
-        ("1.00–1.50", 1.00, 1.50),
-        ("1.51–2.00", 1.51, 2.00),
-        ("2.01–3.00", 2.01, 3.00),
-        ("3.01–5.00", 3.01, 5.00),
-        ("5.01+",     5.01, 9999.0),
-    ]
-    by_odd = []
-    for label, lo, hi in ranges:
-        bucket = [t for t in resolved if lo <= float(t.get("odd") or 0) <= hi]
-        if not bucket:
+    for lid in cached_ids:
+        try:
+            evals = svc.evaluate_predictions(lid)
+        except Exception as exc:
+            logger.warning("evaluate_predictions failed league=%s: %s", lid, exc)
             continue
-        n = len(bucket)
-        g = sum(1 for t in bucket if t.get("status") == "green")
-        by_odd.append({"label": label, "total": n, "green": g, "red": n - g,
-                       "taxa": round(g / n * 100, 1)})
+        if not evals:
+            continue
 
-    by_stake_map: dict = {}
-    for t in resolved:
-        s = (t.get("stake") or "Sem stake").strip() or "Sem stake"
-        by_stake_map.setdefault(s, {"total": 0, "green": 0})
-        by_stake_map[s]["total"] += 1
-        if t.get("status") == "green":
-            by_stake_map[s]["green"] += 1
-    by_stake = []
-    for label, v in sorted(by_stake_map.items()):
-        n = v["total"]
-        g = v["green"]
-        by_stake.append({"label": label, "total": n, "green": g, "red": n - g,
-                         "taxa": round(g / n * 100, 1) if n else 0.0})
+        n            = len(evals)
+        n_outcome    = sum(1 for e in evals if e["outcome_correct"])
+        n_over25     = sum(1 for e in evals if (e["over_25_pct"] > 50) == e["actual_over25"])
+        n_btts       = sum(1 for e in evals if (e["btts_pct"] > 50) == e["actual_btts"])
+        n_home_right = sum(1 for e in evals if e["actual_outcome"] == "home" and e["predicted_outcome"] == "home")
+        n_home_total = sum(1 for e in evals if e["predicted_outcome"] == "home")
+        n_draw_right = sum(1 for e in evals if e["actual_outcome"] == "draw" and e["predicted_outcome"] == "draw")
+        n_draw_total = sum(1 for e in evals if e["predicted_outcome"] == "draw")
+        n_away_right = sum(1 for e in evals if e["actual_outcome"] == "away" and e["predicted_outcome"] == "away")
+        n_away_total = sum(1 for e in evals if e["predicted_outcome"] == "away")
 
-    by_legs_map: dict = {}
-    for t in resolved:
-        jogos = t.get("jogos") or []
-        if isinstance(jogos, str):
-            try:
-                jogos = json.loads(jogos)
-            except Exception:
-                jogos = []
-        n_legs = len(jogos) if isinstance(jogos, list) else 0
-        label  = f"{n_legs} jogo{'s' if n_legs != 1 else ''}"
-        by_legs_map.setdefault(label, {"n": n_legs, "total": 0, "green": 0})
-        by_legs_map[label]["total"] += 1
-        if t.get("status") == "green":
-            by_legs_map[label]["green"] += 1
-    by_legs = []
-    for label, v in sorted(by_legs_map.items(), key=lambda x: x[1]["n"]):
-        n = v["total"]
-        g = v["green"]
-        by_legs.append({"label": label, "total": n, "green": g, "red": n - g,
-                        "taxa": round(g / n * 100, 1) if n else 0.0})
+        by_league.append({
+            "league_id":    lid,
+            "league_name":  league_map.get(lid, {}).get("name", str(lid)),
+            "source":       svc._cache.get(lid, {}).get("source", "?"),
+            "jogos":        n,
+            "outcome_taxa": round(n_outcome / n * 100, 1),
+            "over25_taxa":  round(n_over25  / n * 100, 1),
+            "btts_taxa":    round(n_btts    / n * 100, 1),
+            "home_prec":    round(n_home_right / n_home_total * 100, 1) if n_home_total else 0.0,
+            "draw_prec":    round(n_draw_right / n_draw_total * 100, 1) if n_draw_total else 0.0,
+            "away_prec":    round(n_away_right / n_away_total * 100, 1) if n_away_total else 0.0,
+        })
+        all_evals.extend(evals)
+
+    if not all_evals:
+        return {
+            "available": False,
+            "message": "Nenhum jogo avaliável nas ligas em cache.",
+        }
+
+    N         = len(all_evals)
+    n_outcome = sum(1 for e in all_evals if e["outcome_correct"])
+    n_over25  = sum(1 for e in all_evals if (e["over_25_pct"] > 50) == e["actual_over25"])
+    n_btts    = sum(1 for e in all_evals if (e["btts_pct"] > 50) == e["actual_btts"])
+
+    n_home_right = sum(1 for e in all_evals if e["actual_outcome"] == "home" and e["predicted_outcome"] == "home")
+    n_home_total = sum(1 for e in all_evals if e["predicted_outcome"] == "home")
+    n_draw_right = sum(1 for e in all_evals if e["actual_outcome"] == "draw" and e["predicted_outcome"] == "draw")
+    n_draw_total = sum(1 for e in all_evals if e["predicted_outcome"] == "draw")
+    n_away_right = sum(1 for e in all_evals if e["actual_outcome"] == "away" and e["predicted_outcome"] == "away")
+    n_away_total = sum(1 for e in all_evals if e["predicted_outcome"] == "away")
+
+    conf_buckets = [
+        ("40–50%", 40, 50),
+        ("50–60%", 50, 60),
+        ("60–70%", 60, 70),
+        ("70–80%", 70, 80),
+        ("80%+",   80, 101),
+    ]
+    calibration = []
+    for label, lo, hi in conf_buckets:
+        subset = [
+            e for e in all_evals
+            if lo <= max(e["home_win_pct"], e["draw_pct"], e["away_win_pct"]) < hi
+        ]
+        if not subset:
+            continue
+        n = len(subset)
+        c = sum(1 for e in subset if e["outcome_correct"])
+        calibration.append({"label": label, "total": n, "correct": c, "taxa": round(c / n * 100, 1)})
 
     return {
-        "geral": {
-            "total_tips": len(tips),
-            "resolvidas": total_r,
-            "green":      green_r,
-            "red":        red_r,
-            "pendentes":  sum(1 for t in tips if t.get("status") == "pendente"),
-            "voids":      sum(1 for t in tips if t.get("status") == "void"),
-            "taxa":       taxa_r,
+        "available":        True,
+        "total_jogos":      N,
+        "ligas_analisadas": len(by_league),
+        "outcome": {
+            "corretos": n_outcome,
+            "total":    N,
+            "taxa":     round(n_outcome / N * 100, 1),
         },
-        "por_periodo": {
-            "ultimos_30d": _period_stats(30),
-            "ultimos_60d": _period_stats(60),
-            "ultimos_90d": _period_stats(90),
+        "por_tipo": {
+            "home": {
+                "previsto": n_home_total,
+                "correto":  n_home_right,
+                "taxa":     round(n_home_right / n_home_total * 100, 1) if n_home_total else 0.0,
+            },
+            "empate": {
+                "previsto": n_draw_total,
+                "correto":  n_draw_right,
+                "taxa":     round(n_draw_right / n_draw_total * 100, 1) if n_draw_total else 0.0,
+            },
+            "away": {
+                "previsto": n_away_total,
+                "correto":  n_away_right,
+                "taxa":     round(n_away_right / n_away_total * 100, 1) if n_away_total else 0.0,
+            },
         },
-        "por_odd":   by_odd,
-        "por_stake": by_stake,
-        "por_legs":  by_legs,
+        "over25": {
+            "corretos": n_over25,
+            "total":    N,
+            "taxa":     round(n_over25 / N * 100, 1),
+        },
+        "btts": {
+            "corretos": n_btts,
+            "total":    N,
+            "taxa":     round(n_btts / N * 100, 1),
+        },
+        "calibration": calibration,
+        "por_liga":    sorted(by_league, key=lambda x: x["outcome_taxa"], reverse=True),
     }
