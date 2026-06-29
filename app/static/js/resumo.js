@@ -421,6 +421,11 @@
   var CARDS_ORDER_KEY      = 'fluxara_cards_order';
   var CARD_VISIBILITY_KEY  = 'fluxara_cards_visibility';
 
+  var CAT_COLORS        = ['#0d6efd','#dc3545','#fd7e14','#198754','#6f42c1','#20c997','#e83e8c','#ffc107'];
+  var _despCatData      = null;
+  var _despCatGrand     = 0;
+  var _despCatChartMode = false;
+
   function loadVisibility() {
     try { return JSON.parse(localStorage.getItem(CARD_VISIBILITY_KEY)) || {}; } catch (e) { return {}; }
   }
@@ -641,6 +646,99 @@
     }
   }
 
+  function _renderDespCatList(data, grand) {
+    var body = document.getElementById('despesasCatBody');
+    if (!body) return;
+    var top5 = data.slice(0, 5);
+    var rest = data.slice(5);
+
+    var conicStops = [];
+    var acc = 0;
+    data.forEach(function (c, i) {
+      var pct   = grand > 0 ? parseFloat(c.total || 0) / grand * 100 : 0;
+      var color = CAT_COLORS[i % CAT_COLORS.length];
+      conicStops.push(color + ' ' + acc.toFixed(2) + '% ' + (acc + pct).toFixed(2) + '%');
+      acc += pct;
+    });
+    var gradient = 'conic-gradient(' + conicStops.join(', ') + ')';
+
+    function buildRow(c, i) {
+      var val   = parseFloat(c.total || 0);
+      var pct   = grand > 0 ? Math.round(val / grand * 100) : 0;
+      var color = CAT_COLORS[i % CAT_COLORS.length];
+      return '<div class="desp-cat-row">'
+        + '<span class="desp-cat-dot" style="background:' + color + '"></span>'
+        + '<div class="desp-cat-info">'
+        +   '<div class="desp-cat-nome">' + esc(c.categoria_nome) + '</div>'
+        +   '<div class="desp-cat-bar-wrap"><div class="desp-cat-bar" style="width:' + pct + '%;background:' + color + '"></div></div>'
+        + '</div>'
+        + '<div class="desp-cat-right">'
+        +   '<div class="desp-cat-valor">' + formatMoney(val) + '</div>'
+        +   '<div class="desp-cat-pct">' + pct + '%</div>'
+        + '</div>'
+        + '</div>';
+    }
+
+    var top5Html = top5.map(buildRow).join('');
+    var restHtml = rest.map(function (c, i) { return buildRow(c, i + 5); }).join('');
+    var moreLabel = rest.length + ' ' + (rest.length === 1 ? 'categoria' : 'categorias');
+
+    body.innerHTML = '<div class="desp-cat-layout">'
+      + '<div class="desp-cat-chart-wrap"><div class="desp-cat-pie" style="background:' + gradient + '"></div></div>'
+      + '<div class="desp-cat-list">' + top5Html + '</div>'
+      + '</div>'
+      + (rest.length
+          ? '<div class="desp-cat-extras" id="despCatExtras">' + restHtml + '</div>'
+            + '<button type="button" class="desp-cat-expand-btn" id="despCatExpandBtn">'
+            + 'Ver mais ' + moreLabel + ' <i class="bi bi-chevron-down"></i></button>'
+          : '');
+
+    if (rest.length) {
+      var btn      = document.getElementById('despCatExpandBtn');
+      var extras   = document.getElementById('despCatExtras');
+      var expanded = false;
+      btn.addEventListener('click', function () {
+        expanded = !expanded;
+        extras.style.display = expanded ? 'block' : 'none';
+        btn.innerHTML = expanded
+          ? 'Recolher <i class="bi bi-chevron-up"></i>'
+          : 'Ver mais ' + moreLabel + ' <i class="bi bi-chevron-down"></i>';
+      });
+    }
+  }
+
+  function _renderDespCatChart(data, grand) {
+    var body = document.getElementById('despesasCatBody');
+    if (!body) return;
+
+    var segsHtml = data.map(function (c, i) {
+      var val   = parseFloat(c.total || 0);
+      var pct   = grand > 0 ? val / grand * 100 : 0;
+      var color = CAT_COLORS[i % CAT_COLORS.length];
+      var label = pct >= 8 ? '<span class="cat-stacked-seg-pct">' + Math.round(pct) + '%</span>' : '';
+      return '<div class="cat-stacked-seg" style="flex:' + pct.toFixed(3) + ';background:' + color + '"'
+        + ' title="' + esc(c.categoria_nome) + ': ' + formatMoney(val) + ' (' + Math.round(pct) + '%)">'
+        + label + '</div>';
+    }).join('');
+
+    var legendHtml = data.map(function (c, i) {
+      var val = parseFloat(c.total || 0);
+      var pct = grand > 0 ? Math.round(val / grand * 100) : 0;
+      var color = CAT_COLORS[i % CAT_COLORS.length];
+      return '<div class="cat-stacked-leg-item">'
+        + '<span class="cat-stacked-leg-dot" style="background:' + color + '"></span>'
+        + '<span class="cat-stacked-leg-nome">' + esc(c.categoria_nome) + '</span>'
+        + '<span class="cat-stacked-leg-val">' + formatMoney(val) + '</span>'
+        + '<span class="cat-stacked-leg-pct">' + pct + '%</span>'
+        + '</div>';
+    }).join('');
+
+    body.innerHTML = '<div class="cat-stacked-wrap">'
+      + '<div class="cat-stacked-bar">' + segsHtml + '</div>'
+      + '<div class="cat-stacked-legend">' + legendHtml + '</div>'
+      + '</div>';
+  }
+
   async function loadDespesasPorCategoria() {
     var body    = document.getElementById('despesasCatBody');
     var totalEl = document.getElementById('totalDespesasCat');
@@ -653,73 +751,47 @@
           + '<i class="bi bi-tags d-block mb-1" style="font-size:1.8rem;opacity:.3"></i>'
           + 'Nenhuma despesa neste mês</div>';
         totalEl.textContent = 'R$ 0,00';
+        _despCatData = null;
+        var tb = document.getElementById('btnCatViewToggle');
+        if (tb) tb.style.display = 'none';
         return;
       }
 
       var grand = data.reduce(function (s, c) { return s + parseFloat(c.total || 0); }, 0);
       totalEl.textContent = formatMoney(grand);
+      _despCatData  = data;
+      _despCatGrand = grand;
 
-      var COLORS = ['#0d6efd','#dc3545','#fd7e14','#198754','#6f42c1','#20c997','#e83e8c','#ffc107'];
-      var top5 = data.slice(0, 5);
-      var rest = data.slice(5);
-
-      var conicStops = [];
-      var acc = 0;
-      data.forEach(function (c, i) {
-        var pct   = grand > 0 ? parseFloat(c.total || 0) / grand * 100 : 0;
-        var color = COLORS[i % COLORS.length];
-        conicStops.push(color + ' ' + acc.toFixed(2) + '% ' + (acc + pct).toFixed(2) + '%');
-        acc += pct;
-      });
-      var gradient = 'conic-gradient(' + conicStops.join(', ') + ')';
-
-      function buildRow(c, i) {
-        var val   = parseFloat(c.total || 0);
-        var pct   = grand > 0 ? Math.round(val / grand * 100) : 0;
-        var color = COLORS[i % COLORS.length];
-        return '<div class="desp-cat-row">'
-          + '<span class="desp-cat-dot" style="background:' + color + '"></span>'
-          + '<div class="desp-cat-info">'
-          +   '<div class="desp-cat-nome">' + esc(c.categoria_nome) + '</div>'
-          +   '<div class="desp-cat-bar-wrap"><div class="desp-cat-bar" style="width:' + pct + '%;background:' + color + '"></div></div>'
-          + '</div>'
-          + '<div class="desp-cat-right">'
-          +   '<div class="desp-cat-valor">' + formatMoney(val) + '</div>'
-          +   '<div class="desp-cat-pct">' + pct + '%</div>'
-          + '</div>'
-          + '</div>';
+      if (_despCatChartMode) {
+        _renderDespCatChart(data, grand);
+      } else {
+        _renderDespCatList(data, grand);
       }
 
-      var top5Html = top5.map(buildRow).join('');
-      var restHtml = rest.map(function (c, i) { return buildRow(c, i + 5); }).join('');
-      var moreLabel = rest.length + ' ' + (rest.length === 1 ? 'categoria' : 'categorias');
-
-      body.innerHTML = '<div class="desp-cat-layout">'
-        + '<div class="desp-cat-chart-wrap"><div class="desp-cat-pie" style="background:' + gradient + '"></div></div>'
-        + '<div class="desp-cat-list">' + top5Html + '</div>'
-        + '</div>'
-        + (rest.length
-            ? '<div class="desp-cat-extras" id="despCatExtras">' + restHtml + '</div>'
-              + '<button type="button" class="desp-cat-expand-btn" id="despCatExpandBtn">'
-              + 'Ver mais ' + moreLabel + ' <i class="bi bi-chevron-down"></i></button>'
-            : '');
-
-      if (rest.length) {
-        var btn     = document.getElementById('despCatExpandBtn');
-        var extras  = document.getElementById('despCatExtras');
-        var expanded = false;
-        btn.addEventListener('click', function () {
-          expanded = !expanded;
-          extras.style.display = expanded ? 'block' : 'none';
-          btn.innerHTML = expanded
-            ? 'Recolher <i class="bi bi-chevron-up"></i>'
-            : 'Ver mais ' + moreLabel + ' <i class="bi bi-chevron-down"></i>';
-        });
-      }
+      var tb = document.getElementById('btnCatViewToggle');
+      if (tb) tb.style.display = '';
     } catch (e) {
       body.innerHTML = '<div class="text-center py-2 text-muted small">Erro ao carregar.</div>';
     }
   }
+
+  (function initCatViewToggle() {
+    var btn = document.getElementById('btnCatViewToggle');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      _despCatChartMode = !_despCatChartMode;
+      var icon = document.getElementById('iconCatViewToggle');
+      if (_despCatChartMode) {
+        if (icon) icon.className = 'bi bi-list-ul';
+        btn.title = 'Ver lista';
+        if (_despCatData) _renderDespCatChart(_despCatData, _despCatGrand);
+      } else {
+        if (icon) icon.className = 'bi bi-bar-chart-steps';
+        btn.title = 'Ver como gráfico';
+        if (_despCatData) _renderDespCatList(_despCatData, _despCatGrand);
+      }
+    });
+  })();
 
   // ── Ocultar / mostrar valores ───────────────────────────────────────────────
   var VALORES_HIDDEN_KEY = 'fluxara_valores_ocultos';
