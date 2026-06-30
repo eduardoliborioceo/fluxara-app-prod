@@ -732,12 +732,14 @@ body {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 1.15rem;
-  font-weight: 800;
+  font-family: 'Grand Hotel', cursive;
+  font-size: 1.55rem;
+  font-weight: 400;
   color: #ffffff;
-  letter-spacing: .5px;
+  letter-spacing: .3px;
   pointer-events: none;
   user-select: none;
+  white-space: nowrap;
 }
 
 .mobile-header .username {
