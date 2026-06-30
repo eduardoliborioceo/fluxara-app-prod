@@ -4,7 +4,7 @@
 :root {
   --sidebar-width: 240px;
   --header-height: 56px;
-  --bottom-nav-height: 64px;
+  --bottom-nav-height: 52px;
 
   /*
    * --safe-bottom: espaço mínimo obrigatório acima da borda inferior da tela.
@@ -845,7 +845,7 @@ body {
 @media (max-width: 767px) {
 
   :root {
-    --safe-bottom: calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px));
+    --safe-bottom: calc(var(--bottom-nav-height, 52px) + env(safe-area-inset-bottom, 0px));
   }
 
   body {
