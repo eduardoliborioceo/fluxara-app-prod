@@ -2290,10 +2290,7 @@ function generateTipStoryCanvas(tip, logoImg, fluxImg) {
     const charSize = 520;
     const charX    = (W - charSize) / 2;
     const charY    = (H - charSize) / 2 + 60;
-    ctx.save();
-    ctx.globalAlpha = 0.13;
     ctx.drawImage(fluxImg, charX, charY, charSize, charSize);
-    ctx.restore();
   } else {
     _drawFluxCharacter(ctx, W, H);
   }
@@ -2472,7 +2469,7 @@ function generateTipStoryCanvas(tip, logoImg, fluxImg) {
     ctx.fillStyle = C.textMuted;
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
-    ctx.fillText("⚽  JOGOS DA MÚLTIPLA", PAD, curY);
+    ctx.fillText(tip.jogos.length === 1 ? "⚽  APOSTA SIMPLES" : "⚽  SELEÇÕES DA MÚLTIPLA", PAD, curY);
     curY += 18;
 
     const maxG = Math.min(tip.jogos.length, 5);
