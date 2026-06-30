@@ -125,6 +125,24 @@
   z-index: 100;
 }
 
+@media (max-width: 767px) {
+  .extrato-page-header {
+    top: var(--header-height, 56px);
+    border-radius: 0 0 14px 14px;
+    box-shadow: 0 4px 12px rgba(15,23,42,0.07);
+  }
+
+  .extrato-page-header::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: 0;
+    right: 0;
+    height: 8px;
+    background: var(--bg, #f1f5f9);
+  }
+}
+
 /* Topbar simples para extrato de cartão (sem saldo inline) */
 .extrato-cartao-topbar {
   display: flex;
