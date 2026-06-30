@@ -2168,6 +2168,77 @@ function _wrapText(ctx, text, x, y, maxWidth, lineHeight) {
   return curY;
 }
 
+function _drawFluxCharacter(ctx, W, H) {
+  ctx.save();
+  const cx = W / 2;
+
+  const HEAD_R   = 118;
+  const HEAD_CY  = H * 0.41;
+  const BODY_W   = 168;
+  const BODY_H   = 188;
+  const BODY_X   = cx - BODY_W / 2;
+  const BODY_Y   = HEAD_CY + HEAD_R - 10;
+  const ARM_W    = 32;
+  const ARM_H    = 110;
+  const LEG_W    = 40;
+  const LEG_H    = 90;
+
+  ctx.fillStyle = "rgba(13,110,253,0.11)";
+
+  // Head
+  ctx.beginPath();
+  ctx.arc(cx, HEAD_CY, HEAD_R, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Antenna stem
+  ctx.fillRect(cx - 4, HEAD_CY - HEAD_R - 50, 8, 50);
+
+  // Antenna ball
+  ctx.beginPath();
+  ctx.arc(cx, HEAD_CY - HEAD_R - 56, 14, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Body
+  _drawRoundedRect(ctx, BODY_X, BODY_Y, BODY_W, BODY_H, 28);
+  ctx.fill();
+
+  // Chest panel
+  ctx.fillStyle = "rgba(13,110,253,0.16)";
+  _drawRoundedRect(ctx, cx - 38, BODY_Y + 28, 76, 72, 12);
+  ctx.fill();
+
+  ctx.fillStyle = "rgba(13,110,253,0.11)";
+
+  // Left arm
+  _drawRoundedRect(ctx, BODY_X - ARM_W - 6, BODY_Y + 14, ARM_W, ARM_H, 14);
+  ctx.fill();
+
+  // Right arm
+  _drawRoundedRect(ctx, BODY_X + BODY_W + 6, BODY_Y + 14, ARM_W, ARM_H, 14);
+  ctx.fill();
+
+  // Left leg
+  _drawRoundedRect(ctx, cx - LEG_W - 10, BODY_Y + BODY_H - 10, LEG_W, LEG_H, 14);
+  ctx.fill();
+
+  // Right leg
+  _drawRoundedRect(ctx, cx + 10, BODY_Y + BODY_H - 10, LEG_W, LEG_H, 14);
+  ctx.fill();
+
+  // Eyes (slightly brighter)
+  ctx.fillStyle = "rgba(13,110,253,0.22)";
+  _drawRoundedRect(ctx, cx - 54, HEAD_CY - 26, 40, 38, 8);
+  ctx.fill();
+  _drawRoundedRect(ctx, cx + 14, HEAD_CY - 26, 40, 38, 8);
+  ctx.fill();
+
+  // Mouth
+  _drawRoundedRect(ctx, cx - 30, HEAD_CY + 44, 60, 12, 6);
+  ctx.fill();
+
+  ctx.restore();
+}
+
 function generateTipStoryCanvas(tip, logoImg) {
   const W = 540, H = 960, PAD = 32;
   const canvas = document.createElement("canvas");
@@ -2175,52 +2246,55 @@ function generateTipStoryCanvas(tip, logoImg) {
   canvas.height = H;
   const ctx = canvas.getContext("2d");
 
-  // ── PALETTE ──────────────────────────────────────────────
+  // ── PALETTE (light theme) ────────────────────────────────
   const C = {
-    bg:         "#050d1a",
-    card:       "rgba(255,255,255,0.07)",
-    cardBorder: "rgba(255,255,255,0.11)",
-    white:      "#ffffff",
-    blue:       "#3b82f6",
-    blueBright: "#60a5fa",
-    green:      "#22c55e",
-    amber:      "#f59e0b",
-    red:        "#ef4444",
+    bg:         "#f0f7ff",
+    card:       "rgba(255,255,255,0.88)",
+    cardBorder: "rgba(13,110,253,0.14)",
+    text:       "#0f172a",
+    textMuted:  "#475569",
+    blue:       "#0d6efd",
+    blueDark:   "#1d4ed8",
+    green:      "#16a34a",
+    amber:      "#b45309",
+    red:        "#dc2626",
     gray:       "#64748b",
   };
 
   const statusMap = {
-    green:    { color: C.green, icon: "✅", label: "GREEN" },
-    red:      { color: C.red,   icon: "❌", label: "RED" },
-    pendente: { color: C.amber, icon: "⏳", label: "EM ABERTO" },
-    void:     { color: C.gray,  icon: "⬜", label: "VOID" },
+    green:    { color: C.green, bg: "rgba(22,163,74,0.12)",   icon: "✅", label: "GREEN"    },
+    red:      { color: C.red,   bg: "rgba(220,38,38,0.10)",   icon: "❌", label: "RED"      },
+    pendente: { color: C.amber, bg: "rgba(180,83,9,0.10)",    icon: "⏳", label: "EM ABERTO" },
+    void:     { color: C.gray,  bg: "rgba(100,116,139,0.10)", icon: "⬜", label: "VOID"     },
   };
   const sc = statusMap[tip.status] || statusMap.pendente;
 
-  // ── BACKGROUND — deep dark with radial blue glow ──────────
-  ctx.fillStyle = C.bg;
+  // ── BACKGROUND — light gradient ──────────────────────────
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+  bgGrad.addColorStop(0,    "#dbeafe");
+  bgGrad.addColorStop(0.35, "#f0f7ff");
+  bgGrad.addColorStop(0.70, "#f8faff");
+  bgGrad.addColorStop(1,    "#e8f0fe");
+  ctx.fillStyle = bgGrad;
   ctx.fillRect(0, 0, W, H);
 
-  const glowCenter = ctx.createRadialGradient(W / 2, H * 0.40, 0, W / 2, H * 0.40, 390);
-  glowCenter.addColorStop(0, "rgba(37,99,235,0.22)");
-  glowCenter.addColorStop(0.55, "rgba(37,99,235,0.06)");
-  glowCenter.addColorStop(1, "rgba(0,0,0,0)");
+  // Subtle soft glow center
+  const glowCenter = ctx.createRadialGradient(W / 2, H * 0.38, 0, W / 2, H * 0.38, 340);
+  glowCenter.addColorStop(0, "rgba(255,255,255,0.60)");
+  glowCenter.addColorStop(1, "rgba(255,255,255,0)");
   ctx.fillStyle = glowCenter;
   ctx.fillRect(0, 0, W, H);
 
-  const glowBL = ctx.createRadialGradient(W * 0.10, H * 0.88, 0, W * 0.10, H * 0.88, 220);
-  glowBL.addColorStop(0, "rgba(79,70,229,0.18)");
-  glowBL.addColorStop(1, "rgba(0,0,0,0)");
-  ctx.fillStyle = glowBL;
-  ctx.fillRect(0, 0, W, H);
+  // ── ASSISTENTE FLUX CHARACTER (background) ───────────────
+  _drawFluxCharacter(ctx, W, H);
 
   // Top accent line
   const accentG = ctx.createLinearGradient(0, 0, W, 0);
-  accentG.addColorStop(0,   "rgba(59,130,246,0)");
-  accentG.addColorStop(0.5, "rgba(96,165,250,1)");
-  accentG.addColorStop(1,   "rgba(59,130,246,0)");
+  accentG.addColorStop(0,   "rgba(13,110,253,0)");
+  accentG.addColorStop(0.5, "rgba(13,110,253,1)");
+  accentG.addColorStop(1,   "rgba(13,110,253,0)");
   ctx.fillStyle = accentG;
-  ctx.fillRect(0, 0, W, 3);
+  ctx.fillRect(0, 0, W, 4);
 
   // ── LOGO ─────────────────────────────────────────────────
   const LOGO_SIZE = 52, LOGO_X = PAD, LOGO_Y = 26;
@@ -2231,16 +2305,16 @@ function generateTipStoryCanvas(tip, logoImg) {
     ctx.clip();
     ctx.drawImage(logoImg, LOGO_X, LOGO_Y, LOGO_SIZE, LOGO_SIZE);
     ctx.restore();
-    ctx.strokeStyle = "rgba(255,255,255,0.22)";
+    ctx.strokeStyle = "rgba(13,110,253,0.28)";
     ctx.lineWidth = 1.5;
     _drawRoundedRect(ctx, LOGO_X, LOGO_Y, LOGO_SIZE, LOGO_SIZE, 14);
     ctx.stroke();
   } else {
-    ctx.fillStyle = "rgba(255,255,255,0.12)";
+    ctx.fillStyle = "rgba(13,110,253,0.12)";
     _drawRoundedRect(ctx, LOGO_X, LOGO_Y, LOGO_SIZE, LOGO_SIZE, 14);
     ctx.fill();
     ctx.font = "900 30px system-ui,-apple-system,sans-serif";
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = C.blue;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("F", LOGO_X + LOGO_SIZE / 2, LOGO_Y + LOGO_SIZE / 2);
@@ -2249,20 +2323,20 @@ function generateTipStoryCanvas(tip, logoImg) {
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
   ctx.font = "900 22px system-ui,-apple-system,sans-serif";
-  ctx.fillStyle = "#ffffff";
+  ctx.fillStyle = C.text;
   ctx.fillText("FLUXARA", LOGO_X + LOGO_SIZE + 14, LOGO_Y + 8);
 
-  ctx.font = "500 11px system-ui,-apple-system,sans-serif";
-  ctx.fillStyle = "rgba(255,255,255,0.55)";
+  ctx.font = "600 11px system-ui,-apple-system,sans-serif";
+  ctx.fillStyle = C.blue;
   ctx.fillText("TIPS & APOSTAS", LOGO_X + LOGO_SIZE + 14, LOGO_Y + 34);
 
   ctx.font = "400 9.5px system-ui,-apple-system,sans-serif";
-  ctx.fillStyle = "rgba(255,255,255,0.28)";
+  ctx.fillStyle = C.textMuted;
   ctx.fillText("Controle financeiro, apostas e bem-estar.", LOGO_X + LOGO_SIZE + 14, LOGO_Y + 50);
 
   const today = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
   ctx.font = "500 10px system-ui,sans-serif";
-  ctx.fillStyle = "rgba(255,255,255,0.42)";
+  ctx.fillStyle = C.textMuted;
   ctx.textAlign = "right";
   ctx.fillText("📅  " + today, W - PAD, LOGO_Y + 20);
   ctx.textAlign = "left";
@@ -2275,18 +2349,19 @@ function generateTipStoryCanvas(tip, logoImg) {
   const badgeX = (W - badgeW) / 2;
   const badgeY = LOGO_Y + LOGO_SIZE + 24;
 
-  ctx.fillStyle = "rgba(255,255,255,0.06)";
+  ctx.fillStyle = sc.bg;
   _drawRoundedRect(ctx, badgeX, badgeY, badgeW, badgeH, badgeH / 2);
   ctx.fill();
   ctx.strokeStyle = sc.color;
   ctx.lineWidth = 1.5;
+  _drawRoundedRect(ctx, badgeX, badgeY, badgeW, badgeH, badgeH / 2);
   ctx.stroke();
   ctx.fillStyle = sc.color;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(badgeLabel, W / 2, badgeY + badgeH / 2);
 
-  // ── TITLE — large bold italic with glow ──────────────────
+  // ── TITLE — large bold italic ─────────────────────────────
   let curY = badgeY + badgeH + 28;
 
   const titulo = tip.titulo || "Recomendação";
@@ -2300,14 +2375,13 @@ function generateTipStoryCanvas(tip, logoImg) {
 
   if (datePart) {
     ctx.font = "600 22px system-ui,-apple-system,sans-serif";
-    ctx.fillStyle = "rgba(255,255,255,0.52)";
+    ctx.fillStyle = C.textMuted;
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
     ctx.fillText(datePart, W / 2, curY);
     curY += 34;
   }
 
-  // Split namePart: first word on line 1, rest on line 2
   const nameWords = namePart.toUpperCase().split(" ");
   const titleLine1 = nameWords[0] || "";
   const titleLine2 = nameWords.slice(1).join(" ");
@@ -2315,26 +2389,21 @@ function generateTipStoryCanvas(tip, logoImg) {
   ctx.save();
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
-  ctx.shadowColor = "rgba(59,130,246,0.85)";
-  ctx.shadowBlur = 38;
+  ctx.shadowColor = "rgba(13,110,253,0.30)";
+  ctx.shadowBlur = 18;
 
-  const titleFont = "900 italic 72px system-ui,-apple-system,sans-serif";
-  ctx.font = titleFont;
-
-  // Fit line 1
   let fs1 = 72;
   ctx.font = `900 italic ${fs1}px system-ui,-apple-system,sans-serif`;
   while (titleLine1 && ctx.measureText(titleLine1).width > W - PAD * 2 && fs1 > 36) {
     fs1 -= 2;
     ctx.font = `900 italic ${fs1}px system-ui,-apple-system,sans-serif`;
   }
-  ctx.fillStyle = "#ffffff";
+  ctx.fillStyle = C.text;
   if (titleLine1) {
     ctx.fillText(titleLine1, W / 2, curY);
     curY += fs1 + 8;
   }
 
-  // Fit line 2
   if (titleLine2) {
     let fs2 = Math.min(fs1, 60);
     ctx.font = `900 italic ${fs2}px system-ui,-apple-system,sans-serif`;
@@ -2342,7 +2411,7 @@ function generateTipStoryCanvas(tip, logoImg) {
       fs2 -= 2;
       ctx.font = `900 italic ${fs2}px system-ui,-apple-system,sans-serif`;
     }
-    ctx.fillStyle = C.blueBright;
+    ctx.fillStyle = C.blue;
     ctx.fillText(titleLine2, W / 2, curY);
     curY += fs2 + 8;
   }
@@ -2356,11 +2425,12 @@ function generateTipStoryCanvas(tip, logoImg) {
     _drawRoundedRect(ctx, PAD, curY, W - PAD * 2, oddCardH, 16);
     ctx.fill();
     ctx.strokeStyle = C.cardBorder;
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 1.5;
+    _drawRoundedRect(ctx, PAD, curY, W - PAD * 2, oddCardH, 16);
     ctx.stroke();
 
     ctx.font = "700 11px system-ui,sans-serif";
-    ctx.fillStyle = "rgba(255,255,255,0.50)";
+    ctx.fillStyle = C.textMuted;
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
     ctx.fillText("ODD TOTAL", W / 2, curY + 14);
@@ -2373,10 +2443,10 @@ function generateTipStoryCanvas(tip, logoImg) {
     ctx.fillText("⚡", W - PAD - 16, curY + oddCardH / 2 + 6);
 
     ctx.save();
-    ctx.shadowColor = "rgba(59,130,246,0.55)";
-    ctx.shadowBlur = 24;
+    ctx.shadowColor = "rgba(13,110,253,0.35)";
+    ctx.shadowBlur = 18;
     ctx.font = "900 60px system-ui,-apple-system,sans-serif";
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = C.blue;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(tip.odd.toFixed(2), W / 2, curY + oddCardH / 2 + 8);
@@ -2389,7 +2459,7 @@ function generateTipStoryCanvas(tip, logoImg) {
   const hasGames = Array.isArray(tip.jogos) && tip.jogos.length > 0;
   if (hasGames) {
     ctx.font = "700 10px system-ui,sans-serif";
-    ctx.fillStyle = "rgba(255,255,255,0.30)";
+    ctx.fillStyle = C.textMuted;
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
     ctx.fillText("⚽  JOGOS DA MÚLTIPLA", PAD, curY);
@@ -2405,6 +2475,7 @@ function generateTipStoryCanvas(tip, logoImg) {
       ctx.fill();
       ctx.strokeStyle = C.cardBorder;
       ctx.lineWidth = 1;
+      _drawRoundedRect(ctx, rx, ry, rw, ROW_H, 12);
       ctx.stroke();
 
       // Blue left accent
@@ -2413,11 +2484,11 @@ function generateTipStoryCanvas(tip, logoImg) {
       ctx.fill();
 
       // Number badge
-      ctx.fillStyle = "rgba(59,130,246,0.20)";
+      ctx.fillStyle = "rgba(13,110,253,0.12)";
       _drawRoundedRect(ctx, rx + 12, ry + ROW_H / 2 - 14, 28, 28, 8);
       ctx.fill();
       ctx.font = "bold 13px system-ui,sans-serif";
-      ctx.fillStyle = C.blueBright;
+      ctx.fillStyle = C.blue;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(String(i + 1), rx + 26, ry + ROW_H / 2);
@@ -2428,18 +2499,18 @@ function generateTipStoryCanvas(tip, logoImg) {
 
       const p = (j.partida || "").length > 27 ? (j.partida || "").slice(0, 25) + "…" : (j.partida || "");
       ctx.font = "bold 14px system-ui,-apple-system,sans-serif";
-      ctx.fillStyle = "#ffffff";
+      ctx.fillStyle = C.text;
       ctx.fillText(p, textX, ry + 11);
 
       const m = (j.mercado || "").length > 25 ? (j.mercado || "").slice(0, 23) + "…" : (j.mercado || "");
       ctx.font = "500 12px system-ui,sans-serif";
-      ctx.fillStyle = C.blueBright;
+      ctx.fillStyle = C.blue;
       ctx.fillText(m, textX, ry + 31);
 
       if (j.campeonato) {
         const c = j.campeonato.length > 27 ? j.campeonato.slice(0, 25) + "…" : j.campeonato;
         ctx.font = "400 11px system-ui,sans-serif";
-        ctx.fillStyle = "rgba(255,255,255,0.35)";
+        ctx.fillStyle = C.textMuted;
         ctx.fillText(c, textX, ry + 51);
       }
 
@@ -2462,16 +2533,17 @@ function generateTipStoryCanvas(tip, logoImg) {
     ctx.fill();
     ctx.strokeStyle = C.cardBorder;
     ctx.lineWidth = 1;
+    _drawRoundedRect(ctx, PAD, curY, W - PAD * 2, ROW_H, 12);
     ctx.stroke();
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
     if (tip.campeonato) {
       ctx.font = "400 11px system-ui,sans-serif";
-      ctx.fillStyle = "rgba(255,255,255,0.35)";
+      ctx.fillStyle = C.textMuted;
       ctx.fillText(tip.campeonato, PAD + 16, curY + 12);
     }
     ctx.font = "bold 15px system-ui,sans-serif";
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = C.text;
     ctx.fillText(
       tip.partida.length > 34 ? tip.partida.slice(0, 32) + "…" : tip.partida,
       PAD + 16, curY + 34
@@ -2482,8 +2554,8 @@ function generateTipStoryCanvas(tip, logoImg) {
   // Stake
   if (tip.stake) {
     curY += 8;
-    ctx.font = "500 13px system-ui,sans-serif";
-    ctx.fillStyle = "rgba(255,255,255,0.52)";
+    ctx.font = "600 13px system-ui,sans-serif";
+    ctx.fillStyle = C.textMuted;
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
     ctx.fillText("💰  Stake: " + tip.stake, W / 2, curY);
@@ -2491,7 +2563,7 @@ function generateTipStoryCanvas(tip, logoImg) {
 
   // ── FOOTER ───────────────────────────────────────────────
   const footerY = H - 82;
-  ctx.strokeStyle = "rgba(255,255,255,0.07)";
+  ctx.strokeStyle = "rgba(13,110,253,0.14)";
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(PAD, footerY);
@@ -2499,26 +2571,26 @@ function generateTipStoryCanvas(tip, logoImg) {
   ctx.stroke();
 
   ctx.font = "700 10.5px system-ui,sans-serif";
-  ctx.fillStyle = "rgba(255,255,255,0.40)";
+  ctx.fillStyle = C.textMuted;
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
   ctx.fillText("🛡️  APOSTE COM RESPONSABILIDADE", W / 2, footerY + 10);
 
   ctx.font = "400 9.5px system-ui,sans-serif";
-  ctx.fillStyle = "rgba(255,255,255,0.25)";
+  ctx.fillStyle = C.gray;
   ctx.fillText("Proibido para menores de 18 anos", W / 2, footerY + 26);
 
   ctx.save();
-  ctx.shadowColor = "rgba(59,130,246,0.50)";
-  ctx.shadowBlur = 14;
+  ctx.shadowColor = "rgba(13,110,253,0.35)";
+  ctx.shadowBlur = 12;
   ctx.font = "800 22px system-ui,-apple-system,sans-serif";
-  ctx.fillStyle = "#ffffff";
+  ctx.fillStyle = C.blue;
   ctx.fillText("fluxara.app", W / 2, footerY + 48);
   ctx.restore();
 
   // Bottom accent line
   ctx.fillStyle = accentG;
-  ctx.fillRect(0, H - 3, W, 3);
+  ctx.fillRect(0, H - 4, W, 4);
 
   return canvas;
 }
