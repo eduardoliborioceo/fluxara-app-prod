@@ -1,0 +1,244 @@
+{% extends "layouts/app.html" %}
+{% block title %}Fluxara · Calculadoras{% endblock %}
+
+{% block page_title %}
+<div class="page-header">
+  <div class="page-header-title">
+    <span class="page-header-section">Ferramentas</span>
+    <h1 class="page-header-name">Calculadoras</h1>
+  </div>
+  <div class="page-header-actions">
+    <a href="javascript:history.back()" class="btn-header-icon" title="Voltar">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+    <button class="btn-header-icon" onclick="toggleFullscreen()" title="Tela cheia">
+      <i class="bi bi-arrows-fullscreen"></i>
+    </button>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/calculadoras.css') }}?v={{ static_v }}">
+
+<div class="calc-wrapper">
+
+  <div class="calc-tabs">
+    <button class="calc-tab calc-tab--active" id="tabBtnRescisao" onclick="calcTab('rescisao')">
+      <i class="bi bi-file-earmark-break"></i>
+      Rescisão
+    </button>
+    <button class="calc-tab" id="tabBtnLiquido" onclick="calcTab('liquido')">
+      <i class="bi bi-cash-coin"></i>
+      Salário Líquido
+    </button>
+    <button class="calc-tab" id="tabBtnDecimo" onclick="calcTab('decimo')">
+      <i class="bi bi-gift"></i>
+      13º Salário
+    </button>
+    <button class="calc-tab" id="tabBtnFerias" onclick="calcTab('ferias')">
+      <i class="bi bi-airplane"></i>
+      Férias
+    </button>
+  </div>
+
+  <!-- ========== RESCISÃO ========== -->
+  <div id="tabRescisao" class="calc-panel">
+    <div class="calc-card">
+      <div class="calc-card-header">
+        <i class="bi bi-file-earmark-break calc-card-icon"></i>
+        <div>
+          <div class="calc-card-title">Rescisão Trabalhista</div>
+          <div class="calc-card-sub">Demissão sem justa causa (CLT)</div>
+        </div>
+      </div>
+      <div class="calc-form-grid">
+        <div class="calc-form-group">
+          <label class="calc-label">Salário Bruto</label>
+          <div class="calc-input-prefix">
+            <span>R$</span>
+            <input type="number" id="rescSalario" class="calc-input" min="0" step="0.01" placeholder="0,00" oninput="calcRescisao()">
+          </div>
+        </div>
+        <div class="calc-form-group">
+          <label class="calc-label">Data de Admissão</label>
+          <input type="date" id="rescAdmissao" class="calc-input" oninput="calcRescisao()">
+        </div>
+        <div class="calc-form-group">
+          <label class="calc-label">Data de Demissão</label>
+          <input type="date" id="rescDemissao" class="calc-input" oninput="calcRescisao()">
+        </div>
+        <div class="calc-form-group">
+          <label class="calc-label">Aviso Prévio</label>
+          <select id="rescAviso" class="calc-input" onchange="calcRescisao()">
+            <option value="indenizado">Indenizado (pago pela empresa)</option>
+            <option value="trabalhado">Trabalhado pelo funcionário</option>
+            <option value="nao_cumprido">Não cumprido (descontado)</option>
+          </select>
+        </div>
+        <div class="calc-form-group">
+          <label class="calc-label">Saldo do FGTS <span class="calc-hint-inline">(opcional)</span></label>
+          <div class="calc-input-prefix">
+            <span>R$</span>
+            <input type="number" id="rescFgts" class="calc-input" min="0" step="0.01" placeholder="0,00" oninput="calcRescisao()">
+          </div>
+        </div>
+        <div class="calc-form-group">
+          <label class="calc-label">Dias trabalhados no mês</label>
+          <input type="number" id="rescDias" class="calc-input" min="1" max="31" placeholder="Ex: 15" oninput="calcRescisao()">
+        </div>
+      </div>
+
+      <div id="rescResultado" class="calc-result" style="display:none">
+        <div class="calc-result-title">Resumo da Rescisão</div>
+        <div class="calc-result-grid" id="rescItens"></div>
+        <div class="calc-result-total">
+          <span>Total a Receber</span>
+          <span id="rescTotal" class="calc-result-total-val"></span>
+        </div>
+        <p class="calc-disclaimer">Estimativa baseada na CLT. Valores podem variar conforme convenção coletiva e situação específica.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== SALÁRIO LÍQUIDO ========== -->
+  <div id="tabLiquido" class="calc-panel" style="display:none">
+    <div class="calc-card">
+      <div class="calc-card-header">
+        <i class="bi bi-cash-coin calc-card-icon"></i>
+        <div>
+          <div class="calc-card-title">Salário Líquido</div>
+          <div class="calc-card-sub">INSS + IRRF · Tabelas 2024</div>
+        </div>
+      </div>
+      <div class="calc-form-grid">
+        <div class="calc-form-group">
+          <label class="calc-label">Salário Bruto</label>
+          <div class="calc-input-prefix">
+            <span>R$</span>
+            <input type="number" id="liqSalario" class="calc-input" min="0" step="0.01" placeholder="0,00" oninput="calcLiquido()">
+          </div>
+        </div>
+        <div class="calc-form-group">
+          <label class="calc-label">Número de Dependentes</label>
+          <input type="number" id="liqDependentes" class="calc-input" min="0" max="20" value="0" oninput="calcLiquido()">
+        </div>
+        <div class="calc-form-group">
+          <label class="calc-label">Outros descontos <span class="calc-hint-inline">(opcional)</span></label>
+          <div class="calc-input-prefix">
+            <span>R$</span>
+            <input type="number" id="liqOutros" class="calc-input" min="0" step="0.01" placeholder="0,00" oninput="calcLiquido()">
+          </div>
+        </div>
+      </div>
+
+      <div id="liqResultado" class="calc-result" style="display:none">
+        <div class="calc-result-title">Detalhamento</div>
+        <div class="calc-result-grid" id="liqItens"></div>
+        <div class="calc-result-total">
+          <span>Salário Líquido</span>
+          <span id="liqTotal" class="calc-result-total-val"></span>
+        </div>
+        <p class="calc-disclaimer">Cálculo conforme tabelas progressivas INSS e IRRF 2024. Outros benefícios (VR, VT, plano de saúde) não estão incluídos.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 13º SALÁRIO ========== -->
+  <div id="tabDecimo" class="calc-panel" style="display:none">
+    <div class="calc-card">
+      <div class="calc-card-header">
+        <i class="bi bi-gift calc-card-icon"></i>
+        <div>
+          <div class="calc-card-title">13º Salário</div>
+          <div class="calc-card-sub">1ª e 2ª parcelas</div>
+        </div>
+      </div>
+      <div class="calc-form-grid">
+        <div class="calc-form-group">
+          <label class="calc-label">Salário Bruto</label>
+          <div class="calc-input-prefix">
+            <span>R$</span>
+            <input type="number" id="decSalario" class="calc-input" min="0" step="0.01" placeholder="0,00" oninput="calcDecimo()">
+          </div>
+        </div>
+        <div class="calc-form-group">
+          <label class="calc-label">Meses trabalhados no ano</label>
+          <input type="number" id="decMeses" class="calc-input" min="1" max="12" value="12" oninput="calcDecimo()">
+        </div>
+        <div class="calc-form-group">
+          <label class="calc-label">Adiantamento recebido (1ª parcela) <span class="calc-hint-inline">(opcional)</span></label>
+          <div class="calc-input-prefix">
+            <span>R$</span>
+            <input type="number" id="decAdiantamento" class="calc-input" min="0" step="0.01" placeholder="0,00" oninput="calcDecimo()">
+          </div>
+        </div>
+        <div class="calc-form-group">
+          <label class="calc-label">Número de Dependentes</label>
+          <input type="number" id="decDependentes" class="calc-input" min="0" max="20" value="0" oninput="calcDecimo()">
+        </div>
+      </div>
+
+      <div id="decResultado" class="calc-result" style="display:none">
+        <div class="calc-result-title">Resumo do 13º</div>
+        <div class="calc-result-grid" id="decItens"></div>
+        <div class="calc-result-total">
+          <span>2ª Parcela (Líquida)</span>
+          <span id="decTotal" class="calc-result-total-val"></span>
+        </div>
+        <p class="calc-disclaimer">A 1ª parcela é paga entre fevereiro e novembro, sem desconto de IRRF. A 2ª parcela é paga até 20 de dezembro com INSS e IRRF deduzidos.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== FÉRIAS ========== -->
+  <div id="tabFerias" class="calc-panel" style="display:none">
+    <div class="calc-card">
+      <div class="calc-card-header">
+        <i class="bi bi-airplane calc-card-icon"></i>
+        <div>
+          <div class="calc-card-title">Férias</div>
+          <div class="calc-card-sub">Remuneração + 1/3 constitucional</div>
+        </div>
+      </div>
+      <div class="calc-form-grid">
+        <div class="calc-form-group">
+          <label class="calc-label">Salário Bruto</label>
+          <div class="calc-input-prefix">
+            <span>R$</span>
+            <input type="number" id="ferSalario" class="calc-input" min="0" step="0.01" placeholder="0,00" oninput="calcFerias()">
+          </div>
+        </div>
+        <div class="calc-form-group">
+          <label class="calc-label">Dias de férias</label>
+          <input type="number" id="ferDias" class="calc-input" min="5" max="30" value="30" oninput="calcFerias()">
+        </div>
+        <div class="calc-form-group">
+          <label class="calc-label">Dias vendidos (abono pecuniário)</label>
+          <select id="ferVendidos" class="calc-input" onchange="calcFerias()">
+            <option value="0">Nenhum</option>
+            <option value="10">10 dias</option>
+          </select>
+        </div>
+        <div class="calc-form-group">
+          <label class="calc-label">Número de Dependentes</label>
+          <input type="number" id="ferDependentes" class="calc-input" min="0" max="20" value="0" oninput="calcFerias()">
+        </div>
+      </div>
+
+      <div id="ferResultado" class="calc-result" style="display:none">
+        <div class="calc-result-title">Resumo das Férias</div>
+        <div class="calc-result-grid" id="ferItens"></div>
+        <div class="calc-result-total">
+          <span>Total Líquido a Receber</span>
+          <span id="ferTotal" class="calc-result-total-val"></span>
+        </div>
+        <p class="calc-disclaimer">O abono pecuniário (dias vendidos) não sofre incidência de IRRF. INSS e IRRF são calculados sobre a remuneração de férias. Tabelas 2024.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/calculadoras.js') }}?v={{ static_v }}"></script>
+{% endblock %}
