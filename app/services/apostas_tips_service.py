@@ -94,13 +94,21 @@ def create_tip(titulo: str, stake: str, link_aposta: str,
     ))
 
 
-def update_tip(tip_id: int, titulo: str, stake: str, link_aposta: str) -> dict:
+def update_tip(tip_id: int, titulo: str, stake: str, link_aposta: str, odd=None) -> dict:
     titulo = (titulo or "").strip()
     if not titulo:
         raise ValueError("Título é obrigatório")
     if len(titulo) > 200:
         raise ValueError("Título muito longo (máx 200 caracteres)")
-    row = repo.update_tip(tip_id, titulo, stake or None, link_aposta or None)
+    odd_val = None
+    if odd is not None:
+        try:
+            odd_val = float(odd)
+        except (ValueError, TypeError):
+            raise ValueError("Odd inválida")
+        if odd_val <= 0:
+            raise ValueError("Odd deve ser maior que zero")
+    row = repo.update_tip(tip_id, titulo, stake or None, link_aposta or None, odd=odd_val)
     if not row:
         raise ValueError("Recomendação não encontrada")
     return _serialize(row)

@@ -151,15 +151,15 @@ def toggle_aprovada(tip_id: int):
             return row
 
 
-def update_tip(tip_id: int, titulo: str, stake, link_aposta):
+def update_tip(tip_id: int, titulo: str, stake, link_aposta, odd=None):
     with get_db() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("""
                 UPDATE apostas_tips
-                SET titulo = %s, stake = %s, link_aposta = %s, updated_at = NOW()
+                SET titulo = %s, stake = %s, link_aposta = %s, odd = COALESCE(%s, odd), updated_at = NOW()
                 WHERE id = %s
                 RETURNING *
-            """, (titulo, stake or None, link_aposta or None, tip_id))
+            """, (titulo, stake or None, link_aposta or None, odd, tip_id))
             row = cur.fetchone()
             conn.commit()
             return row

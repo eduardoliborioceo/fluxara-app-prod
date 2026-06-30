@@ -1738,6 +1738,7 @@ def apostas_tips_update(tip_id):
             titulo=data.get("titulo", ""),
             stake=data.get("stake", ""),
             link_aposta=data.get("link_aposta", ""),
+            odd=data.get("odd"),
         )
         return jsonify(tip)
     except ValueError as e:
