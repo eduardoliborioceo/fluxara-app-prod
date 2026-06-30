@@ -2036,6 +2036,7 @@ function openEditModal(tipId) {
   document.getElementById("editTipId").value        = tipId;
   document.getElementById("editTitulo").value       = tip.titulo || "";
   document.getElementById("editStake").value        = tip.stake  || "";
+  document.getElementById("editOdd").value          = tip.odd != null ? tip.odd : "";
   document.getElementById("editLinkAposta").value   = tip.link_aposta || "";
   document.getElementById("editFormError").style.display = "none";
   document.getElementById("editModalOverlay").style.display = "flex";
@@ -2070,12 +2071,19 @@ function _showEditFormError(msg) {
 async function submitEditTip() {
   document.getElementById("editFormError").style.display = "none";
 
-  const tipId    = parseInt(document.getElementById("editTipId").value);
-  const titulo   = document.getElementById("editTitulo").value.trim();
-  const stake    = document.getElementById("editStake").value.trim();
+  const tipId      = parseInt(document.getElementById("editTipId").value);
+  const titulo     = document.getElementById("editTitulo").value.trim();
+  const stake      = document.getElementById("editStake").value.trim();
+  const oddRaw     = document.getElementById("editOdd").value.trim();
   const linkAposta = document.getElementById("editLinkAposta").value.trim();
 
   if (!titulo) { _showEditFormError("Título é obrigatório"); return; }
+
+  const odd = oddRaw !== "" ? parseFloat(oddRaw) : null;
+  if (odd !== null && (isNaN(odd) || odd <= 0)) {
+    _showEditFormError("Odd inválida — deve ser um número maior que zero");
+    return;
+  }
 
   const btn = document.getElementById("editSubmitBtn");
   btn.disabled = true;
@@ -2084,7 +2092,7 @@ async function submitEditTip() {
     const resp = await fetch(`/api/apostas/tips/${tipId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ titulo, stake, link_aposta: linkAposta }),
+      body: JSON.stringify({ titulo, stake, odd, link_aposta: linkAposta }),
     });
     const json = await resp.json();
     if (!resp.ok) { _showEditFormError(json.error || "Erro ao salvar"); return; }

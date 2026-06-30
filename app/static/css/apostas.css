@@ -408,6 +408,14 @@
 
 .tips-required { color: #dc2626; }
 
+.tips-form-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: .72rem;
+  font-weight: 500;
+  color: var(--text-muted, #64748b);
+}
+
 .tips-form-input {
   width: 100%;
   padding: 9px 12px;
