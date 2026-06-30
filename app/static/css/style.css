@@ -728,6 +728,18 @@ body {
   z-index: 200;
 }
 
+.mobile-brand {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: .5px;
+  pointer-events: none;
+  user-select: none;
+}
+
 .mobile-header .username {
   color: #f1f5f9;
 }
