@@ -2239,7 +2239,7 @@ function _drawFluxCharacter(ctx, W, H) {
   ctx.restore();
 }
 
-function generateTipStoryCanvas(tip, logoImg) {
+function generateTipStoryCanvas(tip, logoImg, fluxImg) {
   const W = 540, H = 960, PAD = 32;
   const canvas = document.createElement("canvas");
   canvas.width = W;
@@ -2286,7 +2286,17 @@ function generateTipStoryCanvas(tip, logoImg) {
   ctx.fillRect(0, 0, W, H);
 
   // ── ASSISTENTE FLUX CHARACTER (background) ───────────────
-  _drawFluxCharacter(ctx, W, H);
+  if (fluxImg) {
+    const charSize = 520;
+    const charX    = (W - charSize) / 2;
+    const charY    = (H - charSize) / 2 + 60;
+    ctx.save();
+    ctx.globalAlpha = 0.13;
+    ctx.drawImage(fluxImg, charX, charY, charSize, charSize);
+    ctx.restore();
+  } else {
+    _drawFluxCharacter(ctx, W, H);
+  }
 
   // Top accent line
   const accentG = ctx.createLinearGradient(0, 0, W, 0);
@@ -2610,14 +2620,19 @@ async function openStoryModal(tipId) {
   overlay.style.display = "flex";
   if (dlBtn) { dlBtn.style.opacity = "0.4"; dlBtn.style.pointerEvents = "none"; }
 
-  const logoImg = await new Promise((resolve) => {
+  const loadImg = src => new Promise(resolve => {
     const image = new Image();
     image.onload  = () => resolve(image);
     image.onerror = () => resolve(null);
-    image.src = "/static/images/logos/Icon-mobile-logo-vector.png";
+    image.src = src;
   });
 
-  const canvas  = generateTipStoryCanvas(tip, logoImg);
+  const [logoImg, fluxImg] = await Promise.all([
+    loadImg("/static/images/logos/Icon-mobile-logo-vector.png"),
+    loadImg("/static/images/logos/1782664376486.png"),
+  ]);
+
+  const canvas  = generateTipStoryCanvas(tip, logoImg, fluxImg);
   const dataUrl = canvas.toDataURL("image/png");
 
   img.src = dataUrl;
