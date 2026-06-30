@@ -807,19 +807,24 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   font-size: 11px;
 }
 
+.bottom-nav small {
+  display: none;
+}
+
 .bottom-nav i {
-  font-size: 20px;
+  font-size: 24px;
 }
 
 .bottom-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 24px;
-  margin-bottom: 2px;
+  height: 28px;
+  margin-bottom: 0;
 }
 
 .bottom-nav-avatar {
