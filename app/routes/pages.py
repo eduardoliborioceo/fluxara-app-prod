@@ -56,6 +56,12 @@ def apostas():
     return render_template("apostas.html", active_menu="apostas")
 
 
+@bp.route("/calculadoras")
+@login_required
+def calculadoras():
+    return render_template("calculadoras.html", active_menu="calculadoras")
+
+
 @bp.route("/minha-saude")
 @login_required
 def minha_saude():

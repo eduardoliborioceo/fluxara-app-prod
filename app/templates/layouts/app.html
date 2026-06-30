@@ -64,7 +64,7 @@
 
     {% set cfg_active = active_menu in ['contas', 'configuracoes', 'usuario', 'admin'] %}
     {% set dev_active = active_menu in ['dev_painel', 'dev_novo'] %}
-    {% set ferramentas_active = active_menu in ['minha_saude', 'treino', 'surebet', 'apostas'] %}
+    {% set ferramentas_active = active_menu in ['minha_saude', 'treino', 'surebet', 'apostas', 'calculadoras'] %}
     <nav>
       <a href="{{ url_for('pages.resumo') }}"
          class="{% if active_menu == 'resumo' %}active{% endif %}">
@@ -105,6 +105,10 @@
           <a href="{{ url_for('pages.apostas') }}"
              class="sidebar-subitem{% if active_menu == 'apostas' %} active{% endif %}">
             <i class="bi bi-trophy"></i> Apostas
+          </a>
+          <a href="{{ url_for('pages.calculadoras') }}"
+             class="sidebar-subitem{% if active_menu == 'calculadoras' %} active{% endif %}">
+            <i class="bi bi-calculator-fill"></i> Calculadoras
           </a>
         </div>
       </div>
