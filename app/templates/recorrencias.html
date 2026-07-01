@@ -51,88 +51,90 @@
     <div class="dm-handle"></div>
     <div class="dm-title" id="recModalTitulo">Nova Recorrência</div>
 
-    <input type="hidden" id="recEditId">
+    <div class="dm-body">
+      <input type="hidden" id="recEditId">
 
-    <div class="rec-form-group">
-      <label class="rec-label">Nome</label>
-      <input type="text" id="recNome" class="rec-input" placeholder="Ex: Netflix, Energia, Seguro..." maxlength="200">
-    </div>
-
-    <div class="rec-form-group" id="recTipoGroup">
-      <label class="rec-label">Tipo</label>
-      <div class="rec-tipo-toggle" id="recTipoToggle">
-        <button type="button" class="rec-tipo-btn rec-tipo-btn--active" data-tipo="credito">
-          <i class="bi bi-credit-card-fill"></i> Crédito automático
-        </button>
-        <button type="button" class="rec-tipo-btn" data-tipo="debito">
-          <i class="bi bi-bank"></i> Débito automático
-        </button>
+      <div class="rec-form-group">
+        <label class="rec-label">Nome</label>
+        <input type="text" id="recNome" class="rec-input" placeholder="Ex: Netflix, Energia, Seguro..." maxlength="200">
       </div>
-    </div>
 
-    <div class="rec-form-group">
-      <label class="rec-label">Valor mensal</label>
-      <div class="rec-input-prefix">
-        <span>R$</span>
-        <input type="number" id="recValor" class="rec-input" min="0.01" step="0.01" placeholder="0,00" inputmode="decimal">
-      </div>
-    </div>
-
-    <div class="rec-form-group" id="recCartaoGroup">
-      <label class="rec-label">Cartão de crédito</label>
-      <div class="conta-picker" id="recCartaoPicker">
-        <div class="conta-picker-trigger" id="recCartaoTrigger">
-          <div class="conta-picker-selected" id="recCartaoSelected">
-            <span class="text-muted">Selecionar cartão...</span>
-          </div>
-          <i class="bi bi-chevron-down conta-picker-arrow"></i>
+      <div class="rec-form-group" id="recTipoGroup">
+        <label class="rec-label">Tipo</label>
+        <div class="rec-tipo-toggle" id="recTipoToggle">
+          <button type="button" class="rec-tipo-btn rec-tipo-btn--active" data-tipo="credito">
+            <i class="bi bi-credit-card-fill"></i> Crédito automático
+          </button>
+          <button type="button" class="rec-tipo-btn" data-tipo="debito">
+            <i class="bi bi-bank"></i> Débito automático
+          </button>
         </div>
-        <div class="conta-picker-dropdown" id="recCartaoDropdown"></div>
-        <input type="hidden" id="recCartaoId">
       </div>
-    </div>
 
-    <div class="rec-form-group d-none" id="recContaGroup">
-      <label class="rec-label">Conta bancária</label>
-      <div class="conta-picker" id="recContaPicker">
-        <div class="conta-picker-trigger" id="recContaTrigger">
-          <div class="conta-picker-selected" id="recContaSelected">
-            <span class="text-muted">Selecionar conta...</span>
-          </div>
-          <i class="bi bi-chevron-down conta-picker-arrow"></i>
+      <div class="rec-form-group">
+        <label class="rec-label">Valor mensal</label>
+        <div class="rec-input-prefix">
+          <span>R$</span>
+          <input type="number" id="recValor" class="rec-input" min="0.01" step="0.01" placeholder="0,00" inputmode="decimal">
         </div>
-        <div class="conta-picker-dropdown" id="recContaDropdown"></div>
-        <input type="hidden" id="recContaId">
       </div>
-    </div>
 
-    <div class="rec-form-group">
-      <label class="rec-label">Dia do vencimento</label>
-      <input type="number" id="recDia" class="rec-input" min="1" max="31" placeholder="Ex: 10">
-    </div>
-
-    <div class="rec-form-group">
-      <label class="rec-label">Categoria <span class="rec-hint">(opcional)</span></label>
-      <div class="conta-picker" id="recCategoriaPicker">
-        <div class="conta-picker-trigger" id="recCategoriaTrigger">
-          <div class="conta-picker-selected" id="recCategoriaSelected">
-            <span class="text-muted">Sem categoria</span>
+      <div class="rec-form-group" id="recCartaoGroup">
+        <label class="rec-label">Cartão de crédito</label>
+        <div class="conta-picker" id="recCartaoPicker">
+          <div class="conta-picker-trigger" id="recCartaoTrigger">
+            <div class="conta-picker-selected" id="recCartaoSelected">
+              <span class="text-muted">Selecionar cartão...</span>
+            </div>
+            <i class="bi bi-chevron-down conta-picker-arrow"></i>
           </div>
-          <i class="bi bi-chevron-down conta-picker-arrow"></i>
+          <div class="conta-picker-dropdown" id="recCartaoDropdown"></div>
+          <input type="hidden" id="recCartaoId">
         </div>
-        <div class="conta-picker-dropdown" id="recCategoriaDropdown"></div>
-        <input type="hidden" id="recCategoriaId">
       </div>
-    </div>
 
-    <div class="rec-form-group d-none" id="recSubcategoriaGroup">
-      <label class="rec-label">Subcategoria <span class="rec-hint">(opcional)</span></label>
-      <select id="recSubcategoriaId" class="form-select lancamento-select">
-        <option value="">Selecionar subcategoria...</option>
-      </select>
-    </div>
+      <div class="rec-form-group d-none" id="recContaGroup">
+        <label class="rec-label">Conta bancária</label>
+        <div class="conta-picker" id="recContaPicker">
+          <div class="conta-picker-trigger" id="recContaTrigger">
+            <div class="conta-picker-selected" id="recContaSelected">
+              <span class="text-muted">Selecionar conta...</span>
+            </div>
+            <i class="bi bi-chevron-down conta-picker-arrow"></i>
+          </div>
+          <div class="conta-picker-dropdown" id="recContaDropdown"></div>
+          <input type="hidden" id="recContaId">
+        </div>
+      </div>
 
-    <div id="recError" class="rec-error" style="display:none"></div>
+      <div class="rec-form-group">
+        <label class="rec-label">Dia do vencimento</label>
+        <input type="number" id="recDia" class="rec-input" min="1" max="31" placeholder="Ex: 10">
+      </div>
+
+      <div class="rec-form-group">
+        <label class="rec-label">Categoria <span class="rec-hint">(opcional)</span></label>
+        <div class="conta-picker" id="recCategoriaPicker">
+          <div class="conta-picker-trigger" id="recCategoriaTrigger">
+            <div class="conta-picker-selected" id="recCategoriaSelected">
+              <span class="text-muted">Sem categoria</span>
+            </div>
+            <i class="bi bi-chevron-down conta-picker-arrow"></i>
+          </div>
+          <div class="conta-picker-dropdown" id="recCategoriaDropdown"></div>
+          <input type="hidden" id="recCategoriaId">
+        </div>
+      </div>
+
+      <div class="rec-form-group d-none" id="recSubcategoriaGroup">
+        <label class="rec-label">Subcategoria <span class="rec-hint">(opcional)</span></label>
+        <select id="recSubcategoriaId" class="form-select lancamento-select">
+          <option value="">Selecionar subcategoria...</option>
+        </select>
+      </div>
+
+      <div id="recError" class="rec-error" style="display:none"></div>
+    </div>
 
     <div class="dm-actions">
       <button type="button" class="btn btn-link text-danger me-auto d-none" id="recBtnDeletar" onclick="deletarRec()">Excluir</button>

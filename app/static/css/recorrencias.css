@@ -387,7 +387,91 @@
   color: #475569;
 }
 
-/* dropdown precisa ficar acima do dm-sheet (z-index 500) */
+/* ========================
+   MODAL OVERLAY + SHEET
+======================== */
+.dm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, .48);
+  z-index: 1060;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  backdrop-filter: blur(2px);
+}
+
+.dm-sheet {
+  background: var(--card, #fff);
+  border-radius: 20px 20px 0 0;
+  width: 100%;
+  max-width: 640px;
+  box-shadow: 0 -4px 32px rgba(15, 23, 42, .14);
+  display: flex;
+  flex-direction: column;
+  max-height: 92vh;
+  overflow: hidden;
+}
+
+.dm-handle {
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(15, 23, 42, .12);
+  margin: 12px auto 0;
+  flex-shrink: 0;
+}
+
+.dm-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text, #1e293b);
+  padding: 16px 24px 8px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border, rgba(15,23,42,.09));
+}
+
+.dm-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px 8px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.dm-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 24px;
+  padding-bottom: calc(14px + var(--safe-bottom, 0px));
+  border-top: 1px solid var(--border, rgba(15,23,42,.09));
+  flex-shrink: 0;
+  background: var(--card, #fff);
+}
+
+/* desktop: card flutuante centrado, 4 lados visíveis — igual ao lancamento-card */
+@media (min-width: 768px) {
+  .dm-overlay {
+    align-items: center;
+    padding: 24px;
+  }
+  .dm-sheet {
+    border-radius: 16px;
+    max-height: 85vh;
+  }
+}
+
+/* dropdown acima do sheet */
 .dm-sheet .conta-picker-dropdown {
   z-index: 600;
+}
+
+[data-theme="escuro"] .dm-sheet {
+  background: #1e293b;
+}
+
+[data-theme="escuro"] .dm-title,
+[data-theme="escuro"] .dm-actions {
+  border-color: rgba(255,255,255,.08);
+  background: #1e293b;
 }
