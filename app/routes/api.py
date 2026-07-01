@@ -1316,6 +1316,7 @@ def surebet_create_alavancagem():
             aposta_inicial=data.get("aposta_inicial"),
             odd=data.get("odd"),
             num_rodadas=data.get("num_rodadas"),
+            tipo=data.get("tipo", "lucro"),
         )
         return jsonify(alv), 201
     except ValueError as e:

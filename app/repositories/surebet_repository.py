@@ -6,7 +6,7 @@ def list_alavancagens(user_id: int):
     with get_db() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("""
-                SELECT id, nome, aposta_inicial, odd, num_rodadas, rodada_atual, criado_em
+                SELECT id, nome, aposta_inicial, odd, num_rodadas, rodada_atual, tipo, criado_em
                 FROM surebet_alavancagem
                 WHERE user_id = %s
                 ORDER BY criado_em DESC
@@ -15,15 +15,15 @@ def list_alavancagens(user_id: int):
 
 
 def create_alavancagem(user_id: int, nome: str, aposta_inicial: float,
-                       odd: float, num_rodadas: int):
+                       odd: float, num_rodadas: int, tipo: str = 'lucro'):
     with get_db() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("""
                 INSERT INTO surebet_alavancagem
-                    (user_id, nome, aposta_inicial, odd, num_rodadas, rodada_atual)
-                VALUES (%s, %s, %s, %s, %s, 0)
+                    (user_id, nome, aposta_inicial, odd, num_rodadas, rodada_atual, tipo)
+                VALUES (%s, %s, %s, %s, %s, 0, %s)
                 RETURNING *
-            """, (user_id, nome, aposta_inicial, odd, num_rodadas))
+            """, (user_id, nome, aposta_inicial, odd, num_rodadas, tipo))
             row = cur.fetchone()
             conn.commit()
             return row
