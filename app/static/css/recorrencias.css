@@ -387,52 +387,7 @@
   color: #475569;
 }
 
-/* ========================
-   PICKERS (conta / cartão / categoria)
-======================== */
-.rec-picker-wrap {
-  border-bottom: 1px solid var(--border, rgba(15,23,42,.09));
-  padding-bottom: 6px;
-}
-
-.rec-picker-wrap .conta-picker-trigger {
-  padding: 4px 0;
-}
-
-.rec-picker-wrap .conta-picker-dropdown {
-  left: -12px;
-  right: -12px;
+/* dropdown precisa ficar acima do dm-sheet (z-index 500) */
+.dm-sheet .conta-picker-dropdown {
   z-index: 600;
-}
-
-/* subcategoria inline select */
-#recSubcategoriaId {
-  border: none;
-  border-bottom: 1px solid var(--border, rgba(15,23,42,.09));
-  border-radius: 0;
-  padding-left: 0;
-  box-shadow: none;
-  font-size: .875rem;
-  background: transparent;
-  color: var(--text, #1e293b);
-  width: 100%;
-}
-
-#recSubcategoriaId:focus {
-  outline: none;
-  box-shadow: none;
-  border-bottom-color: var(--primary, #0d6efd);
-}
-
-[data-theme="escuro"] .rec-picker-wrap .conta-picker-dropdown {
-  background: #1e293b;
-  box-shadow: 0 8px 32px rgba(0,0,0,.4);
-}
-
-[data-theme="escuro"] .rec-picker-wrap .conta-picker-item:hover {
-  background: rgba(255,255,255,.06);
-}
-
-[data-theme="escuro"] #recSubcategoriaId {
-  color: #e2e8f0;
 }
