@@ -148,13 +148,8 @@
 
       <div class="surebet-field">
         <label class="surebet-label">Número de rodadas</label>
-        <div class="surebet-outcomes-toggle" id="alvRodadasToggle">
-          <button type="button" class="surebet-outcome-btn" data-n="2">2</button>
-          <button type="button" class="surebet-outcome-btn active" data-n="3">3</button>
-          <button type="button" class="surebet-outcome-btn" data-n="4">4</button>
-          <button type="button" class="surebet-outcome-btn" data-n="5">5</button>
-          <button type="button" class="surebet-outcome-btn" data-n="6">6</button>
-        </div>
+        <input type="number" id="alvNumRodadasInput" class="surebet-input"
+               min="2" max="100" value="3" placeholder="Ex: 10">
       </div>
 
       <button class="alv-btn-simular" id="alvBtnCriar" onclick="alvCriar()">

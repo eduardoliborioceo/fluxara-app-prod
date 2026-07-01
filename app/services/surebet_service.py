@@ -26,8 +26,8 @@ def create_alavancagem(user_id: int, nome: str, aposta_inicial,
         raise ValueError("Aposta inicial inválida")
     if odd <= 1:
         raise ValueError("Odd deve ser maior que 1")
-    if not (2 <= num_rodadas <= 10):
-        raise ValueError("Número de rodadas deve ser entre 2 e 10")
+    if not (2 <= num_rodadas <= 100):
+        raise ValueError("Número de rodadas deve ser entre 2 e 100")
     nome = (nome or "").strip() or "Alavancagem"
     return _serialize(dict(repo.create_alavancagem(user_id, nome, aposta_inicial, odd, num_rodadas)))
 
