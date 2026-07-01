@@ -1,0 +1,116 @@
+{% extends "layouts/app.html" %}
+{% block title %}Fluxara · Recorrências{% endblock %}
+
+{% block page_title %}
+<div class="page-header">
+  <div class="page-header-title">
+    <span class="page-header-section">Finanças</span>
+    <h1 class="page-header-name">Recorrências</h1>
+  </div>
+  <div class="page-header-actions">
+    <a href="{{ url_for('pages.resumo') }}" class="btn-header-icon" title="Voltar">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+    <button class="btn-header-icon" onclick="toggleFullscreen()" title="Tela cheia">
+      <i class="bi bi-arrows-fullscreen"></i>
+    </button>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/recorrencias.css') }}?v={{ static_v }}">
+
+<div class="rec-wrapper">
+
+  <div id="recLoading" class="text-center py-5 text-muted">
+    <div class="spinner-border spinner-border-sm me-2"></div>Carregando...
+  </div>
+
+  <div id="recVazio" class="rec-vazio d-none">
+    <i class="bi bi-arrow-repeat"></i>
+    <p>Nenhuma recorrência cadastrada</p>
+    <span>Toque no + para adicionar débito ou crédito automático</span>
+  </div>
+
+  <div id="recLista" class="d-none"></div>
+
+</div>
+
+<!-- FAB -->
+<div class="rec-fab">
+  <button class="rec-fab-btn" id="btnNovaRec" aria-label="Nova recorrência">
+    <i class="bi bi-plus"></i>
+  </button>
+</div>
+
+<!-- MODAL RECORRÊNCIA -->
+<div class="dm-overlay" id="recOverlay" style="display:none" onclick="closeRecModal(event)">
+  <div class="dm-sheet" id="recSheet" onclick="event.stopPropagation()">
+    <div class="dm-handle"></div>
+    <div class="dm-title" id="recModalTitulo">Nova Recorrência</div>
+
+    <input type="hidden" id="recEditId">
+
+    <div class="rec-form-group">
+      <label class="rec-label">Nome</label>
+      <input type="text" id="recNome" class="rec-input" placeholder="Ex: Netflix, Energia, Seguro..." maxlength="200">
+    </div>
+
+    <div class="rec-form-group" id="recTipoGroup">
+      <label class="rec-label">Tipo</label>
+      <div class="rec-tipo-toggle" id="recTipoToggle">
+        <button type="button" class="rec-tipo-btn rec-tipo-btn--active" data-tipo="credito">
+          <i class="bi bi-credit-card-fill"></i> Crédito automático
+        </button>
+        <button type="button" class="rec-tipo-btn" data-tipo="debito">
+          <i class="bi bi-bank"></i> Débito automático
+        </button>
+      </div>
+    </div>
+
+    <div class="rec-form-group">
+      <label class="rec-label">Valor mensal</label>
+      <div class="rec-input-prefix">
+        <span>R$</span>
+        <input type="number" id="recValor" class="rec-input" min="0.01" step="0.01" placeholder="0,00" inputmode="decimal">
+      </div>
+    </div>
+
+    <div class="rec-form-group" id="recCartaoGroup">
+      <label class="rec-label">Cartão de crédito</label>
+      <select id="recCartaoId" class="rec-input rec-select"></select>
+    </div>
+
+    <div class="rec-form-group d-none" id="recContaGroup">
+      <label class="rec-label">Conta bancária</label>
+      <select id="recContaId" class="rec-input rec-select"></select>
+    </div>
+
+    <div class="rec-form-group">
+      <label class="rec-label">Dia do vencimento</label>
+      <input type="number" id="recDia" class="rec-input" min="1" max="31" placeholder="Ex: 10">
+    </div>
+
+    <div class="rec-form-group">
+      <label class="rec-label">Categoria <span class="rec-hint">(opcional)</span></label>
+      <select id="recCategoriaId" class="rec-input rec-select">
+        <option value="">Sem categoria</option>
+      </select>
+    </div>
+
+    <div id="recError" class="rec-error" style="display:none"></div>
+
+    <div class="dm-actions">
+      <button type="button" class="btn btn-link text-danger me-auto d-none" id="recBtnDeletar" onclick="deletarRec()">Excluir</button>
+      <button type="button" class="btn btn-secondary" onclick="closeRecModal()">Cancelar</button>
+      <button type="button" class="btn btn-primary" id="recBtnSalvar" onclick="salvarRec()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/recorrencias.js') }}?v={{ static_v }}"></script>
+{% endblock %}

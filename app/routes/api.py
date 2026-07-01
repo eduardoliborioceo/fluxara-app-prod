@@ -953,6 +953,57 @@ def api_admin_ticket_resposta(ticket_id):
         return jsonify({"error": str(e)}), 400
 
 
+# ============================================================
+#  RECORRÊNCIAS
+# ============================================================
+
+@bp.route("/recorrencias", methods=["GET"])
+@login_required
+def recorrencias_list():
+    from app.services import recorrencias_service
+    return jsonify(recorrencias_service.list_recorrencias(current_user.id))
+
+
+@bp.route("/recorrencias", methods=["POST"])
+@login_required
+def recorrencias_create():
+    from app.services import recorrencias_service
+    data = request.get_json() or {}
+    try:
+        row = recorrencias_service.create_recorrencia(current_user.id, data)
+        return jsonify(row), 201
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@bp.route("/recorrencias/<int:rec_id>", methods=["PUT"])
+@login_required
+def recorrencias_update(rec_id):
+    from app.services import recorrencias_service
+    data = request.get_json() or {}
+    try:
+        recorrencias_service.update_recorrencia(rec_id, current_user.id, data)
+        return jsonify({"ok": True})
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@bp.route("/recorrencias/<int:rec_id>", methods=["DELETE"])
+@login_required
+def recorrencias_delete(rec_id):
+    from app.services import recorrencias_service
+    recorrencias_service.delete_recorrencia(rec_id, current_user.id)
+    return jsonify({"ok": True})
+
+
+@bp.route("/recorrencias/<int:rec_id>/toggle", methods=["POST"])
+@login_required
+def recorrencias_toggle(rec_id):
+    from app.services import recorrencias_service
+    ativo = recorrencias_service.toggle_ativo(rec_id, current_user.id)
+    return jsonify({"ativo": ativo})
+
+
 @bp.route("/auth/confirm-extra", methods=["POST"])
 def api_confirm_extra():
     data = request.get_json() or {}
