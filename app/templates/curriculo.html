@@ -1,0 +1,233 @@
+{% extends "layouts/app.html" %}
+{% block title %}Fluxara · Currículo{% endblock %}
+
+{% block page_title %}
+<div class="page-header">
+  <div class="page-header-title">
+    <span class="page-header-section">Ferramentas</span>
+    <h1 class="page-header-name">Gerador de Currículo</h1>
+  </div>
+  <div class="page-header-actions">
+    <button class="btn-header-icon" onclick="toggleFullscreen()" title="Tela cheia">
+      <i class="bi bi-arrows-fullscreen"></i>
+    </button>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/curriculo.css') }}?v={{ static_v }}">
+
+<div class="cv-page">
+
+  <!-- ── LISTA ── -->
+  <div id="cvLista">
+    <div class="cv-lista-header">
+      <span class="cv-lista-titulo">Meus Currículos</span>
+      <button class="btn btn-primary btn-sm" onclick="cvNovoEditor()">
+        <i class="bi bi-plus-lg me-1"></i>Novo Currículo
+      </button>
+    </div>
+    <div class="cv-grid" id="cvGrid">
+      <div class="cv-vazio" id="cvVazio" style="display:none">
+        <i class="bi bi-file-person"></i>
+        <p>Nenhum currículo criado</p>
+        <span>Clique em "Novo Currículo" para começar</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── EDITOR ── -->
+  <div id="cvEditor" class="cv-editor">
+
+    <div class="cv-editor-header">
+      <button class="btn-header-icon me-2" onclick="cvVoltarLista()" title="Voltar">
+        <i class="bi bi-arrow-left"></i>
+      </button>
+      <input type="text" id="cvTitulo" class="cv-editor-titulo-input" placeholder="Título do currículo..." maxlength="200">
+      <button class="btn btn-primary btn-sm" id="cvBtnSalvar" onclick="cvSalvar()">
+        <i class="bi bi-floppy me-1"></i>Salvar
+      </button>
+    </div>
+
+    <!-- Tabs mobile -->
+    <div class="cv-mobile-tabs" id="cvMobileTabs">
+      <button class="cv-tab-btn active" onclick="cvTab('form')">Formulário</button>
+      <button class="cv-tab-btn" onclick="cvTab('preview')">Preview</button>
+    </div>
+
+    <div class="cv-editor-body">
+
+      <!-- ── FORMULÁRIO ── -->
+      <div class="cv-form-card cv-tab-active" id="cvFormCard">
+
+        <!-- Dados Pessoais -->
+        <div class="cv-section-toggle open" onclick="cvToggleSection(this)">
+          <span class="cv-section-toggle-label">
+            <i class="bi bi-person-circle"></i>Dados Pessoais
+          </span>
+          <i class="bi bi-chevron-down"></i>
+        </div>
+        <div class="cv-section-body open">
+          <div class="cv-row">
+            <div class="cv-field">
+              <label class="cv-label">Nome completo</label>
+              <input type="text" id="fNome" class="cv-input" placeholder="João da Silva" oninput="cvPreview()">
+            </div>
+            <div class="cv-field">
+              <label class="cv-label">Cargo / Título profissional</label>
+              <input type="text" id="fCargo" class="cv-input" placeholder="Engenheiro de Software" oninput="cvPreview()">
+            </div>
+          </div>
+          <div class="cv-row">
+            <div class="cv-field">
+              <label class="cv-label">E-mail</label>
+              <input type="email" id="fEmail" class="cv-input" placeholder="joao@email.com" oninput="cvPreview()">
+            </div>
+            <div class="cv-field">
+              <label class="cv-label">Telefone</label>
+              <input type="text" id="fTelefone" class="cv-input" placeholder="(11) 99999-9999" oninput="cvPreview()">
+            </div>
+          </div>
+          <div class="cv-row">
+            <div class="cv-field">
+              <label class="cv-label">Cidade / Estado</label>
+              <input type="text" id="fCidade" class="cv-input" placeholder="São Paulo, SP" oninput="cvPreview()">
+            </div>
+            <div class="cv-field">
+              <label class="cv-label">LinkedIn</label>
+              <input type="text" id="fLinkedin" class="cv-input" placeholder="linkedin.com/in/joao" oninput="cvPreview()">
+            </div>
+          </div>
+          <div class="cv-row">
+            <div class="cv-field">
+              <label class="cv-label">GitHub</label>
+              <input type="text" id="fGithub" class="cv-input" placeholder="github.com/joao" oninput="cvPreview()">
+            </div>
+            <div class="cv-field">
+              <label class="cv-label">Site / Portfólio</label>
+              <input type="text" id="fSite" class="cv-input" placeholder="meusite.com" oninput="cvPreview()">
+            </div>
+          </div>
+        </div>
+
+        <!-- Resumo Profissional -->
+        <div class="cv-section-toggle open" onclick="cvToggleSection(this)">
+          <span class="cv-section-toggle-label">
+            <i class="bi bi-card-text"></i>Resumo Profissional
+          </span>
+          <i class="bi bi-chevron-down"></i>
+        </div>
+        <div class="cv-section-body open">
+          <div class="cv-field">
+            <label class="cv-label">Resumo</label>
+            <textarea id="fResumo" class="cv-textarea" rows="4"
+              placeholder="Profissional com X anos de experiência em..." oninput="cvPreview()"></textarea>
+          </div>
+        </div>
+
+        <!-- Experiência -->
+        <div class="cv-section-toggle open" onclick="cvToggleSection(this)">
+          <span class="cv-section-toggle-label">
+            <i class="bi bi-briefcase"></i>Experiência Profissional
+          </span>
+          <i class="bi bi-chevron-down"></i>
+        </div>
+        <div class="cv-section-body open">
+          <div class="cv-dynamic-list" id="cvExpList"></div>
+          <button class="cv-add-btn" onclick="cvAddExp()">
+            <i class="bi bi-plus-lg"></i>Adicionar experiência
+          </button>
+        </div>
+
+        <!-- Educação -->
+        <div class="cv-section-toggle" onclick="cvToggleSection(this)">
+          <span class="cv-section-toggle-label">
+            <i class="bi bi-mortarboard"></i>Educação
+          </span>
+          <i class="bi bi-chevron-down"></i>
+        </div>
+        <div class="cv-section-body">
+          <div class="cv-dynamic-list" id="cvEduList"></div>
+          <button class="cv-add-btn" onclick="cvAddEdu()">
+            <i class="bi bi-plus-lg"></i>Adicionar formação
+          </button>
+        </div>
+
+        <!-- Habilidades -->
+        <div class="cv-section-toggle" onclick="cvToggleSection(this)">
+          <span class="cv-section-toggle-label">
+            <i class="bi bi-stars"></i>Habilidades
+          </span>
+          <i class="bi bi-chevron-down"></i>
+        </div>
+        <div class="cv-section-body">
+          <div class="cv-tags-wrap" id="cvSkillsTags"></div>
+          <div class="cv-tag-input-row">
+            <input type="text" id="cvSkillInput" class="cv-input" placeholder="Ex: Python, React, Excel..." maxlength="60"
+              onkeydown="if(event.key==='Enter'){event.preventDefault();cvAddSkill();}">
+            <button class="cv-tag-add" onclick="cvAddSkill()">Adicionar</button>
+          </div>
+        </div>
+
+        <!-- Idiomas -->
+        <div class="cv-section-toggle" onclick="cvToggleSection(this)">
+          <span class="cv-section-toggle-label">
+            <i class="bi bi-translate"></i>Idiomas
+          </span>
+          <i class="bi bi-chevron-down"></i>
+        </div>
+        <div class="cv-section-body">
+          <div class="cv-dynamic-list" id="cvLangList"></div>
+          <button class="cv-add-btn" onclick="cvAddLang()">
+            <i class="bi bi-plus-lg"></i>Adicionar idioma
+          </button>
+        </div>
+
+        <!-- Certificações -->
+        <div class="cv-section-toggle" onclick="cvToggleSection(this)">
+          <span class="cv-section-toggle-label">
+            <i class="bi bi-patch-check"></i>Certificações
+          </span>
+          <i class="bi bi-chevron-down"></i>
+        </div>
+        <div class="cv-section-body">
+          <div class="cv-dynamic-list" id="cvCertList"></div>
+          <button class="cv-add-btn" onclick="cvAddCert()">
+            <i class="bi bi-plus-lg"></i>Adicionar certificação
+          </button>
+        </div>
+
+      </div>
+      <!-- fim form card -->
+
+      <!-- ── PREVIEW ── -->
+      <div class="cv-preview-card" id="cvPreviewCard">
+        <div class="cv-preview-toolbar">
+          <span class="cv-preview-label"><i class="bi bi-eye me-1"></i>Preview</span>
+          <button class="cv-preview-print" onclick="cvImprimir()">
+            <i class="bi bi-printer"></i>Imprimir / PDF
+          </button>
+        </div>
+        <div class="cv-preview-scroll">
+          <div id="cvDoc" class="cv-doc">
+            <div class="cv-empty-state">
+              <i class="bi bi-file-person"></i>
+              Preencha os dados ao lado para visualizar o currículo
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <!-- fim editor body -->
+
+  </div>
+  <!-- fim editor -->
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/curriculo.js') }}?v={{ static_v }}"></script>
+{% endblock %}
