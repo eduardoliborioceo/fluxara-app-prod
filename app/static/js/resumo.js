@@ -1365,7 +1365,7 @@
           nome: c.nome,
           instituicao: c.instituicao,
           categoria_id: c.categoria_id || null,
-          saldo_inicial: c.saldo_inicial,
+          saldo_inicial: parseFloat(c.saldo_inicial) || 0,
           finalidade: c.finalidade || '',
           valor_investido: inv,
         }),
