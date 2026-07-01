@@ -249,6 +249,37 @@
   line-height: 1.5;
 }
 
+/* ── SEGURO-DESEMPREGO ───────────────────────────────── */
+.calc-seguro-block {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 2px solid rgba(13,110,253,.15);
+}
+
+.calc-seguro-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: .82rem;
+  font-weight: 700;
+  color: var(--primary, #0d6efd);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-bottom: 14px;
+}
+
+.calc-seguro-inelegivel {
+  padding: 14px 16px;
+  background: #fef2f2;
+  border: 1px solid rgba(220,38,38,.15);
+  border-radius: 10px;
+  font-size: .82rem;
+  font-weight: 600;
+  color: #dc2626;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
 /* ── MOBILE ──────────────────────────────────────────── */
 @media (max-width: 600px) {
   .calc-card {

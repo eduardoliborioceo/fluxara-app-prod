@@ -18,6 +18,23 @@ function calcTab(tab) {
 }
 
 // ============================================================
+//  PRÉ-PREENCHIMENTO COM DADOS PESSOAIS
+//  Salário base FGTS (excluindo provisão do empréstimo)
+//  FGTS total = disponível (2.987,88) + bloqueado (2.261,15)
+// ============================================================
+
+document.addEventListener("DOMContentLoaded", function () {
+  var rescSal  = document.getElementById("rescSalario");
+  var rescFgts = document.getElementById("rescFgts");
+  var rescBlq  = document.getElementById("rescFgtsBloqueado");
+  if (rescSal && !rescSal.value) {
+    rescSal.value  = "2157.98";
+    if (rescFgts) rescFgts.value = "5249.03";
+    if (rescBlq)  rescBlq.value  = "2261.15";
+  }
+});
+
+// ============================================================
 //  HELPERS
 // ============================================================
 
@@ -29,6 +46,13 @@ function _row(label, val, modifier) {
   return `<div class="calc-result-row${modifier ? " calc-result-row--" + modifier : ""}">
     <span class="calc-result-row-label">${label}</span>
     <span class="calc-result-row-val">${_fmt(val)}</span>
+  </div>`;
+}
+
+function _rowText(label, text, modifier) {
+  return `<div class="calc-result-row${modifier ? " calc-result-row--" + modifier : ""}">
+    <span class="calc-result-row-label">${label}</span>
+    <span class="calc-result-row-val">${text}</span>
   </div>`;
 }
 
@@ -73,11 +97,6 @@ function calcIRRF(baseCalculo) {
   return 0;
 }
 
-// ── Dias entre duas datas ────────────────────────────────────
-function _diffDias(d1, d2) {
-  return Math.floor((d2 - d1) / 86400000);
-}
-
 // ── Meses completos entre duas datas (com fração ≥ 15 dias conta) ──
 function _mesesProporcionais(admissao, demissao) {
   let meses = 0;
@@ -95,41 +114,96 @@ function _mesesProporcionais(admissao, demissao) {
   return meses;
 }
 
+// ── Seguro-Desemprego (Lei 7.998/90 · Tabela 2024) ─────────
+function _calcSeguro(salarioMedio, mesesTotal, requerimento) {
+  const req = parseInt(requerimento) || 1;
+
+  // Elegibilidade mínima por número de requerimento
+  const minMeses = req === 1 ? 12 : req === 2 ? 9 : 6;
+  if (mesesTotal < minMeses) {
+    return { elegivel: false, minMeses: minMeses };
+  }
+
+  // Número de parcelas
+  let parcelas;
+  if (req === 1) {
+    parcelas = mesesTotal < 24 ? 3 : mesesTotal < 36 ? 4 : 5;
+  } else {
+    parcelas = mesesTotal < 12 ? 3 : mesesTotal < 24 ? 4 : 5;
+  }
+
+  // Valor da parcela – faixas 2024 (MTE)
+  const F1 = 2041.19;
+  const F2 = 3401.97;
+  let valorParcela;
+  if (salarioMedio <= F1) {
+    valorParcela = salarioMedio;
+  } else if (salarioMedio <= F2) {
+    valorParcela = F1 + 0.80 * (salarioMedio - F1);
+  } else {
+    valorParcela = F1 + 0.80 * (F2 - F1);
+  }
+  valorParcela = Math.round(valorParcela * 100) / 100;
+
+  return {
+    elegivel: true,
+    parcelas: parcelas,
+    valorParcela: valorParcela,
+    total: Math.round(valorParcela * parcelas * 100) / 100,
+  };
+}
+
 // ============================================================
 //  CALCULADORA 1 — RESCISÃO
 // ============================================================
 
 function calcRescisao() {
-  const salario   = parseFloat(document.getElementById("rescSalario").value)   || 0;
-  const admStr    = document.getElementById("rescAdmissao").value;
-  const demStr    = document.getElementById("rescDemissao").value;
-  const aviso     = document.getElementById("rescAviso").value;
-  const fgts      = parseFloat(document.getElementById("rescFgts").value)      || 0;
-  const dias      = parseInt(document.getElementById("rescDias").value)         || 0;
+  const salario    = parseFloat(document.getElementById("rescSalario").value)         || 0;
+  const admStr     = document.getElementById("rescAdmissao").value;
+  const demStr     = document.getElementById("rescDemissao").value;
+  const aviso      = document.getElementById("rescAviso").value;
+  const fgts       = parseFloat(document.getElementById("rescFgts").value)            || 0;
+  const fgtsBloq   = parseFloat(document.getElementById("rescFgtsBloqueado").value)   || 0;
+  const dias       = parseInt(document.getElementById("rescDias").value)              || 0;
+  const req        = document.getElementById("rescRequerimento").value                || "1";
 
-  const resultDiv = document.getElementById("rescResultado");
-  const itensDiv  = document.getElementById("rescItens");
-  const totalEl   = document.getElementById("rescTotal");
+  const resultDiv  = document.getElementById("rescResultado");
+  const itensDiv   = document.getElementById("rescItens");
+  const totalEl    = document.getElementById("rescTotal");
+  const seguroDiv  = document.getElementById("seguroResultado");
 
-  if (salario <= 0 || !admStr || !demStr) { resultDiv.style.display = "none"; return; }
+  if (salario <= 0 || !admStr || !demStr) {
+    resultDiv.style.display = "none";
+    if (seguroDiv) seguroDiv.style.display = "none";
+    return;
+  }
 
-  const admissao  = new Date(admStr + "T00:00:00");
-  const demissao  = new Date(demStr + "T00:00:00");
-  if (demissao <= admissao) { resultDiv.style.display = "none"; return; }
+  const admissao = new Date(admStr + "T00:00:00");
+  const demissao = new Date(demStr + "T00:00:00");
+  if (demissao <= admissao) {
+    resultDiv.style.display = "none";
+    if (seguroDiv) seguroDiv.style.display = "none";
+    return;
+  }
 
-  const mesesTotal   = _mesesProporcionais(admissao, demissao);
-  const mesesFerias  = _mesesProporcionais(new Date(admissao.getFullYear(), admissao.getMonth() + Math.floor(mesesTotal / 12) * 12, admissao.getDate()), demissao);
-  const mesesDecimo  = _mesesProporcionais(new Date(demissao.getFullYear(), 0, 1), demissao);
+  const mesesTotal  = _mesesProporcionais(admissao, demissao);
+  const mesesFerias = _mesesProporcionais(
+    new Date(admissao.getFullYear(), admissao.getMonth() + Math.floor(mesesTotal / 12) * 12, admissao.getDate()),
+    demissao
+  );
+  const mesesDecimo = _mesesProporcionais(new Date(demissao.getFullYear(), 0, 1), demissao);
 
-  const saldoSalario      = dias > 0 ? (salario / 30) * dias : 0;
-  const aviso30           = salario;
+  const saldoSalario        = dias > 0 ? (salario / 30) * dias : 0;
+  const aviso30             = salario;
   const feriasProporcionais = (salario / 12) * (mesesFerias || mesesTotal % 12 || mesesTotal);
-  const tercoFerias       = feriasProporcionais / 3;
+  const tercoFerias         = feriasProporcionais / 3;
   const decimoProporcionais = (salario / 12) * (mesesDecimo || mesesTotal % 12 || Math.min(mesesTotal, 12));
-  const multaFgts         = fgts * 0.40;
+
+  const fgtsDisponivel = Math.max(0, fgts - fgtsBloq);
+  const multaFgts      = Math.round(fgts * 0.40 * 100) / 100;
 
   let total = saldoSalario + feriasProporcionais + tercoFerias + decimoProporcionais + multaFgts;
-  if (fgts > 0) total += fgts;
+  if (fgts > 0) total += fgtsDisponivel;
 
   let html = _row("Saldo de salário (" + dias + " dias)", saldoSalario, "pos");
   html += _row("Férias proporcionais (" + Math.min(mesesFerias || mesesTotal, 12) + " meses)", feriasProporcionais, "pos");
@@ -145,13 +219,45 @@ function calcRescisao() {
   }
 
   if (fgts > 0) {
-    html += _row("Saldo do FGTS", fgts, "pos");
-    html += _row("Multa FGTS (40%)", multaFgts, "pos");
+    if (fgtsBloq > 0) {
+      html += _row("Saldo FGTS total na conta", fgts);
+      html += _row("FGTS bloqueado (antecipações)", fgtsBloq, "deduct");
+      html += _row("FGTS disponível para saque", fgtsDisponivel, "pos");
+    } else {
+      html += _row("Saldo do FGTS", fgts, "pos");
+    }
+    html += _row("Multa FGTS 40% (sobre saldo total)", multaFgts, "pos");
   }
 
   itensDiv.innerHTML = html;
   totalEl.textContent = _fmt(Math.max(0, total));
   resultDiv.style.display = "";
+
+  // ── Seguro-Desemprego ────────────────────────────────────
+  if (!seguroDiv) return;
+
+  const seguro = _calcSeguro(salario, mesesTotal, req);
+
+  if (seguro.elegivel) {
+    seguroDiv.innerHTML =
+      '<div class="calc-seguro-header"><i class="bi bi-shield-check"></i> Seguro-Desemprego</div>' +
+      '<div class="calc-result-grid">' +
+        _rowText("Número de parcelas", seguro.parcelas + "×") +
+        _row("Valor por parcela (estimado)", seguro.valorParcela, "pos") +
+      '</div>' +
+      '<div class="calc-result-total">' +
+        '<span>Total seguro-desemprego</span>' +
+        '<span class="calc-result-total-val">' + _fmt(seguro.total) + '</span>' +
+      '</div>' +
+      '<p class="calc-disclaimer">Tabela 2024 (MTE). Calculado sobre o salário bruto informado como média dos últimos 3 meses. Solicite nas agências do SINE ou pelo portal gov.br.</p>';
+  } else {
+    seguroDiv.innerHTML =
+      '<div class="calc-seguro-header"><i class="bi bi-shield-x"></i> Seguro-Desemprego</div>' +
+      '<div class="calc-seguro-inelegivel">Tempo insuficiente: necessário mínimo de ' + seguro.minMeses + ' meses trabalhados para o ' + req + 'º requerimento.</div>' +
+      '<p class="calc-disclaimer">Prazos conforme Lei 7.998/90: 1º pedido ≥ 12 meses · 2º pedido ≥ 9 meses · 3º pedido ou mais ≥ 6 meses.</p>';
+  }
+
+  seguroDiv.style.display = "";
 }
 
 // ============================================================
