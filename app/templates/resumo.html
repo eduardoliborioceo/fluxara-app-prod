@@ -277,9 +277,59 @@
   </div>
 </div>
 
+<!-- ====== MODAL APLICAR INTERNAMENTE ====== -->
+<div id="aplicarOverlay" class="dm-overlay" style="display:none" onclick="closeAplicarModal(event)">
+  <div class="dm-sheet">
+    <div class="dm-header">
+      <div class="dm-header-icon" style="background:rgba(13,110,253,.1);color:#0d6efd">
+        <i class="bi bi-lock-fill"></i>
+      </div>
+      <div class="dm-header-text">
+        <div class="dm-header-title">Aplicado internamente</div>
+        <div class="dm-header-sub" style="color:var(--text-muted,#64748b)">Valor aplicado dentro da conta</div>
+      </div>
+      <button class="dm-close" onclick="closeAplicarModal()" title="Fechar">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <div class="dm-body">
+      <div class="dm-field">
+        <label class="dm-label">Conta</label>
+        <div id="aplicarContasList" class="dm-contas-list"></div>
+      </div>
+
+      <div class="dm-field" id="aplicarValorField" style="display:none">
+        <label class="dm-label">Valor aplicado <span class="dm-label-hint">CDB, caixinha, etc.</span></label>
+        <div class="dm-money-row">
+          <span class="dm-currency">R$</span>
+          <input type="text" id="aplicarValorInput" class="dm-money-input" placeholder="0,00" inputmode="decimal">
+        </div>
+        <div class="dm-hint">O saldo total não muda. Digite 0 para remover o valor aplicado.</div>
+      </div>
+
+      <div id="aplicarError" class="dm-error" style="display:none"></div>
+    </div>
+
+    <div class="dm-footer">
+      <button class="dm-btn dm-btn--cancel" onclick="closeAplicarModal()">Cancelar</button>
+      <button class="dm-btn dm-btn--confirm" id="aplicarBtnSalvar" onclick="salvarAplicado()">
+        <i class="bi bi-check-lg"></i> Salvar
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- ====== FAB ====== -->
 <div class="fab-wrapper">
   <div class="fab-menu" id="fabMenu">
+
+    <button class="fab-option" onclick="openAplicarModal(null)">
+      <span class="fab-option-label">Aplicar na conta</span>
+      <span class="fab-option-icon" style="background:#eff6ff;color:#0d6efd">
+        <i class="bi bi-lock-fill"></i>
+      </span>
+    </button>
 
     <a href="{{ url_for('pages.nova_transferencia') }}" class="fab-option">
       <span class="fab-option-label">Transferência</span>
