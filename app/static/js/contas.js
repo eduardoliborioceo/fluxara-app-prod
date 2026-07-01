@@ -119,11 +119,16 @@
           : `<div class="conta-logo-circle" style="background:${inst.cor};color:${inst.corLetra || '#fff'}">${inst.letra}</div>`;
       const upDisabled = idx === 0 ? 'style="visibility:hidden"' : '';
       const downDisabled = idx === total - 1 ? 'style="visibility:hidden"' : '';
+      const investido = parseFloat(c.valor_investido) || 0;
+      const investidoTag = investido > 0
+        ? `<div class="conta-investido-tag"><i class="bi bi-lock-fill"></i> ${formatMoney(investido)} apl.</div>`
+        : '';
       return `<div class="conta-row" onclick="abrirEditarConta(${c.id})">
         ${logoHtml}
         <div class="conta-info">
           <div class="conta-tipo">${esc(c.tipo_nome || 'Conta')}</div>
           <div class="conta-nome-texto">${esc(c.nome)}</div>
+          ${investidoTag}
         </div>
         <div class="conta-saldo-valor">${saldo}</div>
         <div class="conta-move-btns" onclick="event.stopPropagation()">
@@ -231,6 +236,7 @@
     document.getElementById('contaNome').value = '';
     document.getElementById('contaSaldo').value = '';
     document.getElementById('contaFinalidade').value = '';
+    document.getElementById('contaInvestido').value = '';
     document.getElementById('modalContaTitulo').textContent = 'Nova Conta';
     document.getElementById('btnDeletarConta').classList.add('d-none');
     selectInst('outro');
@@ -246,6 +252,8 @@
       document.getElementById('contaNome').value = c.nome;
       document.getElementById('contaSaldo').value = formatDecimal(parseFloat(c.saldo_inicial) || 0);
       document.getElementById('contaFinalidade').value = c.finalidade || '';
+      const inv = parseFloat(c.valor_investido) || 0;
+      document.getElementById('contaInvestido').value = inv > 0 ? formatDecimal(inv) : '';
       document.getElementById('modalContaTitulo').textContent = 'Editar Conta';
       document.getElementById('btnDeletarConta').classList.remove('d-none');
       selectInst(c.instituicao || 'outro');
@@ -263,6 +271,7 @@
     const categoria_id = document.getElementById('contaCategoria').value || null;
     const saldo_inicial = document.getElementById('contaSaldo').value;
     const finalidade = document.getElementById('contaFinalidade').value.trim();
+    const valor_investido = document.getElementById('contaInvestido').value;
 
     if (!nome) {
       document.getElementById('contaNome').focus();
@@ -275,7 +284,7 @@
     const r = await fetch(url, {
       method,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nome, instituicao, categoria_id, saldo_inicial, finalidade }),
+      body: JSON.stringify({ nome, instituicao, categoria_id, saldo_inicial, finalidade, valor_investido }),
     });
 
     if (r.ok) {

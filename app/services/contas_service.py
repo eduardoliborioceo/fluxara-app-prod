@@ -10,7 +10,7 @@ def list_contas(user_id: int, mes: int = 0, ano: int = 0) -> list:
 
 
 def add_conta(user_id: int, nome: str, instituicao: str, categoria_id, saldo_inicial,
-              finalidade: str = "") -> dict:
+              finalidade: str = "", valor_investido=0) -> dict:
     nome = nome.strip()[:100]
     if not nome:
         raise ValueError("Nome obrigatório")
@@ -18,12 +18,13 @@ def add_conta(user_id: int, nome: str, instituicao: str, categoria_id, saldo_ini
     cat_id = int(categoria_id) if categoria_id else None
     saldo = _parse_money(saldo_inicial)
     fin = finalidade.strip()[:100] if finalidade else None
-    row = repo.create_conta(user_id, nome, instituicao, cat_id, saldo, fin)
+    inv = max(0.0, _parse_money(valor_investido))
+    row = repo.create_conta(user_id, nome, instituicao, cat_id, saldo, fin, inv)
     return dict(row)
 
 
 def edit_conta(conta_id: int, user_id: int, nome: str, instituicao: str, categoria_id, saldo_inicial,
-               finalidade: str = ""):
+               finalidade: str = "", valor_investido=0):
     nome = nome.strip()[:100]
     if not nome:
         raise ValueError("Nome obrigatório")
@@ -31,7 +32,8 @@ def edit_conta(conta_id: int, user_id: int, nome: str, instituicao: str, categor
     cat_id = int(categoria_id) if categoria_id else None
     saldo = _parse_money(saldo_inicial)
     fin = finalidade.strip()[:100] if finalidade else None
-    repo.update_conta(conta_id, user_id, nome, instituicao, cat_id, saldo, fin)
+    inv = max(0.0, _parse_money(valor_investido))
+    repo.update_conta(conta_id, user_id, nome, instituicao, cat_id, saldo, fin, inv)
 
 
 def remove_conta(conta_id: int, user_id: int):
