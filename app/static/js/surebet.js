@@ -137,6 +137,7 @@
   var _alvRounds = [];
   var _alvRodadaAtual = 0;
   var _alvFormAberto = false;
+  var _alvTipo = 'lucro';
 
   function fmtAlv(v) {
     return 'R$ ' + parseFloat(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -149,15 +150,28 @@
     return val;
   }
 
+  function _getTipo() {
+    var btn = document.querySelector('#alvTipoToggle .surebet-outcome-btn.active');
+    return btn ? btn.dataset.tipo : 'lucro';
+  }
+
+  document.getElementById('alvTipoToggle').addEventListener('click', function (e) {
+    var btn = e.target.closest('.surebet-outcome-btn');
+    if (!btn) return;
+    document.querySelectorAll('#alvTipoToggle .surebet-outcome-btn').forEach(function (b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+  });
+
   /* ---- Calcula sequência de rodadas ---- */
-  function buildRounds(inicial, odd, n) {
+  function buildRounds(inicial, odd, n, tipo) {
+    tipo = tipo || 'lucro';
     var rounds = [];
     var aposta = parseFloat(inicial);
     for (var i = 0; i < n; i++) {
       var retorno = aposta * parseFloat(odd);
-      var guardar = aposta;
+      var guardar = tipo === 'total' ? 0 : aposta;
       rounds.push({ num: i + 1, aposta: aposta, retorno: retorno, guardar: guardar });
-      aposta = retorno - aposta;
+      aposta = tipo === 'total' ? retorno : (retorno - aposta);
     }
     return rounds;
   }
@@ -172,11 +186,14 @@
       var rowCls = status === 'passado' ? ' alv-round-row--passado' : '';
       var badgeCls = status === 'ativa' ? ' alv-round-badge--ativa' : (status === 'passado' ? ' alv-round-badge--certo' : '');
       var badgeContent = status === 'passado' ? '<i class="bi bi-check-lg"></i>' : r.num;
+      var subText = _alvTipo === 'total'
+        ? (i < _alvRounds.length - 1 ? 'Reinvestir tudo na próxima rodada' : 'Retirar tudo ao ganhar')
+        : 'Guardar se ganhar: ' + fmtAlv(r.guardar);
       html += '<div class="alv-round-row' + rowCls + '">'
         + '<div class="alv-round-badge' + badgeCls + '">' + badgeContent + '</div>'
         + '<div class="alv-round-info">'
-        +   '<div class="alv-round-title">Rodada ' + r.num + ' \u2014 Apostar ' + fmtAlv(r.aposta) + '</div>'
-        +   '<div class="alv-round-sub">Guardar se ganhar: ' + fmtAlv(r.guardar) + '</div>'
+        +   '<div class="alv-round-title">Rodada ' + r.num + ' — Apostar ' + fmtAlv(r.aposta) + '</div>'
+        +   '<div class="alv-round-sub">' + subText + '</div>'
         + '</div>'
         + '<div class="alv-round-right">'
         +   '<div class="alv-round-retorno">' + fmtAlv(r.retorno) + '</div>'
@@ -187,10 +204,14 @@
     container.innerHTML = html;
 
     var concluida = _alvRodadaAtual >= _alvRounds.length;
-    var totalGuardado = _alvRounds.slice(0, _alvRodadaAtual).reduce(function (s, r) { return s + r.guardar; }, 0);
     var lastRound = _alvRounds[_alvRounds.length - 1];
-    var totalFinal = _alvRounds.slice(0, _alvRounds.length - 1).reduce(function (s, r) { return s + r.guardar; }, 0)
-                   + (lastRound ? lastRound.retorno : 0);
+    var totalFinal = _alvTipo === 'total'
+      ? (lastRound ? lastRound.retorno : 0)
+      : _alvRounds.slice(0, _alvRounds.length - 1).reduce(function (s, r) { return s + r.guardar; }, 0)
+        + (lastRound ? lastRound.retorno : 0);
+    var totalGuardado = _alvTipo === 'total'
+      ? 0
+      : _alvRounds.slice(0, _alvRodadaAtual).reduce(function (s, r) { return s + r.guardar; }, 0);
     var rodadaObj = _alvRounds[_alvRodadaAtual] || null;
     document.getElementById('alvSummary').innerHTML = ''
       + (concluida
@@ -204,10 +225,13 @@
           +   '<span class="alv-summary-chip-label">Apostar agora</span>'
           +   '<span class="alv-summary-chip-val">' + fmtAlv(rodadaObj.aposta) + '</span>'
           + '</div>'
-          + '<div class="alv-summary-chip">'
-          +   '<span class="alv-summary-chip-label">Guardado</span>'
-          +   '<span class="alv-summary-chip-val alv-summary-chip-val--green">' + fmtAlv(totalGuardado) + '</span>'
-          + '</div>'
+          + (_alvTipo !== 'total'
+              ? '<div class="alv-summary-chip">'
+              +   '<span class="alv-summary-chip-label">Guardado</span>'
+              +   '<span class="alv-summary-chip-val alv-summary-chip-val--green">' + fmtAlv(totalGuardado) + '</span>'
+              + '</div>'
+              : ''
+            )
           + '<div class="alv-summary-chip">'
           +   '<span class="alv-summary-chip-label">Total final</span>'
           +   '<span class="alv-summary-chip-val">' + fmtAlv(totalFinal) + '</span>'
@@ -222,7 +246,8 @@
   function alvAbrir(alv) {
     _alvAtualId = alv.id;
     _alvRodadaAtual = alv.rodada_atual || 0;
-    _alvRounds = buildRounds(alv.aposta_inicial, alv.odd, alv.num_rodadas);
+    _alvTipo = alv.tipo || 'lucro';
+    _alvRounds = buildRounds(alv.aposta_inicial, alv.odd, alv.num_rodadas, _alvTipo);
     document.getElementById('alvAtivaNome').textContent = alv.nome;
     document.getElementById('alvResultCard').style.display = '';
     renderRounds();
@@ -252,11 +277,13 @@
       var progresso = (alv.rodada_atual || 0) + 1;
       var total = alv.num_rodadas;
       var isAtiva = alv.id === _alvAtualId;
+      var tipoLabel = alv.tipo === 'total' ? '100%' : 'Lucro';
       return '<div class="alv-lista-item' + (isAtiva ? ' alv-lista-item--ativa' : '') + '">'
         + '<div class="alv-lista-item-info">'
         +   '<div class="alv-lista-item-nome">' + escAlv(alv.nome) + '</div>'
         +   '<div class="alv-lista-item-meta">'
         +     fmtAlv(alv.aposta_inicial) + ' @ ' + parseFloat(alv.odd).toFixed(2)
+        +     ' &middot; ' + tipoLabel
         +     ' &middot; Rodada ' + progresso + '/' + total
         +   '</div>'
         + '</div>'
@@ -328,6 +355,7 @@
         aposta_inicial: inicial,
         odd: odd,
         num_rodadas: _getNumRodadas(),
+        tipo: _getTipo(),
       }),
     })
       .then(function (r) {
@@ -416,4 +444,3 @@
       });
   };
 })();
-

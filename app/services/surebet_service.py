@@ -9,6 +9,7 @@ def _serialize(row: dict) -> dict:
         'odd': float(row['odd']),
         'num_rodadas': int(row['num_rodadas']),
         'rodada_atual': int(row['rodada_atual']),
+        'tipo': row.get('tipo') or 'lucro',
         'criado_em': row['criado_em'].isoformat() if row.get('criado_em') else None,
     }
 
@@ -18,7 +19,7 @@ def list_alavancagens(user_id: int) -> list:
 
 
 def create_alavancagem(user_id: int, nome: str, aposta_inicial,
-                       odd, num_rodadas) -> dict:
+                       odd, num_rodadas, tipo: str = 'lucro') -> dict:
     aposta_inicial = float(aposta_inicial)
     odd = float(odd)
     num_rodadas = int(num_rodadas)
@@ -28,8 +29,9 @@ def create_alavancagem(user_id: int, nome: str, aposta_inicial,
         raise ValueError("Odd deve ser maior que 1")
     if not (2 <= num_rodadas <= 100):
         raise ValueError("Número de rodadas deve ser entre 2 e 100")
+    tipo = tipo if tipo in ('lucro', 'total') else 'lucro'
     nome = (nome or "").strip() or "Alavancagem"
-    return _serialize(dict(repo.create_alavancagem(user_id, nome, aposta_inicial, odd, num_rodadas)))
+    return _serialize(dict(repo.create_alavancagem(user_id, nome, aposta_inicial, odd, num_rodadas, tipo)))
 
 
 def update_rodada(alavancagem_id: int, user_id: int, rodada_atual: int) -> dict:
