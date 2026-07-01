@@ -79,12 +79,30 @@
 
     <div class="rec-form-group" id="recCartaoGroup">
       <label class="rec-label">Cartão de crédito</label>
-      <select id="recCartaoId" class="rec-input rec-select"></select>
+      <div class="rec-picker-wrap conta-picker" id="recCartaoPicker">
+        <div class="conta-picker-trigger" id="recCartaoTrigger">
+          <div class="conta-picker-selected" id="recCartaoSelected">
+            <span class="text-muted" style="font-size:.85rem">Selecionar cartão...</span>
+          </div>
+          <i class="bi bi-chevron-down conta-picker-arrow"></i>
+        </div>
+        <div class="conta-picker-dropdown" id="recCartaoDropdown"></div>
+        <input type="hidden" id="recCartaoId">
+      </div>
     </div>
 
     <div class="rec-form-group d-none" id="recContaGroup">
       <label class="rec-label">Conta bancária</label>
-      <select id="recContaId" class="rec-input rec-select"></select>
+      <div class="rec-picker-wrap conta-picker" id="recContaPicker">
+        <div class="conta-picker-trigger" id="recContaTrigger">
+          <div class="conta-picker-selected" id="recContaSelected">
+            <span class="text-muted" style="font-size:.85rem">Selecionar conta...</span>
+          </div>
+          <i class="bi bi-chevron-down conta-picker-arrow"></i>
+        </div>
+        <div class="conta-picker-dropdown" id="recContaDropdown"></div>
+        <input type="hidden" id="recContaId">
+      </div>
     </div>
 
     <div class="rec-form-group">
@@ -94,8 +112,22 @@
 
     <div class="rec-form-group">
       <label class="rec-label">Categoria <span class="rec-hint">(opcional)</span></label>
-      <select id="recCategoriaId" class="rec-input rec-select">
-        <option value="">Sem categoria</option>
+      <div class="rec-picker-wrap conta-picker" id="recCategoriaPicker">
+        <div class="conta-picker-trigger" id="recCategoriaTrigger">
+          <div class="conta-picker-selected" id="recCategoriaSelected">
+            <span class="text-muted" style="font-size:.85rem">Sem categoria</span>
+          </div>
+          <i class="bi bi-chevron-down conta-picker-arrow"></i>
+        </div>
+        <div class="conta-picker-dropdown" id="recCategoriaDropdown"></div>
+        <input type="hidden" id="recCategoriaId">
+      </div>
+    </div>
+
+    <div class="rec-form-group d-none" id="recSubcategoriaGroup">
+      <label class="rec-label">Subcategoria <span class="rec-hint">(opcional)</span></label>
+      <select id="recSubcategoriaId" class="rec-input rec-select">
+        <option value="">Selecionar subcategoria...</option>
       </select>
     </div>
 
