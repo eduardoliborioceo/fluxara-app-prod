@@ -195,6 +195,22 @@
       </select>
     </div>
 
+    <div class="jogos-filter-row">
+      <select id="jogosPctMetrica" class="apostas-filter-select" onchange="applyJogosFilter()">
+        <option value="">Filtro análise</option>
+        <option value="home_win">Casa vencer %</option>
+        <option value="draw">Empate %</option>
+        <option value="away_win">Fora vencer %</option>
+        <option value="over_25">Over 2.5 gols %</option>
+        <option value="over_15">Over 1.5 gols %</option>
+        <option value="btts">Ambas marcam %</option>
+      </select>
+      <span class="jogos-pct-sep">≥</span>
+      <input type="number" id="jogosPctMin" class="apostas-filter-input jogos-pct-input"
+             min="1" max="100" placeholder="%" oninput="applyJogosFilter()">
+      <span class="jogos-pct-sep">%</span>
+    </div>
+
     <div id="jogosLoading" class="apostas-loading" style="display:none">
       <div class="apostas-spinner"></div>
       <span>Buscando jogos e classificações...</span>

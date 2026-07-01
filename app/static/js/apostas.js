@@ -668,6 +668,7 @@ async function loadJogos(slug) {
   _stopLivePolling();
   _updateJogosDateLabel();
   setJogosState("loading");
+  window._predictionCache = {};
 
   const fromDate = _jogosFromDate();
   const params   = `days=7&from_date=${fromDate}`;
@@ -742,6 +743,14 @@ async function _loadMatchPrediction(m) {
   const container = document.getElementById(predId);
   if (!container) return;
 
+  const cacheKey = `${m.home_id}-${m.away_id}`;
+
+  if (window._predictionCache?.[cacheKey]) {
+    container.innerHTML = _renderInlinePrediction(window._predictionCache[cacheKey], m.home_name, m.away_name);
+    _applyPctToRow(m.home_id, m.away_id);
+    return;
+  }
+
   const league = window._activeLeague || "";
   const hp = m.home_pos ? `&home_pos=${encodeURIComponent(m.home_pos)}` : "";
   const ap = m.away_pos ? `&away_pos=${encodeURIComponent(m.away_pos)}` : "";
@@ -751,9 +760,45 @@ async function _loadMatchPrediction(m) {
     const resp = await fetch(url);
     const data = await resp.json();
     if (!resp.ok) throw new Error();
+    window._predictionCache = window._predictionCache || {};
+    window._predictionCache[cacheKey] = data;
     container.innerHTML = _renderInlinePrediction(data, m.home_name, m.away_name);
+    _applyPctToRow(m.home_id, m.away_id);
   } catch {
     container.style.display = "none";
+  }
+}
+
+function _applyPctToRow(homeId, awayId) {
+  const metrica = document.getElementById("jogosPctMetrica")?.value || "";
+  const minVal  = parseFloat(document.getElementById("jogosPctMin")?.value || "");
+  if (!metrica || isNaN(minVal) || minVal <= 0) return;
+
+  const key  = `${homeId}-${awayId}`;
+  const pred = window._predictionCache?.[key];
+  const row  = document.querySelector(`.jogos-match-row[data-hid="${homeId}"][data-aid="${awayId}"]`);
+  if (!row || !pred) return;
+
+  const p   = pred.prediction?.probabilities || {};
+  const g   = pred.prediction?.goals || {};
+  const map = { home_win: p.home_win, draw: p.draw, away_win: p.away_win,
+                over_25: g.over_25_pct, over_15: g.over_15_pct, btts: g.btts_pct };
+  const val = map[metrica];
+  if (val != null && val < minVal) {
+    row.style.display = "none";
+    _syncDayGroupVisibility();
+  }
+}
+
+function _syncDayGroupVisibility() {
+  document.querySelectorAll(".jogos-day-group").forEach(group => {
+    const anyVisible = [...group.querySelectorAll(".jogos-match-row")].some(r => r.style.display !== "none");
+    group.style.display = anyVisible ? "" : "none";
+  });
+  const noneVisible = [...document.querySelectorAll(".jogos-day-group")].every(g => g.style.display === "none");
+  if (noneVisible) {
+    document.getElementById("jogosVazioMsg").textContent = "Nenhum jogo atinge este percentual de análise.";
+    setJogosState("vazio");
   }
 }
 
@@ -937,7 +982,7 @@ function buildMatchRow(m, ctx) {
     : "";
 
   return `
-    <div class="jogos-match-row">
+    <div class="jogos-match-row" data-hid="${escHtml(String(m.home_id || ''))}" data-aid="${escHtml(String(m.away_id || ''))}">
       <div class="jogos-team jogos-team--home">
         ${homePosHtml}
         <span class="jogos-team-name">${escHtml(m.home_name)}</span>

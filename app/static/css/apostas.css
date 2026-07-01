@@ -1844,6 +1844,20 @@
   min-width: 80px;
 }
 
+.jogos-pct-input {
+  flex: 0 0 auto;
+  width: 68px;
+  padding: 9px 8px;
+  text-align: center;
+}
+
+.jogos-pct-sep {
+  font-size: .875rem;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+  flex-shrink: 0;
+}
+
 /* ========================
    PRÓXIMOS JOGOS — date navigation
 ======================== */
