@@ -100,6 +100,9 @@
     return 'linear-gradient(135deg, #334155, #0f172a)';
   }
 
+  var contasCache = [];
+  var _aplicarContaId = null;
+
   var now = new Date();
   var year  = now.getFullYear();
   var month = now.getMonth();
@@ -199,7 +202,7 @@
       if (isFuturoMes()) url += '?mes=' + mes + '&ano=' + year;
       var r = await fetch(url);
       var data = await r.json();
-      var contasCache = Array.isArray(data) ? data : [];
+      contasCache = Array.isArray(data) ? data : [];
       var body = document.getElementById('contasBody');
       var totalEl = document.getElementById('totalContas');
       if (!contasCache.length) {
@@ -225,9 +228,12 @@
           ? '<div class="conta-saldo-previsto">Previsto: ' + formatMoney(saldoPrevisto) + '</div>'
           : saldoLabel;
         var investido = parseFloat(c.valor_investido) || 0;
-        var saldoSubEl = investido > 0
+        var splitEl = investido > 0
           ? '<div class="conta-saldo-split">disp. ' + formatMoney(saldoAtual - investido)
-              + ' &middot; <span class="conta-saldo-split-inv">apl. ' + formatMoney(investido) + '</span></div>'
+              + ' &middot; <span class="conta-saldo-split-inv" onclick="event.stopPropagation();openAplicarModal(' + c.id + ')" title="Editar valor aplicado">apl. ' + formatMoney(investido) + '</span></div>'
+          : '';
+        var saldoSubEl = splitEl
+          ? splitEl + (previstoDiff ? '<div class="conta-saldo-previsto">Prev. ' + formatMoney(saldoPrevisto) + '</div>' : '')
           : saldoPrevEl;
         var finalidadeTag = c.finalidade
           ? '<span class="conta-finalidade-tag">' + esc(c.finalidade) + '</span>'
@@ -1268,6 +1274,112 @@
 
   window._resumoInst = INSTITUICOES;
   window._resumoBuildLogo = buildLogoHtml;
+
+  /* ---- Modal: Aplicar internamente ---- */
+
+  function _renderAplicarContas() {
+    var container = document.getElementById('aplicarContasList');
+    if (!container) return;
+    container.innerHTML = contasCache.map(function (c) {
+      var inst = INSTITUICOES[c.instituicao] || INSTITUICOES.outro;
+      var logo = buildLogoHtml(inst, 32);
+      var inv = parseFloat(c.valor_investido) || 0;
+      var invBadge = inv > 0
+        ? '<span class="dm-inv-badge">apl. ' + formatMoney(inv) + '</span>'
+        : '';
+      var isSelected = c.id === _aplicarContaId;
+      return '<div class="dm-conta-opt' + (isSelected ? ' selected' : '') + '" onclick="selectAplicarConta(' + c.id + ')">'
+        + logo
+        + '<div class="dm-conta-opt-info">'
+        +   '<div class="dm-conta-check-nome">' + esc(c.nome) + '</div>'
+        +   (invBadge ? '<div>' + invBadge + '</div>' : '')
+        + '</div>'
+        + (isSelected ? '<i class="bi bi-check-circle-fill" style="color:#0d6efd;flex-shrink:0;font-size:1.1rem"></i>' : '')
+        + '</div>';
+    }).join('');
+  }
+
+  window.openAplicarModal = function (contaId) {
+    _aplicarContaId = contaId || null;
+    _renderAplicarContas();
+    var valorField = document.getElementById('aplicarValorField');
+    var errorEl = document.getElementById('aplicarError');
+    errorEl.style.display = 'none';
+    if (contaId) {
+      var c = contasCache.find(function (x) { return x.id === contaId; });
+      if (c) {
+        var inv = parseFloat(c.valor_investido) || 0;
+        document.getElementById('aplicarValorInput').value = inv > 0
+          ? inv.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+          : '';
+        valorField.style.display = '';
+      }
+    } else {
+      document.getElementById('aplicarValorInput').value = '';
+      valorField.style.display = 'none';
+    }
+    document.getElementById('aplicarOverlay').style.display = '';
+    fabMenu.classList.remove('open');
+    fabBtn.classList.remove('open');
+  };
+
+  window.selectAplicarConta = function (contaId) {
+    _aplicarContaId = contaId;
+    _renderAplicarContas();
+    var c = contasCache.find(function (x) { return x.id === contaId; });
+    if (c) {
+      var inv = parseFloat(c.valor_investido) || 0;
+      document.getElementById('aplicarValorInput').value = inv > 0
+        ? inv.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+        : '';
+      document.getElementById('aplicarValorField').style.display = '';
+      document.getElementById('aplicarValorInput').focus();
+    }
+  };
+
+  window.closeAplicarModal = function (e) {
+    if (e && e.target !== document.getElementById('aplicarOverlay')) return;
+    document.getElementById('aplicarOverlay').style.display = 'none';
+  };
+
+  window.salvarAplicado = async function () {
+    var errorEl = document.getElementById('aplicarError');
+    errorEl.style.display = 'none';
+    if (!_aplicarContaId) {
+      errorEl.textContent = 'Selecione uma conta.';
+      errorEl.style.display = '';
+      return;
+    }
+    var c = contasCache.find(function (x) { return x.id === _aplicarContaId; });
+    if (!c) return;
+    var rawVal = (document.getElementById('aplicarValorInput').value || '')
+      .replace(/\./g, '').replace(',', '.');
+    var inv = Math.max(0, parseFloat(rawVal) || 0);
+    var btn = document.getElementById('aplicarBtnSalvar');
+    btn.disabled = true;
+    try {
+      var resp = await fetch('/api/contas/' + _aplicarContaId, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nome: c.nome,
+          instituicao: c.instituicao,
+          categoria_id: c.categoria_id || null,
+          saldo_inicial: c.saldo_inicial,
+          finalidade: c.finalidade || '',
+          valor_investido: inv,
+        }),
+      });
+      if (!resp.ok) throw new Error();
+      document.getElementById('aplicarOverlay').style.display = 'none';
+      loadContas();
+    } catch (_) {
+      errorEl.textContent = 'Erro ao salvar. Tente novamente.';
+      errorEl.style.display = '';
+    } finally {
+      btn.disabled = false;
+    }
+  };
 })();
 
 // ============================================================

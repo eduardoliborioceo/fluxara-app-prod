@@ -286,6 +286,10 @@
 .conta-saldo-split-inv {
   color: #0d6efd;
   font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 2px;
 }
 
 .tx-actions {
@@ -3136,6 +3140,67 @@
 .dm-conta-check:last-child { border-bottom: none; }
 .dm-conta-check:hover { background: rgba(13,110,253,.04); }
 .dm-conta-check.dm-checked { background: rgba(13,110,253,.07); }
+
+.dm-conta-opt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border, rgba(15,23,42,.05));
+  transition: background .12s;
+  user-select: none;
+}
+.dm-conta-opt:last-child { border-bottom: none; }
+.dm-conta-opt:hover { background: rgba(13,110,253,.04); }
+.dm-conta-opt.selected { background: rgba(13,110,253,.07); }
+.dm-conta-opt-info { flex: 1; min-width: 0; }
+
+.dm-inv-badge {
+  font-size: .68rem;
+  font-weight: 600;
+  color: #0d6efd;
+  background: rgba(13,110,253,.1);
+  border-radius: 4px;
+  padding: 1px 6px;
+  display: inline-block;
+  margin-top: 2px;
+}
+
+.dm-money-row {
+  display: flex;
+  align-items: stretch;
+  border: 1.5px solid var(--border, rgba(15,23,42,.12));
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+}
+.dm-currency {
+  padding: 11px 14px;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+  background: rgba(15,23,42,.03);
+  border-right: 1.5px solid var(--border, rgba(15,23,42,.09));
+  font-size: .9rem;
+  flex-shrink: 0;
+}
+.dm-money-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  padding: 11px 14px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text, #1e293b);
+  background: transparent;
+  min-width: 0;
+}
+.dm-hint {
+  font-size: .72rem;
+  color: var(--text-muted, #64748b);
+  margin-top: 6px;
+  line-height: 1.4;
+}
 
 .dm-conta-check input[type="checkbox"] {
   position: absolute;
