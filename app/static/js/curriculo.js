@@ -3,14 +3,22 @@
 
   var _lista = [];
   var _editId = null;
-  var _skills = [];
   var _mobileTab = 'form';
+  var _template = 'classico';
 
-  // ── utilitários ──────────────────────────────────────────────
+  // ── utils ────────────────────────────────────────────────────
   function esc(s) {
     return String(s || '')
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
   }
 
   function val(id) {
@@ -18,519 +26,515 @@
     return el ? el.value.trim() : '';
   }
 
-  function set(id, v) {
+  function setVal(id, v) {
     var el = document.getElementById(id);
     if (el) el.value = v || '';
   }
 
-  function fmt(s) { return esc(s || '').replace(/\n/g, '<br>'); }
+  // ── template selection ────────────────────────────────────────
+  window.cvAbrirSelecaoTemplate = function () {
+    document.getElementById('cvTemplateOverlay').style.display = 'flex';
+  };
 
-  function ptDate(d) {
-    if (!d) return '';
-    var parts = d.split('-');
-    if (parts.length === 2) {
-      var months = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-      return months[parseInt(parts[1], 10) - 1] + ' ' + parts[0];
+  window.cvFecharTemplate = function (e) {
+    if (!e || e.target === document.getElementById('cvTemplateOverlay')) {
+      document.getElementById('cvTemplateOverlay').style.display = 'none';
     }
-    return d;
+  };
+
+  window.cvSelecionarTemplate = function (tpl) {
+    _template = tpl;
+    document.getElementById('cvTemplateOverlay').style.display = 'none';
+    _editId = null;
+    cvAbrirEditor(null);
+  };
+
+  // ── views ────────────────────────────────────────────────────
+  function showLista() {
+    document.getElementById('cvLista').style.display = 'block';
+    var ed = document.getElementById('cvEditor');
+    ed.style.display = 'none';
+    ed.classList.remove('active');
   }
 
-  // ── API ──────────────────────────────────────────────────────
-  async function apiGet(url) {
-    var r = await fetch(url);
-    return r.json();
+  function showEditor() {
+    document.getElementById('cvLista').style.display = 'none';
+    var ed = document.getElementById('cvEditor');
+    ed.style.display = 'flex';
+    ed.classList.add('active');
+    cvTab('form');
   }
 
-  async function apiPost(url, data) {
-    var r = await fetch(url, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+  window.cvVoltarLista = function () {
+    showLista();
+    _editId = null;
+  };
+
+  // ── mobile tabs ──────────────────────────────────────────────
+  window.cvTab = function (tab) {
+    _mobileTab = tab;
+    var btns = document.querySelectorAll('.cv-tab-btn');
+    btns[0].classList.toggle('active', tab === 'form');
+    btns[1].classList.toggle('active', tab === 'preview');
+    var form = document.getElementById('cvFormCard');
+    var prev = document.getElementById('cvPreviewCard');
+    if (window.innerWidth <= 900) {
+      form.classList.toggle('cv-tab-active', tab === 'form');
+      prev.classList.toggle('cv-tab-active', tab === 'preview');
+    } else {
+      form.classList.add('cv-tab-active');
+      prev.classList.add('cv-tab-active');
+    }
+  };
+
+  // ── section toggles ──────────────────────────────────────────
+  window.cvToggleSection = function (el) {
+    el.classList.toggle('open');
+    var body = el.nextElementSibling;
+    body.classList.toggle('open');
+  };
+
+  // ── dynamic items ────────────────────────────────────────────
+  function makeItem(listId, innerHtml) {
+    var list = document.getElementById(listId);
+    var div = document.createElement('div');
+    div.className = 'cv-dynamic-item';
+    div.innerHTML = '<button class="cv-item-remove" onclick="this.parentElement.remove();cvPreview()" title="Remover"><i class="bi bi-trash3"></i></button>' + innerHtml;
+    list.appendChild(div);
+    div.querySelectorAll('input,textarea,select').forEach(function (el) {
+      el.addEventListener('input', cvPreview);
     });
-    return r.json();
+    cvPreview();
   }
 
-  async function apiPut(url, data) {
-    var r = await fetch(url, {
-      method: 'PUT', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+  window.cvAddFormacao = function () {
+    makeItem('cvFormacaoList',
+      '<div class="cv-field"><label class="cv-label">Instituição</label>' +
+      '<input type="text" class="cv-input cv-finst" placeholder="Universidade / Curso"></div>' +
+      '<div class="cv-field"><label class="cv-label">Descrição</label>' +
+      '<input type="text" class="cv-input cv-fdesc" placeholder="Graduação em Análise e Desenvolvimento de Sistemas"></div>' +
+      '<div class="cv-row">' +
+      '<div class="cv-field"><label class="cv-label">Período</label>' +
+      '<input type="text" class="cv-input cv-fperiodo" placeholder="Fevereiro 2026 – Atualmente"></div>' +
+      '<div class="cv-field"><label class="cv-label">Localidade</label>' +
+      '<input type="text" class="cv-input cv-flocal" placeholder="Manaus, Brasil"></div>' +
+      '</div>'
+    );
+  };
+
+  window.cvAddComp = function () {
+    makeItem('cvCompList',
+      '<div class="cv-row">' +
+      '<div class="cv-field"><label class="cv-label">Categoria</label>' +
+      '<input type="text" class="cv-input cv-clabel" placeholder="Linguagem"></div>' +
+      '<div class="cv-field" style="flex:2"><label class="cv-label">Descrição</label>' +
+      '<input type="text" class="cv-input cv-cval" placeholder="Python, JavaScript, SQL..."></div>' +
+      '</div>'
+    );
+  };
+
+  window.cvAddExp = function () {
+    makeItem('cvExpList',
+      '<div class="cv-field"><label class="cv-label">Cargo – Tipo de contrato</label>' +
+      '<input type="text" class="cv-input cv-ecargo" placeholder="APONTADOR(A) DE PRODUÇÃO – CLT"></div>' +
+      '<div class="cv-row">' +
+      '<div class="cv-field"><label class="cv-label">Empresa</label>' +
+      '<input type="text" class="cv-input cv-eemp" placeholder="Venttos Electronics"></div>' +
+      '<div class="cv-field"><label class="cv-label">Período</label>' +
+      '<input type="text" class="cv-input cv-eper" placeholder="Abril 2024 – Atualmente"></div>' +
+      '</div>' +
+      '<div class="cv-field"><label class="cv-label">Responsabilidades (uma por linha)</label>' +
+      '<textarea class="cv-textarea cv-eresp" rows="4" placeholder="Lançamento de produção no sistema;\nRegistrar paradas de máquina;"></textarea></div>'
+    );
+  };
+
+  window.cvAddCert = function () {
+    makeItem('cvCertList',
+      '<div class="cv-row">' +
+      '<div class="cv-field" style="flex:2"><label class="cv-label">Nome / Emissor</label>' +
+      '<input type="text" class="cv-input cv-cnome" placeholder="Power BI Completo (udemy) | CERTIFICADO"></div>' +
+      '<div class="cv-field"><label class="cv-label">Data</label>' +
+      '<input type="text" class="cv-input cv-cdata" placeholder="Julho 2025"></div>' +
+      '</div>'
+    );
+  };
+
+  // ── collect form data ────────────────────────────────────────
+  function collectDados() {
+    var formacao = [];
+    document.querySelectorAll('#cvFormacaoList .cv-dynamic-item').forEach(function (el) {
+      formacao.push({
+        instituicao: el.querySelector('.cv-finst').value.trim(),
+        descricao: el.querySelector('.cv-fdesc').value.trim(),
+        periodo: el.querySelector('.cv-fperiodo').value.trim(),
+        localidade: el.querySelector('.cv-flocal').value.trim()
+      });
     });
-    return r.json();
+
+    var competencias = [];
+    document.querySelectorAll('#cvCompList .cv-dynamic-item').forEach(function (el) {
+      competencias.push({
+        label: el.querySelector('.cv-clabel').value.trim(),
+        valor: el.querySelector('.cv-cval').value.trim()
+      });
+    });
+
+    var experiencias = [];
+    document.querySelectorAll('#cvExpList .cv-dynamic-item').forEach(function (el) {
+      experiencias.push({
+        cargo_contrato: el.querySelector('.cv-ecargo').value.trim(),
+        empresa: el.querySelector('.cv-eemp').value.trim(),
+        periodo: el.querySelector('.cv-eper').value.trim(),
+        responsabilidades: el.querySelector('.cv-eresp').value.trim()
+      });
+    });
+
+    var certificados = [];
+    document.querySelectorAll('#cvCertList .cv-dynamic-item').forEach(function (el) {
+      certificados.push({
+        nome: el.querySelector('.cv-cnome').value.trim(),
+        data: el.querySelector('.cv-cdata').value.trim()
+      });
+    });
+
+    return {
+      template: _template,
+      nome: val('fNome'),
+      email: val('fEmail'),
+      telefone: val('fTelefone'),
+      linkedin: val('fLinkedin'),
+      github: val('fGithub'),
+      formacao: formacao,
+      competencias: competencias,
+      experiencias: experiencias,
+      certificados: certificados
+    };
   }
 
-  async function apiDelete(url) {
-    var r = await fetch(url, { method: 'DELETE' });
-    return r.json();
+  // ── populate form from dados ─────────────────────────────────
+  function populateForm(dados) {
+    _template = dados.template || 'classico';
+    setVal('fNome', dados.nome);
+    setVal('fEmail', dados.email);
+    setVal('fTelefone', dados.telefone);
+    setVal('fLinkedin', dados.linkedin);
+    setVal('fGithub', dados.github);
+
+    document.getElementById('cvFormacaoList').innerHTML = '';
+    (dados.formacao || []).forEach(function (f) {
+      cvAddFormacao();
+      var items = document.querySelectorAll('#cvFormacaoList .cv-dynamic-item');
+      var last = items[items.length - 1];
+      last.querySelector('.cv-finst').value = f.instituicao || '';
+      last.querySelector('.cv-fdesc').value = f.descricao || '';
+      last.querySelector('.cv-fperiodo').value = f.periodo || '';
+      last.querySelector('.cv-flocal').value = f.localidade || '';
+    });
+
+    document.getElementById('cvCompList').innerHTML = '';
+    (dados.competencias || []).forEach(function (c) {
+      cvAddComp();
+      var items = document.querySelectorAll('#cvCompList .cv-dynamic-item');
+      var last = items[items.length - 1];
+      last.querySelector('.cv-clabel').value = c.label || '';
+      last.querySelector('.cv-cval').value = c.valor || '';
+    });
+
+    document.getElementById('cvExpList').innerHTML = '';
+    (dados.experiencias || []).forEach(function (e) {
+      cvAddExp();
+      var items = document.querySelectorAll('#cvExpList .cv-dynamic-item');
+      var last = items[items.length - 1];
+      last.querySelector('.cv-ecargo').value = e.cargo_contrato || '';
+      last.querySelector('.cv-eemp').value = e.empresa || '';
+      last.querySelector('.cv-eper').value = e.periodo || '';
+      last.querySelector('.cv-eresp').value = e.responsabilidades || '';
+    });
+
+    document.getElementById('cvCertList').innerHTML = '';
+    (dados.certificados || []).forEach(function (c) {
+      cvAddCert();
+      var items = document.querySelectorAll('#cvCertList .cv-dynamic-item');
+      var last = items[items.length - 1];
+      last.querySelector('.cv-cnome').value = c.nome || '';
+      last.querySelector('.cv-cdata').value = c.data || '';
+    });
+  }
+
+  // ── preview (Modelo Clássico) ─────────────────────────────────
+  window.cvPreview = function () {
+    var dados = collectDados();
+    document.getElementById('cvDoc').innerHTML = buildDocHtml(dados);
+  };
+
+  function buildDocHtml(d) {
+    var html = '';
+
+    // HEADER
+    html += '<div class="cvc-header">';
+    html += '<div class="cvc-header-left">';
+    html += '<div class="cvc-name">' + esc(d.nome || 'Seu Nome') + '</div>';
+    if (d.linkedin) {
+      html += '<div class="cvc-contact-line">LinkedIn: ' + esc(d.linkedin) + '</div>';
+    }
+    if (d.github) {
+      html += '<div class="cvc-contact-line">GitHub: ' + esc(d.github) + '</div>';
+    }
+    html += '</div>';
+    html += '<div class="cvc-header-right">';
+    if (d.email) {
+      html += '<div class="cvc-email-label">Email:</div>';
+      html += '<div class="cvc-email-val">' + esc(d.email) + '</div>';
+    }
+    if (d.telefone) {
+      html += '<div class="cvc-cel-label">Celular:</div>';
+      html += '<div class="cvc-cel-val">' + esc(d.telefone) + '</div>';
+    }
+    html += '</div>';
+    html += '</div>';
+
+    // FORMAÇÃO
+    if (d.formacao && d.formacao.length) {
+      html += '<div class="cvc-section">';
+      html += '<div class="cvc-section-title">FORMAÇÃO</div>';
+      d.formacao.forEach(function (f) {
+        if (!f.instituicao && !f.descricao) return;
+        html += '<div class="cvc-form-item">';
+        html += '<div class="cvc-form-left">';
+        html += '<div class="cvc-inst">' + esc(f.instituicao) + '</div>';
+        html += '<div class="cvc-desc">' + esc(f.descricao) + '</div>';
+        html += '</div>';
+        html += '<div class="cvc-form-right">';
+        html += '<div class="cvc-period">' + esc(f.periodo) + '</div>';
+        html += '<div class="cvc-local">' + esc(f.localidade) + '</div>';
+        html += '</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    // RESUMO DE COMPETÊNCIAS
+    var comps = (d.competencias || []).filter(function (c) { return c.label || c.valor; });
+    if (comps.length) {
+      html += '<div class="cvc-section">';
+      html += '<div class="cvc-section-title">RESUMO DE COMPETÊNCIAS</div>';
+      html += '<ul class="cvc-bullets">';
+      comps.forEach(function (c) {
+        html += '<li>';
+        if (c.label) html += '<strong>' + esc(c.label) + ':</strong> ';
+        html += esc(c.valor);
+        html += '</li>';
+      });
+      html += '</ul>';
+      html += '</div>';
+    }
+
+    // EXPERIÊNCIA PROFISSIONAL
+    var exps = (d.experiencias || []).filter(function (e) { return e.cargo_contrato || e.empresa; });
+    if (exps.length) {
+      html += '<div class="cvc-section">';
+      html += '<div class="cvc-section-title">EXPERIÊNCIA PROFISSIONAL</div>';
+      exps.forEach(function (e) {
+        html += '<div class="cvc-exp-item">';
+        html += '<div class="cvc-exp-header">';
+        var title = e.cargo_contrato;
+        if (e.empresa) title += (title ? ' | ' : '') + e.empresa;
+        html += '<div class="cvc-exp-title">' + esc(title) + '</div>';
+        html += '<div class="cvc-exp-period">' + esc(e.periodo) + '</div>';
+        html += '</div>';
+        if (e.responsabilidades) {
+          var bullets = e.responsabilidades.split('\n').filter(function (l) { return l.trim(); });
+          if (bullets.length) {
+            html += '<ul class="cvc-bullets">';
+            bullets.forEach(function (b) {
+              html += '<li>' + esc(b.replace(/^[•\-\*]\s*/, '')) + '</li>';
+            });
+            html += '</ul>';
+          }
+        }
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    // CERTIFICADOS
+    var certs = (d.certificados || []).filter(function (c) { return c.nome; });
+    if (certs.length) {
+      html += '<div class="cvc-section">';
+      html += '<div class="cvc-section-title">CERTIFICADOS</div>';
+      certs.forEach(function (c) {
+        html += '<div class="cvc-cert-row">';
+        html += '<div class="cvc-cert-nome">' + esc(c.nome) + '</div>';
+        html += '<div class="cvc-cert-data">' + esc(c.data) + '</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    return html;
+  }
+
+  // ── CSS inline for print window ──────────────────────────────
+  var PRINT_CSS = [
+    '* { margin:0; padding:0; box-sizing:border-box; }',
+    'body { font-family: Calibri,"Segoe UI",Arial,sans-serif; font-size:10.5pt; color:#111; background:#fff; padding:18mm 20mm; }',
+    '.cvc-header { display:grid; grid-template-columns:1fr auto; gap:16px; align-items:start; margin-bottom:12px; padding-bottom:10px; border-bottom:1.5px solid #555; }',
+    '.cvc-name { font-size:17pt; font-weight:700; letter-spacing:.3px; margin:0 0 4px; color:#000; text-transform:uppercase; }',
+    '.cvc-contact-line { font-size:9pt; color:#333; margin-bottom:2px; }',
+    '.cvc-header-right { text-align:right; }',
+    '.cvc-email-label,.cvc-cel-label { font-size:9pt; font-weight:700; color:#000; }',
+    '.cvc-email-val,.cvc-cel-val { font-size:9pt; color:#333; margin-bottom:4px; }',
+    '.cvc-section { margin-bottom:14px; }',
+    '.cvc-section-title { text-align:center; font-weight:700; font-size:9.5pt; letter-spacing:.6px; text-transform:uppercase; border:1px solid #888; padding:4px 8px; margin-bottom:10px; color:#000; }',
+    '.cvc-form-item { display:grid; grid-template-columns:1fr auto; gap:16px; align-items:start; margin-bottom:10px; }',
+    '.cvc-form-right { text-align:right; white-space:nowrap; }',
+    '.cvc-inst { font-weight:700; font-size:9.5pt; color:#000; }',
+    '.cvc-desc { font-size:9.5pt; color:#333; margin-top:1px; }',
+    '.cvc-period { font-weight:700; font-size:9pt; color:#000; }',
+    '.cvc-local { font-size:9pt; color:#555; margin-top:1px; }',
+    '.cvc-bullets { padding-left:18px; margin:0; list-style:disc; }',
+    '.cvc-bullets li { font-size:9.5pt; color:#333; margin-bottom:3px; line-height:1.4; }',
+    '.cvc-exp-item { margin-bottom:14px; }',
+    '.cvc-exp-header { display:grid; grid-template-columns:1fr auto; gap:12px; align-items:baseline; margin-bottom:5px; }',
+    '.cvc-exp-title { font-weight:700; font-size:9.5pt; color:#000; }',
+    '.cvc-exp-period { font-weight:700; font-size:9pt; color:#000; white-space:nowrap; }',
+    '.cvc-cert-row { display:grid; grid-template-columns:1fr auto; gap:16px; align-items:baseline; margin-bottom:4px; }',
+    '.cvc-cert-nome { font-size:9.5pt; color:#333; }',
+    '.cvc-cert-nome::before { content:"• "; }',
+    '.cvc-cert-data { font-weight:700; font-size:9pt; color:#000; white-space:nowrap; }',
+    '@media print { @page { margin:18mm 20mm; } body { padding:0; } }'
+  ].join('\n');
+
+  // ── imprimir ─────────────────────────────────────────────────
+  window.cvImprimir = function () {
+    var dados = collectDados();
+    var docHtml = buildDocHtml(dados);
+    var titulo = val('cvTitulo') || 'Currículo';
+
+    var win = window.open('', '_blank', 'width=900,height=700');
+    win.document.write(
+      '<!DOCTYPE html><html lang="pt-BR"><head>' +
+      '<meta charset="utf-8">' +
+      '<title>' + esc(titulo) + '</title>' +
+      '<style>' + PRINT_CSS + '</style>' +
+      '</head><body>' +
+      docHtml +
+      '<script>window.addEventListener("load",function(){window.print();});<\/script>' +
+      '</body></html>'
+    );
+    win.document.close();
+  };
+
+  // ── salvar ───────────────────────────────────────────────────
+  window.cvSalvar = function () {
+    var titulo = val('cvTitulo');
+    if (!titulo) {
+      document.getElementById('cvTitulo').focus();
+      return;
+    }
+    var dados = collectDados();
+    var btn = document.getElementById('cvBtnSalvar');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass me-1"></i>Salvando…';
+
+    var url = _editId ? '/api/curriculos/' + _editId : '/api/curriculos';
+    var method = _editId ? 'PUT' : 'POST';
+
+    fetch(url, {
+      method: method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ titulo: titulo, dados: dados })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.id) _editId = data.id;
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check2 me-1"></i>Salvo';
+        setTimeout(function () {
+          btn.innerHTML = '<i class="bi bi-floppy me-1"></i>Salvar';
+        }, 2000);
+        carregarLista();
+      })
+      .catch(function () {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-floppy me-1"></i>Salvar';
+      });
+  };
+
+  // ── abrir editor ─────────────────────────────────────────────
+  function cvAbrirEditor(curriculo) {
+    if (curriculo) {
+      _editId = curriculo.id;
+      _template = (curriculo.dados && curriculo.dados.template) || 'classico';
+      setVal('cvTitulo', curriculo.titulo);
+      populateForm(curriculo.dados || {});
+    } else {
+      _editId = null;
+      setVal('cvTitulo', '');
+      document.getElementById('cvFormacaoList').innerHTML = '';
+      document.getElementById('cvCompList').innerHTML = '';
+      document.getElementById('cvExpList').innerHTML = '';
+      document.getElementById('cvCertList').innerHTML = '';
+      setVal('fNome', '');
+      setVal('fEmail', '');
+      setVal('fTelefone', '');
+      setVal('fLinkedin', '');
+      setVal('fGithub', '');
+    }
+    showEditor();
+    cvPreview();
   }
 
   // ── lista ────────────────────────────────────────────────────
-  async function loadLista() {
-    try {
-      _lista = await apiGet('/api/curriculos');
-    } catch (_) { _lista = []; }
-    renderLista();
+  function carregarLista() {
+    fetch('/api/curriculos')
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        _lista = data.curriculos || [];
+        renderLista();
+      });
   }
 
   function renderLista() {
     var grid = document.getElementById('cvGrid');
     var vazio = document.getElementById('cvVazio');
-    var cards = _lista.map(function (c) { return renderCard(c); }).join('');
-    grid.innerHTML = cards || '';
     if (!_lista.length) {
+      grid.innerHTML = '';
       grid.appendChild(vazio);
-      vazio.style.display = '';
-    } else {
-      vazio.style.display = 'none';
-      grid.insertAdjacentElement('afterbegin', vazio);
+      vazio.classList.remove('d-none');
+      return;
     }
-  }
-
-  function renderCard(c) {
-    var data = new Date(c.atualizado_em).toLocaleDateString('pt-BR');
-    return '<div class="cv-card">'
-      + '<div class="cv-card-icon"><i class="bi bi-file-person-fill"></i></div>'
-      + '<div>'
-        + '<div class="cv-card-titulo">' + esc(c.titulo) + '</div>'
-        + '<div class="cv-card-meta">Atualizado em ' + data + '</div>'
-      + '</div>'
-      + '<div class="cv-card-actions">'
-        + '<button class="cv-card-btn" onclick="cvEditarCard(' + c.id + ')"><i class="bi bi-pencil"></i> Editar</button>'
-        + '<button class="cv-card-btn cv-card-btn--danger" onclick="cvDeletarCard(' + c.id + ',\'' + esc(c.titulo) + '\')"><i class="bi bi-trash"></i> Excluir</button>'
-      + '</div>'
-    + '</div>';
-  }
-
-  window.cvEditarCard = async function (id) {
-    var row = await apiGet('/api/curriculos/' + id);
-    if (row.error) return;
-    _editId = id;
-    _carregarDados(row.titulo, row.dados || {});
-    _mostrarEditor();
-  };
-
-  window.cvDeletarCard = async function (id, titulo) {
-    if (!confirm('Excluir o currículo "' + titulo + '"?\nEsta ação não pode ser desfeita.')) return;
-    await apiDelete('/api/curriculos/' + id);
-    _lista = _lista.filter(function (c) { return c.id !== id; });
-    renderLista();
-  };
-
-  // ── navegação ────────────────────────────────────────────────
-  window.cvNovoEditor = function () {
-    _editId = null;
-    _limparForm();
-    _mostrarEditor();
-  };
-
-  window.cvVoltarLista = function () {
-    document.getElementById('cvLista').style.display = '';
-    document.getElementById('cvEditor').classList.remove('active');
-  };
-
-  function _mostrarEditor() {
-    document.getElementById('cvLista').style.display = 'none';
-    document.getElementById('cvEditor').classList.add('active');
-    cvPreview();
-    cvTab('form');
-  }
-
-  // ── tabs mobile ──────────────────────────────────────────────
-  window.cvTab = function (tab) {
-    _mobileTab = tab;
-    var formCard = document.getElementById('cvFormCard');
-    var prevCard = document.getElementById('cvPreviewCard');
-    var tabs = document.querySelectorAll('.cv-tab-btn');
-    tabs[0].classList.toggle('active', tab === 'form');
-    tabs[1].classList.toggle('active', tab === 'preview');
-    formCard.classList.toggle('cv-tab-active', tab === 'form');
-    prevCard.classList.toggle('cv-tab-active', tab === 'preview');
-  };
-
-  // ── seções colapsáveis ────────────────────────────────────────
-  window.cvToggleSection = function (toggle) {
-    toggle.classList.toggle('open');
-    var body = toggle.nextElementSibling;
-    if (body) body.classList.toggle('open');
-  };
-
-  // ── form: limpar ─────────────────────────────────────────────
-  function _limparForm() {
-    set('cvTitulo', '');
-    set('fNome', ''); set('fCargo', ''); set('fEmail', ''); set('fTelefone', '');
-    set('fCidade', ''); set('fLinkedin', ''); set('fGithub', ''); set('fSite', '');
-    set('fResumo', '');
-    document.getElementById('cvExpList').innerHTML = '';
-    document.getElementById('cvEduList').innerHTML = '';
-    document.getElementById('cvLangList').innerHTML = '';
-    document.getElementById('cvCertList').innerHTML = '';
-    _skills = [];
-    _renderSkills();
-    cvPreview();
-  }
-
-  function _carregarDados(titulo, d) {
-    set('cvTitulo', titulo);
-    set('fNome', d.nome); set('fCargo', d.cargo);
-    set('fEmail', d.email); set('fTelefone', d.telefone);
-    set('fCidade', d.cidade); set('fLinkedin', d.linkedin);
-    set('fGithub', d.github); set('fSite', d.site);
-    set('fResumo', d.resumo);
-
-    document.getElementById('cvExpList').innerHTML = '';
-    (d.experiencias || []).forEach(function (e) { cvAddExp(e); });
-
-    document.getElementById('cvEduList').innerHTML = '';
-    (d.educacao || []).forEach(function (e) { cvAddEdu(e); });
-
-    document.getElementById('cvLangList').innerHTML = '';
-    (d.idiomas || []).forEach(function (l) { cvAddLang(l); });
-
-    document.getElementById('cvCertList').innerHTML = '';
-    (d.certificacoes || []).forEach(function (c) { cvAddCert(c); });
-
-    _skills = Array.isArray(d.habilidades) ? d.habilidades.slice() : [];
-    _renderSkills();
-    cvPreview();
-  }
-
-  // ── coletar dados do form ─────────────────────────────────────
-  function _coletarDados() {
-    return {
-      nome:      val('fNome'),
-      cargo:     val('fCargo'),
-      email:     val('fEmail'),
-      telefone:  val('fTelefone'),
-      cidade:    val('fCidade'),
-      linkedin:  val('fLinkedin'),
-      github:    val('fGithub'),
-      site:      val('fSite'),
-      resumo:    document.getElementById('fResumo').value.trim(),
-      experiencias:  _coletarExp(),
-      educacao:      _coletarEdu(),
-      habilidades:   _skills.slice(),
-      idiomas:       _coletarLang(),
-      certificacoes: _coletarCert(),
-    };
-  }
-
-  // ── EXPERIÊNCIAS ─────────────────────────────────────────────
-  window.cvAddExp = function (data) {
-    data = data || {};
-    var list = document.getElementById('cvExpList');
-    var idx = list.children.length;
-    var div = document.createElement('div');
-    div.className = 'cv-dynamic-item';
-    div.innerHTML = ''
-      + '<div class="cv-dynamic-item-header">'
-        + '<span class="cv-dynamic-item-num">Exp. ' + (idx + 1) + '</span>'
-        + '<button class="cv-dynamic-remove" onclick="this.closest(\'.cv-dynamic-item\').remove();cvPreview();" title="Remover"><i class="bi bi-x-lg"></i></button>'
-      + '</div>'
-      + '<div class="cv-row">'
-        + '<div class="cv-field"><label class="cv-label">Empresa</label>'
-          + '<input type="text" class="cv-input exp-empresa" value="' + esc(data.empresa) + '" placeholder="Nome da empresa" oninput="cvPreview()"></div>'
-        + '<div class="cv-field"><label class="cv-label">Cargo</label>'
-          + '<input type="text" class="cv-input exp-cargo" value="' + esc(data.cargo) + '" placeholder="Cargo ocupado" oninput="cvPreview()"></div>'
-      + '</div>'
-      + '<div class="cv-row-3">'
-        + '<div class="cv-field"><label class="cv-label">Início</label>'
-          + '<input type="month" class="cv-input exp-inicio" value="' + esc(data.inicio) + '" oninput="cvPreview()"></div>'
-        + '<div class="cv-field"><label class="cv-label">Fim</label>'
-          + '<input type="month" class="cv-input exp-fim" value="' + esc(data.fim) + '" oninput="cvPreview()"></div>'
-        + '<div class="cv-field" style="display:flex;align-items:flex-end;padding-bottom:2px">'
-          + '<div class="cv-check-row"><input type="checkbox" class="exp-atual" ' + (data.atual ? 'checked' : '') + ' onchange="cvPreview()">'
-          + '<label>Cargo atual</label></div></div>'
-      + '</div>'
-      + '<div class="cv-field"><label class="cv-label">Descrição / Realizações</label>'
-        + '<textarea class="cv-textarea exp-desc" rows="3" placeholder="Descreva suas responsabilidades e conquistas..." oninput="cvPreview()">' + esc(data.descricao) + '</textarea></div>';
-    list.appendChild(div);
-    cvPreview();
-  };
-
-  function _coletarExp() {
-    return Array.from(document.querySelectorAll('#cvExpList .cv-dynamic-item')).map(function (el) {
-      return {
-        empresa:   el.querySelector('.exp-empresa').value.trim(),
-        cargo:     el.querySelector('.exp-cargo').value.trim(),
-        inicio:    el.querySelector('.exp-inicio').value,
-        fim:       el.querySelector('.exp-fim').value,
-        atual:     el.querySelector('.exp-atual').checked,
-        descricao: el.querySelector('.exp-desc').value.trim(),
-      };
-    });
-  }
-
-  // ── EDUCAÇÃO ─────────────────────────────────────────────────
-  window.cvAddEdu = function (data) {
-    data = data || {};
-    var list = document.getElementById('cvEduList');
-    var idx = list.children.length;
-    var div = document.createElement('div');
-    div.className = 'cv-dynamic-item';
-    div.innerHTML = ''
-      + '<div class="cv-dynamic-item-header">'
-        + '<span class="cv-dynamic-item-num">Formação ' + (idx + 1) + '</span>'
-        + '<button class="cv-dynamic-remove" onclick="this.closest(\'.cv-dynamic-item\').remove();cvPreview();" title="Remover"><i class="bi bi-x-lg"></i></button>'
-      + '</div>'
-      + '<div class="cv-row">'
-        + '<div class="cv-field"><label class="cv-label">Instituição</label>'
-          + '<input type="text" class="cv-input edu-inst" value="' + esc(data.instituicao) + '" placeholder="Nome da instituição" oninput="cvPreview()"></div>'
-        + '<div class="cv-field"><label class="cv-label">Curso</label>'
-          + '<input type="text" class="cv-input edu-curso" value="' + esc(data.curso) + '" placeholder="Nome do curso" oninput="cvPreview()"></div>'
-      + '</div>'
-      + '<div class="cv-row">'
-        + '<div class="cv-field"><label class="cv-label">Grau</label>'
-          + '<select class="cv-input edu-grau" onchange="cvPreview()">'
-            + ['', 'Bacharelado','Licenciatura','Tecnólogo','Pós-graduação','MBA','Mestrado','Doutorado','Técnico','Ensino Médio','Curso Livre'].map(function (g) {
-                return '<option value="' + g + '" ' + (data.grau === g ? 'selected' : '') + '>' + (g || 'Selecionar...') + '</option>';
-              }).join('')
-          + '</select></div>'
-        + '<div class="cv-field"><label class="cv-label">Período</label>'
-          + '<input type="text" class="cv-input edu-periodo" value="' + esc(data.periodo) + '" placeholder="2018 – 2022" oninput="cvPreview()"></div>'
-      + '</div>';
-    list.appendChild(div);
-    cvPreview();
-  };
-
-  function _coletarEdu() {
-    return Array.from(document.querySelectorAll('#cvEduList .cv-dynamic-item')).map(function (el) {
-      return {
-        instituicao: el.querySelector('.edu-inst').value.trim(),
-        curso:       el.querySelector('.edu-curso').value.trim(),
-        grau:        el.querySelector('.edu-grau').value,
-        periodo:     el.querySelector('.edu-periodo').value.trim(),
-      };
-    });
-  }
-
-  // ── HABILIDADES ──────────────────────────────────────────────
-  window.cvAddSkill = function () {
-    var input = document.getElementById('cvSkillInput');
-    var v = (input.value || '').trim();
-    if (!v || _skills.includes(v)) { input.value = ''; return; }
-    _skills.push(v);
-    input.value = '';
-    _renderSkills();
-    cvPreview();
-  };
-
-  function _renderSkills() {
-    var wrap = document.getElementById('cvSkillsTags');
-    wrap.innerHTML = _skills.map(function (s, i) {
-      return '<span class="cv-tag">' + esc(s)
-        + '<button class="cv-tag-remove" onclick="cvRemoveSkill(' + i + ')" title="Remover">×</button></span>';
+    vazio.classList.add('d-none');
+    grid.innerHTML = _lista.map(function (c) {
+      return '<div class="cv-card">' +
+        '<div class="cv-card-titulo">' + esc(c.titulo) + '</div>' +
+        '<div class="cv-card-meta">Atualizado em ' + fmtDate(c.atualizado_em) + '</div>' +
+        '<div class="cv-card-actions">' +
+        '<button class="btn btn-outline-primary btn-sm" onclick="cvEditar(' + c.id + ')"><i class="bi bi-pencil me-1"></i>Editar</button>' +
+        '<button class="btn btn-outline-danger btn-sm" onclick="cvExcluir(' + c.id + ')"><i class="bi bi-trash3 me-1"></i>Excluir</button>' +
+        '</div>' +
+        '</div>';
     }).join('');
   }
 
-  window.cvRemoveSkill = function (i) {
-    _skills.splice(i, 1);
-    _renderSkills();
-    cvPreview();
-  };
-
-  // ── IDIOMAS ──────────────────────────────────────────────────
-  window.cvAddLang = function (data) {
-    data = data || {};
-    var list = document.getElementById('cvLangList');
-    var div = document.createElement('div');
-    div.className = 'cv-dynamic-item';
-    div.innerHTML = ''
-      + '<div class="cv-dynamic-item-header">'
-        + '<span class="cv-dynamic-item-num">Idioma</span>'
-        + '<button class="cv-dynamic-remove" onclick="this.closest(\'.cv-dynamic-item\').remove();cvPreview();" title="Remover"><i class="bi bi-x-lg"></i></button>'
-      + '</div>'
-      + '<div class="cv-row">'
-        + '<div class="cv-field"><label class="cv-label">Idioma</label>'
-          + '<input type="text" class="cv-input lang-idioma" value="' + esc(data.idioma) + '" placeholder="Inglês" oninput="cvPreview()"></div>'
-        + '<div class="cv-field"><label class="cv-label">Nível</label>'
-          + '<select class="cv-input lang-nivel" onchange="cvPreview()">'
-            + ['', 'Básico','Intermediário','Avançado','Fluente','Nativo'].map(function (n) {
-                return '<option value="' + n + '" ' + (data.nivel === n ? 'selected' : '') + '>' + (n || 'Selecionar...') + '</option>';
-              }).join('')
-          + '</select></div>'
-      + '</div>';
-    list.appendChild(div);
-    cvPreview();
-  };
-
-  function _coletarLang() {
-    return Array.from(document.querySelectorAll('#cvLangList .cv-dynamic-item')).map(function (el) {
-      return {
-        idioma: el.querySelector('.lang-idioma').value.trim(),
-        nivel:  el.querySelector('.lang-nivel').value,
-      };
-    });
-  }
-
-  // ── CERTIFICAÇÕES ────────────────────────────────────────────
-  window.cvAddCert = function (data) {
-    data = data || {};
-    var list = document.getElementById('cvCertList');
-    var div = document.createElement('div');
-    div.className = 'cv-dynamic-item';
-    div.innerHTML = ''
-      + '<div class="cv-dynamic-item-header">'
-        + '<span class="cv-dynamic-item-num">Certificação</span>'
-        + '<button class="cv-dynamic-remove" onclick="this.closest(\'.cv-dynamic-item\').remove();cvPreview();" title="Remover"><i class="bi bi-x-lg"></i></button>'
-      + '</div>'
-      + '<div class="cv-row">'
-        + '<div class="cv-field"><label class="cv-label">Nome da certificação</label>'
-          + '<input type="text" class="cv-input cert-nome" value="' + esc(data.nome) + '" placeholder="AWS Solutions Architect" oninput="cvPreview()"></div>'
-        + '<div class="cv-field"><label class="cv-label">Emissor</label>'
-          + '<input type="text" class="cv-input cert-emissor" value="' + esc(data.emissor) + '" placeholder="Amazon" oninput="cvPreview()"></div>'
-      + '</div>'
-      + '<div class="cv-field" style="max-width:120px"><label class="cv-label">Ano</label>'
-        + '<input type="text" class="cv-input cert-ano" value="' + esc(data.ano) + '" placeholder="2023" maxlength="4" oninput="cvPreview()"></div>';
-    list.appendChild(div);
-    cvPreview();
-  };
-
-  function _coletarCert() {
-    return Array.from(document.querySelectorAll('#cvCertList .cv-dynamic-item')).map(function (el) {
-      return {
-        nome:    el.querySelector('.cert-nome').value.trim(),
-        emissor: el.querySelector('.cert-emissor').value.trim(),
-        ano:     el.querySelector('.cert-ano').value.trim(),
-      };
-    });
-  }
-
-  // ── PREVIEW ──────────────────────────────────────────────────
-  window.cvPreview = function () {
-    var d = _coletarDados();
-    var doc = document.getElementById('cvDoc');
-    if (!doc) return;
-
-    var semDados = !d.nome && !d.cargo && !d.email && !d.resumo
-      && !d.experiencias.length && !d.educacao.length;
-    if (semDados) {
-      doc.innerHTML = '<div class="cv-empty-state"><i class="bi bi-file-person"></i>Preencha os dados ao lado para visualizar o currículo</div>';
-      return;
-    }
-
-    var html = '<div class="cv-doc-header">';
-    if (d.nome) html += '<div class="cv-doc-name">' + esc(d.nome) + '</div>';
-    if (d.cargo) html += '<div class="cv-doc-cargo">' + esc(d.cargo) + '</div>';
-
-    var contacts = [];
-    if (d.email)    contacts.push('<span><i class="bi bi-envelope"></i>' + esc(d.email) + '</span>');
-    if (d.telefone) contacts.push('<span><i class="bi bi-telephone"></i>' + esc(d.telefone) + '</span>');
-    if (d.cidade)   contacts.push('<span><i class="bi bi-geo-alt"></i>' + esc(d.cidade) + '</span>');
-    if (d.linkedin) contacts.push('<span><i class="bi bi-linkedin"></i>' + esc(d.linkedin) + '</span>');
-    if (d.github)   contacts.push('<span><i class="bi bi-github"></i>' + esc(d.github) + '</span>');
-    if (d.site)     contacts.push('<span><i class="bi bi-globe"></i>' + esc(d.site) + '</span>');
-    if (contacts.length) html += '<div class="cv-doc-contacts">' + contacts.join('') + '</div>';
-    html += '</div>';
-
-    if (d.resumo) {
-      html += '<div class="cv-doc-section">'
-        + '<div class="cv-doc-section-title">Resumo Profissional</div>'
-        + '<p style="margin:0;font-size:.82rem;color:#334155;white-space:pre-wrap">' + esc(d.resumo) + '</p>'
-        + '</div>';
-    }
-
-    if (d.experiencias.length) {
-      html += '<div class="cv-doc-section"><div class="cv-doc-section-title">Experiência Profissional</div>';
-      d.experiencias.forEach(function (e) {
-        if (!e.empresa && !e.cargo) return;
-        var periodo = '';
-        if (e.inicio) periodo = ptDate(e.inicio) + ' – ' + (e.atual ? 'Presente' : ptDate(e.fim) || '');
-        html += '<div class="cv-doc-item">'
-          + '<div class="cv-doc-item-top">'
-            + '<div><span class="cv-doc-item-title">' + esc(e.cargo) + '</span>'
-              + (e.empresa ? ' <span class="cv-doc-item-sub">— ' + esc(e.empresa) + '</span>' : '') + '</div>'
-            + (periodo ? '<span class="cv-doc-item-period">' + periodo + '</span>' : '')
-          + '</div>'
-          + (e.descricao ? '<div class="cv-doc-item-desc">' + esc(e.descricao) + '</div>' : '')
-        + '</div>';
+  window.cvEditar = function (id) {
+    fetch('/api/curriculos/' + id)
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        cvAbrirEditor(data);
       });
-      html += '</div>';
-    }
-
-    if (d.educacao.length) {
-      html += '<div class="cv-doc-section"><div class="cv-doc-section-title">Educação</div>';
-      d.educacao.forEach(function (e) {
-        if (!e.instituicao && !e.curso) return;
-        html += '<div class="cv-doc-item">'
-          + '<div class="cv-doc-item-top">'
-            + '<div><span class="cv-doc-item-title">' + esc(e.curso) + '</span>'
-              + (e.grau ? ' <span class="cv-doc-item-sub">(' + esc(e.grau) + ')</span>' : '')
-              + (e.instituicao ? '<div class="cv-doc-item-sub">' + esc(e.instituicao) + '</div>' : '')
-            + '</div>'
-            + (e.periodo ? '<span class="cv-doc-item-period">' + esc(e.periodo) + '</span>' : '')
-          + '</div>'
-        + '</div>';
-      });
-      html += '</div>';
-    }
-
-    if (_skills.length) {
-      html += '<div class="cv-doc-section"><div class="cv-doc-section-title">Habilidades</div>'
-        + '<div class="cv-doc-skills">'
-        + _skills.map(function (s) { return '<span class="cv-doc-skill">' + esc(s) + '</span>'; }).join('')
-        + '</div></div>';
-    }
-
-    var langs = _coletarLang().filter(function (l) { return l.idioma; });
-    if (langs.length) {
-      html += '<div class="cv-doc-section"><div class="cv-doc-section-title">Idiomas</div>'
-        + '<div class="cv-doc-langs">'
-        + langs.map(function (l) {
-            return '<span class="cv-doc-lang"><strong>' + esc(l.idioma) + '</strong>'
-              + (l.nivel ? ' — ' + esc(l.nivel) : '') + '</span>';
-          }).join('')
-        + '</div></div>';
-    }
-
-    var certs = _coletarCert().filter(function (c) { return c.nome; });
-    if (certs.length) {
-      html += '<div class="cv-doc-section"><div class="cv-doc-section-title">Certificações</div>';
-      certs.forEach(function (c) {
-        html += '<div class="cv-doc-item">'
-          + '<div class="cv-doc-item-top">'
-            + '<span class="cv-doc-item-title">' + esc(c.nome) + '</span>'
-            + (c.emissor || c.ano ? '<span class="cv-doc-item-sub">' + esc(c.emissor) + (c.ano ? ' · ' + esc(c.ano) : '') + '</span>' : '')
-          + '</div>'
-        + '</div>';
-      });
-      html += '</div>';
-    }
-
-    doc.innerHTML = html;
   };
 
-  // ── salvar ────────────────────────────────────────────────────
-  window.cvSalvar = async function () {
-    var btn = document.getElementById('cvBtnSalvar');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Salvando...';
-    try {
-      var payload = {
-        titulo: val('cvTitulo') || 'Meu Currículo',
-        dados:  _coletarDados(),
-      };
-      var result;
-      if (_editId) {
-        result = await apiPut('/api/curriculos/' + _editId, payload);
-      } else {
-        result = await apiPost('/api/curriculos', payload);
-        if (result && result.id) _editId = result.id;
-      }
-      await loadLista();
-      btn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Salvo!';
-      setTimeout(function () {
-        btn.innerHTML = '<i class="bi bi-floppy me-1"></i>Salvar';
-        btn.disabled = false;
-      }, 1800);
-    } catch (_) {
-      btn.innerHTML = '<i class="bi bi-floppy me-1"></i>Salvar';
-      btn.disabled = false;
-    }
+  window.cvExcluir = function (id) {
+    if (!confirm('Excluir este currículo?')) return;
+    fetch('/api/curriculos/' + id, { method: 'DELETE' })
+      .then(function () { carregarLista(); });
   };
 
-  // ── imprimir ──────────────────────────────────────────────────
-  window.cvImprimir = function () { window.print(); };
-
-  // ── init ──────────────────────────────────────────────────────
+  // ── init ─────────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', function () {
-    loadLista();
+    showLista();
+    carregarLista();
   });
-})();
+
+}());

@@ -2227,7 +2227,7 @@ def _mp_base_url(req) -> str:
 @login_required
 def api_list_curriculos():
     from app.services import curriculos_service
-    return jsonify(curriculos_service.list_curriculos(current_user.id))
+    return jsonify({"curriculos": curriculos_service.list_curriculos(current_user.id)})
 
 
 @bp.route("/curriculos", methods=["POST"])
@@ -2274,4 +2274,3 @@ def api_delete_curriculo(curriculo_id):
     from app.services import curriculos_service
     curriculos_service.delete_curriculo(curriculo_id, current_user.id)
     return jsonify({"ok": True})
-    return url
