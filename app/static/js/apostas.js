@@ -2393,6 +2393,32 @@ function generateTipStoryCanvas(tip, logoImg, fluxImg) {
   ctx.fillText("📅  " + today, W - PAD, LOGO_Y + 20);
   ctx.textAlign = "left";
 
+  // ── STAKE PILL — top-right, below date, always in clear area ─
+  if (tip.stake) {
+    const stakeLabel = "💰  Stake: " + tip.stake;
+    ctx.font = "700 12px system-ui,-apple-system,sans-serif";
+    const pillW = ctx.measureText(stakeLabel).width + 24;
+    const pillH = 28;
+    const pillX = W - PAD - pillW;
+    const pillY = LOGO_Y + 38;
+
+    ctx.fillStyle = "rgba(13,110,253,0.13)";
+    _drawRoundedRect(ctx, pillX, pillY, pillW, pillH, pillH / 2);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(13,110,253,0.35)";
+    ctx.lineWidth = 1.5;
+    _drawRoundedRect(ctx, pillX, pillY, pillW, pillH, pillH / 2);
+    ctx.stroke();
+
+    ctx.font = "700 12px system-ui,-apple-system,sans-serif";
+    ctx.fillStyle = C.blue;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(stakeLabel, pillX + pillW / 2, pillY + pillH / 2);
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+  }
+
   // ── STATUS BADGE ─────────────────────────────────────────
   ctx.font = "800 14px system-ui,-apple-system,sans-serif";
   const badgeLabel = sc.icon + "  " + sc.label;
@@ -2601,16 +2627,6 @@ function generateTipStoryCanvas(tip, logoImg, fluxImg) {
       PAD + 16, curY + 34
     );
     curY += ROW_H + 8;
-  }
-
-  // Stake
-  if (tip.stake) {
-    curY += 8;
-    ctx.font = "600 13px system-ui,sans-serif";
-    ctx.fillStyle = C.textMuted;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "top";
-    ctx.fillText("💰  Stake: " + tip.stake, W / 2, curY);
   }
 
   // ── FOOTER ───────────────────────────────────────────────
