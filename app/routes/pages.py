@@ -7,6 +7,11 @@ bp = Blueprint("pages", __name__)
 @bp.route("/")
 @login_required
 def resumo():
+    from app.services import recorrencias_service
+    try:
+        recorrencias_service.processar_recorrencias(current_user.id)
+    except Exception:
+        pass
     return render_template("resumo.html", active_menu="resumo")
 
 
@@ -54,6 +59,12 @@ def surebet():
 @login_required
 def apostas():
     return render_template("apostas.html", active_menu="apostas")
+
+
+@bp.route("/recorrencias")
+@login_required
+def recorrencias():
+    return render_template("recorrencias.html", active_menu="recorrencias")
 
 
 @bp.route("/calculadoras")
