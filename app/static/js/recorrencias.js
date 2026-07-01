@@ -176,7 +176,7 @@
 
   function renderCategoria(c, compact) {
     var color = c.cor_fundo || '#64748b';
-    var iconHtml = '<div class="conta-picker-logo" style="background:' + color + '20;color:' + color + ';width:32px;height:32px">'
+    var iconHtml = '<div class="conta-picker-logo" style="background:' + color + '20;color:' + color + '">'
       + '<i class="bi ' + esc(c.icone || 'bi-tag') + '"></i></div>';
     if (compact) return iconHtml + '<span class="conta-picker-nome">' + esc(c.nome) + '</span>';
     return '<div class="conta-picker-item" data-id="' + c.id + '">'
@@ -223,7 +223,7 @@
 
   async function loadCategorias() {
     try {
-      var r = await fetch('/api/config/categorias');
+      var r = await fetch('/api/config/categorias?tipo=despesa');
       var cats = await r.json();
       _categorias = Array.isArray(cats) ? cats : [];
     } catch (_) { _categorias = []; }
