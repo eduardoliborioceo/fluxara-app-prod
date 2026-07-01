@@ -127,14 +127,17 @@
 
 @media (max-width: 767px) {
   .extrato-page-header {
-    top: 0;
-    margin-top: -16px;
-    margin-left: -10px;
-    margin-right: -10px;
-    padding-left: 20px;
-    padding-right: 20px;
+    position: fixed;
+    top: var(--header-height, 56px);
+    left: 0;
+    right: 0;
+    z-index: 150;
     border-radius: 20px 20px 14px 14px;
     box-shadow: 0 4px 12px rgba(15,23,42,0.07);
+  }
+
+  .extrato-body-wrap {
+    padding-top: 48px;
   }
 }
 
