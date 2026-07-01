@@ -224,6 +224,11 @@
         var saldoPrevEl = previstoDiff
           ? '<div class="conta-saldo-previsto">Previsto: ' + formatMoney(saldoPrevisto) + '</div>'
           : saldoLabel;
+        var investido = parseFloat(c.valor_investido) || 0;
+        var saldoSubEl = investido > 0
+          ? '<div class="conta-saldo-split">disp. ' + formatMoney(saldoAtual - investido)
+              + ' &middot; <span class="conta-saldo-split-inv">apl. ' + formatMoney(investido) + '</span></div>'
+          : saldoPrevEl;
         var finalidadeTag = c.finalidade
           ? '<span class="conta-finalidade-tag">' + esc(c.finalidade) + '</span>'
           : '';
@@ -235,7 +240,7 @@
           + '</div>'
           + '<div>'
           +   '<div class="conta-saldo" style="' + saldoClass + '">' + formatMoney(saldoAtual) + '</div>'
-          +   saldoPrevEl
+          +   saldoSubEl
           + '</div>'
           + '</div>';
       }).join('');

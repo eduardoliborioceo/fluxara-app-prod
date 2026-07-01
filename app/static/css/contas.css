@@ -172,6 +172,16 @@
   text-overflow: ellipsis;
 }
 
+.conta-investido-tag {
+  font-size: .72rem;
+  font-weight: 500;
+  color: #0d6efd;
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
 /* ========================
    SALDO
 ======================== */
