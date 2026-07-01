@@ -18,23 +18,6 @@ function calcTab(tab) {
 }
 
 // ============================================================
-//  PRÉ-PREENCHIMENTO COM DADOS PESSOAIS
-//  Salário base FGTS (excluindo provisão do empréstimo)
-//  FGTS total = disponível (2.987,88) + bloqueado (2.261,15)
-// ============================================================
-
-document.addEventListener("DOMContentLoaded", function () {
-  var rescSal  = document.getElementById("rescSalario");
-  var rescFgts = document.getElementById("rescFgts");
-  var rescBlq  = document.getElementById("rescFgtsBloqueado");
-  if (rescSal && !rescSal.value) {
-    rescSal.value  = "2157.98";
-    if (rescFgts) rescFgts.value = "5249.03";
-    if (rescBlq)  rescBlq.value  = "2261.15";
-  }
-});
-
-// ============================================================
 //  HELPERS
 // ============================================================
 
