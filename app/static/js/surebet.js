@@ -136,21 +136,18 @@
   var _alvAtualId = null;
   var _alvRounds = [];
   var _alvRodadaAtual = 0;
-  var _alvNumRodadas = 3;
   var _alvFormAberto = false;
 
   function fmtAlv(v) {
     return 'R$ ' + parseFloat(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
-  /* ---- Rodadas toggle ---- */
-  document.getElementById('alvRodadasToggle').addEventListener('click', function (e) {
-    var btn = e.target.closest('.surebet-outcome-btn');
-    if (!btn) return;
-    document.querySelectorAll('#alvRodadasToggle .surebet-outcome-btn').forEach(function (b) { b.classList.remove('active'); });
-    btn.classList.add('active');
-    _alvNumRodadas = parseInt(btn.dataset.n);
-  });
+  function _getNumRodadas() {
+    var val = parseInt(document.getElementById('alvNumRodadasInput')?.value || '3', 10);
+    if (isNaN(val) || val < 2) return 2;
+    if (val > 100) return 100;
+    return val;
+  }
 
   /* ---- Calcula sequência de rodadas ---- */
   function buildRounds(inicial, odd, n) {
@@ -330,7 +327,7 @@
         nome: nome || null,
         aposta_inicial: inicial,
         odd: odd,
-        num_rodadas: _alvNumRodadas,
+        num_rodadas: _getNumRodadas(),
       }),
     })
       .then(function (r) {
