@@ -56,8 +56,9 @@ def _parse_money(value) -> float:
     if isinstance(value, (int, float)):
         return float(value)
     s = str(value).strip().replace("R$", "").replace(" ", "")
-    s = s.replace(".", "").replace(",", ".")
+    if "," in s:
+        s = s.replace(".", "").replace(",", ".")
     try:
         return float(s)
-    except ValueError:
+    except (ValueError, TypeError):
         return 0.0
