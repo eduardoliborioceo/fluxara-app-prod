@@ -73,6 +73,12 @@ def calculadoras():
     return render_template("calculadoras.html", active_menu="calculadoras")
 
 
+@bp.route("/ferramentas/curriculo")
+@login_required
+def curriculo():
+    return render_template("curriculo.html", active_menu="curriculo")
+
+
 @bp.route("/minha-saude")
 @login_required
 def minha_saude():

@@ -2219,4 +2219,59 @@ def _mp_base_url(req) -> str:
     url = req.url_root.rstrip("/")
     if url.startswith("http://") and "localhost" not in url:
         url = "https://" + url[7:]
+
+
+# ── Currículos ──────────────────────────────────────────────────────────────
+
+@bp.route("/curriculos", methods=["GET"])
+@login_required
+def api_list_curriculos():
+    from app.services import curriculos_service
+    return jsonify(curriculos_service.list_curriculos(current_user.id))
+
+
+@bp.route("/curriculos", methods=["POST"])
+@login_required
+def api_create_curriculo():
+    from app.services import curriculos_service
+    data = request.get_json() or {}
+    try:
+        result = curriculos_service.save_curriculo(
+            current_user.id, None, data.get("titulo", ""), data.get("dados", {})
+        )
+        return jsonify(result), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@bp.route("/curriculos/<int:curriculo_id>", methods=["GET"])
+@login_required
+def api_get_curriculo(curriculo_id):
+    from app.services import curriculos_service
+    row = curriculos_service.get_curriculo(curriculo_id, current_user.id)
+    if not row:
+        return jsonify({"error": "Não encontrado"}), 404
+    return jsonify(row)
+
+
+@bp.route("/curriculos/<int:curriculo_id>", methods=["PUT"])
+@login_required
+def api_update_curriculo(curriculo_id):
+    from app.services import curriculos_service
+    data = request.get_json() or {}
+    try:
+        result = curriculos_service.save_curriculo(
+            current_user.id, curriculo_id, data.get("titulo", ""), data.get("dados", {})
+        )
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@bp.route("/curriculos/<int:curriculo_id>", methods=["DELETE"])
+@login_required
+def api_delete_curriculo(curriculo_id):
+    from app.services import curriculos_service
+    curriculos_service.delete_curriculo(curriculo_id, current_user.id)
+    return jsonify({"ok": True})
     return url
