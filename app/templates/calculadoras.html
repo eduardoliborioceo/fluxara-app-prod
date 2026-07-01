@@ -77,15 +77,30 @@
           </select>
         </div>
         <div class="calc-form-group">
-          <label class="calc-label">Saldo do FGTS <span class="calc-hint-inline">(opcional)</span></label>
+          <label class="calc-label">Saldo total do FGTS <span class="calc-hint-inline">(opcional)</span></label>
           <div class="calc-input-prefix">
             <span>R$</span>
             <input type="number" id="rescFgts" class="calc-input" min="0" step="0.01" placeholder="0,00" oninput="calcRescisao()">
           </div>
         </div>
         <div class="calc-form-group">
+          <label class="calc-label">FGTS bloqueado / antecipado <span class="calc-hint-inline">(opcional)</span></label>
+          <div class="calc-input-prefix">
+            <span>R$</span>
+            <input type="number" id="rescFgtsBloqueado" class="calc-input" min="0" step="0.01" placeholder="0,00" oninput="calcRescisao()">
+          </div>
+        </div>
+        <div class="calc-form-group">
           <label class="calc-label">Dias trabalhados no mês</label>
           <input type="number" id="rescDias" class="calc-input" min="1" max="31" placeholder="Ex: 15" oninput="calcRescisao()">
+        </div>
+        <div class="calc-form-group">
+          <label class="calc-label">Requerimento de seguro-desemprego</label>
+          <select id="rescRequerimento" class="calc-input" onchange="calcRescisao()">
+            <option value="1">1º pedido (mínimo 12 meses)</option>
+            <option value="2">2º pedido (mínimo 9 meses)</option>
+            <option value="3">3º pedido ou mais (mínimo 6 meses)</option>
+          </select>
         </div>
       </div>
 
@@ -93,11 +108,13 @@
         <div class="calc-result-title">Resumo da Rescisão</div>
         <div class="calc-result-grid" id="rescItens"></div>
         <div class="calc-result-total">
-          <span>Total a Receber</span>
+          <span>Total a Receber (Rescisão)</span>
           <span id="rescTotal" class="calc-result-total-val"></span>
         </div>
-        <p class="calc-disclaimer">Estimativa baseada na CLT. Valores podem variar conforme convenção coletiva e situação específica.</p>
+        <p class="calc-disclaimer">Estimativa baseada na CLT. Valores brutos sem desconto de INSS/IRRF sobre verbas rescisórias. Empréstimos e descontos pessoais não afetam o cálculo das verbas.</p>
       </div>
+
+      <div id="seguroResultado" class="calc-seguro-block" style="display:none"></div>
     </div>
   </div>
 
