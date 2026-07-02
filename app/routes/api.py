@@ -1008,8 +1008,13 @@ def recorrencias_toggle(rec_id):
 @login_required
 def recorrencias_processar():
     from app.services import recorrencias_service
+    data = request.get_json() or {}
+    hora_local = data.get("hora_local")
+    forcar = bool(data.get("forcar", False))
     try:
-        processados = recorrencias_service.processar_recorrencias(current_user.id)
+        processados = recorrencias_service.processar_recorrencias(
+            current_user.id, hora_local=hora_local, forcar=forcar
+        )
         return jsonify({"ok": True, "processados": processados})
     except Exception as e:
         return jsonify({"error": str(e)}), 500

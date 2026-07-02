@@ -543,3 +543,92 @@
   border-color: rgba(255,255,255,.08);
   background: #1e293b;
 }
+
+/* ========================
+   HORA EXECUCAO & PROCESSAR
+======================== */
+.rec-hora-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.rec-hora-input {
+  max-width: 140px;
+}
+
+.rec-hora-agora-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: .8rem;
+  font-weight: 500;
+  color: var(--primary);
+  background: none;
+  border: 1px solid rgba(13,110,253,.35);
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: background .12s;
+}
+.rec-hora-agora-btn:hover { background: rgba(13,110,253,.06); }
+
+.rec-sublabel {
+  display: block;
+  margin-top: 5px;
+  font-size: .76rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.rec-processar-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin: 12px 0 8px;
+}
+
+.rec-processar-info {
+  font-size: .82rem;
+  color: var(--text-muted);
+}
+
+.rec-processar-info strong {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  font-size: .85rem;
+}
+
+.rec-processar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--primary);
+  background: rgba(13,110,253,.07);
+  border: 1px solid rgba(13,110,253,.3);
+  border-radius: 8px;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: background .12s;
+  white-space: nowrap;
+}
+.rec-processar-btn:hover { background: rgba(13,110,253,.13); }
+.rec-processar-btn:disabled { opacity: .6; cursor: not-allowed; }
+
+.rec-processar-result {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: .82rem;
+  margin-bottom: 8px;
+}
+.rec-processar-result--ok   { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+.rec-processar-result--info { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+.rec-processar-result--err  { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }

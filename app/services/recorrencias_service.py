@@ -40,6 +40,19 @@ def get_recorrencia(recorrencia_id: int, user_id: int) -> dict | None:
     return dict(row) if row else None
 
 
+def _parse_hora(value) -> str | None:
+    if not value:
+        return None
+    s = str(value).strip()[:5]
+    try:
+        h, m = s.split(':')
+        if 0 <= int(h) <= 23 and 0 <= int(m) <= 59:
+            return f"{int(h):02d}:{int(m):02d}"
+    except (ValueError, IndexError):
+        pass
+    return None
+
+
 def create_recorrencia(user_id: int, data: dict) -> dict:
     nome = (data.get("nome") or "").strip()[:200]
     if not nome:
@@ -60,7 +73,10 @@ def create_recorrencia(user_id: int, data: dict) -> dict:
         raise ValueError("Conta obrigatória para débito automático")
     if tipo == "credito" and not cartao_id:
         raise ValueError("Cartão obrigatório para crédito automático")
-    row = repo.create_recorrencia(user_id, nome, tipo, valor, categoria_id, conta_id, cartao_id, dia)
+    hora_execucao = _parse_hora(data.get("hora_execucao"))
+    row = repo.create_recorrencia(
+        user_id, nome, tipo, valor, categoria_id, conta_id, cartao_id, dia, hora_execucao
+    )
     return dict(row)
 
 
@@ -80,7 +96,10 @@ def update_recorrencia(recorrencia_id: int, user_id: int, data: dict):
         raise ValueError("Recorrência não encontrada")
     conta_id = int(data["conta_id"]) if data.get("conta_id") else None
     cartao_id = int(data["cartao_id"]) if data.get("cartao_id") else None
-    repo.update_recorrencia(recorrencia_id, user_id, nome, valor, categoria_id, conta_id, cartao_id, dia)
+    hora_execucao = _parse_hora(data.get("hora_execucao"))
+    repo.update_recorrencia(
+        recorrencia_id, user_id, nome, valor, categoria_id, conta_id, cartao_id, dia, hora_execucao
+    )
 
 
 def toggle_ativo(recorrencia_id: int, user_id: int) -> bool:
@@ -91,13 +110,29 @@ def delete_recorrencia(recorrencia_id: int, user_id: int):
     repo.delete_recorrencia(recorrencia_id, user_id)
 
 
-def processar_recorrencias(user_id: int) -> list[dict]:
+def processar_recorrencias(user_id: int, hora_local: str | None = None,
+                           forcar: bool = False) -> list[dict]:
     today = datetime.date.today()
     ativas = repo.list_ativas(user_id)
     processados = []
 
     for r in ativas:
         try:
+            # Verificação de hora de execução
+            hora_exec = r.get('hora_execucao')
+            if hora_exec is not None and not forcar:
+                if hora_local is None:
+                    continue  # recorrências temporizadas precisam de hora_local do cliente
+                try:
+                    h, m = map(int, hora_local.split(':')[:2])
+                    local_time = datetime.time(h, m)
+                    exec_time = (hora_exec if isinstance(hora_exec, datetime.time)
+                                 else datetime.time.fromisoformat(str(hora_exec)[:5]))
+                    if local_time < exec_time:
+                        continue  # ainda não chegou a hora
+                except (ValueError, AttributeError):
+                    continue
+
             last_day = calendar.monthrange(today.year, today.month)[1]
             due_day = min(r['dia_vencimento'], last_day)
             due_date = datetime.date(today.year, today.month, due_day)

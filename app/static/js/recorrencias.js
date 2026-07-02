@@ -372,6 +372,7 @@
       ? (rec.cartao_nome ? esc(rec.cartao_nome) : '—')
       : (rec.conta_nome  ? esc(rec.conta_nome)  : '—');
     var meta = 'Todo dia ' + rec.dia_vencimento + ' · ' + ref;
+    if (rec.hora_execucao) meta += ' · às ' + String(rec.hora_execucao).slice(0, 5);
     if (rec.categoria_nome) meta += ' · ' + esc(rec.categoria_nome);
 
     var toggleClass = isAtivo ? 'rec-toggle--ativo' : 'rec-toggle--pausado';
@@ -460,6 +461,8 @@
     document.getElementById('recNome').value   = '';
     document.getElementById('recValor').value  = '';
     document.getElementById('recDia').value    = '';
+    var horaEl = document.getElementById('recHora');
+    if (horaEl) horaEl.value = '';
     var errEl = document.getElementById('recError');
     if (errEl) errEl.style.display = 'none';
     document.getElementById('recBtnDeletar').classList.add('d-none');
@@ -503,6 +506,8 @@
     document.getElementById('recNome').value   = rec.nome || '';
     document.getElementById('recValor').value  = parseFloat(rec.valor) || '';
     document.getElementById('recDia').value    = rec.dia_vencimento || '';
+    var horaEl = document.getElementById('recHora');
+    if (horaEl) horaEl.value = rec.hora_execucao ? String(rec.hora_execucao).slice(0, 5) : '';
     _setTipo(rec.tipo);
     document.getElementById('recTipoGroup').style.display = 'none';
 
@@ -546,6 +551,9 @@
       cartao_id:        _tipo === 'credito' ? (document.getElementById('recCartaoId').value || null) : null,
       conta_id:         _tipo === 'debito'  ? (document.getElementById('recContaId').value  || null) : null,
     };
+
+    var horaEl = document.getElementById('recHora');
+    payload.hora_execucao = horaEl && horaEl.value ? horaEl.value : null;
 
     var btn = document.getElementById('recBtnSalvar');
     btn.disabled = true;
@@ -595,6 +603,64 @@
     } catch (_) {}
   };
 
+  // ── usar hora atual ──────────────────────────────────────────
+  window.recUsarHoraAtual = function () {
+    var horaEl = document.getElementById('recHora');
+    if (!horaEl) return;
+    var agora = new Date();
+    var h = String(agora.getHours()).padStart(2, '0');
+    var m = String(agora.getMinutes()).padStart(2, '0');
+    horaEl.value = h + ':' + m;
+  };
+
+  // ── processar agora (teste) ──────────────────────────────────
+  window.processarAgora = async function () {
+    var btn = document.getElementById('recBtnProcessar');
+    var res = document.getElementById('recProcessarResult');
+    if (btn) btn.disabled = true;
+    if (res) res.style.display = 'none';
+    try {
+      var resp = await fetch('/api/recorrencias/processar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ forcar: true })
+      });
+      var json = await resp.json();
+      if (res) {
+        var count = (json.processados || []).length;
+        if (count > 0) {
+          var nomes = json.processados.map(function (p) { return esc(p.nome); }).join(', ');
+          res.innerHTML = '<i class="bi bi-check-circle-fill text-success me-1"></i>' +
+            count + ' recorrência(s) processada(s): ' + nomes;
+          res.className = 'rec-processar-result rec-processar-result--ok';
+        } else {
+          res.innerHTML = '<i class="bi bi-info-circle me-1"></i>Nenhuma recorrência pendente para hoje.';
+          res.className = 'rec-processar-result rec-processar-result--info';
+        }
+        res.style.display = '';
+        await loadRecs();
+      }
+    } catch (_) {
+      if (res) {
+        res.innerHTML = '<i class="bi bi-exclamation-triangle me-1"></i>Erro ao processar.';
+        res.className = 'rec-processar-result rec-processar-result--err';
+        res.style.display = '';
+      }
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  };
+
+  // ── relógio local ─────────────────────────────────────────────
+  function _atualizarRelogio() {
+    var el = document.getElementById('recHoraLocalDisplay');
+    if (!el) return;
+    var agora = new Date();
+    el.textContent = String(agora.getHours()).padStart(2, '0') + ':' +
+                     String(agora.getMinutes()).padStart(2, '0') + ':' +
+                     String(agora.getSeconds()).padStart(2, '0');
+  }
+
   // ── eventos ──────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', function () {
     var fab = document.getElementById('btnNovaRec');
@@ -603,6 +669,9 @@
     document.querySelectorAll('.rec-tipo-btn').forEach(function (btn) {
       btn.addEventListener('click', function () { _setTipo(btn.dataset.tipo); });
     });
+
+    _atualizarRelogio();
+    setInterval(_atualizarRelogio, 1000);
 
     init();
   });
