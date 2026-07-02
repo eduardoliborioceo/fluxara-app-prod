@@ -40,6 +40,28 @@ def _s(text) -> str:
     return (text or '').strip()
 
 
+_LATIN1_SUBS = {
+    '•': '·',  # bullet → middle dot (Latin-1)
+    '–': '-',        # en dash
+    '—': '-',        # em dash
+    '‘': "'",        # left single quote
+    '’': "'",        # right single quote
+    '“': '"',        # left double quote
+    '”': '"',        # right double quote
+    '…': '...',      # ellipsis
+}
+
+
+def _t(text) -> str:
+    s = _s(text)
+    for ch, repl in _LATIN1_SUBS.items():
+        s = s.replace(ch, repl)
+    return s.encode('latin-1', errors='replace').decode('latin-1')
+
+
+BULLET = '· '
+
+
 def gerar_pdf(dados: dict) -> bytes:
     from fpdf import FPDF, XPos, YPos
 
@@ -58,21 +80,21 @@ def gerar_pdf(dados: dict) -> bytes:
         pdf.set_text_color(0, 0, 0)
         pdf.set_draw_color(136, 136, 136)
         pdf.set_line_width(0.3)
-        pdf.cell(W, 7, titulo, border=1, align='C',
+        pdf.cell(W, 7, _t(titulo), border=1, align='C',
                  new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.ln(3)
 
     # ── NOME ──
-    nome = _s(dados.get('nome', 'NOME COMPLETO')).upper()
+    nome = _t(dados.get('nome', 'NOME COMPLETO')).upper()
     pdf.set_font('Helvetica', 'B', 17)
     pdf.set_text_color(0, 0, 0)
     pdf.cell(W, 10, nome, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
     # ── CABEÇALHO: linkedin/github esq · email/tel dir ──
-    linkedin = _s(dados.get('linkedin'))
-    github = _s(dados.get('github'))
-    email = _s(dados.get('email'))
-    telefone = _s(dados.get('telefone'))
+    linkedin = _t(dados.get('linkedin'))
+    github = _t(dados.get('github'))
+    email = _t(dados.get('email'))
+    telefone = _t(dados.get('telefone'))
 
     y_h = pdf.get_y()
     LEFT_W = 100
@@ -133,10 +155,10 @@ def gerar_pdf(dados: dict) -> bytes:
         RC = 55
         LC = W - RC - 3
         for f in formacao:
-            inst = _s(f.get('instituicao'))
-            desc = _s(f.get('descricao'))
-            periodo = _s(f.get('periodo'))
-            local = _s(f.get('localidade'))
+            inst = _t(f.get('instituicao'))
+            desc = _t(f.get('descricao'))
+            periodo = _t(f.get('periodo'))
+            local = _t(f.get('localidade'))
 
             y_f = pdf.get_y()
 
@@ -176,10 +198,10 @@ def gerar_pdf(dados: dict) -> bytes:
     if comps:
         secao('RESUMO DE COMPETÊNCIAS')
         for c in comps:
-            label = _s(c.get('label'))
-            valor = _s(c.get('valor'))
-            linha = ('• ' + label + ': ' + valor) if label and valor else (
-                '• ' + (label or valor))
+            label = _t(c.get('label'))
+            valor = _t(c.get('valor'))
+            linha = (BULLET + label + ': ' + valor) if label and valor else (
+                BULLET + (label or valor))
             pdf.set_x(L + 2)
             pdf.set_font('Helvetica', '', 9.5)
             pdf.set_text_color(51, 51, 51)
@@ -195,10 +217,10 @@ def gerar_pdf(dados: dict) -> bytes:
         RC_E = 50
         LC_E = W - RC_E - 3
         for e in exps:
-            cargo = _s(e.get('cargo_contrato'))
-            empresa = _s(e.get('empresa'))
-            periodo = _s(e.get('periodo'))
-            resps = _s(e.get('responsabilidades'))
+            cargo = _t(e.get('cargo_contrato'))
+            empresa = _t(e.get('empresa'))
+            periodo = _t(e.get('periodo'))
+            resps = _t(e.get('responsabilidades'))
             title_str = cargo + (' | ' + empresa if empresa else '') if cargo else empresa
 
             y_e = pdf.get_y()
@@ -221,13 +243,13 @@ def gerar_pdf(dados: dict) -> bytes:
             pdf.ln(1)
 
             if resps:
-                bullets = [b.strip().lstrip('•-* ')
+                bullets = [b.strip().lstrip('·-* ')
                            for b in resps.split('\n') if b.strip()]
                 for b in bullets:
                     pdf.set_x(L + 4)
                     pdf.set_font('Helvetica', '', 9.5)
                     pdf.set_text_color(51, 51, 51)
-                    pdf.multi_cell(W - 4, 5, '• ' + b)
+                    pdf.multi_cell(W - 4, 5, BULLET + _t(b))
                     pdf.set_x(L)
             pdf.ln(4)
 
@@ -238,8 +260,8 @@ def gerar_pdf(dados: dict) -> bytes:
         RC_C = 40
         LC_C = W - RC_C - 3
         for c in certs:
-            nome_c = _s(c.get('nome'))
-            data_c = _s(c.get('data'))
+            nome_c = _t(c.get('nome'))
+            data_c = _t(c.get('data'))
 
             y_c = pdf.get_y()
             if data_c:
@@ -253,7 +275,7 @@ def gerar_pdf(dados: dict) -> bytes:
             pdf.set_xy(L, y_c)
             pdf.set_font('Helvetica', '', 9.5)
             pdf.set_text_color(51, 51, 51)
-            pdf.multi_cell(LC_C, 5, '• ' + nome_c)
+            pdf.multi_cell(LC_C, 5, BULLET + nome_c)
             y_left_c = pdf.get_y()
 
             pdf.set_y(max(y_left_c, y_right_c))
@@ -269,7 +291,7 @@ def gerar_pdf(dados: dict) -> bytes:
     if outros:
         secao('OUTROS')
         for o in outros:
-            texto = _s(o.get('texto'))
+            texto = _t(o.get('texto'))
             imagem_b64 = o.get('imagem') or ''
             has_img = imagem_b64.startswith('data:image/')
 

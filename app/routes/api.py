@@ -2319,17 +2319,21 @@ def api_delete_curriculo(curriculo_id):
 def api_download_curriculo_pdf(curriculo_id):
     import io
     from app.services import curriculos_service
-    row = curriculos_service.get_curriculo(curriculo_id, current_user.id)
-    if not row:
-        return jsonify({"error": "Não encontrado"}), 404
-    pdf_bytes = curriculos_service.gerar_pdf(row.get('dados') or {})
-    titulo = (row.get('titulo') or 'curriculo').replace(' ', '_')
-    return send_file(
-        io.BytesIO(pdf_bytes),
-        mimetype='application/pdf',
-        as_attachment=True,
-        download_name=titulo + '.pdf'
-    )
+    try:
+        row = curriculos_service.get_curriculo(curriculo_id, current_user.id)
+        if not row:
+            return jsonify({"error": "Não encontrado"}), 404
+        pdf_bytes = curriculos_service.gerar_pdf(row.get('dados') or {})
+        titulo = (row.get('titulo') or 'curriculo').replace(' ', '_')
+        return send_file(
+            io.BytesIO(pdf_bytes),
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=titulo + '.pdf'
+        )
+    except Exception as exc:
+        logger.error("Erro ao gerar PDF curriculo %s: %s", curriculo_id, exc, exc_info=True)
+        return jsonify({"error": "Erro ao gerar PDF", "detalhe": str(exc)}), 500
 
 
 @bp.route("/curriculos/<int:curriculo_id>/download/docx", methods=["GET"])
@@ -2337,14 +2341,18 @@ def api_download_curriculo_pdf(curriculo_id):
 def api_download_curriculo_docx(curriculo_id):
     import io
     from app.services import curriculos_service
-    row = curriculos_service.get_curriculo(curriculo_id, current_user.id)
-    if not row:
-        return jsonify({"error": "Não encontrado"}), 404
-    docx_bytes = curriculos_service.gerar_docx(row.get('dados') or {})
-    titulo = (row.get('titulo') or 'curriculo').replace(' ', '_')
-    return send_file(
-        io.BytesIO(docx_bytes),
-        mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        as_attachment=True,
-        download_name=titulo + '.docx'
-    )
+    try:
+        row = curriculos_service.get_curriculo(curriculo_id, current_user.id)
+        if not row:
+            return jsonify({"error": "Não encontrado"}), 404
+        docx_bytes = curriculos_service.gerar_docx(row.get('dados') or {})
+        titulo = (row.get('titulo') or 'curriculo').replace(' ', '_')
+        return send_file(
+            io.BytesIO(docx_bytes),
+            mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            as_attachment=True,
+            download_name=titulo + '.docx'
+        )
+    except Exception as exc:
+        logger.error("Erro ao gerar DOCX curriculo %s: %s", curriculo_id, exc, exc_info=True)
+        return jsonify({"error": "Erro ao gerar Word", "detalhe": str(exc)}), 500
