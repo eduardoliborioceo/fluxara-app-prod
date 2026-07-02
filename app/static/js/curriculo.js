@@ -600,11 +600,40 @@
         '<div class="cv-card-meta">Atualizado em ' + fmtDate(c.atualizado_em) + '</div>' +
         '<div class="cv-card-actions">' +
         '<button class="btn btn-outline-primary btn-sm" onclick="cvEditar(' + c.id + ')"><i class="bi bi-pencil me-1"></i>Editar</button>' +
-        '<button class="btn btn-outline-danger btn-sm" onclick="cvExcluir(' + c.id + ')"><i class="bi bi-trash3 me-1"></i>Excluir</button>' +
+        '<button class="btn btn-outline-secondary btn-sm" onclick="cvBaixarPdf(' + c.id + ')" title="Baixar PDF"><i class="bi bi-file-earmark-pdf"></i></button>' +
+        '<button class="btn btn-outline-secondary btn-sm" onclick="cvBaixarDocx(' + c.id + ')" title="Baixar Word"><i class="bi bi-file-earmark-word"></i></button>' +
+        '<button class="btn btn-outline-danger btn-sm" onclick="cvExcluir(' + c.id + ')"><i class="bi bi-trash3"></i></button>' +
         '</div>' +
         '</div>';
     }).join('');
   }
+
+  function _download(url) {
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = '';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  window.cvBaixarPdf = function (id) {
+    _download('/api/curriculos/' + id + '/download/pdf');
+  };
+
+  window.cvBaixarDocx = function (id) {
+    _download('/api/curriculos/' + id + '/download/docx');
+  };
+
+  window.cvBaixarPdfEditor = function () {
+    if (!_editId) { alert('Salve o currículo antes de baixar.'); return; }
+    _download('/api/curriculos/' + _editId + '/download/pdf');
+  };
+
+  window.cvBaixarDocxEditor = function () {
+    if (!_editId) { alert('Salve o currículo antes de baixar.'); return; }
+    _download('/api/curriculos/' + _editId + '/download/docx');
+  };
 
   window.cvEditar = function (id) {
     fetch('/api/curriculos/' + id)

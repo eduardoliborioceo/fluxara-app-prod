@@ -293,7 +293,7 @@
 }
 .cv-preview-scroll {
   flex: 1;
-  overflow-y: auto;
+  overflow: auto;
   padding: 24px;
   display: flex;
   justify-content: center;
@@ -632,8 +632,26 @@
   .cv-preview-card.cv-tab-active { display: flex; min-height: 60vh; }
 }
 
+@media (max-width: 767px) {
+  .cv-preview-scroll { padding: 12px; }
+  #cvDoc {
+    width: 100%;
+    min-height: auto;
+    padding: 10mm 10mm;
+    font-size: 9pt;
+    box-shadow: 0 1px 8px rgba(15,23,42,.08);
+  }
+  .cvc-header { grid-template-columns: 1fr; gap: 4px; }
+  .cvc-header-right { text-align: left; }
+  .cvc-form-item { grid-template-columns: 1fr; gap: 4px; }
+  .cvc-form-right { text-align: left; }
+  .cvc-exp-header { grid-template-columns: 1fr; gap: 2px; }
+  .cvc-cert-row { grid-template-columns: 1fr; gap: 2px; }
+}
+
 @media (max-width: 480px) {
   .cv-row { grid-template-columns: 1fr; }
   .cv-editor-header { flex-wrap: wrap; }
   .cv-editor-titulo-input { order: 2; flex-basis: 100%; }
+  .cv-btn-label { display: none; }
 }
