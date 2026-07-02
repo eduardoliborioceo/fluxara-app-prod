@@ -10,10 +10,12 @@ def list_recorrencias(user_id: int) -> list:
                 SELECT r.*,
                     cb.nome AS conta_nome, cb.instituicao AS conta_instituicao,
                     cc.nome AS cartao_nome, cc.bandeira AS cartao_bandeira,
+                    cartao_cb.instituicao AS cartao_conta_instituicao,
                     cat.nome AS categoria_nome
                 FROM recorrencias r
                 LEFT JOIN contas_bancarias cb ON cb.id = r.conta_id
                 LEFT JOIN cartoes_credito cc ON cc.id = r.cartao_id
+                LEFT JOIN contas_bancarias cartao_cb ON cartao_cb.id = cc.conta_id
                 LEFT JOIN categorias cat ON cat.id = r.categoria_id
                 WHERE r.user_id = %s
                 ORDER BY r.ativo DESC, r.dia_vencimento, r.nome

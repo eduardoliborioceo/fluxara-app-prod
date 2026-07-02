@@ -77,27 +77,25 @@
 }
 
 /* ========================
-   ÍCONE
+   LOGO COLUNA
 ======================== */
-.rec-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: 10px;
+.rec-logo-col {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 1.1rem;
+  gap: 3px;
   flex-shrink: 0;
 }
 
-.rec-icon--credito {
-  background: rgba(251,191,36,.12);
-  color: #d97706;
-}
-
-.rec-icon--debito {
-  background: rgba(59,130,246,.10);
-  color: #0d6efd;
+.conta-picker-logo {
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .55rem;
+  font-weight: 700;
+  letter-spacing: -.5px;
+  overflow: hidden;
+  flex-shrink: 0;
 }
 
 /* ========================
@@ -192,6 +190,76 @@
   color: var(--primary, #0d6efd);
   border-color: rgba(13,110,253,.2);
 }
+
+/* ========================
+   FILTRO BAR
+======================== */
+.rec-filtro-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 0 12px;
+}
+
+.rec-filtro-scroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.rec-filtro-scroll::-webkit-scrollbar { display: none; }
+
+.rec-filtro-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border, rgba(15,23,42,0.09));
+  background: transparent;
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all .12s;
+  flex-shrink: 0;
+}
+
+.rec-filtro-pill--active {
+  background: rgba(13,110,253,.08);
+  border-color: rgba(13,110,253,.3);
+  color: var(--primary, #0d6efd);
+}
+
+.rec-filtro-pill .conta-picker-logo {
+  width: 20px !important;
+  height: 20px !important;
+  border-radius: 5px !important;
+}
+
+.rec-filtro-total {
+  display: flex;
+  gap: 16px;
+  padding: 0 2px;
+  font-size: .78rem;
+  font-weight: 700;
+}
+
+.rec-filtro-total-credito { color: #d97706; }
+.rec-filtro-total-debito  { color: var(--primary, #0d6efd); }
+
+.rec-vazio-filtro {
+  text-align: center;
+  padding: 40px 20px;
+  color: #94a3b8;
+}
+
+.rec-vazio-filtro i { font-size: 2rem; display: block; margin-bottom: 8px; opacity: .4; }
+.rec-vazio-filtro p { font-size: .85rem; font-weight: 600; color: #64748b; }
 
 /* ========================
    FAB
