@@ -237,6 +237,75 @@
     render();
   }
 
+  // ── filtro ───────────────────────────────────────────────────
+  var _filtroAtivo = 'todos';
+
+  window.setRecFiltro = function (key) {
+    _filtroAtivo = key;
+    document.querySelectorAll('.rec-filtro-pill').forEach(function (p) {
+      p.classList.toggle('rec-filtro-pill--active', p.dataset.filtro === key);
+    });
+    renderLista();
+  };
+
+  function _filtroKey(rec) {
+    if (rec.tipo === 'credito') return 'cartao_' + rec.cartao_id;
+    return 'conta_' + rec.conta_id;
+  }
+
+  function _buildFiltroBar() {
+    var bar = document.getElementById('recFiltroBar');
+    var scroll = bar ? bar.querySelector('.rec-filtro-scroll') : null;
+    if (!scroll) return;
+
+    var contas  = {};
+    var cartoes = {};
+    _recCache.forEach(function (r) {
+      if (r.tipo === 'debito' && r.conta_id && !contas[r.conta_id]) {
+        contas[r.conta_id] = { id: r.conta_id, nome: r.conta_nome || 'Conta', inst: (r.conta_instituicao || 'outro').toLowerCase() };
+      }
+      if (r.tipo === 'credito' && r.cartao_id && !cartoes[r.cartao_id]) {
+        cartoes[r.cartao_id] = { id: r.cartao_id, nome: r.cartao_nome || 'Cartão', bandeira: r.cartao_bandeira, inst: (r.cartao_conta_instituicao || '').toLowerCase() };
+      }
+    });
+
+    var html = '<button class="rec-filtro-pill' + (_filtroAtivo === 'todos' ? ' rec-filtro-pill--active' : '') + '" data-filtro="todos" onclick="setRecFiltro(\'todos\')">Todas</button>';
+
+    Object.values(contas).forEach(function (c) {
+      var inst = INSTITUICOES[c.inst] || INSTITUICOES.outro;
+      var logo = buildLogoHtml(inst, 20);
+      var key  = 'conta_' + c.id;
+      html += '<button class="rec-filtro-pill' + (_filtroAtivo === key ? ' rec-filtro-pill--active' : '') + '" data-filtro="' + key + '" onclick="setRecFiltro(\'' + key + '\')">' + logo + '<span>' + esc(c.nome) + '</span></button>';
+    });
+
+    Object.values(cartoes).forEach(function (c) {
+      var b    = BANDEIRAS[c.bandeira] || BANDEIRAS.outro;
+      var inst = c.inst ? (INSTITUICOES[c.inst] || null) : null;
+      var logos = inst
+        ? '<div style="display:flex;align-items:center;gap:2px;flex-shrink:0">' + buildLogoHtml(inst, 20) + buildBandeiraLogoHtml(b, 20) + '</div>'
+        : buildBandeiraLogoHtml(b, 20);
+      var key  = 'cartao_' + c.id;
+      html += '<button class="rec-filtro-pill' + (_filtroAtivo === key ? ' rec-filtro-pill--active' : '') + '" data-filtro="' + key + '" onclick="setRecFiltro(\'' + key + '\')">' + logos + '<span>' + esc(c.nome) + '</span></button>';
+    });
+
+    scroll.innerHTML = html;
+    bar.classList.remove('d-none');
+  }
+
+  function _filtroTotal() {
+    var items = _recCache.filter(function (r) {
+      return _filtroAtivo === 'todos' || _filtroKey(r) === _filtroAtivo;
+    });
+    var credito = items.filter(function (r) { return r.tipo === 'credito'; }).reduce(function (s, r) { return s + Number(r.valor); }, 0);
+    var debito  = items.filter(function (r) { return r.tipo === 'debito';  }).reduce(function (s, r) { return s + Number(r.valor); }, 0);
+    var el = document.getElementById('recFiltroTotal');
+    if (!el) return;
+    var parts = [];
+    if (credito > 0) parts.push('<span class="rec-filtro-total-credito">Crédito: ' + _fmt(credito) + '</span>');
+    if (debito  > 0) parts.push('<span class="rec-filtro-total-debito">Débito: '   + _fmt(debito)  + '</span>');
+    el.innerHTML = parts.join('');
+  }
+
   // ── renderização da lista ────────────────────────────────────
   function render() {
     var loading = document.getElementById('recLoading');
@@ -246,14 +315,26 @@
     if (!_recCache.length) {
       if (vazio) vazio.classList.remove('d-none');
       if (lista) lista.classList.add('d-none');
+      var bar = document.getElementById('recFiltroBar');
+      if (bar) bar.classList.add('d-none');
       return;
     }
     if (vazio) vazio.classList.add('d-none');
+    _buildFiltroBar();
+    renderLista();
+  }
+
+  function renderLista() {
+    var lista = document.getElementById('recLista');
     if (!lista) return;
     lista.classList.remove('d-none');
 
-    var credito = _recCache.filter(function (r) { return r.tipo === 'credito'; });
-    var debito  = _recCache.filter(function (r) { return r.tipo === 'debito';  });
+    var items = _recCache.filter(function (r) {
+      return _filtroAtivo === 'todos' || _filtroKey(r) === _filtroAtivo;
+    });
+
+    var credito = items.filter(function (r) { return r.tipo === 'credito'; });
+    var debito  = items.filter(function (r) { return r.tipo === 'debito';  });
 
     var html = '';
     if (credito.length) {
@@ -264,13 +345,29 @@
       html += '<div class="rec-group-header"><i class="bi bi-bank me-1"></i>Débito automático</div>';
       html += '<div class="rec-card">' + debito.map(renderRow).join('') + '</div>';
     }
+    if (!html) {
+      html = '<div class="rec-vazio-filtro"><i class="bi bi-funnel"></i><p>Nenhum item neste filtro</p></div>';
+    }
     lista.innerHTML = html;
+    _filtroTotal();
+  }
+
+  function _buildLogoColuna(rec) {
+    if (rec.tipo === 'credito') {
+      var b    = BANDEIRAS[(rec.cartao_bandeira || '').toLowerCase()] || BANDEIRAS.outro;
+      var inst = rec.cartao_conta_instituicao ? INSTITUICOES[(rec.cartao_conta_instituicao || '').toLowerCase()] : null;
+      if (inst) {
+        return '<div class="rec-logo-col">' + buildLogoHtml(inst, 32) + buildBandeiraLogoHtml(b, 32) + '</div>';
+      }
+      return '<div class="rec-logo-col">' + buildBandeiraLogoHtml(b, 40) + '</div>';
+    }
+    var instKey = (rec.conta_instituicao || 'outro').toLowerCase();
+    var instObj = INSTITUICOES[instKey] || INSTITUICOES.outro;
+    return '<div class="rec-logo-col">' + buildLogoHtml(instObj, 40) + '</div>';
   }
 
   function renderRow(rec) {
     var isAtivo   = rec.ativo;
-    var iconClass = rec.tipo === 'credito' ? 'rec-icon--credito' : 'rec-icon--debito';
-    var iconSvg   = rec.tipo === 'credito' ? 'credit-card-fill' : 'bank';
     var ref       = rec.tipo === 'credito'
       ? (rec.cartao_nome ? esc(rec.cartao_nome) : '—')
       : (rec.conta_nome  ? esc(rec.conta_nome)  : '—');
@@ -282,7 +379,7 @@
     var rowOpacity  = isAtivo ? '' : ' style="opacity:.55"';
 
     return '<div class="rec-row"' + rowOpacity + '>' +
-      '<div class="rec-icon ' + iconClass + '"><i class="bi bi-' + iconSvg + '"></i></div>' +
+      _buildLogoColuna(rec) +
       '<div class="rec-info">' +
         '<div class="rec-nome">' + esc(rec.nome) + '</div>' +
         '<div class="rec-meta">' + meta + '</div>' +
