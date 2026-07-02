@@ -377,4 +377,14 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/resumo.js') }}?v={{ static_v }}"></script>
+<script>
+(function () {
+  var horaLocal = new Date().toTimeString().slice(0, 5);
+  fetch('/api/recorrencias/processar', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ hora_local: horaLocal })
+  }).catch(function () {});
+}());
+</script>
 {% endblock %}

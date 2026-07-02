@@ -41,6 +41,17 @@
     <div class="rec-filtro-total" id="recFiltroTotal"></div>
   </div>
 
+  <div class="rec-processar-bar">
+    <div class="rec-processar-info">
+      <i class="bi bi-clock me-1"></i>
+      Hora local: <strong id="recHoraLocalDisplay">--:--</strong>
+    </div>
+    <button class="rec-processar-btn" onclick="processarAgora()" id="recBtnProcessar">
+      <i class="bi bi-play-circle me-1"></i>Processar agora
+    </button>
+  </div>
+  <div id="recProcessarResult" class="rec-processar-result" style="display:none"></div>
+
   <div id="recLista" class="d-none"></div>
 
 </div>
@@ -117,6 +128,17 @@
       <div class="rec-form-group">
         <label class="rec-label">Dia do vencimento</label>
         <input type="number" id="recDia" class="rec-input" min="1" max="31" placeholder="Ex: 10">
+      </div>
+
+      <div class="rec-form-group">
+        <label class="rec-label">Hora de execução <span class="rec-hint">(opcional)</span></label>
+        <div class="rec-hora-row">
+          <input type="time" id="recHora" class="rec-input rec-hora-input">
+          <button type="button" class="rec-hora-agora-btn" onclick="recUsarHoraAtual()" title="Usar hora atual">
+            <i class="bi bi-clock-history"></i> Usar hora atual
+          </button>
+        </div>
+        <small class="rec-sublabel">O lançamento só é criado após esta hora no dia do vencimento. Deixe em branco para processar a qualquer hora.</small>
       </div>
 
       <div class="rec-form-group">
