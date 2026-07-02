@@ -1,7 +1,15 @@
 .calc-wrapper {
-  max-width: 720px;
-  margin: 0 auto;
+  max-width: 100%;
   padding: 0 0 40px;
+}
+
+@media (min-width: 992px) {
+  .calc-wrapper {
+    padding: 0 8px 60px;
+  }
+  .calc-form-grid {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
 }
 
 /* ── TABS ────────────────────────────────────────────── */
