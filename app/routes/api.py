@@ -1004,6 +1004,17 @@ def recorrencias_toggle(rec_id):
     return jsonify({"ativo": ativo})
 
 
+@bp.route("/recorrencias/processar", methods=["POST"])
+@login_required
+def recorrencias_processar():
+    from app.services import recorrencias_service
+    try:
+        processados = recorrencias_service.processar_recorrencias(current_user.id)
+        return jsonify({"ok": True, "processados": processados})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @bp.route("/auth/confirm-extra", methods=["POST"])
 def api_confirm_extra():
     data = request.get_json() or {}
