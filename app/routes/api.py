@@ -2221,6 +2221,28 @@ def _mp_base_url(req) -> str:
         url = "https://" + url[7:]
 
 
+# ── Autocomplete: Instituições e Localidades ────────────────────────────────
+
+@bp.route("/autocomplete/instituicoes", methods=["GET"])
+@login_required
+def api_autocomplete_instituicoes():
+    from app.services import instituicoes_service
+    termo = request.args.get("q", "").strip()
+    if len(termo) < 2:
+        return jsonify([])
+    return jsonify(instituicoes_service.buscar(termo))
+
+
+@bp.route("/autocomplete/localidades", methods=["GET"])
+@login_required
+def api_autocomplete_localidades():
+    from app.services import localidades_service
+    termo = request.args.get("q", "").strip()
+    if len(termo) < 2:
+        return jsonify([])
+    return jsonify(localidades_service.buscar(termo))
+
+
 # ── Currículos ──────────────────────────────────────────────────────────────
 
 @bp.route("/curriculos", methods=["GET"])
