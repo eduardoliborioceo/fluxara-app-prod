@@ -151,6 +151,19 @@
           </button>
         </div>
 
+        <!-- Outros -->
+        <div class="cv-section-toggle" onclick="cvToggleSection(this)">
+          <span class="cv-section-toggle-label"><i class="bi bi-info-circle"></i>Outros</span>
+          <i class="bi bi-chevron-down"></i>
+        </div>
+        <div class="cv-section-body">
+          <p class="cv-hint-text">Informações adicionais, QR Code de projeto, disponibilidade...</p>
+          <div class="cv-dynamic-list" id="cvOutrosList"></div>
+          <button class="cv-add-btn" onclick="cvAddOutro()">
+            <i class="bi bi-plus-lg"></i>Adicionar item
+          </button>
+        </div>
+
       </div>
 
       <!-- ── PREVIEW ── -->

@@ -247,6 +247,73 @@
     );
   };
 
+  function _initImageUpload(item) {
+    var fileInput = item.querySelector('.cv-img-file');
+    var hiddenInput = item.querySelector('.cv-oimagem');
+    var preview = item.querySelector('.cv-img-preview');
+    var thumb = item.querySelector('.cv-img-thumb');
+    var selBtn = item.querySelector('.cv-img-sel-btn');
+    var remBtn = item.querySelector('.cv-img-rem-btn');
+
+    selBtn.addEventListener('click', function () { fileInput.click(); });
+
+    fileInput.addEventListener('change', function () {
+      var file = fileInput.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        var img = new Image();
+        img.onload = function () {
+          var canvas = document.createElement('canvas');
+          var MAX = 400;
+          var ratio = Math.min(MAX / img.width, MAX / img.height, 1);
+          canvas.width = Math.round(img.width * ratio);
+          canvas.height = Math.round(img.height * ratio);
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+          var dataUrl = canvas.toDataURL('image/png', 0.9);
+          hiddenInput.value = dataUrl;
+          thumb.src = dataUrl;
+          preview.style.display = '';
+          selBtn.style.display = 'none';
+          cvPreview();
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    remBtn.addEventListener('click', function () {
+      fileInput.value = '';
+      hiddenInput.value = '';
+      thumb.src = '';
+      preview.style.display = 'none';
+      selBtn.style.display = '';
+      cvPreview();
+    });
+  }
+
+  window.cvAddOutro = function () {
+    makeItem('cvOutrosList',
+      '<div class="cv-field"><label class="cv-label">Texto / Descrição</label>' +
+      '<textarea class="cv-textarea cv-otext" rows="3" placeholder="Disponível para trabalhar em qualquer turno, horário integral..."></textarea></div>' +
+      '<div class="cv-field">' +
+      '<label class="cv-label">Imagem <span class="cv-label-hint">(opcional · QR Code, logo de projeto...)</span></label>' +
+      '<div class="cv-img-wrap">' +
+      '<input type="file" class="cv-img-file" accept="image/*">' +
+      '<input type="hidden" class="cv-oimagem">' +
+      '<button type="button" class="cv-add-btn cv-img-sel-btn" style="width:auto;margin-top:0">' +
+      '<i class="bi bi-image me-1"></i>Escolher imagem</button>' +
+      '<div class="cv-img-preview" style="display:none">' +
+      '<img class="cv-img-thumb" alt="Imagem">' +
+      '<button type="button" class="cv-img-rem-btn"><i class="bi bi-x-lg me-1"></i>Remover</button>' +
+      '</div>' +
+      '</div>' +
+      '</div>'
+    );
+    var items = document.querySelectorAll('#cvOutrosList .cv-dynamic-item');
+    _initImageUpload(items[items.length - 1]);
+  };
+
   // ── collect form data ────────────────────────────────────────
   function collectDados() {
     var formacao = [];
@@ -285,6 +352,15 @@
       });
     });
 
+    var outros = [];
+    document.querySelectorAll('#cvOutrosList .cv-dynamic-item').forEach(function (el) {
+      var texto = el.querySelector('.cv-otext') ? el.querySelector('.cv-otext').value.trim() : '';
+      var imagem = el.querySelector('.cv-oimagem') ? el.querySelector('.cv-oimagem').value : '';
+      if (texto || imagem) {
+        outros.push({ texto: texto, imagem: imagem });
+      }
+    });
+
     return {
       template: _template,
       nome: val('fNome'),
@@ -295,7 +371,8 @@
       formacao: formacao,
       competencias: competencias,
       experiencias: experiencias,
-      certificados: certificados
+      certificados: certificados,
+      outros: outros
     };
   }
 
@@ -347,6 +424,24 @@
       var last = items[items.length - 1];
       last.querySelector('.cv-cnome').value = c.nome || '';
       last.querySelector('.cv-cdata').value = c.data || '';
+    });
+
+    document.getElementById('cvOutrosList').innerHTML = '';
+    (dados.outros || []).forEach(function (o) {
+      cvAddOutro();
+      var items = document.querySelectorAll('#cvOutrosList .cv-dynamic-item');
+      var last = items[items.length - 1];
+      if (last.querySelector('.cv-otext')) last.querySelector('.cv-otext').value = o.texto || '';
+      if (o.imagem && /^data:image\//.test(o.imagem)) {
+        var hidden = last.querySelector('.cv-oimagem');
+        var preview = last.querySelector('.cv-img-preview');
+        var thumb = last.querySelector('.cv-img-thumb');
+        var selBtn = last.querySelector('.cv-img-sel-btn');
+        if (hidden) hidden.value = o.imagem;
+        if (thumb) thumb.src = o.imagem;
+        if (preview) preview.style.display = '';
+        if (selBtn) selBtn.style.display = 'none';
+      }
     });
   }
 
@@ -460,6 +555,29 @@
       html += '</div>';
     }
 
+    // OUTROS
+    var outros = (d.outros || []).filter(function (o) { return o.texto || o.imagem; });
+    if (outros.length) {
+      html += '<div class="cvc-section">';
+      html += '<div class="cvc-section-title">OUTROS</div>';
+      outros.forEach(function (o) {
+        var hasImg = o.imagem && /^data:image\//.test(o.imagem);
+        html += '<div class="cvc-outro-item">';
+        if (o.texto && hasImg) {
+          html += '<div class="cvc-outro-layout">';
+          html += '<div class="cvc-outro-text">' + esc(o.texto).replace(/\n/g, '<br>') + '</div>';
+          html += '<img class="cvc-outro-img" src="' + o.imagem + '" alt="">';
+          html += '</div>';
+        } else if (o.texto) {
+          html += '<div class="cvc-outro-text">' + esc(o.texto).replace(/\n/g, '<br>') + '</div>';
+        } else if (hasImg) {
+          html += '<div style="text-align:center"><img class="cvc-outro-img" src="' + o.imagem + '" alt=""></div>';
+        }
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
     return html;
   }
 
@@ -491,6 +609,10 @@
     '.cvc-cert-nome { font-size:9.5pt; color:#333; }',
     '.cvc-cert-nome::before { content:"• "; }',
     '.cvc-cert-data { font-weight:700; font-size:9pt; color:#000; white-space:nowrap; }',
+    '.cvc-outro-item { margin-bottom:10px; }',
+    '.cvc-outro-layout { display:grid; grid-template-columns:1fr auto; gap:16px; align-items:start; }',
+    '.cvc-outro-text { font-size:9.5pt; color:#333; white-space:pre-line; line-height:1.45; }',
+    '.cvc-outro-img { width:35mm; height:auto; }',
     '@media print { @page { margin:18mm 20mm; } body { padding:0; } }'
   ].join('\n');
 
@@ -564,6 +686,7 @@
       document.getElementById('cvCompList').innerHTML = '';
       document.getElementById('cvExpList').innerHTML = '';
       document.getElementById('cvCertList').innerHTML = '';
+      document.getElementById('cvOutrosList').innerHTML = '';
       setVal('fNome', '');
       setVal('fEmail', '');
       setVal('fTelefone', '');

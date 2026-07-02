@@ -259,6 +259,52 @@ def gerar_pdf(dados: dict) -> bytes:
             pdf.set_y(max(y_left_c, y_right_c))
             pdf.ln(2)
 
+    # ── OUTROS ──
+    import base64 as _b64
+    from io import BytesIO as _BytesIO
+
+    IMG_W = 35
+    outros = [o for o in (dados.get('outros') or [])
+              if _s(o.get('texto')) or (o.get('imagem') or '').startswith('data:image/')]
+    if outros:
+        secao('OUTROS')
+        for o in outros:
+            texto = _s(o.get('texto'))
+            imagem_b64 = o.get('imagem') or ''
+            has_img = imagem_b64.startswith('data:image/')
+
+            if texto and has_img:
+                TEXT_W = W - IMG_W - 5
+                y_o = pdf.get_y()
+                try:
+                    raw = imagem_b64.split(',', 1)[1]
+                    pdf.image(_BytesIO(_b64.b64decode(raw)),
+                              x=L + TEXT_W + 5, y=y_o, w=IMG_W)
+                except Exception:
+                    has_img = False
+                pdf.set_xy(L, y_o)
+                pdf.set_font('Helvetica', '', 9.5)
+                pdf.set_text_color(51, 51, 51)
+                pdf.multi_cell(TEXT_W if has_img else W, 5, texto)
+                pdf.set_y(max(pdf.get_y(), y_o + IMG_W))
+                pdf.ln(4)
+
+            elif texto:
+                pdf.set_x(L)
+                pdf.set_font('Helvetica', '', 9.5)
+                pdf.set_text_color(51, 51, 51)
+                pdf.multi_cell(W, 5, texto)
+                pdf.ln(4)
+
+            elif has_img:
+                try:
+                    raw = imagem_b64.split(',', 1)[1]
+                    pdf.image(_BytesIO(_b64.b64decode(raw)),
+                              x=L + (W - IMG_W) / 2, y=pdf.get_y(), w=IMG_W)
+                    pdf.ln(IMG_W + 4)
+                except Exception:
+                    pass
+
     return bytes(pdf.output())
 
 
@@ -453,6 +499,51 @@ def gerar_docx(dados: dict) -> bytes:
         add_secao('CERTIFICADOS')
         for c in certs:
             add_dois_col('• ' + _s(c.get('nome')), None, _s(c.get('data')), None)
+
+    # ── OUTROS ──
+    import base64 as _b64
+    from io import BytesIO as _BytesIO
+
+    outros = [o for o in (dados.get('outros') or [])
+              if _s(o.get('texto')) or (o.get('imagem') or '').startswith('data:image/')]
+    if outros:
+        add_secao('OUTROS')
+        for o in outros:
+            texto = _s(o.get('texto'))
+            imagem_b64 = o.get('imagem') or ''
+            has_img = imagem_b64.startswith('data:image/')
+
+            if has_img:
+                try:
+                    raw = imagem_b64.split(',', 1)[1]
+                    img_buf = _BytesIO(_b64.b64decode(raw))
+                    t = doc.add_table(rows=1, cols=2)
+                    _no_borders(t)
+                    lc = t.cell(0, 0)
+                    if texto:
+                        lp = lc.paragraphs[0]
+                        _p_spacing(lp, after=2)
+                        r = lp.add_run(texto)
+                        r.font.size = Pt(9.5)
+                        r.font.color.rgb = RGBColor(51, 51, 51)
+                    rc = t.cell(0, 1)
+                    rp = rc.paragraphs[0]
+                    rp.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    _p_spacing(rp, after=0)
+                    run = rp.add_run()
+                    run.add_picture(img_buf, width=Mm(35))
+                    sp = doc.add_paragraph()
+                    _p_spacing(sp, after=4)
+                    continue
+                except Exception:
+                    pass
+
+            if texto:
+                p = doc.add_paragraph()
+                _p_spacing(p, after=4)
+                r = p.add_run(texto)
+                r.font.size = Pt(9.5)
+                r.font.color.rgb = RGBColor(51, 51, 51)
 
     buf = BytesIO()
     doc.save(buf)
