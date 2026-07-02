@@ -1538,6 +1538,10 @@ function addJogoRow() {
         <input type="date" id="jogo-data-${idx}" class="tips-form-input">
       </div>
     </div>
+    <input type="hidden" id="jogo-home-logo-${idx}">
+    <input type="hidden" id="jogo-away-logo-${idx}">
+    <input type="hidden" id="jogo-league-logo-${idx}">
+    <input type="hidden" id="jogo-league-flag-${idx}">
     <div class="tips-mercados-list" id="jogo-${idx}-mercados">
       ${_buildMercadoRow(idx, mIdx, true)}
     </div>
@@ -1673,6 +1677,11 @@ async function submitTipForm() {
 
     if (!partida) { showTipFormError("Partida obrigatória"); return; }
 
+    const home_logo   = document.getElementById(`jogo-home-logo-${jogoIdx}`)?.value   || null;
+    const away_logo   = document.getElementById(`jogo-away-logo-${jogoIdx}`)?.value   || null;
+    const league_logo = document.getElementById(`jogo-league-logo-${jogoIdx}`)?.value || null;
+    const league_flag = document.getElementById(`jogo-league-flag-${jogoIdx}`)?.value || null;
+
     const mercadoRows = block.querySelectorAll(".tips-mercado-row");
     if (mercadoRows.length === 0) { showTipFormError("Adicione pelo menos um mercado por jogo"); return; }
 
@@ -1687,7 +1696,7 @@ async function submitTipForm() {
       if (!mercado)              { showTipFormError("Mercado obrigatório"); return; }
       if (!oddVal || oddVal <= 1){ showTipFormError("Odd inválida (deve ser > 1.00)"); return; }
 
-      jogos.push({ partida, campeonato, mercado, odd: oddVal, data_partida: data || null });
+      jogos.push({ partida, campeonato, mercado, odd: oddVal, data_partida: data || null, home_logo, away_logo, league_logo, league_flag });
     }
   }
 
@@ -1899,6 +1908,10 @@ function _renderPickerMatches(matches, season, leagueLogo, leagueFlag) {
              data-partida="${escHtml(partida)}"
              data-season="${escHtml(season)}"
              data-date="${escHtml(date)}"
+             data-home-logo="${escHtml(m.home_logo || '')}"
+             data-away-logo="${escHtml(m.away_logo || '')}"
+             data-league-logo="${escHtml(leagueLogo)}"
+             data-league-flag="${escHtml(leagueFlag)}"
              onclick="_selectPickerMatch(this)">
           <div class="picker-match-teams">
             <div class="picker-team-block">
@@ -1927,18 +1940,23 @@ function _renderPickerMatches(matches, season, leagueLogo, leagueFlag) {
 
 function _selectPickerMatch(el) {
   if (_pickerJogoIdx === null) return;
-  const idx     = _pickerJogoIdx;
-  const partida = el.dataset.partida;
-  const season  = el.dataset.season;
-  const date    = el.dataset.date;
+  const idx        = _pickerJogoIdx;
+  const partida    = el.dataset.partida;
+  const season     = el.dataset.season;
+  const date       = el.dataset.date;
+  const homeLogo   = el.dataset.homeLogo   || "";
+  const awayLogo   = el.dataset.awayLogo   || "";
+  const leagueLogo = el.dataset.leagueLogo || "";
+  const leagueFlag = el.dataset.leagueFlag || "";
 
-  const partidaEl = document.getElementById(`jogo-partida-${idx}`);
-  const campEl    = document.getElementById(`jogo-campeonato-${idx}`);
-  const dataEl    = document.getElementById(`jogo-data-${idx}`);
-
-  if (partidaEl) partidaEl.value = partida;
-  if (campEl)    campEl.value    = season;
-  if (dataEl && date) dataEl.value = date;
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+  set(`jogo-partida-${idx}`,    partida);
+  set(`jogo-campeonato-${idx}`, season);
+  if (date) set(`jogo-data-${idx}`, date);
+  set(`jogo-home-logo-${idx}`,   homeLogo);
+  set(`jogo-away-logo-${idx}`,   awayLogo);
+  set(`jogo-league-logo-${idx}`, leagueLogo);
+  set(`jogo-league-flag-${idx}`, leagueFlag);
 
   closeMatchPicker();
 }
@@ -2350,7 +2368,8 @@ function _drawFluxCharacter(ctx, W, H) {
   ctx.restore();
 }
 
-function generateTipStoryCanvas(tip, logoImg, fluxImg) {
+function generateTipStoryCanvas(tip, logoImg, fluxImg, imgMap) {
+  imgMap = imgMap || {};
   const W = 540, H = 960, PAD = 32;
   const canvas = document.createElement("canvas");
   canvas.width = W;
@@ -2396,12 +2415,15 @@ function generateTipStoryCanvas(tip, logoImg, fluxImg) {
   ctx.fillStyle = glowCenter;
   ctx.fillRect(0, 0, W, H);
 
-  // ── ASSISTENTE FLUX CHARACTER (background) ───────────────
+  // ── ASSISTENTE FLUX CHARACTER (background, maior e mais à direita) ──
   if (fluxImg) {
-    const charSize = 520;
-    const charX    = (W - charSize) / 2;
-    const charY    = (H - charSize) / 2 + 60;
-    ctx.drawImage(fluxImg, charX, charY, charSize, charSize);
+    const charW = 520;
+    const charH = 720;
+    const charX = Math.round(W * 0.58 - charW / 2);
+    const charY = Math.round(H * 0.20);
+    ctx.globalAlpha = 0.90;
+    ctx.drawImage(fluxImg, charX, charY, charW, charH);
+    ctx.globalAlpha = 1.0;
   } else {
     _drawFluxCharacter(ctx, W, H);
   }
@@ -2602,73 +2624,173 @@ function generateTipStoryCanvas(tip, logoImg, fluxImg) {
   // ── GAMES ────────────────────────────────────────────────
   const hasGames = Array.isArray(tip.jogos) && tip.jogos.length > 0;
   if (hasGames) {
+    // Group by partida so multiple mercados stack inside one card
+    const grouped = [];
+    const _seen = {};
+    tip.jogos.forEach(j => {
+      const key = (j.partida || "") + "|" + (j.campeonato || "") + "|" + (j.data_partida || "");
+      if (_seen[key] !== undefined) {
+        grouped[_seen[key]].mercados.push({ mercado: j.mercado, odd: j.odd });
+      } else {
+        _seen[key] = grouped.length;
+        grouped.push({
+          partida: j.partida, campeonato: j.campeonato, data_partida: j.data_partida,
+          home_logo: j.home_logo, away_logo: j.away_logo,
+          league_logo: j.league_logo, league_flag: j.league_flag,
+          mercados: [{ mercado: j.mercado, odd: j.odd }]
+        });
+      }
+    });
+
     ctx.font = "700 10px system-ui,sans-serif";
     ctx.fillStyle = C.textMuted;
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
-    ctx.fillText(tip.jogos.length === 1 ? "⚽  APOSTA SIMPLES" : "⚽  SELEÇÕES DA MÚLTIPLA", PAD, curY);
+    ctx.fillText(grouped.length === 1 ? "⚽  APOSTA SIMPLES" : "⚽  SELEÇÕES DA MÚLTIPLA", PAD, curY);
     curY += 18;
 
-    const maxG = Math.min(tip.jogos.length, 5);
-    for (let i = 0; i < maxG; i++) {
-      const j = tip.jogos[i];
-      const ROW_H = 76, rx = PAD, ry = curY, rw = W - PAD * 2;
+    const TEAM_H    = 24;
+    const MKT_H     = 22;
+    const LOGO_S    = 20;
+    const CV        = 12;
+    const CH        = 14;
+    const LEAGUE_H  = 24;
+    const SEP       = 6;
+    const maxG      = Math.min(grouped.length, 5);
 
+    for (let i = 0; i < maxG; i++) {
+      const g   = grouped[i];
+      const rx  = PAD, ry = curY, rw = W - PAD * 2;
+      const parts = (g.partida || "").split(" x ");
+      const homeName = parts[0] || "";
+      const awayName = parts.slice(1).join(" x ") || "";
+      const cardH = CV + TEAM_H * 2 + SEP + MKT_H * g.mercados.length + SEP + LEAGUE_H + CV;
+
+      // Card bg
       ctx.fillStyle = C.card;
-      _drawRoundedRect(ctx, rx, ry, rw, ROW_H, 12);
+      _drawRoundedRect(ctx, rx, ry, rw, cardH, 12);
       ctx.fill();
       ctx.strokeStyle = C.cardBorder;
       ctx.lineWidth = 1;
-      _drawRoundedRect(ctx, rx, ry, rw, ROW_H, 12);
+      _drawRoundedRect(ctx, rx, ry, rw, cardH, 12);
       ctx.stroke();
 
       // Blue left accent
       ctx.fillStyle = C.blue;
-      _drawRoundedRect(ctx, rx, ry, 4, ROW_H, 2);
+      _drawRoundedRect(ctx, rx, ry, 4, cardH, 2);
       ctx.fill();
 
-      // Number badge
-      ctx.fillStyle = "rgba(13,110,253,0.12)";
-      _drawRoundedRect(ctx, rx + 12, ry + ROW_H / 2 - 14, 28, 28, 8);
-      ctx.fill();
-      ctx.font = "bold 13px system-ui,sans-serif";
-      ctx.fillStyle = C.blue;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(String(i + 1), rx + 26, ry + ROW_H / 2);
+      const cX  = rx + CH;
+      let lineY = ry + CV;
 
-      ctx.textAlign = "left";
-      ctx.textBaseline = "top";
-      const textX = rx + 50;
-
-      const p = (j.partida || "").length > 27 ? (j.partida || "").slice(0, 25) + "…" : (j.partida || "");
-      ctx.font = "bold 14px system-ui,-apple-system,sans-serif";
-      ctx.fillStyle = C.text;
-      ctx.fillText(p, textX, ry + 11);
-
-      const m = (j.mercado || "").length > 25 ? (j.mercado || "").slice(0, 23) + "…" : (j.mercado || "");
-      ctx.font = "500 12px system-ui,sans-serif";
-      ctx.fillStyle = C.blue;
-      ctx.fillText(m, textX, ry + 31);
-
-      if (j.campeonato) {
-        const c = j.campeonato.length > 27 ? j.campeonato.slice(0, 25) + "…" : j.campeonato;
-        ctx.font = "400 11px system-ui,sans-serif";
-        ctx.fillStyle = C.textMuted;
-        ctx.fillText(c, textX, ry + 51);
-      }
-
-      if (j.odd != null) {
-        ctx.font = "bold 16px system-ui,-apple-system,sans-serif";
-        ctx.fillStyle = C.green;
-        ctx.textAlign = "right";
+      // ── Team rows ──
+      const teams = [
+        { name: homeName, logo: g.home_logo },
+        { name: awayName, logo: g.away_logo },
+      ];
+      for (const team of teams) {
+        const tImg = imgMap[team.logo];
+        if (tImg) {
+          ctx.save();
+          ctx.beginPath();
+          _drawRoundedRect(ctx, cX, lineY + (TEAM_H - LOGO_S) / 2, LOGO_S, LOGO_S, 4);
+          ctx.clip();
+          ctx.drawImage(tImg, cX, lineY + (TEAM_H - LOGO_S) / 2, LOGO_S, LOGO_S);
+          ctx.restore();
+        } else {
+          ctx.fillStyle = "rgba(13,110,253,0.10)";
+          ctx.beginPath();
+          ctx.arc(cX + LOGO_S / 2, lineY + TEAM_H / 2, LOGO_S / 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        const nameX   = cX + LOGO_S + 7;
+        const nameMaxW = rw - CH - LOGO_S - 7 - 10;
+        let tname     = team.name;
+        ctx.font       = "600 13px system-ui,-apple-system,sans-serif";
+        ctx.textAlign  = "left";
         ctx.textBaseline = "middle";
-        ctx.fillText("@ " + j.odd.toFixed(2), rx + rw - 14, ry + ROW_H / 2);
-        ctx.textAlign = "left";
-        ctx.textBaseline = "top";
+        ctx.fillStyle  = C.text;
+        while (tname.length > 2 && ctx.measureText(tname).width > nameMaxW) tname = tname.slice(0, -1);
+        if (tname.length < team.name.length) tname = tname.slice(0, -1) + "…";
+        ctx.fillText(tname, nameX, lineY + TEAM_H / 2);
+        lineY += TEAM_H;
       }
 
-      curY += ROW_H + 8;
+      lineY += SEP;
+
+      // ── Mercado rows ──
+      for (const mkt of g.mercados) {
+        const mktMaxW = rw - CH * 2 - 55;
+        let mktShort  = mkt.mercado || "";
+        ctx.font      = "500 11.5px system-ui,sans-serif";
+        ctx.fillStyle = C.blue;
+        ctx.textAlign = "left";
+        ctx.textBaseline = "middle";
+        while (mktShort.length > 2 && ctx.measureText(mktShort).width > mktMaxW) mktShort = mktShort.slice(0, -1);
+        if (mktShort.length < (mkt.mercado || "").length) mktShort = mktShort.slice(0, -1) + "…";
+        ctx.fillText(mktShort, cX, lineY + MKT_H / 2);
+
+        if (mkt.odd != null) {
+          ctx.font      = "bold 13px system-ui,-apple-system,sans-serif";
+          ctx.fillStyle = C.green;
+          ctx.textAlign = "right";
+          ctx.fillText("@ " + parseFloat(mkt.odd).toFixed(2), rx + rw - CH, lineY + MKT_H / 2);
+        }
+        lineY += MKT_H;
+      }
+
+      lineY += SEP;
+
+      // ── League footer ──
+      ctx.strokeStyle = C.cardBorder;
+      ctx.lineWidth   = 1;
+      ctx.beginPath();
+      ctx.moveTo(rx + 12, lineY);
+      ctx.lineTo(rx + rw - 12, lineY);
+      ctx.stroke();
+
+      const flagH  = 14;
+      const midY   = lineY + LEAGUE_H / 2;
+      let lgX      = cX;
+
+      const flagImg = g.league_flag && imgMap[g.league_flag];
+      if (flagImg) {
+        ctx.save();
+        ctx.beginPath();
+        _drawRoundedRect(ctx, lgX, midY - flagH / 2, Math.round(flagH * 1.5), flagH, 2);
+        ctx.clip();
+        ctx.drawImage(flagImg, lgX, midY - flagH / 2, Math.round(flagH * 1.5), flagH);
+        ctx.restore();
+        lgX += Math.round(flagH * 1.5) + 5;
+      }
+
+      const lgLogoImg = g.league_logo && imgMap[g.league_logo];
+      if (lgLogoImg) {
+        ctx.save();
+        ctx.beginPath();
+        _drawRoundedRect(ctx, lgX, midY - flagH / 2, flagH, flagH, 2);
+        ctx.clip();
+        ctx.drawImage(lgLogoImg, lgX, midY - flagH / 2, flagH, flagH);
+        ctx.restore();
+        lgX += flagH + 5;
+      }
+
+      if (g.campeonato) {
+        let campText = g.campeonato;
+        if (g.data_partida) {
+          const yr = g.data_partida.slice(0, 4);
+          if (yr && !campText.endsWith(yr)) campText += " " + yr;
+        }
+        const campMaxW = rx + rw - CH - lgX;
+        ctx.font       = "500 10.5px system-ui,sans-serif";
+        ctx.fillStyle  = C.textMuted;
+        ctx.textAlign  = "left";
+        ctx.textBaseline = "middle";
+        while (campText.length > 2 && ctx.measureText(campText).width > campMaxW) campText = campText.slice(0, -1);
+        ctx.fillText(campText, lgX, midY);
+      }
+
+      curY += cardH + 8;
     }
   } else if (tip.partida) {
     const ROW_H = 76;
@@ -2751,12 +2873,27 @@ async function openStoryModal(tipId) {
     image.src = src;
   });
 
-  const [logoImg, fluxImg] = await Promise.all([
+  const extraUrls = [];
+  const extraUrlSet = new Set();
+  (tip.jogos || []).forEach(j => {
+    [j.home_logo, j.away_logo, j.league_logo].forEach(u => {
+      if (u && !extraUrlSet.has(u)) { extraUrlSet.add(u); extraUrls.push(u); }
+    });
+    if (j.league_flag) {
+      const flagUrl = `https://flagcdn.com/w20/${j.league_flag}.png`;
+      if (!extraUrlSet.has(flagUrl)) { extraUrlSet.add(flagUrl); extraUrls.push(flagUrl); }
+    }
+  });
+
+  const [logoImg, fluxImg, ...extraImgs] = await Promise.all([
     loadImg("/static/images/logos/Icon-mobile-logo-vector.png"),
     loadImg("/static/images/logos/1782664376486.png"),
+    ...extraUrls.map(loadImg),
   ]);
+  const imgMap = {};
+  extraUrls.forEach((url, i) => { if (extraImgs[i]) imgMap[url] = extraImgs[i]; });
 
-  const canvas  = generateTipStoryCanvas(tip, logoImg, fluxImg);
+  const canvas  = generateTipStoryCanvas(tip, logoImg, fluxImg, imgMap);
   const dataUrl = canvas.toDataURL("image/png");
 
   img.src = dataUrl;
