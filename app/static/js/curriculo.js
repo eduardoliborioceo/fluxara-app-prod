@@ -6,6 +6,90 @@
   var _mobileTab = 'form';
   var _template = 'classico';
 
+  // ── autocomplete ─────────────────────────────────────────────
+  function buildAutocomplete(input, endpoint) {
+    var wrap = document.createElement('div');
+    wrap.className = 'cv-autocomplete-wrap';
+    input.parentNode.insertBefore(wrap, input);
+    wrap.appendChild(input);
+
+    var list = document.createElement('div');
+    list.className = 'cv-autocomplete-list';
+    wrap.appendChild(list);
+
+    var timer = null;
+    var focusedIdx = -1;
+
+    function highlight(text, term) {
+      var idx = text.toLowerCase().indexOf(term.toLowerCase());
+      if (idx < 0) return esc(text);
+      return esc(text.slice(0, idx)) +
+        '<mark>' + esc(text.slice(idx, idx + term.length)) + '</mark>' +
+        esc(text.slice(idx + term.length));
+    }
+
+    function close() {
+      list.classList.remove('open');
+      list.innerHTML = '';
+      focusedIdx = -1;
+    }
+
+    function select(value) {
+      input.value = value;
+      close();
+      input.dispatchEvent(new Event('input'));
+    }
+
+    function moveFocus(dir) {
+      var items = list.querySelectorAll('.cv-autocomplete-item');
+      if (!items.length) return;
+      items[focusedIdx] && items[focusedIdx].classList.remove('focused');
+      focusedIdx = (focusedIdx + dir + items.length) % items.length;
+      items[focusedIdx].classList.add('focused');
+      items[focusedIdx].scrollIntoView({ block: 'nearest' });
+    }
+
+    input.addEventListener('input', function () {
+      var q = input.value.trim();
+      clearTimeout(timer);
+      if (q.length < 2) { close(); return; }
+      timer = setTimeout(function () {
+        fetch(endpoint + '?q=' + encodeURIComponent(q))
+          .then(function (r) { return r.json(); })
+          .then(function (results) {
+            if (!results.length) { close(); return; }
+            list.innerHTML = results.map(function (r) {
+              return '<div class="cv-autocomplete-item" data-value="' + esc(r) + '">' +
+                highlight(r, q) + '</div>';
+            }).join('');
+            list.classList.add('open');
+            focusedIdx = -1;
+            list.querySelectorAll('.cv-autocomplete-item').forEach(function (el) {
+              el.addEventListener('mousedown', function (e) {
+                e.preventDefault();
+                select(el.dataset.value);
+              });
+            });
+          });
+      }, 200);
+    });
+
+    input.addEventListener('keydown', function (e) {
+      if (!list.classList.contains('open')) return;
+      if (e.key === 'ArrowDown') { e.preventDefault(); moveFocus(1); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); moveFocus(-1); }
+      else if (e.key === 'Enter') {
+        var focused = list.querySelector('.cv-autocomplete-item.focused');
+        if (focused) { e.preventDefault(); select(focused.dataset.value); }
+      }
+      else if (e.key === 'Escape') { close(); }
+    });
+
+    input.addEventListener('blur', function () {
+      setTimeout(close, 150);
+    });
+  }
+
   // ── utils ────────────────────────────────────────────────────
   function esc(s) {
     return String(s || '')
@@ -110,16 +194,20 @@
   window.cvAddFormacao = function () {
     makeItem('cvFormacaoList',
       '<div class="cv-field"><label class="cv-label">Instituição</label>' +
-      '<input type="text" class="cv-input cv-finst" placeholder="Universidade / Curso"></div>' +
+      '<input type="text" class="cv-input cv-finst" placeholder="Universidade / Curso" autocomplete="off"></div>' +
       '<div class="cv-field"><label class="cv-label">Descrição</label>' +
       '<input type="text" class="cv-input cv-fdesc" placeholder="Graduação em Análise e Desenvolvimento de Sistemas"></div>' +
       '<div class="cv-row">' +
       '<div class="cv-field"><label class="cv-label">Período</label>' +
       '<input type="text" class="cv-input cv-fperiodo" placeholder="Fevereiro 2026 – Atualmente"></div>' +
       '<div class="cv-field"><label class="cv-label">Localidade</label>' +
-      '<input type="text" class="cv-input cv-flocal" placeholder="Manaus, Brasil"></div>' +
+      '<input type="text" class="cv-input cv-flocal" placeholder="Manaus, AM" autocomplete="off"></div>' +
       '</div>'
     );
+    var items = document.querySelectorAll('#cvFormacaoList .cv-dynamic-item');
+    var last = items[items.length - 1];
+    buildAutocomplete(last.querySelector('.cv-finst'), '/api/autocomplete/instituicoes');
+    buildAutocomplete(last.querySelector('.cv-flocal'), '/api/autocomplete/localidades');
   };
 
   window.cvAddComp = function () {
@@ -230,6 +318,7 @@
       last.querySelector('.cv-fperiodo').value = f.periodo || '';
       last.querySelector('.cv-flocal').value = f.localidade || '';
     });
+    // autocomplete já está aplicado por cvAddFormacao()
 
     document.getElementById('cvCompList').innerHTML = '';
     (dados.competencias || []).forEach(function (c) {
