@@ -554,6 +554,73 @@
 
 .tips-jogo-row:last-child { margin-bottom: 0; }
 
+/* ── mercado rows dentro de um jogo ── */
+.tips-mercados-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.tips-mercado-row {
+  border-top: 1px dashed rgba(15,23,42,.07);
+  padding-top: 6px;
+}
+
+.tips-mercado-row:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.tips-mercado-row-inner {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.tips-mercado-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 6px;
+  background: rgba(220,38,38,.07);
+  color: #dc2626;
+  cursor: pointer;
+  font-size: .72rem;
+  margin-bottom: 0;
+  transition: background .12s;
+}
+
+.tips-mercado-remove:hover { background: rgba(220,38,38,.16); }
+
+.tips-mercado-remove-ph {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.tips-btn-add-mercado {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  font-size: .73rem;
+  font-weight: 600;
+  color: #16a34a;
+  background: rgba(22,163,74,.08);
+  border: 1px solid rgba(22,163,74,.2);
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background .12s;
+  margin-bottom: 4px;
+}
+
+.tips-btn-add-mercado:hover { background: rgba(22,163,74,.14); }
+
 .tips-jogo-row-top {
   display: flex;
   align-items: center;
@@ -1022,6 +1089,20 @@
 }
 
 .tips-detail-jogo--sep { margin-top: 6px; }
+
+.tips-detail-mercados {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 5px;
+}
+
+.tips-detail-mercado-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
 
 .tips-detail-tipo {
   display: flex;

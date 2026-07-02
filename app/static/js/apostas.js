@@ -1235,6 +1235,9 @@ function buildTipCard(tip, isAdmin) {
   const adminActions = isAdmin ? buildTipAdminActions(tip) : "";
   const hasMultipla  = Array.isArray(tip.jogos) && tip.jogos.length > 0;
   const aprovada     = tip.aprovada !== false;
+  const jogoCount    = hasMultipla
+    ? new Set(tip.jogos.map(j => (j.partida || "") + "|" + (j.campeonato || ""))).size
+    : 0;
 
   const oddHtml = tip.odd != null
     ? `<span class="tips-odd-display"><i class="bi bi-calculator"></i>Odd total: <strong>${tip.odd.toFixed(2)}</strong></span>`
@@ -1266,7 +1269,6 @@ function buildTipCard(tip, isAdmin) {
   }
 
   const detailsHtml = hasMultipla ? buildMultiplaDetails(tip) : buildLegacyDetails(tip);
-  const jogoCount   = hasMultipla ? tip.jogos.length : 0;
   const detailLabel = jogoCount > 1 ? `${jogoCount} jogos` : "resumo";
 
   const toggleSection = detailsHtml ? `
@@ -1307,19 +1309,34 @@ function buildTipCard(tip, isAdmin) {
 }
 
 function buildMultiplaDetails(tip) {
-  return tip.jogos.map((j, idx) => {
-    const campHtml = j.campeonato
-      ? `<span class="tips-detail-camp">${escHtml(j.campeonato)}</span>` : "";
-    const dataHtml = j.data_partida
-      ? `<span>${formatDate(j.data_partida)}</span>` : "";
+  const grouped = [];
+  const seen = {};
+  tip.jogos.forEach(j => {
+    const key = (j.partida || "") + "|" + (j.campeonato || "") + "|" + (j.data_partida || "");
+    if (seen[key] !== undefined) {
+      grouped[seen[key]].mercados.push({ mercado: j.mercado, odd: j.odd });
+    } else {
+      seen[key] = grouped.length;
+      grouped.push({ partida: j.partida, campeonato: j.campeonato, data_partida: j.data_partida, mercados: [{ mercado: j.mercado, odd: j.odd }] });
+    }
+  });
+
+  return grouped.map((g, idx) => {
+    const campHtml = g.campeonato
+      ? `<span class="tips-detail-camp">${escHtml(g.campeonato)}</span>` : "";
+    const dataHtml = g.data_partida
+      ? `<span>${formatDate(g.data_partida)}</span>` : "";
+    const mercadosHtml = g.mercados.map(m =>
+      `<div class="tips-detail-mercado-row">
+        <span class="tips-detail-tipo"><i class="bi bi-tag-fill"></i>${escHtml(m.mercado)}</span>
+        ${m.odd != null ? `<span class="tips-detail-odd">@ ${m.odd.toFixed(2)}</span>` : ""}
+      </div>`
+    ).join("");
     return `
       <div class="tips-detail-jogo${idx > 0 ? " tips-detail-jogo--sep" : ""}">
-        <div class="tips-detail-tipo"><i class="bi bi-tag-fill"></i>${escHtml(j.mercado)}</div>
-        <div class="tips-detail-partida">${escHtml(j.partida)}${campHtml}</div>
-        <div class="tips-detail-meta">
-          ${dataHtml}
-          ${j.odd != null ? `<span class="tips-detail-odd">@ ${j.odd.toFixed(2)}</span>` : ""}
-        </div>
+        <div class="tips-detail-partida">${escHtml(g.partida)}${campHtml}</div>
+        ${g.mercados.length > 0 ? `<div class="tips-detail-mercados">${mercadosHtml}</div>` : ""}
+        ${dataHtml ? `<div class="tips-detail-meta">${dataHtml}</div>` : ""}
       </div>`;
   }).join("");
 }
@@ -1457,15 +1474,45 @@ function buildMercadoOptions() {
   }).join("");
 }
 
+let _mercadoCounter = 0;
+
+function _buildMercadoRow(jogoIdx, mIdx, isFirst) {
+  const mercadoOpts = buildMercadoOptions();
+  const canRemove = !isFirst;
+  return `
+    <div class="tips-mercado-row" id="jogo-${jogoIdx}-m-${mIdx}">
+      <div class="tips-mercado-row-inner">
+        <div class="tips-form-group tips-form-group--flex2">
+          ${isFirst ? '<label class="tips-form-label">Mercado <span class="tips-required">*</span></label>' : ''}
+          <select id="jogo-${jogoIdx}-mercado-${mIdx}" class="tips-form-input" onchange="onMercadoChange(${jogoIdx},${mIdx})">
+            <option value="" disabled selected>Selecione...</option>
+            ${mercadoOpts}
+          </select>
+        </div>
+        <div class="tips-form-group tips-form-group--flex1">
+          ${isFirst ? '<label class="tips-form-label">Odd <span class="tips-required">*</span></label>' : ''}
+          <input type="number" id="jogo-${jogoIdx}-odd-${mIdx}" class="tips-form-input" step="0.01" min="1.01" placeholder="1.85" oninput="calcOddTotal()">
+        </div>
+        ${canRemove
+          ? `<button type="button" class="tips-mercado-remove" onclick="removeMercadoRow(${jogoIdx},${mIdx})" title="Remover mercado"><i class="bi bi-x-lg"></i></button>`
+          : '<div class="tips-mercado-remove-ph"></div>'}
+      </div>
+      <div class="tips-form-group" id="jogo-${jogoIdx}-outro-${mIdx}" style="display:none">
+        <input type="text" id="jogo-${jogoIdx}-mercado-outro-${mIdx}" class="tips-form-input" placeholder="Ex: Handicap Asiático -0.5" maxlength="100">
+      </div>
+    </div>`;
+}
+
 function addJogoRow() {
   const idx = _jogoCounter++;
-  const mercadoOpts = buildMercadoOptions();
   const container = document.getElementById("tipJogosContainer");
 
-  const row = document.createElement("div");
-  row.className = "tips-jogo-row";
-  row.id = `jogo-row-${idx}`;
-  row.innerHTML = `
+  const block = document.createElement("div");
+  block.className = "tips-jogo-row";
+  block.id = `jogo-row-${idx}`;
+
+  const mIdx = _mercadoCounter++;
+  block.innerHTML = `
     <div class="tips-jogo-row-top">
       <span class="tips-jogo-num">Jogo ${container.children.length + 1}</span>
       <button type="button" class="tips-jogo-remove" onclick="removeJogoRow(${idx})" title="Remover jogo">
@@ -1491,27 +1538,32 @@ function addJogoRow() {
         <input type="date" id="jogo-data-${idx}" class="tips-form-input">
       </div>
     </div>
-    <div class="tips-form-row">
-      <div class="tips-form-group tips-form-group--flex2">
-        <label class="tips-form-label">Mercado <span class="tips-required">*</span></label>
-        <select id="jogo-mercado-${idx}" class="tips-form-input" onchange="onMercadoChange(${idx})">
-          <option value="" disabled selected>Selecione...</option>
-          ${mercadoOpts}
-        </select>
-      </div>
-      <div class="tips-form-group tips-form-group--flex1">
-        <label class="tips-form-label">Odd <span class="tips-required">*</span></label>
-        <input type="number" id="jogo-odd-${idx}" class="tips-form-input" step="0.01" min="1.01" placeholder="1.85" oninput="calcOddTotal()">
-      </div>
+    <div class="tips-mercados-list" id="jogo-${idx}-mercados">
+      ${_buildMercadoRow(idx, mIdx, true)}
     </div>
-    <div class="tips-form-group" id="jogo-outro-group-${idx}" style="display:none">
-      <label class="tips-form-label">Especificar mercado <span class="tips-required">*</span></label>
-      <input type="text" id="jogo-mercado-outro-${idx}" class="tips-form-input" placeholder="Ex: Handicap Asiático -0.5" maxlength="100">
-    </div>
+    <button type="button" class="tips-btn-add-mercado" onclick="addMercadoToJogo(${idx})">
+      <i class="bi bi-plus-lg"></i> Adicionar mercado ao mesmo jogo
+    </button>
   `;
 
-  container.appendChild(row);
+  container.appendChild(block);
   renumberJogos();
+  calcOddTotal();
+}
+
+function addMercadoToJogo(jogoIdx) {
+  const list = document.getElementById(`jogo-${jogoIdx}-mercados`);
+  if (!list) return;
+  const mIdx = _mercadoCounter++;
+  const div = document.createElement("div");
+  div.innerHTML = _buildMercadoRow(jogoIdx, mIdx, false);
+  list.appendChild(div.firstElementChild);
+  calcOddTotal();
+}
+
+function removeMercadoRow(jogoIdx, mIdx) {
+  const row = document.getElementById(`jogo-${jogoIdx}-m-${mIdx}`);
+  if (row) row.remove();
   calcOddTotal();
 }
 
@@ -1530,26 +1582,31 @@ function renumberJogos() {
   });
 }
 
-function onMercadoChange(idx) {
-  const sel = document.getElementById(`jogo-mercado-${idx}`);
-  const grp = document.getElementById(`jogo-outro-group-${idx}`);
+function onMercadoChange(jogoIdx, mIdx) {
+  const sel = document.getElementById(`jogo-${jogoIdx}-mercado-${mIdx}`);
+  const grp = document.getElementById(`jogo-${jogoIdx}-outro-${mIdx}`);
   if (sel && grp) grp.style.display = sel.value === "Outro (especificar)" ? "block" : "none";
 }
 
 function calcOddTotal() {
-  const rows = document.querySelectorAll("#tipJogosContainer .tips-jogo-row");
+  const blocks = document.querySelectorAll("#tipJogosContainer .tips-jogo-row");
   let total = 1;
-  let valid = rows.length > 0;
+  let valid = blocks.length > 0;
+  let hasAny = false;
 
-  rows.forEach(row => {
-    const id = row.id.replace("jogo-row-", "");
-    const val = parseFloat(document.getElementById(`jogo-odd-${id}`)?.value);
-    if (!val || val <= 1) { valid = false; }
-    else total *= val;
+  blocks.forEach(block => {
+    const jogoIdx = block.id.replace("jogo-row-", "");
+    const mercadoRows = block.querySelectorAll(".tips-mercado-row");
+    mercadoRows.forEach(mRow => {
+      const mId = mRow.id.replace(`jogo-${jogoIdx}-m-`, "");
+      const val = parseFloat(document.getElementById(`jogo-${jogoIdx}-odd-${mId}`)?.value);
+      if (!val || val <= 1) { valid = false; }
+      else { total *= val; hasAny = true; }
+    });
   });
 
   const el = document.getElementById("tipOddTotal");
-  if (el) el.textContent = (valid && rows.length > 0) ? total.toFixed(2) : "—";
+  if (el) el.textContent = (valid && hasAny) ? total.toFixed(2) : "—";
 }
 
 async function pasteLink() {
@@ -1571,6 +1628,7 @@ function openTipModal() {
   document.getElementById("tipJogosContainer").innerHTML = "";
   document.getElementById("tipOddTotal").textContent = "—";
   _jogoCounter = 0;
+  _mercadoCounter = 0;
   hideTipFormError();
   document.getElementById("tipModalOverlay").style.display = "flex";
   addJogoRow();
@@ -1603,26 +1661,34 @@ async function submitTipForm() {
 
   if (!titulo) { showTipFormError("Título é obrigatório"); return; }
 
-  const rows = document.querySelectorAll("#tipJogosContainer .tips-jogo-row");
-  if (rows.length === 0) { showTipFormError("Adicione pelo menos um jogo"); return; }
+  const blocks = document.querySelectorAll("#tipJogosContainer .tips-jogo-row");
+  if (blocks.length === 0) { showTipFormError("Adicione pelo menos um jogo"); return; }
 
   const jogos = [];
-  for (const row of rows) {
-    const idx       = row.id.replace("jogo-row-", "");
-    const partida   = (document.getElementById(`jogo-partida-${idx}`)?.value || "").trim();
-    const campeonato = (document.getElementById(`jogo-campeonato-${idx}`)?.value || "").trim();
-    const data      = document.getElementById(`jogo-data-${idx}`)?.value || "";
-    const selVal    = document.getElementById(`jogo-mercado-${idx}`)?.value || "";
-    const mercado   = selVal === "Outro (especificar)"
-      ? (document.getElementById(`jogo-mercado-outro-${idx}`)?.value || "").trim()
-      : selVal;
-    const oddVal    = parseFloat(document.getElementById(`jogo-odd-${idx}`)?.value);
+  for (const block of blocks) {
+    const jogoIdx    = block.id.replace("jogo-row-", "");
+    const partida    = (document.getElementById(`jogo-partida-${jogoIdx}`)?.value || "").trim();
+    const campeonato = (document.getElementById(`jogo-campeonato-${jogoIdx}`)?.value || "").trim();
+    const data       = document.getElementById(`jogo-data-${jogoIdx}`)?.value || "";
 
-    if (!partida)        { showTipFormError(`Partida obrigatória`); return; }
-    if (!mercado)        { showTipFormError(`Mercado obrigatório`); return; }
-    if (!oddVal || oddVal <= 1) { showTipFormError(`Odd inválida (deve ser > 1.00)`); return; }
+    if (!partida) { showTipFormError("Partida obrigatória"); return; }
 
-    jogos.push({ partida, campeonato, mercado, odd: oddVal, data_partida: data || null });
+    const mercadoRows = block.querySelectorAll(".tips-mercado-row");
+    if (mercadoRows.length === 0) { showTipFormError("Adicione pelo menos um mercado por jogo"); return; }
+
+    for (const mRow of mercadoRows) {
+      const mId    = mRow.id.replace(`jogo-${jogoIdx}-m-`, "");
+      const selVal = document.getElementById(`jogo-${jogoIdx}-mercado-${mId}`)?.value || "";
+      const mercado = selVal === "Outro (especificar)"
+        ? (document.getElementById(`jogo-${jogoIdx}-mercado-outro-${mId}`)?.value || "").trim()
+        : selVal;
+      const oddVal = parseFloat(document.getElementById(`jogo-${jogoIdx}-odd-${mId}`)?.value);
+
+      if (!mercado)              { showTipFormError("Mercado obrigatório"); return; }
+      if (!oddVal || oddVal <= 1){ showTipFormError("Odd inválida (deve ser > 1.00)"); return; }
+
+      jogos.push({ partida, campeonato, mercado, odd: oddVal, data_partida: data || null });
+    }
   }
 
   const btn = document.getElementById("tipSubmitBtn");
