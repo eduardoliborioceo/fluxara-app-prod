@@ -1,7 +1,10 @@
+import logging
+
 from flask import Blueprint, render_template, redirect, url_for, request
 from flask_login import login_required, current_user
 
 bp = Blueprint("pages", __name__)
+logger = logging.getLogger(__name__)
 
 
 @bp.route("/")
@@ -10,8 +13,8 @@ def resumo():
     from app.services import recorrencias_service
     try:
         recorrencias_service.processar_recorrencias(current_user.id)
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.error("processar_recorrencias falhou para user=%s: %s", current_user.id, exc, exc_info=True)
     return render_template("resumo.html", active_menu="resumo")
 
 

@@ -1,8 +1,11 @@
 import calendar
 import datetime
+import logging
 
 from app.repositories import recorrencias_repository as repo
 from app.repositories import lancamentos_repository as lanc_repo
+
+logger = logging.getLogger(__name__)
 
 
 def _parse_money(value) -> float:
@@ -88,58 +91,69 @@ def delete_recorrencia(recorrencia_id: int, user_id: int):
     repo.delete_recorrencia(recorrencia_id, user_id)
 
 
-def processar_recorrencias(user_id: int):
+def processar_recorrencias(user_id: int) -> list[dict]:
     today = datetime.date.today()
     ativas = repo.list_ativas(user_id)
+    processados = []
 
     for r in ativas:
-        last_day = calendar.monthrange(today.year, today.month)[1]
-        due_day = min(r['dia_vencimento'], last_day)
-        due_date = datetime.date(today.year, today.month, due_day)
+        try:
+            last_day = calendar.monthrange(today.year, today.month)[1]
+            due_day = min(r['dia_vencimento'], last_day)
+            due_date = datetime.date(today.year, today.month, due_day)
 
-        if today < due_date:
-            continue
+            if today < due_date:
+                continue
 
-        ultimo = r['ultimo_lancamento']
-        if ultimo and ultimo.year == today.year and ultimo.month == today.month:
-            continue
+            ultimo = r['ultimo_lancamento']
+            if ultimo:
+                ultimo_date = ultimo.date() if hasattr(ultimo, 'date') else ultimo
+                if ultimo_date >= due_date:
+                    continue
 
-        if r['tipo'] == 'debito':
-            lanc_repo.create_lancamento(
-                user_id=user_id,
-                tipo='despesa',
-                descricao=r['nome'],
-                valor=float(r['valor']),
-                data_vencimento=due_date.isoformat(),
-                efetivado=True,
-                recorrente=False,
-                recorrencia_tipo=None,
-                categoria_id=r['categoria_id'],
-                subcategoria_id=None,
-                conta_id=r['conta_id'],
-                cartao_id=None,
-                fatura_mes=None,
-                fatura_ano=None,
-            )
+            if r['tipo'] == 'debito':
+                lanc_repo.create_lancamento(
+                    user_id=user_id,
+                    tipo='despesa',
+                    descricao=r['nome'],
+                    valor=float(r['valor']),
+                    data_vencimento=due_date.isoformat(),
+                    efetivado=True,
+                    recorrente=False,
+                    recorrencia_tipo=None,
+                    categoria_id=r['categoria_id'],
+                    subcategoria_id=None,
+                    conta_id=r['conta_id'],
+                    cartao_id=None,
+                    fatura_mes=None,
+                    fatura_ano=None,
+                )
+                processados.append({'id': r['id'], 'nome': r['nome'], 'tipo': 'debito'})
 
-        elif r['tipo'] == 'credito':
-            dia_fech = r.get('dia_fechamento') or 1
-            fatura_mes, fatura_ano = _fatura_mes_ano(dia_fech, due_date)
-            lanc_repo.create_lancamento(
-                user_id=user_id,
-                tipo='despesa_cartao',
-                descricao=r['nome'],
-                valor=float(r['valor']),
-                data_vencimento=due_date.isoformat(),
-                efetivado=False,
-                recorrente=False,
-                recorrencia_tipo=None,
-                categoria_id=r['categoria_id'],
-                subcategoria_id=None,
-                conta_id=None,
-                cartao_id=r['cartao_id'],
-                fatura_mes=fatura_mes,
-                fatura_ano=fatura_ano,
-            )
+            elif r['tipo'] == 'credito':
+                dia_fech = r.get('dia_fechamento') or 1
+                fatura_mes, fatura_ano = _fatura_mes_ano(dia_fech, due_date)
+                lanc_repo.create_lancamento(
+                    user_id=user_id,
+                    tipo='despesa_cartao',
+                    descricao=r['nome'],
+                    valor=float(r['valor']),
+                    data_vencimento=due_date.isoformat(),
+                    efetivado=False,
+                    recorrente=False,
+                    recorrencia_tipo=None,
+                    categoria_id=r['categoria_id'],
+                    subcategoria_id=None,
+                    conta_id=None,
+                    cartao_id=r['cartao_id'],
+                    fatura_mes=fatura_mes,
+                    fatura_ano=fatura_ano,
+                )
+                processados.append({'id': r['id'], 'nome': r['nome'], 'tipo': 'credito'})
 
-        repo.mark_lancado(r['id'], user_id, today)
+            repo.mark_lancado(r['id'], user_id, today)
+
+        except Exception as exc:
+            logger.error("Erro ao processar recorrencia id=%s user=%s: %s", r.get('id'), user_id, exc, exc_info=True)
+
+    return processados
